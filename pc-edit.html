@@ -1,0 +1,1409 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>REHEARSAL MODE — Mock</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@300;400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: #1a1918;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+    color: #e8e8e2;
+    min-height: 100vh;
+    padding: 0;
+  }
+  /* 全画面プレビュー用の薄い案内バー（既存の screen-nav を圧縮） */
+  /* ── 画面セレクター ───────── */
+  .screen-nav {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    margin: 0;
+    padding: 8px 12px;
+    border-bottom: 1px solid #2c2a27;
+    background: #0d0c0b;
+  }
+  .screen-nav button { padding: 6px 12px !important; font-size: 10px !important; }
+  .screen-nav button {
+    background: #1c1b19;
+    color: #a8a8a0;
+    border: 1px solid #2c2a27;
+    padding: 10px 16px;
+    border-radius: 4px;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.15s;
+  }
+  .screen-nav button:hover { border-color: #e89a4a; color: #e8e8e2; }
+  .screen-nav button.active {
+    background: #e89a4a;
+    color: #0a0a08;
+    border-color: #e89a4a;
+  }
+  .nav-title {
+    color: #76766f;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-right: 8px;
+  }
+  .screen { display: none; }
+  .screen.active { display: block; animation: fadeIn 0.3s ease-out; }
+  @keyframes fadeIn { from {opacity:0; transform: translateY(6px);} to {opacity:1;} }
+
+  /* ── PC編集画面 ───────── */
+  .pc-frame {
+    max-width: 100%;
+    margin: 0;
+    background: #1a1918;
+    border: none;
+    border-radius: 0;
+    overflow: hidden;
+  }
+  .pc-header {
+    display: flex;
+    align-items: end;
+    gap: 12px;
+    padding: 16px 20px;
+    background: #1a1918;
+  }
+  .info-icon-btn {
+    width: 44px; height: 44px;
+    background: #1c1b19;
+    border: 1px solid #2c2a27;
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    color: #a8a8a0;
+    font-weight: 700;
+  }
+  .concert-title-input {
+    flex: 1;
+    height: 44px;
+    background: #1c1b19;
+    border: 1px solid #2c2a27;
+    border-radius: 4px;
+    padding: 0 14px;
+    color: #e8e8e2;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+  }
+  .label-stack {
+    display: flex; flex-direction: column; align-items: center;
+    width: 88px;
+  }
+  .label-stack span {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.12em;
+    color: #a8a8a0; margin-bottom: 6px; text-transform: uppercase;
+  }
+  .label-stack input {
+    width: 100%; height: 40px;
+    background: #1c1b19; border: 1px solid #2c2a27;
+    border-radius: 4px; text-align: center;
+    color: #e8e8e2;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif; font-variant-numeric: tabular-nums;
+    font-size: 16px; font-weight: 600;
+  }
+  .mode-tabs {
+    display: flex; gap: 4px;
+    background: #1c1b19;
+    border: 1px solid #2c2a27;
+    border-radius: 99px;
+    padding: 4px;
+    margin-left: auto;
+  }
+  .mode-tabs button {
+    background: transparent;
+    border: none;
+    padding: 8px 16px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: #76766f;
+    cursor: pointer;
+    border-radius: 99px;
+    text-transform: uppercase;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+  }
+  .mode-tabs button.active {
+    background: #e89a4a;
+    color: #0a0a08;
+  }
+  .pc-rh-header {
+    padding: 16px 20px 12px;
+    border-bottom: 1px solid #2c2a27;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  }
+  .pc-rh-title {
+    font-size: 13px; letter-spacing: 0.3em; color: #e89a4a;
+    font-weight: 700; text-transform: uppercase;
+  }
+  .pc-rh-actions { display: flex; gap: 8px; }
+  .pc-btn {
+    padding: 8px 16px;
+    background: #1c1b19;
+    border: 1px solid #2c2a27;
+    color: #a8a8a0;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    cursor: pointer;
+    text-transform: uppercase;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+  }
+  .pc-btn.primary { background: #e89a4a; color: #0a0a08; border-color: #e89a4a; }
+  /* 列順: drag / M# / TITLE / TIME / RH# / TAGS(コンパクト) / MEMO(広く) / × */
+  .pc-table-header {
+    display: grid;
+    grid-template-columns: 28px 50px minmax(160px, 0.8fr) 60px 50px 280px minmax(320px, 2.5fr) 26px;
+    gap: 8px;
+    padding: 6px 14px;
+    background: #1a1918;
+    border-bottom: 1px solid #e89a4a40;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+    font-size: 10px;
+    color: #76766f;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+  .pc-row {
+    display: grid;
+    grid-template-columns: 28px 50px minmax(160px, 0.8fr) 60px 50px 280px minmax(320px, 2.5fr) 26px;
+    gap: 8px;
+    padding: 6px 14px;
+    background: #242320;
+    border: 1px solid #2c2a27;
+    border-radius: 3px;
+    margin: 2px 8px;
+    align-items: center;
+  }
+  .pc-row.current {
+    background: #2a2018;
+    border-color: #e89a4a;
+    box-shadow: 0 0 0 1px rgba(232,154,74,0.25);
+  }
+  .pc-row .drag {
+    color: rgba(255,255,255,0.18);
+    text-align: center;
+    cursor: grab;
+  }
+  /* M番号: 控えめなオレンジ薄、ゴシック */
+  .pc-row .m-no {
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    color: rgba(232,154,74,0.55);
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.05em;
+  }
+  /* RH番号: メインアクセント、太い */
+  .pc-row .rh-no {
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+    font-weight: 800;
+    font-size: 16px;
+    color: #e89a4a;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .pc-row .title-cell {
+    font-size: 14px;
+    font-weight: 600;
+    color: #e8e8e2;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .pc-row .time-cell {
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+    font-weight: 600;
+    color: #e8b04a;
+    text-align: center;
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+  }
+  .pc-row .tag-cell {
+    display: flex; gap: 3px; flex-wrap: nowrap;
+    min-width: 0;
+  }
+  .tag-btn {
+    padding: 3px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    background: #1c1b19;
+    border: 1px solid #2c2a27;
+    color: #5a5a54;
+    cursor: pointer;
+    user-select: none;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+    white-space: nowrap;
+    flex: 1 1 0;
+    min-width: 0;
+    text-align: center;
+  }
+  .tag-btn.on.monitor { background: rgba(91,155,213,0.25); border-color: #5b9bd5; color: #a8d4e8; }
+  .tag-btn.on.bagari  { background: rgba(224,122,95,0.25);  border-color: #e07a5f; color: #f0b09c; }
+  .tag-btn.on.oto     { background: rgba(230,200,112,0.25); border-color: #e6c870; color: #f0d8a0; }
+  .tag-btn.on.koutou  { background: rgba(126,194,122,0.25); border-color: #7ec27a; color: #b8d9b0; }
+  .tag-btn.on.kikou   { background: rgba(110,198,200,0.25); border-color: #6ec6c8; color: #a8dcde; }
+  .tag-btn.on.zentai  { background: rgba(212,165,116,0.25); border-color: #d4a574; color: #e8c890; }
+  .pc-row .memo {
+    background: #1d1b19;
+    border: 1px solid #2c2a27;
+    border-radius: 3px;
+    padding: 6px 10px;
+    color: #a8a8a0;
+    font-size: 12px;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .pc-row .row-action {
+    color: #5a5a54;
+    text-align: center;
+    cursor: pointer;
+    font-size: 12px;
+  }
+  .row-num-num {
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+    font-weight: 700;
+    color: #76766f;
+    text-align: center;
+    font-size: 13px;
+  }
+
+  /* ── スマホ画面共通 ───────── */
+  .phone-wrapper {
+    display: flex;
+    justify-content: center;
+    padding: 20px 0;
+  }
+  .phone {
+    width: 380px;
+    height: 720px;
+    background: #1a1918;
+    border: 1px solid #2c2a27;
+    border-radius: 32px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    box-shadow: 0 20px 60px rgba(232,154,74,0.08);
+  }
+  .phone-header {
+    padding: 14px 16px 10px;
+    border-bottom: 1px solid #2c2a27;
+    background: #1a1918;
+  }
+  .phone-brand {
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+    font-size: 14px;
+    letter-spacing: 0.3em;
+    color: #e89a4a;
+    font-weight: 700;
+  }
+  .phone-concert-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #e8e8e2;
+    margin-top: 2px;
+  }
+  .phone-sub {
+    font-size: 11px;
+    color: #a8a8a0;
+    margin-top: 2px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .phone-sub .dot {
+    width: 6px; height: 6px;
+    background: #e89a4a;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100% {opacity:1} 50% {opacity:0.4} }
+  .progress-wrap {
+    margin-top: 8px;
+    height: 4px;
+    background: #1c1b19;
+    border-radius: 2px;
+    overflow: hidden;
+    position: relative;
+  }
+  .progress-bar {
+    height: 100%;
+    background: #e89a4a;
+    border-radius: 2px;
+  }
+  .progress-text {
+    font-size: 10px;
+    color: #76766f;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif; font-variant-numeric: tabular-nums;
+    margin-top: 4px;
+    text-align: right;
+  }
+
+  /* ── スマホ：上タブ ───────── */
+  .phone-top-tabs {
+    display: flex;
+    border-bottom: 1px solid #2c2a27;
+    background: #1a1918;
+  }
+  .phone-top-tabs button {
+    flex: 1;
+    background: transparent;
+    border: none;
+    padding: 12px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    color: #76766f;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    text-transform: uppercase;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+  }
+  .phone-top-tabs button.active {
+    color: #e89a4a;
+    border-bottom-color: #e89a4a;
+  }
+
+  /* ── スマホ：ボディ ───────── */
+  .phone-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+  }
+  .now-banner {
+    background: linear-gradient(180deg, rgba(232,154,74,0.15), rgba(232,154,74,0.05));
+    border: 1px solid #e89a4a;
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 12px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .now-banner .now-label {
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    color: #e89a4a;
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+  .now-banner .now-song {
+    font-size: 14px;
+    color: #e8e8e2;
+    font-weight: 700;
+  }
+  .countdown {
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif; font-variant-numeric: tabular-nums;
+    font-size: 22px;
+    font-weight: 600;
+    color: #e6c870;
+  }
+  .rh-card {
+    background: #242320;
+    border: 1px solid #2c2a27;
+    border-radius: 6px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    position: relative;
+  }
+  .rh-card.now {
+    background: #2a2018;
+    border-color: #e89a4a;
+  }
+  .rh-card.now::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 12px; bottom: 12px;
+    width: 3px;
+    background: #e89a4a;
+    border-radius: 0 2px 2px 0;
+    animation: pulse 2s infinite;
+  }
+  .rh-card.done { opacity: 0.55; }
+  .rh-card-head {
+    display: flex; gap: 10px; align-items: baseline;
+    margin-bottom: 6px;
+  }
+  .rh-num {
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif; font-variant-numeric: tabular-nums;
+    font-weight: 800;
+    font-size: 18px;
+    color: #e89a4a;
+    min-width: 28px;
+  }
+  .rh-num-mini {
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif; font-variant-numeric: tabular-nums;
+    font-size: 10px;
+    color: #76766f;
+    font-weight: 700;
+  }
+  .rh-title {
+    flex: 1;
+    font-size: 15px;
+    font-weight: 700;
+    color: #e8e8e2;
+  }
+  .rh-card.done .rh-title {
+    text-decoration: line-through;
+    color: #76766f;
+  }
+  .rh-time {
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif; font-variant-numeric: tabular-nums;
+    font-size: 12px;
+    color: #e8b04a;
+    font-weight: 700;
+  }
+  .rh-card-tags {
+    display: flex; gap: 4px; flex-wrap: wrap;
+    margin: 6px 0;
+  }
+  .tag-pill {
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+  }
+  .tag-pill.monitor { background: rgba(91,155,213,0.25); border: 1px solid #5b9bd5; color: #a8d4e8; }
+  .tag-pill.bagari  { background: rgba(224,122,95,0.25);  border: 1px solid #e07a5f; color: #f0b09c; }
+  .tag-pill.oto     { background: rgba(230,200,112,0.25); border: 1px solid #e6c870; color: #f0d8a0; }
+  .tag-pill.koutou  { background: rgba(126,194,122,0.25); border: 1px solid #7ec27a; color: #b8d9b0; }
+  .tag-pill.kikou   { background: rgba(110,198,200,0.25); border: 1px solid #6ec6c8; color: #a8dcde; }
+  .tag-pill.zentai  { background: rgba(212,165,116,0.25); border: 1px solid #d4a574; color: #e8c890; }
+  .rh-card-memo {
+    font-size: 12px;
+    color: #a8a8a0;
+    margin: 4px 0;
+    line-height: 1.5;
+  }
+  .rh-card-foot {
+    display: flex; justify-content: flex-end;
+    margin-top: 8px;
+  }
+  .finish-btn {
+    background: #e89a4a;
+    color: #0a0a08;
+    border: none;
+    padding: 6px 16px;
+    border-radius: 99px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    cursor: pointer;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+  }
+  .rh-card.done .finish-btn {
+    background: #7ec27a;
+    color: #0a0a08;
+  }
+  .rh-card.done .finish-btn::before {
+    content: '✓ ';
+  }
+
+  /* ── スマホ：下タブ ───────── */
+  .phone-bottom-tabs {
+    display: flex;
+    background: #1a1918;
+    border-top: 1px solid #2c2a27;
+    height: 64px;
+  }
+  .phone-bottom-tabs button {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: #76766f;
+    cursor: pointer;
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    font-weight: 700;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    position: relative;
+    padding-top: 6px;
+  }
+  .phone-bottom-tabs button.active {
+    color: #e89a4a;
+  }
+  .phone-bottom-tabs button .ico {
+    font-size: 18px;
+    line-height: 1;
+  }
+  .phone-bottom-tabs button.locked .ico { opacity: 0.35; }
+  .phone-bottom-tabs button.locked { color: #5a5a54; }
+  .phone-bottom-tabs button .badge {
+    position: absolute;
+    top: 6px;
+    right: 50%;
+    transform: translateX(20px);
+    background: #e07a5f;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    min-width: 18px;
+    height: 18px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 5px;
+  }
+
+  /* ── INFO ───────── */
+  .info-item {
+    background: #242320;
+    border: 1px solid #2c2a27;
+    border-radius: 6px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    position: relative;
+  }
+  .info-item.unread {
+    border-left: 3px solid #e89a4a;
+  }
+  .info-item.urgent {
+    border-color: #e07a5f;
+    background: rgba(224,122,95,0.06);
+  }
+  .info-item-head {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 6px;
+  }
+  .info-tag {
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+  .info-tag.norm { background: rgba(232,154,74,0.2); color: #f0c08a; border: 1px solid #e89a4a; }
+  .info-tag.urg  { background: rgba(224,122,95,0.2); color: #f0b09c; border: 1px solid #e07a5f; }
+  .info-time {
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif; font-variant-numeric: tabular-nums;
+    font-size: 10px;
+    color: #76766f;
+  }
+  .info-body {
+    font-size: 13px;
+    color: #e8e8e2;
+    line-height: 1.6;
+  }
+  .info-author {
+    font-size: 10px;
+    color: #76766f;
+    margin-top: 6px;
+  }
+
+  /* ── 入り時間 ───────── */
+  .arrival-form {
+    background: #242320;
+    border: 1px solid #e89a4a;
+    border-radius: 6px;
+    padding: 14px;
+    margin-bottom: 12px;
+  }
+  .arrival-form .label {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: #e89a4a;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .arrival-form input {
+    width: 100%;
+    background: #1d1b19;
+    border: 1px solid #2c2a27;
+    border-radius: 4px;
+    padding: 10px;
+    color: #e8e8e2;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif; font-variant-numeric: tabular-nums;
+    font-size: 14px;
+    margin-bottom: 8px;
+  }
+  .arrival-form button {
+    width: 100%;
+    background: #e89a4a;
+    color: #0a0a08;
+    border: none;
+    padding: 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    cursor: pointer;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+  }
+  .arrival-row {
+    background: #242320;
+    border: 1px solid #2c2a27;
+    border-radius: 6px;
+    padding: 10px 14px;
+    margin-bottom: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .arrival-name {
+    font-size: 13px;
+    color: #e8e8e2;
+    font-weight: 600;
+  }
+  .arrival-role {
+    font-size: 10px;
+    color: #76766f;
+  }
+  .arrival-time {
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif; font-variant-numeric: tabular-nums;
+    font-size: 16px;
+    color: #e6c870;
+    font-weight: 700;
+  }
+
+  /* ── HOTEL ───────── */
+  .hotel-card {
+    background: #242320;
+    border: 1px solid #2c2a27;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 10px;
+  }
+  .hotel-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: #e8e8e2;
+    margin-bottom: 4px;
+  }
+  .hotel-rating {
+    color: #e6c870;
+    font-size: 12px;
+    margin-bottom: 10px;
+  }
+  .hotel-info {
+    display: grid;
+    grid-template-columns: 70px 1fr;
+    gap: 6px 10px;
+    font-size: 12px;
+  }
+  .hotel-info dt { color: #76766f; }
+  .hotel-info dd { color: #e8e8e2; margin: 0; font-weight: 500; }
+  .hotel-info dd a { color: #e89a4a; text-decoration: none; }
+
+  /* ── PASS ───────── */
+  .pass-screen {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+  }
+  .pass-icon {
+    width: 60px; height: 60px;
+    background: rgba(232,154,74,0.12);
+    border: 1px solid #e89a4a;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: #e89a4a;
+    font-size: 24px;
+    margin-bottom: 16px;
+  }
+  .pass-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #e8e8e2;
+    margin-bottom: 4px;
+    letter-spacing: 0.05em;
+  }
+  .pass-sub {
+    font-size: 12px;
+    color: #a8a8a0;
+    text-align: center;
+    margin-bottom: 24px;
+    line-height: 1.6;
+  }
+  .pass-input {
+    width: 100%;
+    background: #1d1b19;
+    border: 1px solid #2c2a27;
+    border-radius: 4px;
+    padding: 12px;
+    color: #e8e8e2;
+    text-align: center;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif; font-variant-numeric: tabular-nums;
+    font-size: 18px;
+    letter-spacing: 0.4em;
+    margin-bottom: 12px;
+  }
+  .pass-btn {
+    width: 100%;
+    background: #e89a4a;
+    color: #0a0a08;
+    border: none;
+    padding: 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.25em;
+    cursor: pointer;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+  }
+  .pass-help {
+    font-size: 11px;
+    color: #5a5a54;
+    margin-top: 16px;
+    text-align: center;
+    line-height: 1.6;
+  }
+  .pass-help strong { color: #e89a4a; }
+
+  /* ── ロックモーダル ───────── */
+  .locked-overlay {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    text-align: center;
+  }
+  .locked-icon {
+    color: #5a5a54;
+    font-size: 36px;
+    margin-bottom: 12px;
+  }
+  .locked-msg {
+    color: #a8a8a0;
+    font-size: 13px;
+    margin-bottom: 16px;
+    line-height: 1.6;
+  }
+
+  /* ── キャプション ───────── */
+  .caption {
+    text-align: center;
+    color: #76766f;
+    font-size: 12px;
+    margin-top: 12px;
+    line-height: 1.6;
+  }
+  .caption strong { color: #e89a4a; }
+</style>
+
+<div class="screen-nav">
+  <div class="nav-title">画面切替（クリック）</div>
+  <button class="active" onclick="show('pc')">PC編集</button>
+  <button onclick="show('rh')">RH</button>
+  <button onclick="show('info')">INFO</button>
+  <button onclick="show('arrival')">入り時間</button>
+  <button onclick="show('hotel')">HOTEL</button>
+  <button onclick="show('pass')">PASS</button>
+  <button onclick="show('locked')">未認証時</button>
+</div>
+
+<!-- ════════ PC編集画面 ════════ -->
+<div class="screen active" id="screen-pc">
+  <div class="pc-frame">
+    <div class="pc-header">
+      <div class="info-icon-btn">i</div>
+      <input class="concert-title-input" value="櫻坂46 5th Anniversary Live" />
+      <div class="label-stack" style="width: 130px;">
+        <span>DATE</span>
+        <input type="date" value="2026-04-29" style="font-family: 'Noto Sans JP', sans-serif; font-size: 13px; border-color: #e89a4a; box-shadow: 0 0 0 1px rgba(232,154,74,0.2);" />
+      </div>
+      <div class="label-stack">
+        <span>REHEARSAL</span>
+        <input value="10:00" />
+      </div>
+      <div class="label-stack">
+        <span>RH END</span>
+        <input value="16:00" style="border-color:#e89a4a; box-shadow:0 0 0 1px rgba(232,154,74,0.2);" />
+      </div>
+      <div class="label-stack">
+        <span>DOOR OPEN</span>
+        <input value="17:30" />
+      </div>
+      <div class="label-stack">
+        <span>SHOW START</span>
+        <input value="18:30" />
+      </div>
+      <div class="mode-tabs">
+        <button>SET LIST</button>
+        <button class="active">REHEARSAL</button>
+        <button>SHOW</button>
+      </div>
+    </div>
+
+    <div class="pc-rh-header">
+      <div class="pc-rh-title">REHEARSAL — 2026.04.29 (水)</div>
+      <div class="pc-rh-actions">
+        <button class="pc-btn">セトリ順</button>
+        <button class="pc-btn primary">リハ順</button>
+        <button class="pc-btn">＋ 曲を追加</button>
+        <button class="pc-btn primary">📱 LINE に送る</button>
+      </div>
+    </div>
+
+    <div class="pc-table-header">
+      <div></div>
+      <div>M#</div>
+      <div>TITLE</div>
+      <div>TIME</div>
+      <div>RH#</div>
+      <div>TAGS</div>
+      <div>MEMO</div>
+      <div></div>
+    </div>
+
+    <div class="pc-row current">
+      <div class="drag">⋮⋮</div>
+      <div class="m-no">M1</div>
+      <div class="title-cell">OPENING VCR + Start Of The Show</div>
+      <div class="time-cell">3:42</div>
+      <div class="rh-no">1</div>
+      <div class="tag-cell">
+        <span class="tag-btn">モニター</span>
+        <span class="tag-btn on bagari">場当たり</span>
+        <span class="tag-btn">音</span>
+        <span class="tag-btn">口答</span>
+        <span class="tag-btn">機構</span>
+        <span class="tag-btn on zentai">全体</span>
+      </div>
+      <div class="memo">場当たり込み・銀テのタイミング確認</div>
+      <div class="row-action">×</div>
+    </div>
+
+    <div class="pc-row">
+      <div class="drag">⋮⋮</div>
+      <div class="m-no">M3</div>
+      <div class="title-cell">Buddies</div>
+      <div class="time-cell">4:18</div>
+      <div class="rh-no">2</div>
+      <div class="tag-cell">
+        <span class="tag-btn on monitor">モニター</span>
+        <span class="tag-btn">場当たり</span>
+        <span class="tag-btn on oto">音</span>
+        <span class="tag-btn">口答</span>
+        <span class="tag-btn">機構</span>
+        <span class="tag-btn">全体</span>
+      </div>
+      <div class="memo">Aメロ前ハケ動線確認</div>
+      <div class="row-action">×</div>
+    </div>
+
+    <div class="pc-row">
+      <div class="drag">⋮⋮</div>
+      <div class="m-no">M5</div>
+      <div class="title-cell">流れ弾</div>
+      <div class="time-cell">3:55</div>
+      <div class="rh-no">3</div>
+      <div class="tag-cell">
+        <span class="tag-btn">モニター</span>
+        <span class="tag-btn on bagari">場当たり</span>
+        <span class="tag-btn">音</span>
+        <span class="tag-btn">口答</span>
+        <span class="tag-btn on kikou">機構</span>
+        <span class="tag-btn">全体</span>
+      </div>
+      <div class="memo">セリ上昇 Q→17 / 振付確認</div>
+      <div class="row-action">×</div>
+    </div>
+
+    <div class="pc-row">
+      <div class="drag">⋮⋮</div>
+      <div class="m-no">M9</div>
+      <div class="title-cell">承認欲求</div>
+      <div class="time-cell">3:30</div>
+      <div class="rh-no">4</div>
+      <div class="tag-cell">
+        <span class="tag-btn">モニター</span>
+        <span class="tag-btn">場当たり</span>
+        <span class="tag-btn">音</span>
+        <span class="tag-btn on koutou">口答</span>
+        <span class="tag-btn">機構</span>
+        <span class="tag-btn">全体</span>
+      </div>
+      <div class="memo">MC前後の口答合わせ</div>
+      <div class="row-action">×</div>
+    </div>
+
+    <div class="pc-row">
+      <div class="drag">⋮⋮</div>
+      <div class="m-no">EN</div>
+      <div class="title-cell">Start over!</div>
+      <div class="time-cell">4:01</div>
+      <div class="rh-no">5</div>
+      <div class="tag-cell">
+        <span class="tag-btn">モニター</span>
+        <span class="tag-btn">場当たり</span>
+        <span class="tag-btn">音</span>
+        <span class="tag-btn">口答</span>
+        <span class="tag-btn">機構</span>
+        <span class="tag-btn on zentai">全体</span>
+      </div>
+      <div class="memo">アンコール通し・銀テ2回目・退場まで</div>
+      <div class="row-action">×</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ スマホ：RH ════════ -->
+<div class="screen" id="screen-rh">
+  <div class="phone-wrapper">
+    <div class="phone">
+      <div class="phone-header">
+        <div class="phone-brand">SCHEDULE STUDIO</div>
+        <div class="phone-concert-title">櫻坂46 5th Anniversary Live</div>
+        <div class="phone-sub"><span class="dot"></span>2026/4/29(水) リハーサル進行中</div>
+        <div class="progress-wrap"><div class="progress-bar" style="width:20%"></div></div>
+        <div class="progress-text">1/5 完了</div>
+      </div>
+
+      <div class="phone-top-tabs">
+        <button class="active">リハ順</button>
+        <button>セトリ順</button>
+      </div>
+
+      <div class="phone-body">
+        <div class="now-banner">
+          <div>
+            <div class="now-label">▶ NOW</div>
+            <div class="now-song">Buddies</div>
+          </div>
+          <div class="countdown">04:18</div>
+        </div>
+
+        <div class="rh-card done">
+          <div class="rh-card-head">
+            <div class="rh-num">①<div class="rh-num-mini">M1</div></div>
+            <div class="rh-title">OPENING VCR + Start Of The Show</div>
+            <div class="rh-time">3:42</div>
+          </div>
+          <div class="rh-card-tags">
+            <span class="tag-pill bagari">場当たり</span>
+            <span class="tag-pill zentai">全体</span>
+          </div>
+          <div class="rh-card-memo">場当たり込み・銀テのタイミング確認</div>
+          <div class="rh-card-foot"><button class="finish-btn">完了</button></div>
+        </div>
+
+        <div class="rh-card now">
+          <div class="rh-card-head">
+            <div class="rh-num">②<div class="rh-num-mini">M3</div></div>
+            <div class="rh-title">Buddies</div>
+            <div class="rh-time">4:18</div>
+          </div>
+          <div class="rh-card-tags">
+            <span class="tag-pill monitor">モニター</span>
+            <span class="tag-pill oto">音</span>
+          </div>
+          <div class="rh-card-memo">Aメロ前ハケ動線確認</div>
+          <div class="rh-card-foot"><button class="finish-btn">終了</button></div>
+        </div>
+
+        <div class="rh-card">
+          <div class="rh-card-head">
+            <div class="rh-num">③<div class="rh-num-mini">M5</div></div>
+            <div class="rh-title">流れ弾</div>
+            <div class="rh-time">3:55</div>
+          </div>
+          <div class="rh-card-tags">
+            <span class="tag-pill kikou">機構</span>
+            <span class="tag-pill bagari">場当たり</span>
+          </div>
+          <div class="rh-card-memo">セリ上昇 Q→17 / 振付確認</div>
+          <div class="rh-card-foot"><button class="finish-btn">終了</button></div>
+        </div>
+
+        <div class="rh-card">
+          <div class="rh-card-head">
+            <div class="rh-num">④<div class="rh-num-mini">M9</div></div>
+            <div class="rh-title">承認欲求</div>
+            <div class="rh-time">3:30</div>
+          </div>
+          <div class="rh-card-tags">
+            <span class="tag-pill koutou">口答</span>
+          </div>
+          <div class="rh-card-memo">MC前後の口答合わせ</div>
+          <div class="rh-card-foot"><button class="finish-btn">終了</button></div>
+        </div>
+
+        <div class="rh-card">
+          <div class="rh-card-head">
+            <div class="rh-num">⑤<div class="rh-num-mini">EN</div></div>
+            <div class="rh-title">Start over!</div>
+            <div class="rh-time">4:01</div>
+          </div>
+          <div class="rh-card-tags">
+            <span class="tag-pill zentai">全体</span>
+          </div>
+          <div class="rh-card-memo">アンコール通し・銀テ2回目・退場まで</div>
+          <div class="rh-card-foot"><button class="finish-btn">終了</button></div>
+        </div>
+      </div>
+
+      <div class="phone-bottom-tabs">
+        <button class="active"><span class="ico">📋</span>RH</button>
+        <button><span class="ico">📢</span>INFO<span class="badge">3</span></button>
+        <button><span class="ico">🚪</span>入り時間</button>
+        <button class="locked"><span class="ico">🏨</span>HOTEL</button>
+        <button><span class="ico">🔒</span>PASS</button>
+      </div>
+    </div>
+  </div>
+  <div class="caption">
+    <strong>スマホ：RH（リハーサル進行）</strong><br>
+    全スタッフがLINEから飛んで見る画面。NOW項目が紫光、終了ボタンで全員のスマホ即同期。<br>
+    INFOボタンに未読バッジ。HOTELはパスワード入れないとロック中。
+  </div>
+</div>
+
+<!-- ════════ スマホ：INFO ════════ -->
+<div class="screen" id="screen-info">
+  <div class="phone-wrapper">
+    <div class="phone">
+      <div class="phone-header">
+        <div class="phone-brand">SCHEDULE STUDIO</div>
+        <div class="phone-concert-title">櫻坂46 5th Anniversary Live</div>
+        <div class="phone-sub"><span class="dot"></span>INFO — 連絡事項</div>
+      </div>
+
+      <div class="phone-body">
+        <div class="info-item urgent unread">
+          <div class="info-item-head">
+            <span class="info-tag urg">緊急</span>
+            <span class="info-time">11:23</span>
+          </div>
+          <div class="info-body">
+            照明卓のフェーダ8Ch不調。サウンドチェック前に交換予定。15分遅れる可能性あり。
+          </div>
+          <div class="info-author">— のむ</div>
+        </div>
+
+        <div class="info-item unread">
+          <div class="info-item-head">
+            <span class="info-tag norm">変更</span>
+            <span class="info-time">10:48</span>
+          </div>
+          <div class="info-body">
+            M5「流れ弾」のセリ Q番号を Q15 → Q17 に変更しました。機構卓のキューシート修正お願いします。
+          </div>
+          <div class="info-author">— のむ</div>
+        </div>
+
+        <div class="info-item unread">
+          <div class="info-item-head">
+            <span class="info-tag norm">連絡</span>
+            <span class="info-time">10:15</span>
+          </div>
+          <div class="info-body">
+            楽屋仕出し弁当12時着予定。各自取りに来てください。アレルギー対応3名分は別ラベル。
+          </div>
+          <div class="info-author">— 制作 田中</div>
+        </div>
+
+        <div class="info-item">
+          <div class="info-item-head">
+            <span class="info-tag norm">連絡</span>
+            <span class="info-time">09:30</span>
+          </div>
+          <div class="info-body">
+            本日リハ進行表配信しました。タグ別・リハ順で確認可能です。
+          </div>
+          <div class="info-author">— のむ</div>
+        </div>
+
+        <div class="info-item">
+          <div class="info-item-head">
+            <span class="info-tag norm">連絡</span>
+            <span class="info-time">昨日 22:14</span>
+          </div>
+          <div class="info-body">
+            明日（4/29）の入り時間、各自下記タブから入力お願いします。
+          </div>
+          <div class="info-author">— のむ</div>
+        </div>
+      </div>
+
+      <div class="phone-bottom-tabs">
+        <button><span class="ico">📋</span>RH</button>
+        <button class="active"><span class="ico">📢</span>INFO<span class="badge">3</span></button>
+        <button><span class="ico">🚪</span>入り時間</button>
+        <button class="locked"><span class="ico">🏨</span>HOTEL</button>
+        <button><span class="ico">🔒</span>PASS</button>
+      </div>
+    </div>
+  </div>
+  <div class="caption">
+    <strong>スマホ：INFO（連絡事項）</strong><br>
+    のむさんが投稿 → 全員のLINEにプッシュ通知 + INFOタブにバッジ。緊急/変更/連絡でカテゴリ分け。<br>
+    パスワード無しでも全員が閲覧可能。ただし<strong>投稿</strong>は認証済みの人だけ。
+  </div>
+</div>
+
+<!-- ════════ スマホ：入り時間 ════════ -->
+<div class="screen" id="screen-arrival">
+  <div class="phone-wrapper">
+    <div class="phone">
+      <div class="phone-header">
+        <div class="phone-brand">SCHEDULE STUDIO</div>
+        <div class="phone-concert-title">櫻坂46 5th Anniversary Live</div>
+        <div class="phone-sub"><span class="dot"></span>明日の入り時間 — 4/29 (水)</div>
+      </div>
+
+      <div class="phone-body">
+        <div class="arrival-form">
+          <div class="label">あなたの入り時間を入力</div>
+          <input type="time" value="09:30" />
+          <button>登録する</button>
+        </div>
+
+        <div style="font-size:10px; letter-spacing:0.2em; color:#76766f; margin: 14px 4px 8px; text-transform: uppercase;">— 全員のリスト（21名） —</div>
+
+        <div class="arrival-row">
+          <div>
+            <div class="arrival-name">のむ</div>
+            <div class="arrival-role">演出</div>
+          </div>
+          <div class="arrival-time">08:30</div>
+        </div>
+        <div class="arrival-row">
+          <div>
+            <div class="arrival-name">田中</div>
+            <div class="arrival-role">制作</div>
+          </div>
+          <div class="arrival-time">08:30</div>
+        </div>
+        <div class="arrival-row">
+          <div>
+            <div class="arrival-name">佐藤</div>
+            <div class="arrival-role">舞監</div>
+          </div>
+          <div class="arrival-time">09:00</div>
+        </div>
+        <div class="arrival-row">
+          <div>
+            <div class="arrival-name">山田</div>
+            <div class="arrival-role">PA</div>
+          </div>
+          <div class="arrival-time">09:30</div>
+        </div>
+        <div class="arrival-row">
+          <div>
+            <div class="arrival-name">鈴木</div>
+            <div class="arrival-role">照明</div>
+          </div>
+          <div class="arrival-time">09:30</div>
+        </div>
+        <div class="arrival-row">
+          <div>
+            <div class="arrival-name">小林</div>
+            <div class="arrival-role">VJ</div>
+          </div>
+          <div class="arrival-time">10:00</div>
+        </div>
+        <div class="arrival-row">
+          <div>
+            <div class="arrival-name">高橋</div>
+            <div class="arrival-role">早替え</div>
+          </div>
+          <div class="arrival-time">11:00</div>
+        </div>
+        <div class="arrival-row">
+          <div>
+            <div class="arrival-name">渡辺</div>
+            <div class="arrival-role">衣装</div>
+          </div>
+          <div class="arrival-time" style="color:#76766f">未入力</div>
+        </div>
+      </div>
+
+      <div class="phone-bottom-tabs">
+        <button><span class="ico">📋</span>RH</button>
+        <button><span class="ico">📢</span>INFO<span class="badge">3</span></button>
+        <button class="active"><span class="ico">🚪</span>入り時間</button>
+        <button class="locked"><span class="ico">🏨</span>HOTEL</button>
+        <button><span class="ico">🔒</span>PASS</button>
+      </div>
+    </div>
+  </div>
+  <div class="caption">
+    <strong>スマホ：入り時間</strong><br>
+    各スタッフが自分の入り時間を入力。全員のリストが見える。パスワード無しでも入力・閲覧OK。<br>
+    誰がまだ未入力かもひと目で分かる。
+  </div>
+</div>
+
+<!-- ════════ スマホ：HOTEL ════════ -->
+<div class="screen" id="screen-hotel">
+  <div class="phone-wrapper">
+    <div class="phone">
+      <div class="phone-header">
+        <div class="phone-brand">SCHEDULE STUDIO</div>
+        <div class="phone-concert-title">櫻坂46 5th Anniversary Live</div>
+        <div class="phone-sub"><span class="dot"></span>HOTEL — 宿泊先情報</div>
+      </div>
+
+      <div class="phone-body">
+        <div class="hotel-card">
+          <div class="hotel-name">ホテルメトロポリタン仙台</div>
+          <div class="hotel-rating">★★★★ ・ 4/29 (水) チェックイン</div>
+          <dl class="hotel-info">
+            <dt>住所</dt><dd>宮城県仙台市青葉区中央1-1-1</dd>
+            <dt>電話</dt><dd><a href="#">022-268-2525</a></dd>
+            <dt>チェックイン</dt><dd>15:00</dd>
+            <dt>チェックアウト</dt><dd>11:00</dd>
+            <dt>朝食</dt><dd>6:30 - 9:30 / 2F</dd>
+            <dt>Wi-Fi</dt><dd>SSID: METRO_GUEST / PW: 配布カード参照</dd>
+            <dt>会場まで</dt><dd>徒歩 12分 / タクシー 5分</dd>
+          </dl>
+        </div>
+
+        <div class="hotel-card">
+          <div class="hotel-name" style="font-size:14px; color:#a8a8a0;">部屋割り</div>
+          <dl class="hotel-info" style="margin-top:8px;">
+            <dt>のむ</dt><dd>1208号室</dd>
+            <dt>田中</dt><dd>1209号室</dd>
+            <dt>佐藤</dt><dd>1210号室</dd>
+            <dt>山田</dt><dd>1211号室</dd>
+            <dt>鈴木</dt><dd>1212号室</dd>
+          </dl>
+        </div>
+
+        <div class="hotel-card" style="border-color:#e89a4a; background: rgba(232,154,74,0.06);">
+          <div class="hotel-name" style="font-size:13px; color:#e89a4a;">⚠ 注意事項</div>
+          <div style="font-size:12px; color:#a8a8a0; line-height:1.6; margin-top:6px;">
+            ホテルの会議室は本番翌日の精算ミーティング用に予約済（10:00-12:00）。<br>
+            領収書まとめておく担当：田中
+          </div>
+        </div>
+      </div>
+
+      <div class="phone-bottom-tabs">
+        <button><span class="ico">📋</span>RH</button>
+        <button><span class="ico">📢</span>INFO<span class="badge">3</span></button>
+        <button><span class="ico">🚪</span>入り時間</button>
+        <button class="active"><span class="ico">🏨</span>HOTEL</button>
+        <button><span class="ico">🔒</span>PASS</button>
+      </div>
+    </div>
+  </div>
+  <div class="caption">
+    <strong>スマホ：HOTEL（宿泊先情報）</strong><br>
+    ホテル名・住所・チェックイン時間・部屋割り・会場までの距離。<br>
+    <strong>パスワード認証済みの人だけ閲覧可能</strong>（部屋番号などセンシティブ情報のため）。
+  </div>
+</div>
+
+<!-- ════════ スマホ：PASS ════════ -->
+<div class="screen" id="screen-pass">
+  <div class="phone-wrapper">
+    <div class="phone">
+      <div class="phone-header">
+        <div class="phone-brand">SCHEDULE STUDIO</div>
+        <div class="phone-concert-title">櫻坂46 5th Anniversary Live</div>
+        <div class="phone-sub"><span class="dot"></span>PASS — パスワード認証</div>
+      </div>
+
+      <div class="pass-screen">
+        <div class="pass-icon">🔒</div>
+        <div class="pass-title">この公演のパスワード</div>
+        <div class="pass-sub">
+          演出担当（のむ）から共有された<br>
+          4桁の数字を入力してください
+        </div>
+        <input class="pass-input" type="password" value="••••" maxlength="4" />
+        <button class="pass-btn">認証する</button>
+        <div class="pass-help">
+          パスワード認証で <strong>RH の編集 / INFO 投稿 / HOTEL 閲覧 / 部屋割り</strong> がアンロックされます。<br><br>
+          認証なしでも <strong>RH 閲覧 / INFO 閲覧 / 入り時間 入力</strong> は可能です。
+        </div>
+      </div>
+
+      <div class="phone-bottom-tabs">
+        <button><span class="ico">📋</span>RH</button>
+        <button><span class="ico">📢</span>INFO<span class="badge">3</span></button>
+        <button><span class="ico">🚪</span>入り時間</button>
+        <button class="locked"><span class="ico">🏨</span>HOTEL</button>
+        <button class="active"><span class="ico">🔒</span>PASS</button>
+      </div>
+    </div>
+  </div>
+  <div class="caption">
+    <strong>スマホ：PASS（認証）</strong><br>
+    公演ごとに異なる4桁パスワード。のむさんが現場LINEで共有。<br>
+    認証すると HOTEL タブのロックが外れ、INFO 投稿や RH 編集も可能になる。
+  </div>
+</div>
+
+<!-- ════════ 未認証時のロック画面 ════════ -->
+<div class="screen" id="screen-locked">
+  <div class="phone-wrapper">
+    <div class="phone">
+      <div class="phone-header">
+        <div class="phone-brand">SCHEDULE STUDIO</div>
+        <div class="phone-concert-title">櫻坂46 5th Anniversary Live</div>
+        <div class="phone-sub"><span class="dot"></span>HOTEL — 宿泊先情報</div>
+      </div>
+
+      <div class="locked-overlay">
+        <div class="locked-icon">🔒</div>
+        <div class="pass-title" style="margin-bottom:12px;">ロック中</div>
+        <div class="locked-msg">
+          このタブは <strong style="color:#e89a4a">PASS タブ</strong> で<br>
+          パスワード認証してから閲覧できます
+        </div>
+        <button class="pass-btn" style="max-width:220px;" onclick="show('pass')">PASS タブを開く →</button>
+      </div>
+
+      <div class="phone-bottom-tabs">
+        <button><span class="ico">📋</span>RH</button>
+        <button><span class="ico">📢</span>INFO<span class="badge">3</span></button>
+        <button><span class="ico">🚪</span>入り時間</button>
+        <button class="locked active"><span class="ico">🏨</span>HOTEL</button>
+        <button><span class="ico">🔒</span>PASS</button>
+      </div>
+    </div>
+  </div>
+  <div class="caption">
+    <strong>未認証時の HOTEL タブ表示</strong><br>
+    HOTEL や RH 編集などはパスワード未認証だとロック画面が出る。<br>
+    PASS タブへ誘導して認証→アンロック、という流れ。
+  </div>
+</div>
+
+<script>
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.screen-nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+  // ナビボタンのアクティブも合わせる
+  const labels = { pc:'PC編集', rh:'RH', info:'INFO', arrival:'入り時間', hotel:'HOTEL', pass:'PASS', locked:'未認証時' };
+  document.querySelectorAll('.screen-nav button').forEach(b => {
+    if (b.textContent.trim() === labels[id]) b.classList.add('active');
+  });
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+</script>
+</body>
+</html>

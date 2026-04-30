@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PC編集 — HOTEL Excel取込</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: #0d0c0b;
+    color: #e8e8e2;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+    padding: 24px;
+  }
+  h1 {
+    text-align: center;
+    color: #e89a4a;
+    font-weight: 700;
+    letter-spacing: 0.3em;
+    font-size: 13px;
+    margin: 0 0 24px;
+    text-transform: uppercase;
+  }
+  .pc-frame {
+    max-width: 1200px;
+    margin: 0 auto;
+    background: #1a1918;
+    border: 1px solid #2c2a27;
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .header-strip {
+    padding: 14px 20px;
+    border-bottom: 1px solid #2c2a27;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .strip-tabs {
+    display: flex;
+    gap: 4px;
+    background: #1c1b19;
+    border: 1px solid #2c2a27;
+    border-radius: 99px;
+    padding: 4px;
+    margin-left: auto;
+  }
+  .strip-tabs button {
+    background: transparent;
+    border: none;
+    padding: 6px 14px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: #76766f;
+    cursor: pointer;
+    border-radius: 99px;
+    text-transform: uppercase;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+  }
+  .strip-tabs button.active { background: #e89a4a; color: #0a0a08; }
+  .strip-title {
+    color: #e89a4a;
+    font-size: 13px;
+    letter-spacing: 0.2em;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+
+  .sub-tabs {
+    display: flex;
+    gap: 6px;
+    padding: 12px 20px;
+    border-bottom: 1px solid #2c2a27;
+    background: #1a1918;
+  }
+  .sub-tabs button {
+    background: #1c1b19;
+    color: #a8a8a0;
+    border: 1px solid #2c2a27;
+    padding: 6px 14px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+    text-transform: uppercase;
+  }
+  .sub-tabs button.active {
+    background: #e89a4a;
+    color: #0a0a08;
+    border-color: #e89a4a;
+  }
+
+  .body-grid {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 20px;
+    padding: 20px;
+  }
+
+  /* ── 取込エリア ───────── */
+  .import-card {
+    background: #242320;
+    border: 1px solid #2c2a27;
+    border-radius: 6px;
+    padding: 16px 18px;
+  }
+  .card-title {
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    color: #e89a4a;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .card-title .step {
+    background: #e89a4a;
+    color: #0a0a08;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    font-size: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    letter-spacing: 0;
+  }
+
+  .drop-area {
+    border: 2px dashed #2c2a27;
+    border-radius: 8px;
+    padding: 28px 20px;
+    text-align: center;
+    transition: all 0.2s;
+    background: #1d1b19;
+    margin-bottom: 12px;
+    cursor: pointer;
+  }
+  .drop-area:hover {
+    border-color: #e89a4a;
+    background: rgba(232,154,74,0.04);
+  }
+  .drop-icon {
+    font-size: 28px;
+    color: #e89a4a;
+    margin-bottom: 8px;
+  }
+  .drop-text {
+    font-size: 13px;
+    color: #e8e8e2;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .drop-hint {
+    font-size: 11px;
+    color: #76766f;
+    line-height: 1.5;
+  }
+  .download-template {
+    background: #1c1b19;
+    color: #e89a4a;
+    border: 1px solid #e89a4a;
+    padding: 8px 14px;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    font-weight: 700;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+    text-transform: uppercase;
+    width: 100%;
+  }
+
+  .excel-preview {
+    background: #1d1b19;
+    border: 1px solid #2c2a27;
+    border-radius: 6px;
+    overflow: hidden;
+    margin-top: 14px;
+  }
+  .excel-row {
+    display: grid;
+    grid-template-columns: 50px 90px 1fr 1.4fr;
+    gap: 1px;
+    background: #2c2a27;
+  }
+  .excel-row.head .cell {
+    background: #1a1918;
+    color: #e89a4a;
+    font-weight: 700;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+  .excel-row .cell {
+    background: #1d1b19;
+    padding: 8px 10px;
+    font-size: 12px;
+    color: #e8e8e2;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif; font-variant-numeric: tabular-nums;
+  }
+  .excel-row .cell.row-num {
+    color: #5a5a54;
+    text-align: center;
+    background: #1a1918;
+  }
+  .excel-row .cell.role { color: #a8a8a0; font-size: 11px; }
+  .excel-row .cell.room {
+    color: #e89a4a;
+    text-align: right;
+    font-weight: 700;
+  }
+
+  .action-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .action-row button {
+    flex: 1;
+    padding: 10px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+    text-transform: uppercase;
+  }
+  .btn-primary {
+    background: #e89a4a;
+    color: #0a0a08;
+    border: 1px solid #e89a4a;
+  }
+  .btn-secondary {
+    background: #1c1b19;
+    color: #a8a8a0;
+    border: 1px solid #2c2a27;
+  }
+
+  /* ── ホテル管理エリア ───────── */
+  .hotel-list {
+    background: #242320;
+    border: 1px solid #2c2a27;
+    border-radius: 6px;
+    padding: 16px 18px;
+  }
+  .hotel-block {
+    background: #1d1b19;
+    border: 1px solid #2c2a27;
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 10px;
+  }
+  .hotel-block-name {
+    font-size: 13px;
+    color: #e8e8e2;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .hotel-block-info {
+    font-size: 10px;
+    color: #76766f;
+    margin-bottom: 8px;
+    line-height: 1.5;
+  }
+  .hotel-block-info input {
+    background: transparent;
+    border: 1px solid transparent;
+    color: #a8a8a0;
+    font-size: 10px;
+    padding: 2px 4px;
+    border-radius: 2px;
+    width: 100%;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+  }
+  .hotel-block-info input:hover { border-color: #2c2a27; }
+  .hotel-block-info input:focus {
+    border-color: #e89a4a;
+    outline: none;
+    color: #e8e8e2;
+  }
+  .hotel-block-count {
+    display: inline-block;
+    background: rgba(232,154,74,0.15);
+    color: #e89a4a;
+    border: 1px solid #e89a4a;
+    border-radius: 99px;
+    padding: 2px 10px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif; font-variant-numeric: tabular-nums;
+  }
+  /* ── タクシー配車（PC編集側） ───────── */
+  .taxi-block {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #2c2a27;
+  }
+  .taxi-block-title {
+    font-size: 9px;
+    letter-spacing: 0.25em;
+    color: #e6c870;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .taxi-list-pc {
+    display: flex; flex-direction: column; gap: 3px;
+    margin-bottom: 6px;
+  }
+  .taxi-row-pc {
+    display: grid;
+    grid-template-columns: 50px 1fr 50px 20px;
+    gap: 8px;
+    align-items: center;
+    background: #242320;
+    border: 1px solid #2c2a27;
+    border-radius: 3px;
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+  .taxi-row-pc .t-time {
+    color: #e6c870; font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .taxi-row-pc .t-section { color: #e8e8e2; font-weight: 500; }
+  .taxi-row-pc .t-count {
+    color: #e89a4a; font-weight: 700; text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  .taxi-row-pc .t-del {
+    background: transparent; border: none;
+    color: #5a5a54; cursor: pointer;
+    font-size: 12px;
+  }
+  .taxi-add-pc {
+    background: rgba(230,200,112,0.08);
+    color: #e6c870;
+    border: 1px dashed rgba(230,200,112,0.5);
+    border-radius: 3px;
+    padding: 5px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    width: 100%;
+    text-align: center;
+  }
+  .hotel-add {
+    background: #1c1b19;
+    border: 1px dashed #e89a4a;
+    border-radius: 6px;
+    padding: 10px;
+    text-align: center;
+    cursor: pointer;
+    color: #e89a4a;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+  }
+  .caption {
+    text-align: center;
+    color: #76766f;
+    font-size: 12px;
+    margin: 24px auto 0;
+    max-width: 720px;
+    line-height: 1.7;
+  }
+  .caption strong { color: #e89a4a; }
+</style>
+
+<h1>PC 編集側 — HOTEL タブ</h1>
+
+<div class="pc-frame">
+  <!-- 上のメインタブ -->
+  <div class="header-strip">
+    <div class="strip-title">REHEARSAL — 櫻坂46 5th Anniversary Live</div>
+    <div class="strip-tabs">
+      <button>SET LIST</button>
+      <button class="active">REHEARSAL</button>
+      <button>SHOW</button>
+    </div>
+  </div>
+
+  <!-- リハーサルモードのサブタブ -->
+  <div class="sub-tabs">
+    <button>RH 進行表</button>
+    <button>INFO 連絡</button>
+    <button>入り時間</button>
+    <button class="active">HOTEL 宿泊</button>
+  </div>
+
+  <!-- 滞在期間（PC側で設定。ここに入れた日付がスマホの「入り時間」タブに反映される） -->
+  <div style="padding:14px 20px; border-bottom:1px solid #2c2a27; display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+    <div style="font-size:11px; letter-spacing:0.2em; color:#e89a4a; font-weight:700; text-transform:uppercase;">滞在期間</div>
+    <div style="display:flex; align-items:center; gap:8px;">
+      <input type="date" value="2026-04-28" style="background:#1d1b19; border:1px solid #2c2a27; border-radius:4px; padding:8px 10px; color:#e8e8e2; font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif; font-size:12px;" />
+      <span style="color:#76766f;">→</span>
+      <input type="date" value="2026-05-02" style="background:#1d1b19; border:1px solid #2c2a27; border-radius:4px; padding:8px 10px; color:#e8e8e2; font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif; font-size:12px;" />
+    </div>
+    <div style="font-size:11px; color:#76766f; margin-left:auto;">
+      → スマホ <strong style="color:#e89a4a">入り時間</strong> タブが <strong style="color:#e8e8e2">5日分</strong> のタブで自動生成される
+    </div>
+  </div>
+
+  <div class="body-grid">
+
+    <!-- 左：取込エリア -->
+    <div>
+      <div class="import-card">
+        <div class="card-title"><span class="step">1</span>テンプレートをダウンロード</div>
+        <div style="font-size:11px; color:#a8a8a0; line-height:1.6; margin-bottom:10px;">
+          まず Excel テンプレートを落として、いつもの管理シートと同じ列で書き換えてください。
+        </div>
+        <button class="download-template">📥 hotel_template.xlsx をダウンロード</button>
+      </div>
+
+      <div class="import-card" style="margin-top: 14px;">
+        <div class="card-title"><span class="step">2</span>Excel をドロップ or 選択</div>
+        <div class="drop-area">
+          <div class="drop-icon">📊</div>
+          <div class="drop-text">ここに .xlsx をドロップ</div>
+          <div class="drop-hint">または クリックして選択<br>列順: SECTION / NAME / HOTEL</div>
+        </div>
+      </div>
+
+      <div class="import-card" style="margin-top: 14px;">
+        <div class="card-title"><span class="step">3</span>プレビュー & 反映</div>
+        <div style="font-size:11px; color:#a8a8a0; margin-bottom:10px;">
+          取り込まれた内容を確認 → 「反映」を押すと全スマホに即同期。
+        </div>
+
+        <div class="excel-preview">
+          <div class="excel-row head">
+            <div class="cell row-num">#</div>
+            <div class="cell">SECTION</div>
+            <div class="cell">NAME</div>
+            <div class="cell">HOTEL</div>
+          </div>
+          <div class="excel-row">
+            <div class="cell row-num">1</div>
+            <div class="cell role">演出</div>
+            <div class="cell">のむ</div>
+            <div class="cell">メトロポリタン仙台</div>
+          </div>
+          <div class="excel-row">
+            <div class="cell row-num">2</div>
+            <div class="cell role">制作</div>
+            <div class="cell">田中</div>
+            <div class="cell">メトロポリタン仙台</div>
+          </div>
+          <div class="excel-row">
+            <div class="cell row-num">3</div>
+            <div class="cell role">VJ</div>
+            <div class="cell">小林</div>
+            <div class="cell">仙台ガーデンパレス</div>
+          </div>
+          <div class="excel-row">
+            <div class="cell row-num">4</div>
+            <div class="cell role">早替え</div>
+            <div class="cell">高橋</div>
+            <div class="cell">仙台ガーデンパレス</div>
+          </div>
+          <div class="excel-row">
+            <div class="cell row-num">5</div>
+            <div class="cell" style="color:#76766f">…他 101 行</div>
+            <div class="cell"></div>
+            <div class="cell"></div>
+          </div>
+        </div>
+
+        <div class="action-row">
+          <button class="btn-secondary">キャンセル</button>
+          <button class="btn-primary">✓ 反映する (105名)</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 右：ホテル管理エリア -->
+    <div>
+      <div class="hotel-list">
+        <div class="card-title">登録済みホテル一覧</div>
+
+        <div class="hotel-block">
+          <input class="hotel-block-name" style="background:transparent; border:1px solid transparent; color:#e8e8e2; font-weight:700; font-size:13px; padding:2px 4px; border-radius:2px; font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif; width:100%;" value="ホテルメトロポリタン仙台" />
+          <div class="hotel-block-info">
+            住所: <input value="宮城県仙台市青葉区中央1-1-1" />
+          </div>
+          <div class="hotel-block-info">
+            電話: <input value="022-268-2525" />
+          </div>
+          <div class="hotel-block-info">
+            URL: <input value="https://metropolitan-sendai.jp" />
+          </div>
+          <div class="hotel-block-info">
+            Map: <input value="https://maps.app.goo.gl/MetropolitanSendai" placeholder="Google Maps の共有リンクをペースト" />
+          </div>
+          <div style="margin-top:8px;">
+            <span class="hotel-block-count">35名</span>
+          </div>
+          <div class="taxi-block">
+            <div class="taxi-block-title">🚕 タクシー配車</div>
+            <div class="taxi-list-pc">
+              <div class="taxi-row-pc">
+                <span class="t-time">07:00</span>
+                <span class="t-section">PA</span>
+                <span class="t-count">3 台</span>
+                <button class="t-del">×</button>
+              </div>
+              <div class="taxi-row-pc">
+                <span class="t-time">07:30</span>
+                <span class="t-section">照明</span>
+                <span class="t-count">2 台</span>
+                <button class="t-del">×</button>
+              </div>
+              <div class="taxi-row-pc">
+                <span class="t-time">08:00</span>
+                <span class="t-section">演出・制作</span>
+                <span class="t-count">1 台</span>
+                <button class="t-del">×</button>
+              </div>
+            </div>
+            <button class="taxi-add-pc">＋ 配車を追加</button>
+          </div>
+        </div>
+
+        <div class="hotel-block">
+          <input class="hotel-block-name" style="background:transparent; border:1px solid transparent; color:#e8e8e2; font-weight:700; font-size:13px; padding:2px 4px; border-radius:2px; font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif; width:100%;" value="ホテル仙台ガーデンパレス" />
+          <div class="hotel-block-info">
+            住所: <input value="宮城県仙台市青葉区本町2-3-65" />
+          </div>
+          <div class="hotel-block-info">
+            電話: <input value="022-263-2101" />
+          </div>
+          <div class="hotel-block-info">
+            URL: <input value="https://sendai-gardenpalace.co.jp" />
+          </div>
+          <div class="hotel-block-info">
+            Map: <input value="https://maps.app.goo.gl/GardenPalace" placeholder="Google Maps の共有リンクをペースト" />
+          </div>
+          <div style="margin-top:8px;">
+            <span class="hotel-block-count">28名</span>
+          </div>
+          <div class="taxi-block">
+            <div class="taxi-block-title">🚕 タクシー配車</div>
+            <div class="taxi-list-pc">
+              <div class="taxi-row-pc">
+                <span class="t-time">07:45</span>
+                <span class="t-section">VJ</span>
+                <span class="t-count">1 台</span>
+                <button class="t-del">×</button>
+              </div>
+              <div class="taxi-row-pc">
+                <span class="t-time">08:15</span>
+                <span class="t-section">早替え・衣装</span>
+                <span class="t-count">2 台</span>
+                <button class="t-del">×</button>
+              </div>
+            </div>
+            <button class="taxi-add-pc">＋ 配車を追加</button>
+          </div>
+        </div>
+
+        <div class="hotel-block">
+          <input class="hotel-block-name" style="background:transparent; border:1px solid transparent; color:#e8e8e2; font-weight:700; font-size:13px; padding:2px 4px; border-radius:2px; font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif; width:100%;" value="ANAホリデイ・イン仙台" />
+          <div class="hotel-block-info">
+            住所: <input value="宮城県仙台市青葉区花京院1-2-12" />
+          </div>
+          <div class="hotel-block-info">
+            電話: <input value="022-266-3355" />
+          </div>
+          <div class="hotel-block-info">
+            URL: <input value="https://anahi-sendai.com" />
+          </div>
+          <div class="hotel-block-info">
+            Map: <input value="" placeholder="Google Maps の共有リンクをペースト（未設定）" />
+          </div>
+          <div style="margin-top:8px;">
+            <span class="hotel-block-count">42名</span>
+          </div>
+          <div class="taxi-block">
+            <div class="taxi-block-title">🚕 タクシー配車</div>
+            <div class="taxi-list-pc">
+              <div class="taxi-row-pc">
+                <span class="t-time">09:00</span>
+                <span class="t-section">ダンサー</span>
+                <span class="t-count">8 台</span>
+                <button class="t-del">×</button>
+              </div>
+            </div>
+            <button class="taxi-add-pc">＋ 配車を追加</button>
+          </div>
+        </div>
+
+        <div class="hotel-add">＋ ホテルを追加</div>
+
+        <div style="font-size:10px; color:#5a5a54; margin-top:12px; line-height:1.6; text-align:center;">
+          各ホテルの宿泊者リストはExcelから自動反映される<br>
+          ホテル詳細情報（住所・Wi-Fi等）はここで直接編集
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="caption">
+  <strong>使い方の流れ</strong><br>
+  ① テンプレートDL → ② いつものExcelを編集 → ③ ドラッグで取込 → ④ プレビュー確認 → ⑤ 反映ボタンで全スマホに即同期<br><br>
+  ホテル詳細（住所・電話・Wi-Fiパスなど）はPCで直接編集。<br>
+  Excelは「誰がどのホテルか」の振り分けだけを管理する想定。
+</div>
+
+</body>
+</html>

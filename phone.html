@@ -1,0 +1,1389 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<title>SCHEDULE STUDIO</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+  }
+  html, body {
+    margin: 0; padding: 0;
+    background: #1a1918;
+    color: #e8e8e2;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+    height: 100%;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+  /* mono だけ JetBrains に上書き（ただし RHカウントダウンはゴシックでいきたいので除外） */
+  .mono, .rh-time, .rh-rhno, .rh-mno, .arrival-section-time, .pass-input,
+  .info-time, .progress-text {
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif; font-variant-numeric: tabular-nums;
+  }
+  body {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    height: 100dvh;
+  }
+
+  /* ── ヘッダー（2段：日付 + 公演名） ───────── */
+  .phone-header {
+    flex-shrink: 0;
+    padding: 6px 14px 7px;
+    border-bottom: 1px solid #2c2a27;
+    background: #1a1918;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .phone-header-date {
+    font-size: 11px;
+    color: #e89a4a;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .phone-header-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .phone-brand-mini {
+    font-size: 9px;
+    letter-spacing: 0.35em;
+    color: rgba(232,154,74,0.7);
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .phone-concert-title {
+    flex: 1;
+    font-size: 13px;
+    font-weight: 600;
+    color: #e8e8e2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    letter-spacing: 0.02em;
+  }
+  .progress-mini {
+    flex-shrink: 0;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+    font-variant-numeric: tabular-nums;
+    font-size: 11px;
+    font-weight: 600;
+    color: #e89a4a;
+  }
+  @keyframes pulse { 0%,100% {opacity:1} 50% {opacity:0.4} }
+
+  /* ── 上タブ ───────── */
+  .phone-top-tabs {
+    flex-shrink: 0;
+    display: flex;
+    border-bottom: 1px solid #2c2a27;
+    background: #1a1918;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .phone-top-tabs button {
+    flex: 1;
+    min-width: 80px;
+    background: transparent;
+    border: none;
+    padding: 12px 10px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    color: #76766f;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    text-transform: uppercase;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+    white-space: nowrap;
+  }
+  .phone-top-tabs button.active {
+    color: #e89a4a;
+    border-bottom-color: #e89a4a;
+  }
+
+  /* ── ボディ ───────── */
+  .phone-body {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 12px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* スクリーン切替 */
+  .screen { display: none; flex-direction: column; }
+  .screen.active { display: flex; animation: slideUp 0.2s ease-out; }
+  @keyframes slideUp { from {opacity:0; transform: translateY(4px);} to {opacity:1;} }
+
+  /* ── 認証バナー ───────── */
+  .auth-bar {
+    background: rgba(126,194,122,0.1);
+    border: 1px solid #7ec27a;
+    border-radius: 4px;
+    padding: 6px 10px;
+    margin-bottom: 10px;
+    font-size: 10px;
+    color: #b8d9b0;
+    letter-spacing: 0.15em;
+    text-align: center;
+    text-transform: uppercase;
+    font-weight: 700;
+    display: none;
+  }
+  body.authed .auth-bar { display: block; }
+
+  /* ── REHEARSAL 全体カウントダウン（コンパクト化）───────── */
+  .rh-countdown-card {
+    background: #242320;
+    border: 1px solid #2c2a27;
+    border-radius: 8px;
+    padding: 8px 14px;
+    margin-bottom: 8px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .rh-countdown-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, rgba(232,154,74,0.08), transparent 70%);
+    pointer-events: none;
+  }
+  .rh-countdown-left {
+    display: flex; flex-direction: column; gap: 2px;
+    position: relative;
+  }
+  .rh-countdown-label {
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    color: rgba(232,154,74,0.7);
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+  .rh-countdown-meta {
+    font-size: 10px;
+    color: #76766f;
+    letter-spacing: 0.05em;
+  }
+  .rh-countdown-meta strong { color: #a8a8a0; font-weight: 600; }
+  .rh-countdown-time {
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif !important;
+    font-size: 30px;
+    font-weight: 500;
+    font-style: normal;
+    color: #e89a4a;
+    letter-spacing: 0.04em;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    position: relative;
+    text-shadow: 0 0 20px rgba(232,154,74,0.3);
+  }
+  /* meta 行内の残り曲数アクセント */
+  .rh-remain-inline {
+    color: #e89a4a;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── RHカード: 3行レイアウト ───────── */
+  .rh-card {
+    background: #242320;
+    border: 1px solid #2c2a27;
+    border-radius: 6px;
+    padding: 7px 10px;
+    margin-bottom: 4px;
+    position: relative;
+    transition: all 0.15s;
+  }
+  .rh-card.now {
+    background: #2a2018;
+    border-color: #e89a4a;
+    box-shadow: 0 0 0 1px rgba(232,154,74,0.25);
+  }
+  .rh-card.done {
+    opacity: 0.4;
+  }
+
+  /* 1行目: RH No / M No / 曲名 / 時間 / 終了ボタン */
+  .rh-line1 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 5px;
+  }
+  .rh-rhno {
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    color: #e89a4a;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    min-width: 16px;
+  }
+  .rh-mno {
+    font-size: 10px;
+    font-weight: 600;
+    color: rgba(232,154,74,0.55);
+    letter-spacing: 0.05em;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    min-width: 22px;
+  }
+  .rh-title {
+    flex: 1;
+    font-size: 14px;
+    font-weight: 600;
+    color: #e8e8e2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    letter-spacing: 0.01em;
+  }
+  .rh-card.done .rh-title {
+    text-decoration: line-through;
+    color: #76766f;
+  }
+  .rh-time {
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+    font-size: 12px;
+    color: #e6c870;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+    letter-spacing: 0.02em;
+  }
+
+  /* 2行目: タグだけ（全部見える） */
+  .rh-line2 {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 4px;
+  }
+  /* 3行目: メモ（自由入力） */
+  .rh-line3 {
+    font-size: 11px;
+    color: #76766f;
+    line-height: 1.4;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+  }
+  .tag-pill {
+    padding: 2px 7px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    line-height: 1.2;
+  }
+  .tag-pill.monitor { background: rgba(91,155,213,0.18); border: 1px solid rgba(91,155,213,0.6); color: #a8d4e8; }
+  .tag-pill.bagari  { background: rgba(224,122,95,0.18);  border: 1px solid rgba(224,122,95,0.6); color: #f0b09c; }
+  .tag-pill.oto     { background: rgba(230,200,112,0.18); border: 1px solid rgba(230,200,112,0.6); color: #f0d8a0; }
+  .tag-pill.koutou  { background: rgba(126,194,122,0.18); border: 1px solid rgba(126,194,122,0.6); color: #b8d9b0; }
+  .tag-pill.kikou   { background: rgba(110,198,200,0.18); border: 1px solid rgba(110,198,200,0.6); color: #a8dcde; }
+  .tag-pill.zentai  { background: rgba(212,165,116,0.18); border: 1px solid rgba(212,165,116,0.6); color: #e8c890; }
+
+  /* 終了ボタン（押しやすく拡大、行内に収める） */
+  .finish-btn {
+    background: rgba(232,154,74,0.15);
+    color: #e89a4a;
+    border: 1px solid #e89a4a;
+    padding: 7px 16px;
+    border-radius: 99px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.15s;
+    line-height: 1;
+  }
+  .finish-btn:active { background: rgba(232,154,74,0.3); transform: scale(0.96); }
+  .finish-btn.disabled {
+    background: #1c1b19;
+    color: #5a5a54;
+    border: 1px solid #2c2a27;
+    cursor: not-allowed;
+  }
+  .finish-btn.disabled::before { content: '🔒'; opacity: 0.6; margin-right: 4px; font-size: 11px; }
+  .rh-card.done .finish-btn {
+    background: rgba(126,194,122,0.15);
+    color: #7ec27a;
+    border-color: #7ec27a;
+  }
+  .rh-card.done .finish-btn::before { content: '✓ '; }
+
+  /* ── INFO ───────── */
+  .info-item {
+    background: #242320;
+    border: 1px solid #2c2a27;
+    border-radius: 6px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+  }
+  .info-item.unread { border-left: 3px solid #e89a4a; }
+  .info-item.urgent {
+    border-color: #e07a5f;
+    background: rgba(224,122,95,0.06);
+  }
+  .info-item-head {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 6px;
+  }
+  .info-tag {
+    padding: 2px 8px; border-radius: 3px;
+    font-size: 9px; font-weight: 700; letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+  .info-tag.norm { background: rgba(232,154,74,0.2); color: #f0c08a; border: 1px solid #e89a4a; }
+  .info-tag.urg  { background: rgba(224,122,95,0.2); color: #f0b09c; border: 1px solid #e07a5f; }
+  .info-time {
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif; font-variant-numeric: tabular-nums;
+    font-size: 10px; color: #76766f;
+  }
+  .info-body { font-size: 13px; color: #e8e8e2; line-height: 1.6; }
+  .info-author { font-size: 10px; color: #76766f; margin-top: 6px; }
+  .info-compose {
+    background: #242320;
+    border: 1px dashed #e89a4a;
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 12px;
+    text-align: center;
+  }
+  .info-compose-btn {
+    background: #e89a4a; color: #0a0a08;
+    border: none; padding: 8px 18px;
+    border-radius: 99px;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.15em;
+    cursor: pointer;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+  }
+
+  /* ── 入り時間 ───────── */
+  .arrival-section {
+    background: #242320;
+    border: 1px solid #2c2a27;
+    border-radius: 6px;
+    margin-bottom: 6px;
+    overflow: hidden;
+  }
+  .arrival-section-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 14px;
+    cursor: pointer;
+  }
+  .arrival-section-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: #e8e8e2;
+    letter-spacing: 0.05em;
+  }
+  .arrival-section-time {
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif; font-variant-numeric: tabular-nums;
+    font-size: 18px;
+    color: #e6c870;
+    font-weight: 700;
+  }
+  .arrival-section-time.empty {
+    color: #5a5a54;
+    font-size: 12px;
+    font-style: italic;
+  }
+  .arrival-edit-btn {
+    background: rgba(232,154,74,0.15);
+    color: #e89a4a;
+    border: 1px solid #e89a4a;
+    padding: 4px 12px;
+    border-radius: 99px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    cursor: pointer;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+    margin-left: 8px;
+  }
+  .arrival-empty-add {
+    background: #1c1b19;
+    color: #e89a4a;
+    border: 1px dashed #e89a4a;
+    padding: 4px 12px;
+    border-radius: 99px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    cursor: pointer;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+  }
+
+  /* ── HOTEL ───────── */
+  .hotel-block {
+    background: #242320;
+    border: 1px solid #2c2a27;
+    border-radius: 8px;
+    margin-bottom: 14px;
+    overflow: hidden;
+  }
+  .hotel-block-head {
+    padding: 14px;
+    background: rgba(232,154,74,0.06);
+    border-bottom: 1px solid #2c2a27;
+    position: relative;
+  }
+  .hotel-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: #e8e8e2;
+    margin-bottom: 4px;
+  }
+  /* MAP ボタン — 各ホテルに添付された Google マップを開く */
+  .hotel-map-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(91,155,213,0.15);
+    color: #a8d4e8;
+    border: 1px solid #5b9bd5;
+    border-radius: 99px;
+    padding: 5px 12px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    cursor: pointer;
+    text-decoration: none;
+    margin-top: 10px;
+    width: fit-content;
+  }
+  .hotel-map-btn:active { background: rgba(91,155,213,0.3); }
+
+  /* ── タクシー配車セクション ───────── */
+  .taxi-section {
+    padding: 10px 14px 12px;
+    border-top: 1px solid #2c2a27;
+    background: #1d1b19;
+  }
+  .taxi-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .taxi-title {
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    color: #e6c870;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+  .taxi-list { display: flex; flex-direction: column; gap: 4px; }
+  .taxi-row {
+    display: grid;
+    grid-template-columns: 56px 1fr 50px 28px;
+    gap: 8px;
+    align-items: center;
+    background: #242320;
+    border: 1px solid #2c2a27;
+    border-radius: 4px;
+    padding: 7px 10px;
+    font-size: 12px;
+  }
+  .taxi-time {
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif; font-variant-numeric: tabular-nums;
+    color: #e6c870;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .taxi-section-name {
+    color: #e8e8e2;
+    font-weight: 600;
+  }
+  .taxi-count {
+    color: #e89a4a;
+    font-weight: 700;
+    text-align: right;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif; font-variant-numeric: tabular-nums; }
+  .taxi-del {
+    background: transparent;
+    color: #5a5a54;
+    border: none;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 0;
+  }
+  .taxi-del:hover { color: #e07a5f; }
+  .taxi-add-btn {
+    background: rgba(230,200,112,0.1);
+    color: #e6c870;
+    border: 1px dashed #e6c870;
+    border-radius: 4px;
+    padding: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 6px;
+  }
+  /* 追加フォーム */
+  .taxi-form {
+    display: none;
+    background: #242320;
+    border: 1px solid #e6c870;
+    border-radius: 4px;
+    padding: 10px;
+    margin-top: 6px;
+  }
+  .taxi-form.open { display: block; }
+  .taxi-form-row {
+    display: grid;
+    grid-template-columns: 70px 1fr 60px;
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+  .taxi-form select, .taxi-form input {
+    background: #1d1b19;
+    border: 1px solid #2c2a27;
+    border-radius: 3px;
+    color: #e8e8e2;
+    font-size: 12px;
+    padding: 7px 8px;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+    width: 100%;
+  }
+  .taxi-form select { font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif; font-variant-numeric: tabular-nums; }
+  .taxi-form-actions { display: flex; gap: 6px; }
+  .taxi-form-actions button {
+    flex: 1;
+    padding: 7px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    cursor: pointer;
+    border: none;
+  }
+  .taxi-form-actions .save {
+    background: #e6c870;
+    color: #1a1918;
+  }
+  .taxi-form-actions .cancel {
+    background: #1c1b19;
+    color: #a8a8a0;
+    border: 1px solid #2c2a27;
+  }
+  .hotel-rating {
+    color: #e6c870;
+    font-size: 11px;
+    margin-bottom: 8px;
+  }
+  .hotel-info-grid {
+    display: grid;
+    grid-template-columns: 50px 1fr;
+    gap: 4px 8px;
+    font-size: 11px;
+  }
+  .hotel-info-grid dt { color: #76766f; }
+  .hotel-info-grid dd { color: #e8e8e2; margin: 0; font-weight: 500; word-break: break-all; }
+  .hotel-info-grid dd a { color: #e89a4a; text-decoration: none; }
+  .hotel-members-head {
+    padding: 8px 14px;
+    font-size: 10px;
+    color: #76766f;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    font-weight: 700;
+    background: #1d1b19;
+    border-bottom: 1px solid #2c2a27;
+    display: flex;
+    justify-content: space-between;
+  }
+  .hotel-member-row {
+    display: grid;
+    grid-template-columns: 90px 1fr;
+    gap: 12px;
+    padding: 8px 14px;
+    border-bottom: 1px solid rgba(44,42,39,0.4);
+    align-items: baseline;
+    font-size: 12px;
+  }
+  .hotel-member-row:last-child { border-bottom: none; }
+  .hotel-member-section {
+    color: #e89a4a;
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 0.05em;
+  }
+  .hotel-member-name { color: #e8e8e2; font-weight: 500; }
+
+  /* ── PASS ───────── */
+  .pass-screen {
+    flex: 1;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 30px 20px;
+  }
+  .pass-icon {
+    width: 60px; height: 60px;
+    background: rgba(232,154,74,0.12);
+    border: 1px solid #e89a4a;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: #e89a4a; font-size: 24px;
+    margin-bottom: 16px;
+  }
+  .pass-title {
+    font-size: 16px; font-weight: 700; color: #e8e8e2;
+    margin-bottom: 4px; letter-spacing: 0.05em;
+  }
+  .pass-sub {
+    font-size: 12px; color: #a8a8a0;
+    text-align: center; margin-bottom: 24px;
+    line-height: 1.6;
+  }
+  .pass-input {
+    width: 100%;
+    background: #1d1b19; border: 1px solid #2c2a27;
+    border-radius: 4px; padding: 12px;
+    color: #e8e8e2; text-align: center;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif; font-variant-numeric: tabular-nums;
+    font-size: 18px; letter-spacing: 0.4em;
+    margin-bottom: 12px;
+  }
+  .pass-btn {
+    width: 100%;
+    background: #e89a4a; color: #0a0a08;
+    border: none; padding: 12px; border-radius: 4px;
+    font-size: 12px; font-weight: 700; letter-spacing: 0.25em;
+    cursor: pointer;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+  }
+  .pass-help {
+    font-size: 11px; color: #5a5a54;
+    margin-top: 16px; text-align: center;
+    line-height: 1.6;
+  }
+  .pass-help strong { color: #e89a4a; }
+  .pass-status {
+    background: rgba(126,194,122,0.1);
+    border: 1px solid #7ec27a;
+    border-radius: 6px;
+    padding: 10px 14px;
+    margin-bottom: 16px;
+    font-size: 12px; color: #b8d9b0;
+    text-align: center;
+    width: 100%;
+  }
+
+  /* ── 下タブ ───────── */
+  .phone-bottom-tabs {
+    flex-shrink: 0;
+    display: flex;
+    background: #1a1918;
+    border-top: 1px solid #2c2a27;
+    height: 64px;
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+  .phone-bottom-tabs button {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: #76766f;
+    cursor: pointer;
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    font-weight: 700;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    position: relative;
+    padding-top: 6px;
+  }
+  .phone-bottom-tabs button.active { color: #e89a4a; }
+  .phone-bottom-tabs button .ico {
+    font-size: 18px; line-height: 1;
+  }
+  .phone-bottom-tabs button .badge {
+    position: absolute;
+    top: 4px; right: 50%;
+    transform: translateX(20px);
+    background: #e07a5f;
+    color: #fff;
+    font-size: 10px; font-weight: 700;
+    min-width: 18px; height: 18px;
+    border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0 5px;
+  }
+</style>
+
+<!-- ヘッダー（日付 + 公演名の2段） -->
+<div class="phone-header" id="header">
+  <div class="phone-header-date">2026.04.29 (水)</div>
+  <div class="phone-header-row">
+    <div class="phone-brand-mini">SCH</div>
+    <div class="phone-concert-title">櫻坂46 5th Anniversary Live</div>
+    <div class="progress-mini" id="progress-mini">1 / 5</div>
+  </div>
+</div>
+
+<!-- 上タブ -->
+<div class="phone-top-tabs" id="top-tabs">
+  <button class="active">リハ順</button>
+  <button>セトリ順</button>
+</div>
+
+<!-- ボディ -->
+<div class="phone-body" id="body">
+
+  <!-- 認証済バナー -->
+  <div class="auth-bar">✓ 認証済み — RH の進行操作が可能</div>
+
+  <!-- ════ RH ════ -->
+  <div class="screen active" id="screen-rh">
+    <!-- リハーサル全体カウントダウン -->
+    <div class="rh-countdown-card">
+      <div class="rh-countdown-left">
+        <div class="rh-countdown-label">リハ終了まで</div>
+        <div class="rh-countdown-meta">予定 <strong>16:00</strong> ・ 残り <span class="rh-remain-inline" id="remain-num">4</span> 曲</div>
+      </div>
+      <div class="rh-countdown-time" id="rh-cd">02:34:18</div>
+    </div>
+
+    <div class="rh-card done" id="card-1">
+      <div class="rh-line1">
+        <div class="rh-rhno">1</div>
+        <div class="rh-mno">M1</div>
+        <div class="rh-title">OPENING VCR + Start Of The Show</div>
+        <div class="rh-time">3:42</div>
+        <button class="finish-btn" onclick="toggleFinish('card-1')"><span>完了</span></button>
+      </div>
+      <div class="rh-line2">
+        <span class="tag-pill bagari">場当たり</span>
+        <span class="tag-pill zentai">全体</span>
+      </div>
+      <div class="rh-line3">場当たり込み・銀テのタイミング確認</div>
+    </div>
+
+    <div class="rh-card now" id="card-2">
+      <div class="rh-line1">
+        <div class="rh-rhno">2</div>
+        <div class="rh-mno">M3</div>
+        <div class="rh-title">Buddies</div>
+        <div class="rh-time">4:18</div>
+        <button class="finish-btn disabled" onclick="toggleFinish('card-2')"><span>終了</span></button>
+      </div>
+      <div class="rh-line2">
+        <span class="tag-pill monitor">モニター</span>
+        <span class="tag-pill oto">音</span>
+      </div>
+      <div class="rh-line3">Aメロ前ハケ動線確認</div>
+    </div>
+
+    <div class="rh-card" id="card-3">
+      <div class="rh-line1">
+        <div class="rh-rhno">3</div>
+        <div class="rh-mno">M5</div>
+        <div class="rh-title">流れ弾</div>
+        <div class="rh-time">3:55</div>
+        <button class="finish-btn disabled" onclick="toggleFinish('card-3')"><span>終了</span></button>
+      </div>
+      <div class="rh-line2">
+        <span class="tag-pill kikou">機構</span>
+        <span class="tag-pill bagari">場当たり</span>
+      </div>
+      <div class="rh-line3">セリ上昇 Q→17 / 振付確認</div>
+    </div>
+
+    <div class="rh-card" id="card-4">
+      <div class="rh-line1">
+        <div class="rh-rhno">4</div>
+        <div class="rh-mno">M9</div>
+        <div class="rh-title">承認欲求</div>
+        <div class="rh-time">3:30</div>
+        <button class="finish-btn disabled" onclick="toggleFinish('card-4')"><span>終了</span></button>
+      </div>
+      <div class="rh-line2">
+        <span class="tag-pill koutou">口答</span>
+      </div>
+      <div class="rh-line3">MC前後の口答合わせ</div>
+    </div>
+
+    <div class="rh-card" id="card-5">
+      <div class="rh-line1">
+        <div class="rh-rhno">5</div>
+        <div class="rh-mno">EN</div>
+        <div class="rh-title">Start over!</div>
+        <div class="rh-time">4:01</div>
+        <button class="finish-btn disabled" onclick="toggleFinish('card-5')"><span>終了</span></button>
+      </div>
+      <div class="rh-line2">
+        <span class="tag-pill zentai">全体</span>
+      </div>
+      <div class="rh-line3">アンコール通し・銀テ2回目・退場まで</div>
+    </div>
+
+    <div style="height:12px"></div>
+  </div>
+
+  <!-- ════ INFO ════ -->
+  <div class="screen" id="screen-info">
+    <div class="info-compose">
+      <button class="info-compose-btn">＋ NEW POST</button>
+    </div>
+
+    <div class="info-item urgent unread">
+      <div class="info-item-head">
+        <span class="info-tag urg">URGENT</span>
+        <span class="info-time">11:23</span>
+      </div>
+      <div class="info-body">
+        照明卓のフェーダ8Ch不調。サウンドチェック前に交換予定。15分遅れる可能性あり。
+      </div>
+      <div class="info-author">— のむ</div>
+    </div>
+
+    <div class="info-item unread">
+      <div class="info-item-head">
+        <span class="info-tag norm">UPDATE</span>
+        <span class="info-time">10:48</span>
+      </div>
+      <div class="info-body">
+        M5「流れ弾」のセリ Q番号を Q15 → Q17 に変更しました。機構卓のキューシート修正お願いします。
+      </div>
+      <div class="info-author">— のむ</div>
+    </div>
+
+    <div class="info-item unread">
+      <div class="info-item-head">
+        <span class="info-tag norm">NOTICE</span>
+        <span class="info-time">10:15</span>
+      </div>
+      <div class="info-body">
+        楽屋仕出し弁当12時着予定。各自取りに来てください。アレルギー対応3名分は別ラベル。
+      </div>
+      <div class="info-author">— 制作 田中</div>
+    </div>
+
+    <div class="info-item">
+      <div class="info-item-head">
+        <span class="info-tag norm">NOTICE</span>
+        <span class="info-time">09:30</span>
+      </div>
+      <div class="info-body">
+        本日リハ進行表配信しました。
+      </div>
+      <div class="info-author">— のむ</div>
+    </div>
+
+    <div style="height:20px"></div>
+  </div>
+
+  <!-- ════ 入り時間 ════ -->
+  <div class="screen" id="screen-arrival">
+
+    <!-- 日付タブ（PC側で滞在期間を入れると自動生成される） -->
+    <div style="display:flex; gap:6px; margin-bottom:14px; overflow-x:auto;">
+      <button class="arrival-day" style="background:#1c1b19; color:#a8a8a0; border:1px solid #2c2a27; padding:8px 14px; border-radius:99px; font-size:11px; font-weight:700; letter-spacing:0.1em; white-space:nowrap; cursor:pointer;">4/28 (火)</button>
+      <button class="arrival-day active" style="background:#e89a4a; color:#0a0a08; border:1px solid #e89a4a; padding:8px 14px; border-radius:99px; font-size:11px; font-weight:700; letter-spacing:0.1em; white-space:nowrap; cursor:pointer;">4/29 (水)</button>
+      <button class="arrival-day" style="background:#1c1b19; color:#a8a8a0; border:1px solid #2c2a27; padding:8px 14px; border-radius:99px; font-size:11px; font-weight:700; letter-spacing:0.1em; white-space:nowrap; cursor:pointer;">4/30 (木)</button>
+      <button class="arrival-day" style="background:#1c1b19; color:#a8a8a0; border:1px solid #2c2a27; padding:8px 14px; border-radius:99px; font-size:11px; font-weight:700; letter-spacing:0.1em; white-space:nowrap; cursor:pointer;">5/1 (金)</button>
+      <button class="arrival-day" style="background:#1c1b19; color:#a8a8a0; border:1px solid #2c2a27; padding:8px 14px; border-radius:99px; font-size:11px; font-weight:700; letter-spacing:0.1em; white-space:nowrap; cursor:pointer;">5/2 (土)</button>
+    </div>
+
+    <!-- 自分の入り時間を追加するエリア -->
+    <div style="background:#242320; border:1px dashed #e89a4a; border-radius:6px; padding:14px; margin-bottom:14px;">
+      <div style="font-size:10px; letter-spacing:0.2em; color:#e89a4a; font-weight:700; margin-bottom:10px;">＋ 入り時間を追加</div>
+      <div style="display:flex; gap:8px;">
+        <input type="text" placeholder="セクション名 (例: PA)" style="flex:1; background:#1d1b19; border:1px solid #2c2a27; border-radius:4px; padding:9px 10px; color:#e8e8e2; font-size:13px;" />
+        <input type="time" value="09:00" style="width:110px; background:#1d1b19; border:1px solid #2c2a27; border-radius:4px; padding:9px 10px; color:#e8e8e2; font-size:13px;" />
+      </div>
+      <button style="width:100%; margin-top:8px; background:#e89a4a; color:#0a0a08; border:none; padding:9px; border-radius:4px; font-size:11px; font-weight:700; letter-spacing:0.2em; cursor:pointer;">登録する</button>
+    </div>
+
+    <!-- 既存リスト（誰でも追加・編集できる） -->
+    <div style="font-size:10px; letter-spacing:0.2em; color:#76766f; margin: 0 4px 8px; text-transform:uppercase; font-weight:700;">— 登録済み —</div>
+
+    <div class="arrival-section">
+      <div class="arrival-section-row">
+        <div class="arrival-section-name">PA</div>
+        <div style="display:flex; align-items:center;">
+          <span class="arrival-section-time">09:00</span>
+          <button class="arrival-edit-btn">編集</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrival-section">
+      <div class="arrival-section-row">
+        <div class="arrival-section-name">照明</div>
+        <div style="display:flex; align-items:center;">
+          <span class="arrival-section-time">09:30</span>
+          <button class="arrival-edit-btn">編集</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrival-section">
+      <div class="arrival-section-row">
+        <div class="arrival-section-name">VJ</div>
+        <div style="display:flex; align-items:center;">
+          <span class="arrival-section-time">10:00</span>
+          <button class="arrival-edit-btn">編集</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrival-section">
+      <div class="arrival-section-row">
+        <div class="arrival-section-name">機構</div>
+        <div style="display:flex; align-items:center;">
+          <span class="arrival-section-time">10:30</span>
+          <button class="arrival-edit-btn">編集</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrival-section">
+      <div class="arrival-section-row">
+        <div class="arrival-section-name">特効</div>
+        <div style="display:flex; align-items:center;">
+          <span class="arrival-section-time">11:00</span>
+          <button class="arrival-edit-btn">編集</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrival-section">
+      <div class="arrival-section-row">
+        <div class="arrival-section-name">早替え</div>
+        <div style="display:flex; align-items:center;">
+          <span class="arrival-section-time">11:30</span>
+          <button class="arrival-edit-btn">編集</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrival-section">
+      <div class="arrival-section-row">
+        <div class="arrival-section-name">ヘアメイク</div>
+        <div style="display:flex; align-items:center;">
+          <span class="arrival-section-time">12:00</span>
+          <button class="arrival-edit-btn">編集</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrival-section">
+      <div class="arrival-section-row">
+        <div class="arrival-section-name">演出</div>
+        <div style="display:flex; align-items:center;">
+          <span class="arrival-section-time">08:30</span>
+          <button class="arrival-edit-btn">編集</button>
+        </div>
+      </div>
+    </div>
+
+    <div style="height:20px"></div>
+  </div>
+
+  <!-- ════ HOTEL ════ -->
+  <div class="screen" id="screen-hotel">
+
+    <!-- ホテル①: 多数派 -->
+    <div class="hotel-block">
+      <div class="hotel-block-head">
+        <div class="hotel-name">ホテルメトロポリタン仙台</div>
+        <dl class="hotel-info-grid">
+          <dt>住所</dt><dd>宮城県仙台市青葉区中央1-1-1</dd>
+          <dt>電話</dt><dd><a href="tel:0222682525">022-268-2525</a></dd>
+          <dt>URL</dt><dd><a href="#">metropolitan-sendai.jp</a></dd>
+        </dl>
+        <a class="hotel-map-btn" href="https://maps.google.com/?q=ホテルメトロポリタン仙台" target="_blank">
+          📍 MAP
+        </a>
+      </div>
+
+      <!-- タクシー配車（誰でも編集可・5分刻みプルダウン） -->
+      <div class="taxi-section">
+        <div class="taxi-head">
+          <div class="taxi-title">🚕 タクシー配車</div>
+        </div>
+        <div class="taxi-list">
+          <div class="taxi-row">
+            <span class="taxi-time">07:00</span>
+            <span class="taxi-section-name">PA</span>
+            <span class="taxi-count">3 台</span>
+            <button class="taxi-del" title="削除">×</button>
+          </div>
+          <div class="taxi-row">
+            <span class="taxi-time">07:30</span>
+            <span class="taxi-section-name">照明</span>
+            <span class="taxi-count">2 台</span>
+            <button class="taxi-del" title="削除">×</button>
+          </div>
+          <div class="taxi-row">
+            <span class="taxi-time">08:00</span>
+            <span class="taxi-section-name">演出・制作</span>
+            <span class="taxi-count">1 台</span>
+            <button class="taxi-del" title="削除">×</button>
+          </div>
+        </div>
+        <button class="taxi-add-btn" onclick="toggleTaxiForm('taxi-form-1')">＋ 配車を追加</button>
+        <div class="taxi-form" id="taxi-form-1">
+          <div class="taxi-form-row">
+            <select class="time-pulldown"></select>
+            <input type="text" placeholder="セクション名 (例: VJ)" />
+            <input type="number" placeholder="台数" min="1" value="1" />
+          </div>
+          <div class="taxi-form-actions">
+            <button class="cancel" onclick="toggleTaxiForm('taxi-form-1')">キャンセル</button>
+            <button class="save">登録</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="hotel-members-head">
+        <span>宿泊メンバー</span>
+        <span style="color:#e89a4a">35名</span>
+      </div>
+      <div class="hotel-member-row">
+        <div class="hotel-member-section">演出</div>
+        <div class="hotel-member-name">のむ</div>
+      </div>
+      <div class="hotel-member-row">
+        <div class="hotel-member-section">制作</div>
+        <div class="hotel-member-name">田中</div>
+      </div>
+      <div class="hotel-member-row">
+        <div class="hotel-member-section">舞監</div>
+        <div class="hotel-member-name">佐藤</div>
+      </div>
+      <div class="hotel-member-row">
+        <div class="hotel-member-section">PA</div>
+        <div class="hotel-member-name">山田</div>
+      </div>
+      <div class="hotel-member-row">
+        <div class="hotel-member-section">照明</div>
+        <div class="hotel-member-name">鈴木</div>
+      </div>
+      <div class="hotel-member-row">
+        <div class="hotel-member-section">特効</div>
+        <div class="hotel-member-name">中村</div>
+      </div>
+      <div class="hotel-member-row">
+        <div class="hotel-member-name" style="color:#76766f">…他29名</div>
+        <div></div>
+      </div>
+    </div>
+
+    <!-- ホテル②: 別組 -->
+    <div class="hotel-block">
+      <div class="hotel-block-head">
+        <div class="hotel-name">ホテル仙台ガーデンパレス</div>
+        <dl class="hotel-info-grid">
+          <dt>住所</dt><dd>宮城県仙台市青葉区本町2-3-65</dd>
+          <dt>電話</dt><dd><a href="tel:0222632101">022-263-2101</a></dd>
+          <dt>URL</dt><dd><a href="#">sendai-gardenpalace.co.jp</a></dd>
+        </dl>
+        <a class="hotel-map-btn" href="https://maps.google.com/?q=仙台ガーデンパレス" target="_blank">
+          📍 MAP
+        </a>
+      </div>
+
+      <!-- タクシー配車 -->
+      <div class="taxi-section">
+        <div class="taxi-head">
+          <div class="taxi-title">🚕 タクシー配車</div>
+        </div>
+        <div class="taxi-list">
+          <div class="taxi-row">
+            <span class="taxi-time">07:45</span>
+            <span class="taxi-section-name">VJ</span>
+            <span class="taxi-count">1 台</span>
+            <button class="taxi-del" title="削除">×</button>
+          </div>
+          <div class="taxi-row">
+            <span class="taxi-time">08:15</span>
+            <span class="taxi-section-name">早替え・衣装</span>
+            <span class="taxi-count">2 台</span>
+            <button class="taxi-del" title="削除">×</button>
+          </div>
+        </div>
+        <button class="taxi-add-btn" onclick="toggleTaxiForm('taxi-form-2')">＋ 配車を追加</button>
+        <div class="taxi-form" id="taxi-form-2">
+          <div class="taxi-form-row">
+            <select class="time-pulldown"></select>
+            <input type="text" placeholder="セクション名" />
+            <input type="number" placeholder="台数" min="1" value="1" />
+          </div>
+          <div class="taxi-form-actions">
+            <button class="cancel" onclick="toggleTaxiForm('taxi-form-2')">キャンセル</button>
+            <button class="save">登録</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="hotel-members-head">
+        <span>宿泊メンバー</span>
+        <span style="color:#e89a4a">28名</span>
+      </div>
+      <div class="hotel-member-row">
+        <div class="hotel-member-section">VJ</div>
+        <div class="hotel-member-name">小林</div>
+      </div>
+      <div class="hotel-member-row">
+        <div class="hotel-member-section">早替え</div>
+        <div class="hotel-member-name">高橋</div>
+      </div>
+      <div class="hotel-member-row">
+        <div class="hotel-member-section">衣装</div>
+        <div class="hotel-member-name">渡辺</div>
+      </div>
+      <div class="hotel-member-row">
+        <div class="hotel-member-section">機構</div>
+        <div class="hotel-member-name">伊藤</div>
+      </div>
+      <div class="hotel-member-row">
+        <div class="hotel-member-name" style="color:#76766f">…他24名</div>
+        <div></div>
+      </div>
+    </div>
+
+    <!-- ホテル③: ダンサー組 -->
+    <div class="hotel-block">
+      <div class="hotel-block-head">
+        <div class="hotel-name">ANAホリデイ・イン仙台</div>
+        <dl class="hotel-info-grid">
+          <dt>住所</dt><dd>宮城県仙台市青葉区花京院1-2-12</dd>
+          <dt>電話</dt><dd><a href="tel:0222663355">022-266-3355</a></dd>
+          <dt>URL</dt><dd><a href="#">anahi-sendai.com</a></dd>
+        </dl>
+        <a class="hotel-map-btn" href="https://maps.google.com/?q=ANAホリデイイン仙台" target="_blank">
+          📍 MAP
+        </a>
+      </div>
+
+      <!-- タクシー配車 -->
+      <div class="taxi-section">
+        <div class="taxi-head">
+          <div class="taxi-title">🚕 タクシー配車</div>
+        </div>
+        <div class="taxi-list">
+          <div class="taxi-row">
+            <span class="taxi-time">09:00</span>
+            <span class="taxi-section-name">ダンサー</span>
+            <span class="taxi-count">8 台</span>
+            <button class="taxi-del" title="削除">×</button>
+          </div>
+        </div>
+        <button class="taxi-add-btn" onclick="toggleTaxiForm('taxi-form-3')">＋ 配車を追加</button>
+        <div class="taxi-form" id="taxi-form-3">
+          <div class="taxi-form-row">
+            <select class="time-pulldown"></select>
+            <input type="text" placeholder="セクション名" />
+            <input type="number" placeholder="台数" min="1" value="1" />
+          </div>
+          <div class="taxi-form-actions">
+            <button class="cancel" onclick="toggleTaxiForm('taxi-form-3')">キャンセル</button>
+            <button class="save">登録</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="hotel-members-head">
+        <span>宿泊メンバー</span>
+        <span style="color:#e89a4a">42名</span>
+      </div>
+      <div class="hotel-member-row">
+        <div class="hotel-member-section">×38</div>
+        <div class="hotel-member-name">ダンサーチーム</div>
+      </div>
+      <div class="hotel-member-row">
+        <div class="hotel-member-section">×4</div>
+        <div class="hotel-member-name">振付師</div>
+      </div>
+    </div>
+
+    <div style="font-size:10px; color:#5a5a54; margin: 8px 4px 20px; text-align:center;">
+      ※ ホテル割り当てはPC側でExcel取り込みから設定
+    </div>
+  </div>
+
+  <!-- ════ PASS ════ -->
+  <div class="screen" id="screen-pass">
+    <div class="pass-screen" id="pass-input-view">
+      <div style="font-size:11px; letter-spacing:0.4em; color:#e89a4a; font-weight:800; margin-bottom:18px;">PASSWORD</div>
+      <input class="pass-input" id="pass-field" type="password" maxlength="4" placeholder="••••" inputmode="numeric" />
+      <button class="pass-btn" onclick="tryUnlock()">認証する</button>
+    </div>
+    <div class="pass-screen" id="pass-unlocked-view" style="display:none;">
+      <div class="pass-icon" style="background:rgba(126,194,122,0.12); border-color:#7ec27a; color:#7ec27a;">✓</div>
+      <div style="font-size:14px; color:#b8d9b0; font-weight:700; margin-bottom:18px; letter-spacing:0.1em;">認証済み</div>
+      <button class="pass-btn" style="background:#1c1b19; color:#a8a8a0; border:1px solid #2c2a27;" onclick="resetAuth()">ログアウト</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- 下タブ -->
+<div class="phone-bottom-tabs" id="bottom-tabs">
+  <button class="active" onclick="show('rh')"><span class="ico">▶</span>RH</button>
+  <button onclick="show('info')"><span class="ico">⚑</span>INFO<span class="badge">3</span></button>
+  <button onclick="show('arrival')"><span class="ico">⏱</span>入り時間</button>
+  <button onclick="show('hotel')"><span class="ico">★</span>HOTEL</button>
+  <button onclick="show('pass')"><span class="ico">●</span>PASS</button>
+</div>
+
+<script>
+let authed = false;
+const topTabsHiddenScreens = ['info','arrival','hotel','pass'];
+
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+
+  const tabs = document.querySelectorAll('#bottom-tabs button');
+  tabs.forEach((b, i) => {
+    b.classList.remove('active');
+    const idx = ['rh','info','arrival','hotel','pass'][i];
+    if (idx === id) b.classList.add('active');
+  });
+
+  // 上タブは RH のときだけ表示
+  const topTabs = document.getElementById('top-tabs');
+  if (topTabs) topTabs.style.display = (id === 'rh') ? 'flex' : 'none';
+
+  const body = document.getElementById('body');
+  if (body) body.scrollTop = 0;
+}
+
+function tryUnlock() {
+  const v = document.getElementById('pass-field').value;
+  if (v === '1234') {
+    authed = true;
+    document.getElementById('pass-input-view').style.display = 'none';
+    document.getElementById('pass-unlocked-view').style.display = 'flex';
+    document.body.classList.add('authed');
+    // 終了ボタン全部有効化（done 状態のは緑のまま、未完のは紫のクリック可能に）
+    document.querySelectorAll('.finish-btn.disabled').forEach(b => b.classList.remove('disabled'));
+  } else {
+    alert('パスワードが違います（デモ用: 1234）');
+  }
+}
+
+function resetAuth() {
+  authed = false;
+  document.getElementById('pass-input-view').style.display = 'flex';
+  document.getElementById('pass-unlocked-view').style.display = 'none';
+  document.getElementById('pass-field').value = '';
+  document.body.classList.remove('authed');
+  // done でないカードのボタンを再ロック
+  document.querySelectorAll('.rh-card:not(.done) .finish-btn').forEach(b => b.classList.add('disabled'));
+}
+
+// 終了ボタン トグル動作: 認証済みなら done のオン/オフを切り替え
+function toggleFinish(cardId) {
+  if (!authed) {
+    alert('終了ボタンは PASS タブで認証してから押せます');
+    show('pass');
+    return;
+  }
+  const card = document.getElementById(cardId);
+  if (!card) return;
+  const btn = card.querySelector('.finish-btn');
+  const wasDone = card.classList.contains('done');
+
+  if (wasDone) {
+    // 完了取り消し: done を外して「終了」に戻す
+    card.classList.remove('done');
+    btn.textContent = '終了';
+  } else {
+    // 完了: now を外して done に
+    card.classList.remove('now');
+    card.classList.add('done');
+    btn.textContent = '完了';
+    // 次の未完了カードを now に
+    const cards = document.querySelectorAll('.rh-card');
+    for (const c of cards) {
+      if (!c.classList.contains('done')) {
+        c.classList.add('now');
+        break;
+      }
+    }
+  }
+  updateProgress();
+}
+
+function updateProgress() {
+  const total = document.querySelectorAll('.rh-card').length;
+  const done = document.querySelectorAll('.rh-card.done').length;
+  const remain = total - done;
+  const el = document.getElementById('progress-mini');
+  if (el) el.textContent = done + ' / ' + total;
+  const remainEl = document.getElementById('remain-num');
+  if (remainEl) remainEl.textContent = remain;
+}
+
+// リハーサル全体カウントダウン: 終了予定時刻まで
+// デモ用: 残り 2:34:18 から減算
+let rhSec = 2*3600 + 34*60 + 18;
+setInterval(() => {
+  rhSec = Math.max(0, rhSec - 1);
+  const h = String(Math.floor(rhSec / 3600)).padStart(2,'0');
+  const m = String(Math.floor((rhSec % 3600) / 60)).padStart(2,'0');
+  const s = String(rhSec % 60).padStart(2,'0');
+  const el = document.getElementById('rh-cd');
+  if (el) el.textContent = h + ':' + m + ':' + s;
+}, 1000);
+
+updateProgress();
+
+// 5分刻みの時刻プルダウンを各 .time-pulldown に流し込む（00:00〜23:55）
+document.querySelectorAll('.time-pulldown').forEach(sel => {
+  let html = '';
+  for (let h = 0; h < 24; h++) {
+    for (let m = 0; m < 60; m += 5) {
+      const hh = String(h).padStart(2, '0');
+      const mm = String(m).padStart(2, '0');
+      const t = `${hh}:${mm}`;
+      const selected = (t === '08:00') ? ' selected' : '';
+      html += `<option value="${t}"${selected}>${t}</option>`;
+    }
+  }
+  sel.innerHTML = html;
+});
+
+function toggleTaxiForm(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.toggle('open');
+}
+</script>
+</body>
+</html>
