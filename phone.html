@@ -637,11 +637,13 @@
     align-items: stretch;
     margin: 2px 0 9px;
   }
-  /* 3行目: メモ（自由入力／改行で縦に伸びる） */
+  /* 3行目: メモ（自由入力／改行で縦に伸びる／細めの文字でガチャ感を抑える） */
   .rh-line3 {
-    font-size: 15px;
-    color: #e8e8e4 !important;
-    line-height: 1.5;
+    font-size: 14px;
+    font-weight: 300;
+    color: #c8c8c4 !important;
+    line-height: 1.55;
+    letter-spacing: 0.01em;
     min-width: 0;
     white-space: pre-wrap;
     word-wrap: break-word;
@@ -1116,7 +1118,11 @@
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
   }
-  .schedule-row-time:active { color: #f5b06a; }
+  .schedule-row-time:active { opacity: 0.7; }
+  /* DOOR OPEN：黄色（チケット感） */
+  .schedule-row-time.door-open { color: #e6c870; }
+  /* SHOW TIME：赤系（本番のキメ色） */
+  .schedule-row-time.show-time { color: #e07a5f; }
   .schedule-row.muted .schedule-row-time { color: #787878; font-weight: 600; font-size: 22px; }
 
   /* ── 時刻ホイールピッカー（HH:MM 2連） ───────── */
@@ -1275,13 +1281,13 @@
 
     <div class="schedule-section-title">SHOW</div>
     <div class="schedule-card">
-      <div class="schedule-row muted">
-        <div class="schedule-row-label">客入れ</div>
-        <button type="button" class="schedule-row-time" data-time="17:30" onclick="openTimePicker(this)">17:30</button>
+      <div class="schedule-row">
+        <div class="schedule-row-label">DOOR OPEN</div>
+        <button type="button" class="schedule-row-time door-open" data-time="17:30" onclick="openTimePicker(this)">17:30</button>
       </div>
       <div class="schedule-row">
-        <div class="schedule-row-label">本番開始</div>
-        <button type="button" class="schedule-row-time" data-time="18:30" onclick="openTimePicker(this)">18:30</button>
+        <div class="schedule-row-label">SHOW TIME</div>
+        <button type="button" class="schedule-row-time show-time" data-time="18:30" onclick="openTimePicker(this)">18:30</button>
       </div>
     </div>
 
