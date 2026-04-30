@@ -870,6 +870,67 @@
     width: 100%;
   }
 
+  /* ── タイムスケジュール画面 ───────── */
+  .schedule-section-title {
+    font-size: 12px;
+    letter-spacing: 0.3em;
+    color: #787878;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin: 16px 4px 10px;
+  }
+  .schedule-card {
+    background: #242424;
+    border: 1px solid #2c2c2c;
+    border-radius: 10px;
+    padding: 4px 0;
+    margin-bottom: 14px;
+  }
+  .schedule-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 18px;
+    border-bottom: 1px solid #2c2c2c;
+  }
+  .schedule-row:last-child { border-bottom: none; }
+  .schedule-row-label {
+    font-size: 16px;
+    font-weight: 600;
+    color: #d8d8d4;
+    letter-spacing: 0.05em;
+  }
+  .schedule-row-time {
+    font-size: 26px;
+    font-weight: 700;
+    color: #e89a4a;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
+  }
+  .schedule-row.muted .schedule-row-time { color: #787878; font-weight: 600; font-size: 22px; }
+  .schedule-date {
+    font-size: 18px;
+    font-weight: 700;
+    color: #e8e8e8;
+    letter-spacing: 0.05em;
+    text-align: center;
+    margin: 8px 0 16px;
+  }
+
+  /* ── テクリハ画面 ───────── */
+  .tekuriha-empty {
+    background: #242424;
+    border: 1px dashed #3a3a37;
+    border-radius: 10px;
+    padding: 40px 20px;
+    text-align: center;
+    color: #787878;
+    font-size: 14px;
+    line-height: 1.7;
+    margin-top: 24px;
+  }
+  .tekuriha-empty strong { color: #d8d8d4; font-size: 16px; display: block; margin-bottom: 8px; letter-spacing: 0.1em; }
+
   /* ── 下タブ ───────── */
   .phone-bottom-tabs {
     flex-shrink: 0;
@@ -881,13 +942,13 @@
   }
   .phone-bottom-tabs button {
     flex: 1;
+    min-width: 0;
     background: transparent;
     border: none;
     color: #787878;
     cursor: pointer;
-    font-size: 13px;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.04em;
     font-weight: 700;
     font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
     display: flex;
@@ -897,6 +958,9 @@
     gap: 3px;
     position: relative;
     padding-top: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: clip;
   }
   .phone-bottom-tabs button.active { color: #e89a4a; }
   /* 認証前：PASS以外のタブはロック（押せない・薄い） */
@@ -913,7 +977,7 @@
     text-shadow: 0 0 8px rgba(126,194,122,0.55);
   }
   .phone-bottom-tabs button .ico {
-    font-size: 26px; line-height: 1;
+    font-size: 22px; line-height: 1;
   }
   .phone-bottom-tabs button .badge {
     position: absolute;
@@ -947,6 +1011,46 @@
 
 <!-- ボディ -->
 <div class="phone-body" id="body">
+
+  <!-- ════ タイムスケジュール ════ -->
+  <div class="screen" id="screen-schedule">
+    <div class="schedule-date">2026.04.29 (水)</div>
+
+    <div class="schedule-section-title">REHEARSAL</div>
+    <div class="schedule-card">
+      <div class="schedule-row">
+        <div class="schedule-row-label">リハーサル開始</div>
+        <div class="schedule-row-time">10:00</div>
+      </div>
+      <div class="schedule-row">
+        <div class="schedule-row-label">リハーサル終了</div>
+        <div class="schedule-row-time">16:00</div>
+      </div>
+    </div>
+
+    <div class="schedule-section-title">SHOW</div>
+    <div class="schedule-card">
+      <div class="schedule-row muted">
+        <div class="schedule-row-label">客入れ</div>
+        <div class="schedule-row-time">17:30</div>
+      </div>
+      <div class="schedule-row">
+        <div class="schedule-row-label">本番開始</div>
+        <div class="schedule-row-time">18:30</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ テクリハ ════ -->
+  <div class="screen" id="screen-tekuriha">
+    <div class="schedule-date">テクリハ — 17:00 開始予定</div>
+    <div class="tekuriha-empty">
+      <strong>テクリハ画面（仮）</strong>
+      ここに「1幕通し」「2幕通し」「カーテンコール通し」<br>
+      など、全体通しの単位カードが並びます。<br>
+      8タグもこちらで使えるようになります。
+    </div>
+  </div>
 
   <!-- ════ RH ════ -->
   <div class="screen active" id="screen-rh">
@@ -1664,9 +1768,10 @@
 
 <!-- 下タブ -->
 <div class="phone-bottom-tabs" id="bottom-tabs">
+  <button onclick="show('schedule')"><span class="ico">◷</span>タイム</button>
+  <button onclick="show('tekuriha')"><span class="ico">◎</span>テクリハ</button>
   <button class="active" onclick="show('rh')"><span class="ico">▶</span>RH</button>
-  <button onclick="show('info')"><span class="ico">⚑</span>INFO<span class="badge">3</span></button>
-  <button onclick="show('arrival')"><span class="ico">⏱</span>入り時間</button>
+  <button onclick="show('arrival')"><span class="ico">▾</span>入り時間</button>
   <button onclick="show('hotel')"><span class="ico">★</span>HOTEL</button>
   <button data-pass onclick="show('pass')"><span class="ico">●</span>PASS</button>
 </div>
@@ -1692,7 +1797,7 @@
 
 <script>
 let authed = false;
-const topTabsHiddenScreens = ['info','arrival','hotel','pass'];
+const topTabsHiddenScreens = ['schedule','tekuriha','arrival','hotel','pass'];
 
 function show(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -1701,7 +1806,7 @@ function show(id) {
   const tabs = document.querySelectorAll('#bottom-tabs button');
   tabs.forEach((b, i) => {
     b.classList.remove('active');
-    const idx = ['rh','info','arrival','hotel','pass'][i];
+    const idx = ['schedule','tekuriha','rh','arrival','hotel','pass'][i];
     if (idx === id) b.classList.add('active');
   });
 
