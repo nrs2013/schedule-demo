@@ -17,8 +17,8 @@
   }
   html, body {
     margin: 0; padding: 0;
-    background: #1a1918;
-    color: #e8e8e2;
+    background: #1a1a1a;
+    color: #e8e8e8;
     font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
     height: 100%;
     overflow: hidden;
@@ -40,15 +40,15 @@
   .phone-header {
     flex-shrink: 0;
     padding: 6px 14px 7px;
-    border-bottom: 1px solid #2c2a27;
-    background: #1a1918;
+    border-bottom: 1px solid #2c2c2c;
+    background: #1a1a1a;
     display: flex;
     flex-direction: column;
     gap: 2px;
   }
   .phone-header-date {
     font-size: 15px;
-    color: #d4cdb8;
+    color: #d8d8d4;
     font-weight: 700;
     letter-spacing: 0.2em;
     text-align: center;
@@ -62,7 +62,7 @@
   .phone-brand-mini {
     font-size: 13px;
     letter-spacing: 0.35em;
-    color: #76766f;
+    color: #787878;
     font-weight: 700;
     flex-shrink: 0;
   }
@@ -70,7 +70,7 @@
     flex: 1;
     font-size: 17px;
     font-weight: 600;
-    color: #e8e8e2;
+    color: #e8e8e8;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -82,7 +82,7 @@
     font-variant-numeric: tabular-nums;
     font-size: 15px;
     font-weight: 600;
-    color: #a8a8a0;
+    color: #a8a8a8;
   }
   @keyframes pulse { 0%,100% {opacity:1} 50% {opacity:0.4} }
 
@@ -90,8 +90,8 @@
   .phone-top-tabs {
     flex-shrink: 0;
     display: flex;
-    border-bottom: 1px solid #2c2a27;
-    background: #1a1918;
+    border-bottom: 1px solid #2c2c2c;
+    background: #1a1a1a;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
   }
@@ -104,7 +104,7 @@
     font-size: 15px;
     font-weight: 700;
     letter-spacing: 0.18em;
-    color: #76766f;
+    color: #787878;
     cursor: pointer;
     border-bottom: 2px solid transparent;
     text-transform: uppercase;
@@ -149,8 +149,8 @@
 
   /* ── REHEARSAL 全体カウントダウン（コンパクト化）───────── */
   .rh-countdown-card {
-    background: #242320;
-    border: 1px solid #2c2a27;
+    background: #242424;
+    border: 1px solid #2c2c2c;
     border-radius: 8px;
     padding: 8px 14px;
     margin-bottom: 8px;
@@ -165,7 +165,7 @@
     content: '';
     position: absolute;
     inset: 0;
-    background: radial-gradient(ellipse at center, rgba(232,154,74,0.08), transparent 70%);
+    background: radial-gradient(ellipse at center, rgba(232,154,74,0.04), transparent 70%);
     pointer-events: none;
   }
   .rh-countdown-left {
@@ -175,16 +175,16 @@
   .rh-countdown-label {
     font-size: 13px;
     letter-spacing: 0.3em;
-    color: #a8a8a0;
+    color: #a8a8a8;
     font-weight: 700;
     text-transform: uppercase;
   }
   .rh-countdown-meta {
     font-size: 14px;
-    color: #76766f;
+    color: #787878;
     letter-spacing: 0.05em;
   }
-  .rh-countdown-meta strong { color: #a8a8a0; font-weight: 600; }
+  .rh-countdown-meta strong { color: #a8a8a8; font-weight: 600; }
   .rh-countdown-time {
     font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif !important;
     font-size: 46px;
@@ -195,19 +195,19 @@
     line-height: 1;
     font-variant-numeric: tabular-nums;
     position: relative;
-    text-shadow: 0 0 20px rgba(232,154,74,0.3);
+    text-shadow: 0 0 16px rgba(232,154,74,0.18);
   }
   /* meta 行内の残り曲数アクセント */
   .rh-remain-inline {
-    color: #d4cdb8;
+    color: #d8d8d4;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
   }
 
   /* ── RHカード: 3行レイアウト ───────── */
   .rh-card {
-    background: #242320;
-    border: 1px solid #2c2a27;
+    background: #242424;
+    border: 1px solid #2c2c2c;
     border-radius: 6px;
     padding: 7px 10px;
     margin-bottom: 4px;
@@ -215,9 +215,9 @@
     transition: all 0.15s;
   }
   .rh-card.now {
-    background: #2a2018;
+    background: #2a2222;
     border-color: #e89a4a;
-    box-shadow: 0 0 0 1px rgba(232,154,74,0.25);
+    box-shadow: 0 0 0 1px rgba(232,154,74,0.15);
   }
   .rh-card.done {
     opacity: 0.4;
@@ -242,7 +242,7 @@
   .rh-mno {
     font-size: 20px;
     font-weight: 600;
-    color: #a8a8a0;
+    color: #a8a8a8;
     letter-spacing: 0.05em;
     line-height: 1;
     font-variant-numeric: tabular-nums;
@@ -252,7 +252,7 @@
     flex: 1;
     font-size: 20px;
     font-weight: 600;
-    color: #e8e8e2;
+    color: #e8e8e8;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -260,7 +260,7 @@
   }
   .rh-card.done .rh-title {
     text-decoration: line-through;
-    color: #76766f;
+    color: #787878;
   }
   .rh-time {
     font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
@@ -283,7 +283,7 @@
   /* 3行目: メモ（自由入力） */
   .rh-line3 {
     font-size: 15px;
-    color: #76766f;
+    color: #787878;
     line-height: 1.4;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -308,7 +308,7 @@
   /* 終了ボタン（押しやすく拡大、行内に収める） */
   .finish-btn {
     background: rgba(212,205,184,0.08);
-    color: #d4cdb8;
+    color: #d8d8d4;
     border: 1px solid rgba(212,205,184,0.3);
     padding: 7px 16px;
     border-radius: 99px;
@@ -322,9 +322,9 @@
   }
   .finish-btn:active { background: rgba(232,154,74,0.3); transform: scale(0.96); }
   .finish-btn.disabled {
-    background: #1c1b19;
-    color: #5a5a54;
-    border: 1px solid #2c2a27;
+    background: #1c1c1c;
+    color: #5a5a5a;
+    border: 1px solid #2c2c2c;
     cursor: not-allowed;
   }
   .finish-btn.disabled::before { content: '🔒'; opacity: 0.6; margin-right: 4px; font-size: 15px; }
@@ -337,13 +337,13 @@
 
   /* ── INFO ───────── */
   .info-item {
-    background: #242320;
-    border: 1px solid #2c2a27;
+    background: #242424;
+    border: 1px solid #2c2c2c;
     border-radius: 6px;
     padding: 12px 14px;
     margin-bottom: 8px;
   }
-  .info-item.unread { border-left: 3px solid #6e6e66; }
+  .info-item.unread { border-left: 3px solid #6e6e6e; }
   .info-item.urgent {
     border-color: #e07a5f;
     background: rgba(224,122,95,0.06);
@@ -357,24 +357,24 @@
     font-size: 13px; font-weight: 700; letter-spacing: 0.15em;
     text-transform: uppercase;
   }
-  .info-tag.norm { background: rgba(168,168,160,0.12); color: #a8a8a0; border: 1px solid #4a4a45; }
+  .info-tag.norm { background: rgba(168,168,160,0.12); color: #a8a8a8; border: 1px solid #4a4a4a; }
   .info-tag.urg  { background: rgba(224,122,95,0.2); color: #f0b09c; border: 1px solid #e07a5f; }
   .info-time {
     font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif; font-variant-numeric: tabular-nums;
-    font-size: 14px; color: #76766f;
+    font-size: 14px; color: #787878;
   }
-  .info-body { font-size: 17px; color: #e8e8e2; line-height: 1.6; }
-  .info-author { font-size: 14px; color: #76766f; margin-top: 6px; }
+  .info-body { font-size: 17px; color: #e8e8e8; line-height: 1.6; }
+  .info-author { font-size: 14px; color: #787878; margin-top: 6px; }
   .info-compose {
-    background: #242320;
-    border: 1px dashed #4a4a45;
+    background: #242424;
+    border: 1px dashed #4a4a4a;
     border-radius: 6px;
     padding: 12px;
     margin-bottom: 12px;
     text-align: center;
   }
   .info-compose-btn {
-    background: #3a3833; color: #d4cdb8;
+    background: #3a3a3a; color: #d8d8d4;
     border: none; padding: 8px 18px;
     border-radius: 99px;
     font-size: 15px; font-weight: 700; letter-spacing: 0.15em;
@@ -384,8 +384,8 @@
 
   /* ── 入り時間 ───────── */
   .arrival-section {
-    background: #242320;
-    border: 1px solid #2c2a27;
+    background: #242424;
+    border: 1px solid #2c2c2c;
     border-radius: 6px;
     margin-bottom: 6px;
     overflow: hidden;
@@ -400,7 +400,7 @@
   .arrival-section-name {
     font-size: 18px;
     font-weight: 700;
-    color: #e8e8e2;
+    color: #e8e8e8;
     letter-spacing: 0.05em;
   }
   .arrival-section-time {
@@ -410,14 +410,14 @@
     font-weight: 700;
   }
   .arrival-section-time.empty {
-    color: #5a5a54;
+    color: #5a5a5a;
     font-size: 16px;
     font-style: italic;
   }
   .arrival-edit-btn {
     background: rgba(168,168,160,0.12);
-    color: #a8a8a0;
-    border: 1px solid #4a4a45;
+    color: #a8a8a8;
+    border: 1px solid #4a4a4a;
     padding: 4px 12px;
     border-radius: 99px;
     font-size: 14px;
@@ -428,9 +428,9 @@
     margin-left: 8px;
   }
   .arrival-empty-add {
-    background: #1c1b19;
-    color: #a8a8a0;
-    border: 1px dashed #4a4a45;
+    background: #1c1c1c;
+    color: #a8a8a8;
+    border: 1px dashed #4a4a4a;
     padding: 4px 12px;
     border-radius: 99px;
     font-size: 14px;
@@ -442,8 +442,8 @@
 
   /* ── HOTEL ───────── */
   .hotel-block {
-    background: #242320;
-    border: 1px solid #2c2a27;
+    background: #242424;
+    border: 1px solid #2c2c2c;
     border-radius: 8px;
     margin-bottom: 14px;
     overflow: hidden;
@@ -451,13 +451,13 @@
   .hotel-block-head {
     padding: 14px;
     background: transparent;
-    border-bottom: 1px solid #2c2a27;
+    border-bottom: 1px solid #2c2c2c;
     position: relative;
   }
   .hotel-name {
     font-size: 20px;
     font-weight: 700;
-    color: #e8e8e2;
+    color: #e8e8e8;
     margin-bottom: 4px;
   }
   /* MAP ボタン — 各ホテルに添付された Google マップを開く */
@@ -483,8 +483,8 @@
   /* ── タクシー配車セクション ───────── */
   .taxi-section {
     padding: 10px 14px 12px;
-    border-top: 1px solid #2c2a27;
-    background: #1d1b19;
+    border-top: 1px solid #2c2c2c;
+    background: #1d1d1d;
   }
   .taxi-head {
     display: flex; align-items: center; justify-content: space-between;
@@ -503,8 +503,8 @@
     grid-template-columns: 56px 1fr 50px 28px;
     gap: 8px;
     align-items: center;
-    background: #242320;
-    border: 1px solid #2c2a27;
+    background: #242424;
+    border: 1px solid #2c2c2c;
     border-radius: 4px;
     padding: 7px 10px;
     font-size: 16px;
@@ -516,7 +516,7 @@
     font-variant-numeric: tabular-nums;
   }
   .taxi-section-name {
-    color: #e8e8e2;
+    color: #e8e8e8;
     font-weight: 600;
   }
   .taxi-count {
@@ -526,7 +526,7 @@
     font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif; font-variant-numeric: tabular-nums; }
   .taxi-del {
     background: transparent;
-    color: #5a5a54;
+    color: #5a5a5a;
     border: none;
     font-size: 18px;
     cursor: pointer;
@@ -549,7 +549,7 @@
   /* 追加フォーム */
   .taxi-form {
     display: none;
-    background: #242320;
+    background: #242424;
     border: 1px solid #e6c870;
     border-radius: 4px;
     padding: 10px;
@@ -563,10 +563,10 @@
     margin-bottom: 6px;
   }
   .taxi-form select, .taxi-form input {
-    background: #1d1b19;
-    border: 1px solid #2c2a27;
+    background: #1d1d1d;
+    border: 1px solid #2c2c2c;
     border-radius: 3px;
-    color: #e8e8e2;
+    color: #e8e8e8;
     font-size: 16px;
     padding: 7px 8px;
     font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
@@ -586,12 +586,12 @@
   }
   .taxi-form-actions .save {
     background: #e6c870;
-    color: #1a1918;
+    color: #1a1a1a;
   }
   .taxi-form-actions .cancel {
-    background: #1c1b19;
-    color: #a8a8a0;
-    border: 1px solid #2c2a27;
+    background: #1c1c1c;
+    color: #a8a8a8;
+    border: 1px solid #2c2c2c;
   }
   .hotel-rating {
     color: #e6c870;
@@ -604,18 +604,18 @@
     gap: 4px 8px;
     font-size: 15px;
   }
-  .hotel-info-grid dt { color: #76766f; }
-  .hotel-info-grid dd { color: #e8e8e2; margin: 0; font-weight: 500; word-break: break-all; }
-  .hotel-info-grid dd a { color: #d4cdb8; text-decoration: none; }
+  .hotel-info-grid dt { color: #787878; }
+  .hotel-info-grid dd { color: #e8e8e8; margin: 0; font-weight: 500; word-break: break-all; }
+  .hotel-info-grid dd a { color: #d8d8d4; text-decoration: none; }
   .hotel-members-head {
     padding: 8px 14px;
     font-size: 14px;
-    color: #76766f;
+    color: #787878;
     letter-spacing: 0.2em;
     text-transform: uppercase;
     font-weight: 700;
-    background: #1d1b19;
-    border-bottom: 1px solid #2c2a27;
+    background: #1d1d1d;
+    border-bottom: 1px solid #2c2c2c;
     display: flex;
     justify-content: space-between;
   }
@@ -635,7 +635,7 @@
     font-size: 15px;
     letter-spacing: 0.05em;
   }
-  .hotel-member-name { color: #e8e8e2; font-weight: 500; }
+  .hotel-member-name { color: #e8e8e8; font-weight: 500; }
 
   /* ── PASS ───────── */
   .pass-screen {
@@ -647,26 +647,26 @@
   .pass-icon {
     width: 60px; height: 60px;
     background: rgba(212,205,184,0.08);
-    border: 1px solid #6e6e66;
+    border: 1px solid #6e6e6e;
     border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
-    color: #d4cdb8; font-size: 32px;
+    color: #d8d8d4; font-size: 32px;
     margin-bottom: 16px;
   }
   .pass-title {
-    font-size: 21px; font-weight: 700; color: #e8e8e2;
+    font-size: 21px; font-weight: 700; color: #e8e8e8;
     margin-bottom: 4px; letter-spacing: 0.05em;
   }
   .pass-sub {
-    font-size: 16px; color: #a8a8a0;
+    font-size: 16px; color: #a8a8a8;
     text-align: center; margin-bottom: 24px;
     line-height: 1.6;
   }
   .pass-input {
     width: 100%;
-    background: #1d1b19; border: 1px solid #2c2a27;
+    background: #1d1d1d; border: 1px solid #2c2c2c;
     border-radius: 4px; padding: 12px;
-    color: #e8e8e2; text-align: center;
+    color: #e8e8e8; text-align: center;
     font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif; font-variant-numeric: tabular-nums;
     font-size: 26px; letter-spacing: 0.4em;
     margin-bottom: 12px;
@@ -680,11 +680,11 @@
     font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
   }
   .pass-help {
-    font-size: 15px; color: #5a5a54;
+    font-size: 15px; color: #5a5a5a;
     margin-top: 16px; text-align: center;
     line-height: 1.6;
   }
-  .pass-help strong { color: #d4cdb8; }
+  .pass-help strong { color: #d8d8d4; }
   .pass-status {
     background: rgba(126,194,122,0.1);
     border: 1px solid #7ec27a;
@@ -700,8 +700,8 @@
   .phone-bottom-tabs {
     flex-shrink: 0;
     display: flex;
-    background: #1a1918;
-    border-top: 1px solid #2c2a27;
+    background: #1a1a1a;
+    border-top: 1px solid #2c2c2c;
     height: 64px;
     padding-bottom: env(safe-area-inset-bottom, 0);
   }
@@ -709,7 +709,7 @@
     flex: 1;
     background: transparent;
     border: none;
-    color: #76766f;
+    color: #787878;
     cursor: pointer;
     font-size: 13px;
     letter-spacing: 0.15em;
@@ -909,25 +909,25 @@
 
     <!-- 日付タブ（PC側で滞在期間を入れると自動生成される） -->
     <div style="display:flex; gap:6px; margin-bottom:14px; overflow-x:auto;">
-      <button class="arrival-day" style="background:#1c1b19; color:#a8a8a0; border:1px solid #2c2a27; padding:8px 14px; border-radius:99px; font-size: 15px; font-weight:700; letter-spacing:0.1em; white-space:nowrap; cursor:pointer;">4/28 (火)</button>
-      <button class="arrival-day active" style="background:#3a3833; color:#d4cdb8; border:1px solid #6e6e66; padding:8px 14px; border-radius:99px; font-size: 15px; font-weight:700; letter-spacing:0.1em; white-space:nowrap; cursor:pointer;">4/29 (水)</button>
-      <button class="arrival-day" style="background:#1c1b19; color:#a8a8a0; border:1px solid #2c2a27; padding:8px 14px; border-radius:99px; font-size: 15px; font-weight:700; letter-spacing:0.1em; white-space:nowrap; cursor:pointer;">4/30 (木)</button>
-      <button class="arrival-day" style="background:#1c1b19; color:#a8a8a0; border:1px solid #2c2a27; padding:8px 14px; border-radius:99px; font-size: 15px; font-weight:700; letter-spacing:0.1em; white-space:nowrap; cursor:pointer;">5/1 (金)</button>
-      <button class="arrival-day" style="background:#1c1b19; color:#a8a8a0; border:1px solid #2c2a27; padding:8px 14px; border-radius:99px; font-size: 15px; font-weight:700; letter-spacing:0.1em; white-space:nowrap; cursor:pointer;">5/2 (土)</button>
+      <button class="arrival-day" style="background:#1c1c1c; color:#a8a8a8; border:1px solid #2c2c2c; padding:8px 14px; border-radius:99px; font-size: 15px; font-weight:700; letter-spacing:0.1em; white-space:nowrap; cursor:pointer;">4/28 (火)</button>
+      <button class="arrival-day active" style="background:#3a3a3a; color:#d8d8d4; border:1px solid #6e6e6e; padding:8px 14px; border-radius:99px; font-size: 15px; font-weight:700; letter-spacing:0.1em; white-space:nowrap; cursor:pointer;">4/29 (水)</button>
+      <button class="arrival-day" style="background:#1c1c1c; color:#a8a8a8; border:1px solid #2c2c2c; padding:8px 14px; border-radius:99px; font-size: 15px; font-weight:700; letter-spacing:0.1em; white-space:nowrap; cursor:pointer;">4/30 (木)</button>
+      <button class="arrival-day" style="background:#1c1c1c; color:#a8a8a8; border:1px solid #2c2c2c; padding:8px 14px; border-radius:99px; font-size: 15px; font-weight:700; letter-spacing:0.1em; white-space:nowrap; cursor:pointer;">5/1 (金)</button>
+      <button class="arrival-day" style="background:#1c1c1c; color:#a8a8a8; border:1px solid #2c2c2c; padding:8px 14px; border-radius:99px; font-size: 15px; font-weight:700; letter-spacing:0.1em; white-space:nowrap; cursor:pointer;">5/2 (土)</button>
     </div>
 
     <!-- 自分の入り時間を追加するエリア -->
-    <div style="background:#242320; border:1px dashed #4a4a45; border-radius:6px; padding:14px; margin-bottom:14px;">
-      <div style="font-size: 14px; letter-spacing:0.2em; color:#a8a8a0; font-weight:700; margin-bottom:10px;">＋ 入り時間を追加</div>
+    <div style="background:#242424; border:1px dashed #4a4a4a; border-radius:6px; padding:14px; margin-bottom:14px;">
+      <div style="font-size: 14px; letter-spacing:0.2em; color:#a8a8a8; font-weight:700; margin-bottom:10px;">＋ 入り時間を追加</div>
       <div style="display:flex; gap:8px;">
-        <input type="text" placeholder="セクション名 (例: PA)" style="flex:1; background:#1d1b19; border:1px solid #2c2a27; border-radius:4px; padding:9px 10px; color:#e8e8e2; font-size: 17px;" />
-        <input type="time" value="09:00" style="width:110px; background:#1d1b19; border:1px solid #2c2a27; border-radius:4px; padding:9px 10px; color:#e8e8e2; font-size: 17px;" />
+        <input type="text" placeholder="セクション名 (例: PA)" style="flex:1; background:#1d1d1d; border:1px solid #2c2c2c; border-radius:4px; padding:9px 10px; color:#e8e8e8; font-size: 17px;" />
+        <input type="time" value="09:00" style="width:110px; background:#1d1d1d; border:1px solid #2c2c2c; border-radius:4px; padding:9px 10px; color:#e8e8e8; font-size: 17px;" />
       </div>
       <button style="width:100%; margin-top:8px; background:#e89a4a; color:#0a0a08; border:none; padding:9px; border-radius:4px; font-size: 15px; font-weight:700; letter-spacing:0.2em; cursor:pointer;">登録する</button>
     </div>
 
     <!-- 既存リスト（誰でも追加・編集できる） -->
-    <div style="font-size: 14px; letter-spacing:0.2em; color:#76766f; margin: 0 4px 8px; text-transform:uppercase; font-weight:700;">— 登録済み —</div>
+    <div style="font-size: 14px; letter-spacing:0.2em; color:#787878; margin: 0 4px 8px; text-transform:uppercase; font-weight:700;">— 登録済み —</div>
 
     <div class="arrival-section">
       <div class="arrival-section-row">
@@ -1070,7 +1070,7 @@
 
       <div class="hotel-members-head">
         <span>宿泊メンバー</span>
-        <span style="color:#d4cdb8">35名</span>
+        <span style="color:#d8d8d4">35名</span>
       </div>
       <div class="hotel-member-row">
         <div class="hotel-member-section">演出</div>
@@ -1097,7 +1097,7 @@
         <div class="hotel-member-name">中村</div>
       </div>
       <div class="hotel-member-row">
-        <div class="hotel-member-name" style="color:#76766f">…他29名</div>
+        <div class="hotel-member-name" style="color:#787878">…他29名</div>
         <div></div>
       </div>
     </div>
@@ -1151,7 +1151,7 @@
 
       <div class="hotel-members-head">
         <span>宿泊メンバー</span>
-        <span style="color:#d4cdb8">28名</span>
+        <span style="color:#d8d8d4">28名</span>
       </div>
       <div class="hotel-member-row">
         <div class="hotel-member-section">VJ</div>
@@ -1170,7 +1170,7 @@
         <div class="hotel-member-name">伊藤</div>
       </div>
       <div class="hotel-member-row">
-        <div class="hotel-member-name" style="color:#76766f">…他24名</div>
+        <div class="hotel-member-name" style="color:#787878">…他24名</div>
         <div></div>
       </div>
     </div>
@@ -1218,7 +1218,7 @@
 
       <div class="hotel-members-head">
         <span>宿泊メンバー</span>
-        <span style="color:#d4cdb8">42名</span>
+        <span style="color:#d8d8d4">42名</span>
       </div>
       <div class="hotel-member-row">
         <div class="hotel-member-section">×38</div>
@@ -1230,7 +1230,7 @@
       </div>
     </div>
 
-    <div style="font-size: 14px; color:#5a5a54; margin: 8px 4px 20px; text-align:center;">
+    <div style="font-size: 14px; color:#5a5a5a; margin: 8px 4px 20px; text-align:center;">
       ※ ホテル割り当てはPC側でExcel取り込みから設定
     </div>
   </div>
@@ -1238,14 +1238,14 @@
   <!-- ════ PASS ════ -->
   <div class="screen" id="screen-pass">
     <div class="pass-screen" id="pass-input-view">
-      <div style="font-size: 15px; letter-spacing:0.4em; color:#d4cdb8; font-weight:800; margin-bottom:18px;">PASSWORD</div>
+      <div style="font-size: 15px; letter-spacing:0.4em; color:#d8d8d4; font-weight:800; margin-bottom:18px;">PASSWORD</div>
       <input class="pass-input" id="pass-field" type="password" maxlength="4" placeholder="••••" inputmode="numeric" />
       <button class="pass-btn" onclick="tryUnlock()">認証する</button>
     </div>
     <div class="pass-screen" id="pass-unlocked-view" style="display:none;">
       <div class="pass-icon" style="background:rgba(126,194,122,0.12); border-color:#7ec27a; color:#7ec27a;">✓</div>
       <div style="font-size: 18px; color:#b8d9b0; font-weight:700; margin-bottom:18px; letter-spacing:0.1em;">認証済み</div>
-      <button class="pass-btn" style="background:#1c1b19; color:#a8a8a0; border:1px solid #2c2a27;" onclick="resetAuth()">ログアウト</button>
+      <button class="pass-btn" style="background:#1c1c1c; color:#a8a8a8; border:1px solid #2c2c2c;" onclick="resetAuth()">ログアウト</button>
     </div>
   </div>
 
