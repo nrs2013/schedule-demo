@@ -302,7 +302,7 @@
     min-width: 0;
   }
   .tag-pill {
-    /* 四角ボックス：OFFは枠だけ、ONは塗りつぶし */
+    /* 四角ボックス：OFFも枠＋薄塗りで明確な箱、ONはカテゴリ色塗り */
     padding: 5px 0 4px;
     text-align: center;
     font-size: 13px;
@@ -313,10 +313,10 @@
     user-select: none;
     -webkit-user-select: none;
     -webkit-tap-highlight-color: transparent;
-    background: transparent;
-    border: 1px solid #2e2e2c;
+    background: #1c1c1c;
+    border: 1px solid #3a3a37;
     border-radius: 4px;
-    color: #4a4a47;
+    color: #5a5a55;
     transition: all 0.12s, transform 0.08s;
   }
   .tag-pill:active {
