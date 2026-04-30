@@ -248,6 +248,9 @@
     font-variant-numeric: tabular-nums;
     min-width: 22px;
   }
+  /* セトリ順モード: M# が主役、RH# が脇役 */
+  .rh-card.m-mode .rh-rhno { color: #a8a8a8; font-weight: 600; }
+  .rh-card.m-mode .rh-mno { color: #e89a4a; font-weight: 700; }
   .rh-title {
     flex: 1;
     font-size: 20px;
@@ -754,8 +757,8 @@
 
 <!-- 上タブ -->
 <div class="phone-top-tabs" id="top-tabs">
-  <button class="active">リハ順</button>
-  <button>セトリ順</button>
+  <button class="active" onclick="setSortMode('rh', this)">リハ順</button>
+  <button onclick="setSortMode('m', this)">セトリ順</button>
 </div>
 
 <!-- ボディ -->
@@ -770,12 +773,14 @@
     <div class="rh-countdown-card">
       <div class="rh-countdown-left">
         <div class="rh-countdown-label">リハ終了まで</div>
-        <div class="rh-countdown-meta">予定 <strong>16:00</strong> ・ 残り <span class="rh-remain-inline" id="remain-num">4</span> 曲</div>
+        <div class="rh-countdown-meta">予定 <strong>16:00</strong> ・ 残り <span class="rh-remain-inline" id="remain-num">13</span> 曲</div>
       </div>
       <div class="rh-countdown-time" id="rh-cd">02:34:18</div>
     </div>
 
-    <div class="rh-card done" id="card-1">
+    <div id="rh-card-list">
+
+    <div class="rh-card done" id="card-1" data-rh="1" data-m="1">
       <div class="rh-line1">
         <div class="rh-rhno">1</div>
         <div class="rh-mno">M1</div>
@@ -790,7 +795,7 @@
       <div class="rh-line3">場当たり込み・銀テのタイミング確認</div>
     </div>
 
-    <div class="rh-card now" id="card-2">
+    <div class="rh-card now" id="card-2" data-rh="2" data-m="3">
       <div class="rh-line1">
         <div class="rh-rhno">2</div>
         <div class="rh-mno">M3</div>
@@ -805,7 +810,7 @@
       <div class="rh-line3">Aメロ前ハケ動線確認</div>
     </div>
 
-    <div class="rh-card" id="card-3">
+    <div class="rh-card" id="card-3" data-rh="3" data-m="5">
       <div class="rh-line1">
         <div class="rh-rhno">3</div>
         <div class="rh-mno">M5</div>
@@ -820,13 +825,41 @@
       <div class="rh-line3">セリ上昇 Q→17 / 振付確認</div>
     </div>
 
-    <div class="rh-card" id="card-4">
+    <div class="rh-card" id="card-4" data-rh="4" data-m="2">
       <div class="rh-line1">
         <div class="rh-rhno">4</div>
+        <div class="rh-mno">M2</div>
+        <div class="rh-title">摩擦係数</div>
+        <div class="rh-time">3:48</div>
+        <button class="finish-btn disabled" onclick="toggleFinish('card-4')"><span>終了</span></button>
+      </div>
+      <div class="rh-line2">
+        <span class="tag-pill monitor">モニター</span>
+      </div>
+      <div class="rh-line3">2サビ後の煽り尺確認</div>
+    </div>
+
+    <div class="rh-card" id="card-5" data-rh="5" data-m="6">
+      <div class="rh-line1">
+        <div class="rh-rhno">5</div>
+        <div class="rh-mno">M6</div>
+        <div class="rh-title">桜月</div>
+        <div class="rh-time">4:35</div>
+        <button class="finish-btn disabled" onclick="toggleFinish('card-5')"><span>終了</span></button>
+      </div>
+      <div class="rh-line2">
+        <span class="tag-pill bagari">場当たり</span>
+      </div>
+      <div class="rh-line3">バラード・マイクスタンド出し位置</div>
+    </div>
+
+    <div class="rh-card" id="card-6" data-rh="6" data-m="9">
+      <div class="rh-line1">
+        <div class="rh-rhno">6</div>
         <div class="rh-mno">M9</div>
         <div class="rh-title">承認欲求</div>
         <div class="rh-time">3:30</div>
-        <button class="finish-btn disabled" onclick="toggleFinish('card-4')"><span>終了</span></button>
+        <button class="finish-btn disabled" onclick="toggleFinish('card-6')"><span>終了</span></button>
       </div>
       <div class="rh-line2">
         <span class="tag-pill koutou">口答</span>
@@ -834,19 +867,123 @@
       <div class="rh-line3">MC前後の口答合わせ</div>
     </div>
 
-    <div class="rh-card" id="card-5">
+    <div class="rh-card" id="card-7" data-rh="7" data-m="11">
       <div class="rh-line1">
-        <div class="rh-rhno">5</div>
-        <div class="rh-mno">EN</div>
+        <div class="rh-rhno">7</div>
+        <div class="rh-mno">M11</div>
+        <div class="rh-title">何度でも何度でも</div>
+        <div class="rh-time">4:12</div>
+        <button class="finish-btn disabled" onclick="toggleFinish('card-7')"><span>終了</span></button>
+      </div>
+      <div class="rh-line2">
+        <span class="tag-pill oto">音</span>
+        <span class="tag-pill kikou">機構</span>
+      </div>
+      <div class="rh-line3">花道セリ + 火薬合わせ</div>
+    </div>
+
+    <div class="rh-card" id="card-8" data-rh="8" data-m="4">
+      <div class="rh-line1">
+        <div class="rh-rhno">8</div>
+        <div class="rh-mno">M4</div>
+        <div class="rh-title">五月雨よ</div>
+        <div class="rh-time">3:38</div>
+        <button class="finish-btn disabled" onclick="toggleFinish('card-8')"><span>終了</span></button>
+      </div>
+      <div class="rh-line2">
+        <span class="tag-pill monitor">モニター</span>
+      </div>
+      <div class="rh-line3">イヤモニ Lvチェック</div>
+    </div>
+
+    <div class="rh-card" id="card-9" data-rh="9" data-m="7">
+      <div class="rh-line1">
+        <div class="rh-rhno">9</div>
+        <div class="rh-mno">M7</div>
+        <div class="rh-title">自業自得</div>
+        <div class="rh-time">3:50</div>
+        <button class="finish-btn disabled" onclick="toggleFinish('card-9')"><span>終了</span></button>
+      </div>
+      <div class="rh-line2">
+        <span class="tag-pill bagari">場当たり</span>
+        <span class="tag-pill zentai">全体</span>
+      </div>
+      <div class="rh-line3">フォーメーション転換確認</div>
+    </div>
+
+    <div class="rh-card" id="card-10" data-rh="10" data-m="8">
+      <div class="rh-line1">
+        <div class="rh-rhno">10</div>
+        <div class="rh-mno">M8</div>
+        <div class="rh-title">隙間風よ</div>
+        <div class="rh-time">4:05</div>
+        <button class="finish-btn disabled" onclick="toggleFinish('card-10')"><span>終了</span></button>
+      </div>
+      <div class="rh-line2">
+        <span class="tag-pill kikou">機構</span>
+      </div>
+      <div class="rh-line3">セリ降下 Q→24</div>
+    </div>
+
+    <div class="rh-card" id="card-11" data-rh="11" data-m="10">
+      <div class="rh-line1">
+        <div class="rh-rhno">11</div>
+        <div class="rh-mno">M10</div>
+        <div class="rh-title">マチネとソワレ</div>
+        <div class="rh-time">4:22</div>
+        <button class="finish-btn disabled" onclick="toggleFinish('card-11')"><span>終了</span></button>
+      </div>
+      <div class="rh-line2">
+        <span class="tag-pill oto">音</span>
+      </div>
+      <div class="rh-line3">ストリングス・キュー確認</div>
+    </div>
+
+    <div class="rh-card" id="card-12" data-rh="12" data-m="12">
+      <div class="rh-line1">
+        <div class="rh-rhno">12</div>
+        <div class="rh-mno">M12</div>
+        <div class="rh-title">ジャマイカビール</div>
+        <div class="rh-time">3:55</div>
+        <button class="finish-btn disabled" onclick="toggleFinish('card-12')"><span>終了</span></button>
+      </div>
+      <div class="rh-line2">
+        <span class="tag-pill koutou">口答</span>
+        <span class="tag-pill zentai">全体</span>
+      </div>
+      <div class="rh-line3">煽り尺・MCのつなぎ確認</div>
+    </div>
+
+    <div class="rh-card" id="card-13" data-rh="13" data-m="13">
+      <div class="rh-line1">
+        <div class="rh-rhno">13</div>
+        <div class="rh-mno">M13</div>
         <div class="rh-title">Start over!</div>
         <div class="rh-time">4:01</div>
-        <button class="finish-btn disabled" onclick="toggleFinish('card-5')"><span>終了</span></button>
+        <button class="finish-btn disabled" onclick="toggleFinish('card-13')"><span>終了</span></button>
       </div>
       <div class="rh-line2">
         <span class="tag-pill zentai">全体</span>
       </div>
+      <div class="rh-line3">本編ラスト・退場までの動線</div>
+    </div>
+
+    <div class="rh-card" id="card-14" data-rh="14" data-m="14">
+      <div class="rh-line1">
+        <div class="rh-rhno">14</div>
+        <div class="rh-mno">EN</div>
+        <div class="rh-title">最終アンコール通し</div>
+        <div class="rh-time">8:30</div>
+        <button class="finish-btn disabled" onclick="toggleFinish('card-14')"><span>終了</span></button>
+      </div>
+      <div class="rh-line2">
+        <span class="tag-pill zentai">全体</span>
+        <span class="tag-pill kikou">機構</span>
+      </div>
       <div class="rh-line3">アンコール通し・銀テ2回目・退場まで</div>
     </div>
+
+    </div><!-- end #rh-card-list -->
 
     <div style="height:12px"></div>
   </div>
@@ -1363,6 +1500,30 @@ setInterval(() => {
 }, 1000);
 
 updateProgress();
+
+// 並び順切替: 'rh' = リハ順 / 'm' = セトリ順
+function setSortMode(mode, btn) {
+  // 上タブの active 切替
+  document.querySelectorAll('#top-tabs button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+
+  const list = document.getElementById('rh-card-list');
+  if (!list) return;
+  const cards = Array.from(list.querySelectorAll('.rh-card'));
+  const attr = (mode === 'm') ? 'data-m' : 'data-rh';
+  cards.sort((a, b) => {
+    const av = parseInt(a.getAttribute(attr), 10);
+    const bv = parseInt(b.getAttribute(attr), 10);
+    return av - bv;
+  });
+  cards.forEach(c => list.appendChild(c));
+
+  // セトリ順では M番号が主役、RH番号が脇役（色をスワップ）
+  cards.forEach(c => {
+    if (mode === 'm') c.classList.add('m-mode');
+    else c.classList.remove('m-mode');
+  });
+}
 
 // 5分刻みの時刻プルダウンを各 .time-pulldown に流し込む（00:00〜23:55）
 document.querySelectorAll('.time-pulldown').forEach(sel => {
