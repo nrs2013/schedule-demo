@@ -36,22 +36,22 @@
     height: 100dvh;
   }
 
-  /* ── ツアー日付セレクター（最上部の1行） ───────── */
+  /* ── ツアー日付セレクター（最上部・はっきり見える大きさで） ───────── */
   .tour-date-bar {
     flex-shrink: 0;
     display: flex;
     align-items: stretch;
     background: #141312;
     border-bottom: 1px solid #2c2c2c;
-    height: 42px;
+    height: 56px;
   }
   .tour-date-nav {
     background: transparent;
     border: none;
-    color: #787878;
-    font-size: 22px;
+    color: #a8a8a0;
+    font-size: 28px;
     font-weight: 400;
-    width: 42px;
+    width: 52px;
     cursor: pointer;
     padding: 0;
     -webkit-tap-highlight-color: transparent;
@@ -73,10 +73,10 @@
     padding: 0;
   }
   .tour-date-main {
-    font-size: 15px;
+    font-size: 21px;
     font-weight: 700;
     color: #e8e8e4;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.06em;
     font-variant-numeric: tabular-nums;
   }
   .tour-date-label {
@@ -1769,15 +1769,7 @@
 
   <!-- ════ 入り時間 ════ -->
   <div class="screen" id="screen-arrival">
-
-    <!-- 日付タブ（PC側で滞在期間を入れると自動生成される） -->
-    <div style="display:flex; gap:6px; margin-bottom:14px; overflow-x:auto;">
-      <button class="arrival-day" style="background:#1c1c1c; color:#a8a8a8; border:1px solid #2c2c2c; padding:8px 14px; border-radius:99px; font-size: 15px; font-weight:700; letter-spacing:0.1em; white-space:nowrap; cursor:pointer;">4/28 (火)</button>
-      <button class="arrival-day active" style="background:#3a3a3a; color:#d8d8d4; border:1px solid #6e6e6e; padding:8px 14px; border-radius:99px; font-size: 15px; font-weight:700; letter-spacing:0.1em; white-space:nowrap; cursor:pointer;">4/29 (水)</button>
-      <button class="arrival-day" style="background:#1c1c1c; color:#a8a8a8; border:1px solid #2c2c2c; padding:8px 14px; border-radius:99px; font-size: 15px; font-weight:700; letter-spacing:0.1em; white-space:nowrap; cursor:pointer;">4/30 (木)</button>
-      <button class="arrival-day" style="background:#1c1c1c; color:#a8a8a8; border:1px solid #2c2c2c; padding:8px 14px; border-radius:99px; font-size: 15px; font-weight:700; letter-spacing:0.1em; white-space:nowrap; cursor:pointer;">5/1 (金)</button>
-      <button class="arrival-day" style="background:#1c1c1c; color:#a8a8a8; border:1px solid #2c2c2c; padding:8px 14px; border-radius:99px; font-size: 15px; font-weight:700; letter-spacing:0.1em; white-space:nowrap; cursor:pointer;">5/2 (土)</button>
-    </div>
+    <div style="height: 8px;"></div>
 
     <!-- 自分の入り時間を追加するエリア -->
     <div style="background:#242424; border:1px dashed #4a4a4a; border-radius:6px; padding:14px; margin-bottom:14px;">
