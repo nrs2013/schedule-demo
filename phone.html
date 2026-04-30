@@ -121,9 +121,11 @@
     flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
-    padding: 12px;
+    padding: 0 12px 12px;
     -webkit-overflow-scrolling: touch;
   }
+  /* スクリーンの上に余白を持たせる代わり、sticky countdown の上に塗り潰しを */
+  #screen-rh { padding-top: 0; }
 
   /* スクリーン切替（sticky を効かせるため block に） */
   .screen { display: none; }
@@ -147,22 +149,25 @@
   }
   body.authed .auth-bar { display: block; }
 
-  /* ── REHEARSAL 全体カウントダウン（画面上部に固定）───────── */
+  /* ── REHEARSAL 全体カウントダウン（画面上部に完全固定）───────── */
+  .rh-countdown-wrap {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: #1a1a1a;
+    margin: 0 -12px;
+    padding: 12px 12px 8px;
+    box-shadow: 0 6px 12px rgba(0,0,0,0.5);
+  }
   .rh-countdown-card {
     background: #242424;
     border: 1px solid #2c2c2c;
     border-radius: 8px;
     padding: 8px 14px;
-    margin-bottom: 8px;
-    position: sticky;
-    top: 0;
-    z-index: 20;
-    overflow: hidden;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    box-shadow: 0 6px 12px rgba(0,0,0,0.5);
   }
   .rh-countdown-card::after {
     content: '';
@@ -278,14 +283,13 @@
     letter-spacing: 0.02em;
   }
 
-  /* 2行目: タグ7個を等幅グリッドで（チップ廃止・テキスト＋下線方式） */
+  /* 2行目: タグ7個を等幅グリッドで（四角ボックス・OFFは枠だけ／ONは塗り） */
   .rh-line2 {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 0;
+    gap: 4px;
     align-items: stretch;
     margin: 2px 0 9px;
-    padding: 0 2px;
   }
   /* 3行目: メモ（自由入力） */
   .rh-line3 {
@@ -298,7 +302,7 @@
     min-width: 0;
   }
   .tag-pill {
-    /* チップ感を完全廃止：透明背景＋テキストのみ。下線でON状態を示す */
+    /* 四角ボックス：OFFは枠だけ、ONは塗りつぶし */
     padding: 5px 0 4px;
     text-align: center;
     font-size: 13px;
@@ -310,22 +314,22 @@
     -webkit-user-select: none;
     -webkit-tap-highlight-color: transparent;
     background: transparent;
-    border: none;
-    border-bottom: 2px solid transparent;
+    border: 1px solid #2e2e2c;
+    border-radius: 4px;
     color: #4a4a47;
-    transition: color 0.12s, border-color 0.12s, transform 0.08s;
+    transition: all 0.12s, transform 0.08s;
   }
   .tag-pill:active {
     transform: translateY(1px);
   }
-  /* 点灯時：文字色＋下線でカテゴリ色を表示（背景塗りなし） */
-  .tag-pill.on.monitor { color: #a8d4e8; border-bottom-color: #5b9bd5; }
-  .tag-pill.on.bagari  { color: #f0b09c; border-bottom-color: #e07a5f; }
-  .tag-pill.on.oto     { color: #f0d8a0; border-bottom-color: #e6c870; }
-  .tag-pill.on.koutou  { color: #b8d9b0; border-bottom-color: #7ec27a; }
-  .tag-pill.on.shoumei { color: #d8b0e0; border-bottom-color: #c186c8; }
-  .tag-pill.on.kikou   { color: #a8dcde; border-bottom-color: #6ec6c8; }
-  .tag-pill.on.zentai  { color: #e8c890; border-bottom-color: #d4a574; }
+  /* 点灯時：背景塗りつぶし＋色付き枠＋色付き文字 */
+  .tag-pill.on.monitor { background: rgba(91,155,213,0.18);  border-color: rgba(91,155,213,0.7);  color: #a8d4e8; }
+  .tag-pill.on.bagari  { background: rgba(224,122,95,0.18);  border-color: rgba(224,122,95,0.7);  color: #f0b09c; }
+  .tag-pill.on.oto     { background: rgba(230,200,112,0.18); border-color: rgba(230,200,112,0.7); color: #f0d8a0; }
+  .tag-pill.on.koutou  { background: rgba(126,194,122,0.18); border-color: rgba(126,194,122,0.7); color: #b8d9b0; }
+  .tag-pill.on.shoumei { background: rgba(193,134,200,0.18); border-color: rgba(193,134,200,0.7); color: #d8b0e0; }
+  .tag-pill.on.kikou   { background: rgba(110,198,200,0.18); border-color: rgba(110,198,200,0.7); color: #a8dcde; }
+  .tag-pill.on.zentai  { background: rgba(212,165,116,0.18); border-color: rgba(212,165,116,0.7); color: #e8c890; }
 
   /* 終了ボタン（押しやすく拡大、行内に収める） */
   .finish-btn {
@@ -788,13 +792,15 @@
 
   <!-- ════ RH ════ -->
   <div class="screen active" id="screen-rh">
-    <!-- リハーサル全体カウントダウン -->
-    <div class="rh-countdown-card">
-      <div class="rh-countdown-left">
-        <div class="rh-countdown-label">リハ終了まで</div>
-        <div class="rh-countdown-meta">予定 <strong>16:00</strong> ・ 残り <span class="rh-remain-inline" id="remain-num">13</span> 曲</div>
+    <!-- リハーサル全体カウントダウン（sticky wrapper） -->
+    <div class="rh-countdown-wrap">
+      <div class="rh-countdown-card">
+        <div class="rh-countdown-left">
+          <div class="rh-countdown-label">リハ終了まで</div>
+          <div class="rh-countdown-meta">予定 <strong>16:00</strong> ・ 残り <span class="rh-remain-inline" id="remain-num">13</span> 曲</div>
+        </div>
+        <div class="rh-countdown-time" id="rh-cd">02:34:18</div>
       </div>
-      <div class="rh-countdown-time" id="rh-cd">02:34:18</div>
     </div>
 
     <div id="rh-card-list">
