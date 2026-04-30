@@ -145,13 +145,59 @@
     font-weight: 700;
   }
   .tour-date-range {
-    padding: 10px 16px 6px;
+    padding: 10px 16px;
     font-size: 11px;
     color: #787878;
     letter-spacing: 0.05em;
     border-bottom: 1px solid #2c2c2c;
   }
   .tour-date-range strong { color: #e89a4a; font-weight: 700; }
+  .tour-date-edit {
+    padding: 14px 16px 18px;
+    border-bottom: 1px solid #2c2c2c;
+    background: #1c1b19;
+  }
+  .tour-date-edit-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .tour-date-edit-label {
+    font-size: 13px;
+    color: #d8d8d4;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+  }
+  .tour-date-edit input[type="date"] {
+    background: #242322;
+    border: 1px solid #3a3a37;
+    border-radius: 6px;
+    color: #e89a4a;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 700;
+    padding: 8px 12px;
+    -webkit-appearance: none;
+    appearance: none;
+    font-variant-numeric: tabular-nums;
+  }
+  .tour-date-save {
+    width: 100%;
+    margin-top: 4px;
+    background: #e89a4a;
+    color: #0a0a08;
+    border: none;
+    border-radius: 6px;
+    padding: 12px;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    cursor: pointer;
+    font-family: inherit;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #tour-edit-toggle.active { color: #e89a4a; }
   .tour-date-list {
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
@@ -591,15 +637,15 @@
     align-items: stretch;
     margin: 2px 0 9px;
   }
-  /* 3行目: メモ（自由入力） */
+  /* 3行目: メモ（自由入力／改行で縦に伸びる） */
   .rh-line3 {
     font-size: 15px;
     color: #e8e8e4 !important;
-    line-height: 1.4;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    line-height: 1.5;
     min-width: 0;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
   }
   .tag-pill {
     /* OFF: 文字だけ（枠なし・背景なし・グレー）／ ON: カテゴリ色で四角に塗る */
@@ -1169,7 +1215,6 @@
   <button class="tour-date-nav" onclick="changeTourDay(-1)">‹</button>
   <button class="tour-date-display" onclick="openDatePicker()">
     <span class="tour-date-main" id="tour-date-main">4/29 (水)</span>
-    <span class="tour-date-label rehearsal" id="tour-date-label">リハーサル</span>
   </button>
   <button class="tour-date-nav" onclick="changeTourDay(1)">›</button>
 </div>
@@ -2075,11 +2120,30 @@
     <div class="tour-date-modal-header">
       <button onclick="closeDatePicker()">閉じる</button>
       <div class="tour-date-modal-title">ツアー日程</div>
-      <button>編集</button>
+      <button id="tour-edit-toggle" onclick="toggleTourEdit()">編集</button>
     </div>
-    <div class="tour-date-range">
-      会場入り <strong>4/27</strong> 〜 千秋楽 <strong>5/3</strong>（7日間）
+
+    <!-- ツアー期間（編集モードでは入力可） -->
+    <div class="tour-date-range" id="tour-date-range">
+      会場入り <strong id="tour-range-start">4/27</strong> 〜 千秋楽 <strong id="tour-range-end">5/3</strong>（<span id="tour-range-days">7</span>日間）
     </div>
+
+    <!-- 編集フォーム（デフォルト非表示） -->
+    <div class="tour-date-edit" id="tour-date-edit" style="display:none;">
+      <div class="tour-date-edit-row">
+        <span class="tour-date-edit-label">会場入り</span>
+        <input type="date" id="tour-start-input" value="2026-04-27" />
+      </div>
+      <div class="tour-date-edit-row">
+        <span class="tour-date-edit-label">千秋楽</span>
+        <input type="date" id="tour-end-input" value="2026-05-03" />
+      </div>
+      <button class="tour-date-save" onclick="saveTourRange()">保存</button>
+      <div style="font-size:11px; color:#5a5a55; text-align:center; margin-top:8px; letter-spacing:0.05em;">
+        ※ PCと相互リンク（あとから書いた人が優先）
+      </div>
+    </div>
+
     <div class="tour-date-list" id="tour-date-list"></div>
   </div>
 </div>
@@ -2360,16 +2424,27 @@ function closeRhPicker() {
 // 初期：リハ順モード（×カードは隠れる）
 document.body.classList.add('sort-rh');
 
-// ── ツアー日程（モック）──
-const tourDays = [
-  { date: '4/27', dow: '月', label: '仕込み1日目',  cls: 'setup' },
-  { date: '4/28', dow: '火', label: '仕込み2日目',  cls: 'setup' },
-  { date: '4/29', dow: '水', label: 'リハーサル',   cls: 'rehearsal' },
-  { date: '4/30', dow: '木', label: 'GP',           cls: 'gp' },
-  { date: '5/1',  dow: '金', label: '本番初日',     cls: 'show' },
-  { date: '5/2',  dow: '土', label: '本番2日目',    cls: 'show' },
-  { date: '5/3',  dow: '日', label: '千秋楽',       cls: 'show' },
-];
+// ── ツアー日程（モック・期間→日数自動展開）──
+const TOUR_YEAR = 2026;
+let tourStart = '2026-04-27';
+let tourEnd   = '2026-05-03';
+let tourDays = [];
+let selectedDayIdx = 0;
+
+function buildTourDays(startStr, endStr) {
+  const start = new Date(startStr);
+  const end = new Date(endStr);
+  if (isNaN(start) || isNaN(end) || start > end) return [];
+  const days = [];
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    days.push({
+      date: `${d.getMonth() + 1}/${d.getDate()}`,
+      dow: '日月火水木金土'[d.getDay()],
+      iso: d.toISOString().slice(0, 10),
+    });
+  }
+  return days;
+}
 
 // 端末の今日の日付からツアー内の該当日を自動選択
 function findTodayIndex() {
@@ -2377,29 +2452,53 @@ function findTodayIndex() {
   const todayStr = `${now.getMonth() + 1}/${now.getDate()}`;
   const idx = tourDays.findIndex(d => d.date === todayStr);
   if (idx >= 0) {
-    tourDays[idx].today = true;
+    tourDays.forEach((d, i) => d.today = (i === idx));
     return idx;
   }
-  // ツアー範囲外なら：
-  // 過去日 → 千秋楽、未来日 → 初日
   const todayMs = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-  const firstDay = parseDate(tourDays[0].date, now.getFullYear());
-  if (todayMs < firstDay) return 0;
+  if (tourDays.length === 0) return 0;
+  const firstMs = new Date(tourDays[0].iso).getTime();
+  if (todayMs < firstMs) return 0;
   return tourDays.length - 1;
 }
-function parseDate(mmdd, year) {
-  const [m, d] = mmdd.split('/').map(Number);
-  return new Date(year, m - 1, d).getTime();
+
+function refreshTour() {
+  tourDays = buildTourDays(tourStart, tourEnd);
+  selectedDayIdx = findTodayIndex();
+  // 期間サマリ表示更新
+  if (tourDays.length) {
+    document.getElementById('tour-range-start').textContent = tourDays[0].date;
+    document.getElementById('tour-range-end').textContent = tourDays[tourDays.length - 1].date;
+    document.getElementById('tour-range-days').textContent = tourDays.length;
+  }
+  renderDateBar();
+  renderDateList();
 }
 
-let selectedDayIdx = findTodayIndex();
+function toggleTourEdit() {
+  const edit = document.getElementById('tour-date-edit');
+  const toggleBtn = document.getElementById('tour-edit-toggle');
+  const isOpen = edit.style.display !== 'none';
+  edit.style.display = isOpen ? 'none' : 'block';
+  toggleBtn.textContent = isOpen ? '編集' : '完了';
+  toggleBtn.classList.toggle('active', !isOpen);
+}
+
+function saveTourRange() {
+  const s = document.getElementById('tour-start-input').value;
+  const e = document.getElementById('tour-end-input').value;
+  if (!s || !e) { alert('日付を入力してください'); return; }
+  if (s > e) { alert('会場入りより千秋楽が前になっています'); return; }
+  tourStart = s;
+  tourEnd = e;
+  refreshTour();
+  toggleTourEdit();
+}
 
 function renderDateBar() {
+  if (!tourDays.length) return;
   const d = tourDays[selectedDayIdx];
   document.getElementById('tour-date-main').textContent = `${d.date} (${d.dow})`;
-  const label = document.getElementById('tour-date-label');
-  label.textContent = d.label;
-  label.className = 'tour-date-label ' + d.cls;
 }
 
 function renderDateList() {
@@ -2413,7 +2512,6 @@ function renderDateList() {
         <div class="tour-date-item-date">${d.date}</div>
         <div class="tour-date-item-dow">(${d.dow})</div>
       </div>
-      <div class="tour-date-label ${d.cls}">${d.label}</div>
     </div>`;
   }).join('');
 }
@@ -2441,7 +2539,8 @@ function changeTourDay(delta) {
   renderDateBar();
 }
 
-renderDateBar();
+// 初期化：ツアー期間からカレンダーを作って今日に合わせる
+refreshTour();
 </script>
 </body>
 </html>
