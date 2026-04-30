@@ -426,7 +426,7 @@
     min-width: 0;
   }
   .tag-pill {
-    /* 四角ボックス：OFFは枠線だけ・背景透明・文字グレー、ONはカテゴリ色塗り */
+    /* OFF: 文字だけ（枠なし・背景なし・グレー）／ ON: カテゴリ色で四角に塗る */
     padding: 5px 2px 4px;
     text-align: center;
     font-size: 12px;
@@ -440,7 +440,7 @@
     white-space: nowrap;
     overflow: hidden;
     background: transparent;
-    border: 1px solid #353532;
+    border: 1px solid transparent;
     border-radius: 4px;
     color: #6a6a64;
     transition: all 0.12s, transform 0.08s;
