@@ -906,6 +906,27 @@
     color: #e89a4a;
     font-variant-numeric: tabular-nums;
     letter-spacing: 0.02em;
+    background: transparent;
+    border: none;
+    font-family: inherit;
+    padding: 0;
+    text-align: right;
+    min-width: 90px;
+    -webkit-appearance: none;
+    appearance: none;
+    cursor: text;
+  }
+  .schedule-row-time::-webkit-calendar-picker-indicator { display: none; }
+  body:not(.authed) .schedule-row-time {
+    pointer-events: none;
+    cursor: default;
+  }
+  body.authed .schedule-row-time {
+    cursor: pointer;
+  }
+  body.authed .schedule-row-time:hover, body.authed .schedule-row-time:focus {
+    color: #f5b06a;
+    outline: none;
   }
   .schedule-row.muted .schedule-row-time { color: #787878; font-weight: 600; font-size: 22px; }
   .schedule-date {
@@ -963,11 +984,6 @@
     text-overflow: clip;
   }
   .phone-bottom-tabs button.active { color: #e89a4a; }
-  /* 認証前：PASS以外のタブはロック（押せない・薄い） */
-  body:not(.authed) .phone-bottom-tabs button:not([data-pass]) {
-    opacity: 0.30;
-    pointer-events: none;
-  }
   /* 認証後：PASSタブが緑に点灯（認証済み表示の代わり） */
   body.authed .phone-bottom-tabs button[data-pass] {
     color: #7ec27a;
@@ -1020,11 +1036,11 @@
     <div class="schedule-card">
       <div class="schedule-row">
         <div class="schedule-row-label">リハーサル開始</div>
-        <div class="schedule-row-time">10:00</div>
+        <input class="schedule-row-time" type="time" value="10:00" readonly />
       </div>
       <div class="schedule-row">
         <div class="schedule-row-label">リハーサル終了</div>
-        <div class="schedule-row-time">16:00</div>
+        <input class="schedule-row-time" type="time" value="16:00" readonly />
       </div>
     </div>
 
@@ -1032,23 +1048,122 @@
     <div class="schedule-card">
       <div class="schedule-row muted">
         <div class="schedule-row-label">客入れ</div>
-        <div class="schedule-row-time">17:30</div>
+        <input class="schedule-row-time" type="time" value="17:30" readonly />
       </div>
       <div class="schedule-row">
         <div class="schedule-row-label">本番開始</div>
-        <div class="schedule-row-time">18:30</div>
+        <input class="schedule-row-time" type="time" value="18:30" readonly />
       </div>
+    </div>
+
+    <div style="font-size:11px; color:#5a5a55; text-align:center; margin-top:18px; letter-spacing:0.08em;">
+      ※ PCと相互リンク（あとから書いた人が優先）
     </div>
   </div>
 
   <!-- ════ テクリハ ════ -->
   <div class="screen" id="screen-tekuriha">
-    <div class="schedule-date">テクリハ — 17:00 開始予定</div>
-    <div class="tekuriha-empty">
-      <strong>テクリハ画面（仮）</strong>
-      ここに「1幕通し」「2幕通し」「カーテンコール通し」<br>
-      など、全体通しの単位カードが並びます。<br>
-      8タグもこちらで使えるようになります。
+    <!-- テクリハ全体カウントダウン -->
+    <div class="rh-countdown-wrap">
+      <div class="rh-countdown-card">
+        <div class="rh-countdown-left">
+          <div class="rh-countdown-label">テクリハ終了まで</div>
+          <div class="rh-countdown-meta">予定 <strong>21:00</strong> ・ 残り <span class="rh-remain-inline">4</span> 項目</div>
+        </div>
+        <div class="rh-countdown-time">02:34:18</div>
+      </div>
+    </div>
+
+    <div id="tekuriha-card-list">
+
+    <div class="rh-card" data-rh="1" data-m="1">
+      <div class="rh-line1">
+        <button type="button" class="rh-rhno" data-value="1" onclick="openRhPicker(this)">1</button>
+        <div class="rh-mno">B1</div>
+        <div class="rh-title">OPENING〜M5 通し</div>
+        <div class="rh-time">15:00</div>
+        <button class="finish-btn"><span>終了</span></button>
+      </div>
+      <div class="rh-line2">
+        <span class="tag-pill monitor on">モニター</span>
+        <span class="tag-pill bagari">場当たり</span>
+        <span class="tag-pill oto on">音</span>
+        <span class="tag-pill koutou">口答</span>
+        <span class="tag-pill shoumei on">照明</span>
+        <span class="tag-pill kikou">機構</span>
+        <span class="tag-pill float">フロート</span>
+        <span class="tag-pill block">ブロック</span>
+      </div>
+      <div class="rh-line3" contenteditable="true">VCR尺・LED連動チェック・銀テ仕込み</div>
+    </div>
+
+    <div class="rh-card" data-rh="2" data-m="2">
+      <div class="rh-line1">
+        <button type="button" class="rh-rhno" data-value="2" onclick="openRhPicker(this)">2</button>
+        <div class="rh-mno">B2</div>
+        <div class="rh-title">M6〜M9 通し</div>
+        <div class="rh-time">12:00</div>
+        <button class="finish-btn"><span>終了</span></button>
+      </div>
+      <div class="rh-line2">
+        <span class="tag-pill monitor">モニター</span>
+        <span class="tag-pill bagari on">場当たり</span>
+        <span class="tag-pill oto">音</span>
+        <span class="tag-pill koutou">口答</span>
+        <span class="tag-pill shoumei">照明</span>
+        <span class="tag-pill kikou on">機構</span>
+        <span class="tag-pill float on">フロート</span>
+        <span class="tag-pill block">ブロック</span>
+      </div>
+      <div class="rh-line3" contenteditable="true">花道セリ稼働・転換通し</div>
+    </div>
+
+    <div class="rh-card" data-rh="3" data-m="3">
+      <div class="rh-line1">
+        <button type="button" class="rh-rhno" data-value="3" onclick="openRhPicker(this)">3</button>
+        <div class="rh-mno">B3</div>
+        <div class="rh-title">M10〜ENDING 通し</div>
+        <div class="rh-time">10:00</div>
+        <button class="finish-btn"><span>終了</span></button>
+      </div>
+      <div class="rh-line2">
+        <span class="tag-pill monitor on">モニター</span>
+        <span class="tag-pill bagari">場当たり</span>
+        <span class="tag-pill oto on">音</span>
+        <span class="tag-pill koutou">口答</span>
+        <span class="tag-pill shoumei on">照明</span>
+        <span class="tag-pill kikou">機構</span>
+        <span class="tag-pill float">フロート</span>
+        <span class="tag-pill block on">ブロック</span>
+      </div>
+      <div class="rh-line3" contenteditable="true">バラード〜本編ラスト・退場動線</div>
+    </div>
+
+    <div class="rh-card" data-rh="4" data-m="4">
+      <div class="rh-line1">
+        <button type="button" class="rh-rhno" data-value="4" onclick="openRhPicker(this)">4</button>
+        <div class="rh-mno">EN</div>
+        <div class="rh-title">アンコール通し</div>
+        <div class="rh-time">8:00</div>
+        <button class="finish-btn"><span>終了</span></button>
+      </div>
+      <div class="rh-line2">
+        <span class="tag-pill monitor">モニター</span>
+        <span class="tag-pill bagari">場当たり</span>
+        <span class="tag-pill oto on">音</span>
+        <span class="tag-pill koutou">口答</span>
+        <span class="tag-pill shoumei on">照明</span>
+        <span class="tag-pill kikou">機構</span>
+        <span class="tag-pill float">フロート</span>
+        <span class="tag-pill block on">ブロック</span>
+      </div>
+      <div class="rh-line3" contenteditable="true">銀テ2回目・退場・カーテンコールまで</div>
+    </div>
+
+    </div>
+
+    <div style="font-size:11px; color:#5a5a55; text-align:center; margin:18px 0; letter-spacing:0.08em;">
+      ※ PCと相互リンク（あとから書いた人が優先）
     </div>
   </div>
 
@@ -1812,7 +1927,7 @@ function show(id) {
 
   // 上タブは RH のときだけ表示
   const topTabs = document.getElementById('top-tabs');
-  if (topTabs) topTabs.style.display = (id === 'rh') ? 'flex' : 'none';
+  if (topTabs) topTabs.style.display = (id === 'rh' || id === 'tekuriha') ? 'flex' : 'none';
 
   const body = document.getElementById('body');
   if (body) body.scrollTop = 0;
@@ -1825,8 +1940,10 @@ function tryUnlock() {
     document.getElementById('pass-input-view').style.display = 'none';
     document.getElementById('pass-unlocked-view').style.display = 'flex';
     document.body.classList.add('authed');
-    // 終了ボタン全部有効化（done 状態のは緑のまま、未完のは紫のクリック可能に）
+    // 終了ボタン全部有効化
     document.querySelectorAll('.finish-btn.disabled').forEach(b => b.classList.remove('disabled'));
+    // SCHEDULE時間も編集可能に
+    document.querySelectorAll('.schedule-row-time').forEach(i => i.removeAttribute('readonly'));
   } else {
     alert('パスワードが違います（デモ用: 1234）');
   }
@@ -1840,6 +1957,8 @@ function resetAuth() {
   document.body.classList.remove('authed');
   // done でないカードのボタンを再ロック
   document.querySelectorAll('.rh-card:not(.done) .finish-btn').forEach(b => b.classList.add('disabled'));
+  // SCHEDULE時間も再ロック
+  document.querySelectorAll('.schedule-row-time').forEach(i => i.setAttribute('readonly', ''));
 }
 
 // 終了ボタン トグル動作: 認証済みなら done のオン/オフを切り替え
@@ -1905,7 +2024,10 @@ function setSortMode(mode, btn) {
   document.querySelectorAll('#top-tabs button').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
 
-  const list = document.getElementById('rh-card-list');
+  // 現在表示中の画面のカードリストを対象に
+  const activeScreen = document.querySelector('.screen.active');
+  if (!activeScreen) return;
+  const list = activeScreen.querySelector('#rh-card-list, #tekuriha-card-list');
   if (!list) return;
   const cards = Array.from(list.querySelectorAll('.rh-card'));
   const attr = (mode === 'm') ? 'data-m' : 'data-rh';
