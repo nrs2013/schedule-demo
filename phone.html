@@ -258,6 +258,17 @@
     pointer-events: none;
     cursor: default;
   }
+  /* × 選択時：RH#は赤系グレーに、カード全体も「リハなし」感に */
+  .rh-card.no-rh .rh-rhno {
+    color: #5a5a55;
+    font-weight: 400;
+  }
+  .rh-card.no-rh .rh-title {
+    color: #787878;
+  }
+  .rh-card.no-rh {
+    opacity: 0.55;
+  }
 
   /* ── ホイール・ピッカー（時計風くるくる）───────── */
   .picker-overlay {
@@ -318,16 +329,22 @@
   }
   .picker-wheel {
     height: 100%;
+    width: 100%;
     overflow-y: scroll;
+    overflow-x: hidden;
     scroll-snap-type: y mandatory;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
+    overscroll-behavior: contain;
   }
   .picker-wheel::-webkit-scrollbar { display: none; }
-  .picker-wheel-spacer { height: 80px; }
+  .picker-wheel-spacer { height: 80px; width: 100%; }
   .picker-wheel-item {
     height: 40px;
+    width: 100%;
+    box-sizing: border-box;
     scroll-snap-align: center;
+    scroll-snap-stop: always;
     text-align: center;
     font-size: 28px;
     font-weight: 700;
@@ -336,14 +353,18 @@
     align-items: center;
     justify-content: center;
     font-variant-numeric: tabular-nums;
-    transition: color 0.12s, transform 0.12s, opacity 0.12s;
+    transition: color 0.12s, opacity 0.12s;
     opacity: 0.55;
+    transform-origin: center center;
+    will-change: color, opacity;
   }
   .picker-wheel-item.center {
     color: #e89a4a;
-    transform: scale(1.18);
     opacity: 1;
   }
+  /* × は赤系で目立たせる */
+  .picker-wheel-item[data-value="x"] { font-size: 32px; }
+  .picker-wheel-item[data-value="x"].center { color: #e07a5f; }
   .picker-wheel-item.near {
     color: #a8a8a8;
     opacity: 0.85;
@@ -1820,8 +1841,9 @@ function openRhPicker(btn) {
   if (!authed) { show('pass'); return; }
   activeRhBtn = btn;
   const wheel = document.getElementById('rh-picker-wheel');
-  // アイテム生成: 1〜14
+  // アイテム生成: ×（リハなし）+ 1〜14
   let html = '<div class="picker-wheel-spacer"></div>';
+  html += `<div class="picker-wheel-item" data-value="x">×</div>`;
   for (let i = 1; i <= 14; i++) {
     html += `<div class="picker-wheel-item" data-value="${i}">${i}</div>`;
   }
@@ -1831,14 +1853,11 @@ function openRhPicker(btn) {
   const overlay = document.getElementById('rh-picker');
   overlay.classList.add('show');
 
-  // スクロール位置を現在値に合わせる
-  const cur = parseInt(btn.dataset.value, 10) || 1;
+  // スクロール位置を現在値に合わせる（×=index0、1=index1、…14=index14）
+  const cur = btn.dataset.value;
+  const idx = (cur === 'x') ? 0 : Math.max(0, Math.min(14, parseInt(cur, 10) || 1));
   setTimeout(() => {
-    const items = wheel.querySelectorAll('.picker-wheel-item');
-    if (items[cur - 1]) {
-      // scrollTop で正確に中央寄せ
-      wheel.scrollTop = (cur - 1) * 40;
-    }
+    wheel.scrollTop = idx * 40;
     updatePickerHighlight();
   }, 20);
 
@@ -1878,10 +1897,18 @@ function commitRhPicker() {
   if (center && activeRhBtn) {
     const v = center.dataset.value;
     activeRhBtn.dataset.value = v;
-    activeRhBtn.textContent = v;
-    // カードのdata-rhも更新（並び替え用）
+    activeRhBtn.textContent = (v === 'x') ? '×' : v;
+    // カードに「リハなし」状態をマーク
     const card = activeRhBtn.closest('.rh-card');
-    if (card) card.setAttribute('data-rh', v);
+    if (card) {
+      if (v === 'x') {
+        card.classList.add('no-rh');
+        card.setAttribute('data-rh', '99'); // ソート時は最後尾
+      } else {
+        card.classList.remove('no-rh');
+        card.setAttribute('data-rh', v);
+      }
+    }
   }
   closeRhPicker();
 }
