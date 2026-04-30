@@ -246,6 +246,28 @@
     line-height: 1;
     font-variant-numeric: tabular-nums;
     min-width: 16px;
+    /* select 用にネイティブ装飾を消す */
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background: transparent;
+    border: none;
+    padding: 4px 4px 4px 0;
+    margin: 0;
+    cursor: pointer;
+    text-align: left;
+  }
+  .rh-rhno::-ms-expand { display: none; }
+  .rh-rhno option {
+    background: #242424;
+    color: #e89a4a;
+    font-size: 16px;
+    font-weight: 700;
+  }
+  /* スマホで認証前は変更できない様にする */
+  body:not(.authed) .rh-rhno {
+    pointer-events: none;
+    cursor: default;
   }
   .rh-mno {
     font-size: 20px;
@@ -283,11 +305,11 @@
     letter-spacing: 0.02em;
   }
 
-  /* 2行目: タグ7個を等幅グリッドで（四角ボックス・OFFは枠だけ／ONは塗り） */
+  /* 2行目: タグ7個を四角ボックスで（モニター/場当たりは幅広めで折り返し防止） */
   .rh-line2 {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 4px;
+    grid-template-columns: 1.35fr 1.35fr 0.55fr 1fr 1fr 1fr 1fr;
+    gap: 3px;
     align-items: stretch;
     margin: 2px 0 9px;
   }
@@ -303,16 +325,18 @@
   }
   .tag-pill {
     /* 四角ボックス：OFFも枠＋薄塗りで明確な箱、ONはカテゴリ色塗り */
-    padding: 5px 0 4px;
+    padding: 5px 2px 4px;
     text-align: center;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 500;
-    letter-spacing: 0.04em;
+    letter-spacing: 0;
     line-height: 1.2;
     cursor: pointer;
     user-select: none;
     -webkit-user-select: none;
     -webkit-tap-highlight-color: transparent;
+    white-space: nowrap;
+    overflow: hidden;
     background: #1c1c1c;
     border: 1px solid #3a3a37;
     border-radius: 4px;
@@ -751,6 +775,19 @@
     padding-top: 6px;
   }
   .phone-bottom-tabs button.active { color: #e89a4a; }
+  /* 認証前：PASS以外のタブはロック（押せない・薄い） */
+  body:not(.authed) .phone-bottom-tabs button:not([data-pass]) {
+    opacity: 0.30;
+    pointer-events: none;
+  }
+  /* 認証後：PASSタブが緑に点灯（認証済み表示の代わり） */
+  body.authed .phone-bottom-tabs button[data-pass] {
+    color: #7ec27a;
+  }
+  body.authed .phone-bottom-tabs button[data-pass] .ico {
+    color: #7ec27a;
+    text-shadow: 0 0 8px rgba(126,194,122,0.55);
+  }
   .phone-bottom-tabs button .ico {
     font-size: 26px; line-height: 1;
   }
@@ -780,15 +817,12 @@
 
 <!-- 上タブ -->
 <div class="phone-top-tabs" id="top-tabs">
-  <button class="active" onclick="setSortMode('rh', this)">リハ順</button>
   <button onclick="setSortMode('m', this)">セトリ順</button>
+  <button class="active" onclick="setSortMode('rh', this)">リハ順</button>
 </div>
 
 <!-- ボディ -->
 <div class="phone-body" id="body">
-
-  <!-- 認証済バナー -->
-  <div class="auth-bar">✓ 認証済み — RH の進行操作が可能</div>
 
   <!-- ════ RH ════ -->
   <div class="screen active" id="screen-rh">
@@ -807,7 +841,7 @@
 
     <div class="rh-card done" id="card-1" data-rh="1" data-m="1">
       <div class="rh-line1">
-        <div class="rh-rhno">1</div>
+        <select class="rh-rhno"><option value="1" selected>1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option></select>
         <div class="rh-mno">M1</div>
         <div class="rh-title">OPENING VCR + Start Of The Show</div>
         <div class="rh-time">3:42</div>
@@ -827,7 +861,7 @@
 
     <div class="rh-card now" id="card-2" data-rh="2" data-m="3">
       <div class="rh-line1">
-        <div class="rh-rhno">2</div>
+        <select class="rh-rhno"><option value="1">1</option><option value="2" selected>2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option></select>
         <div class="rh-mno">M3</div>
         <div class="rh-title">Buddies</div>
         <div class="rh-time">4:18</div>
@@ -847,7 +881,7 @@
 
     <div class="rh-card" id="card-3" data-rh="3" data-m="5">
       <div class="rh-line1">
-        <div class="rh-rhno">3</div>
+        <select class="rh-rhno"><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option></select>
         <div class="rh-mno">M5</div>
         <div class="rh-title">流れ弾</div>
         <div class="rh-time">3:55</div>
@@ -867,7 +901,7 @@
 
     <div class="rh-card" id="card-4" data-rh="4" data-m="2">
       <div class="rh-line1">
-        <div class="rh-rhno">4</div>
+        <select class="rh-rhno"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4" selected>4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option></select>
         <div class="rh-mno">M2</div>
         <div class="rh-title">摩擦係数</div>
         <div class="rh-time">3:48</div>
@@ -887,7 +921,7 @@
 
     <div class="rh-card" id="card-5" data-rh="5" data-m="6">
       <div class="rh-line1">
-        <div class="rh-rhno">5</div>
+        <select class="rh-rhno"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5" selected>5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option></select>
         <div class="rh-mno">M6</div>
         <div class="rh-title">桜月</div>
         <div class="rh-time">4:35</div>
@@ -907,7 +941,7 @@
 
     <div class="rh-card" id="card-6" data-rh="6" data-m="9">
       <div class="rh-line1">
-        <div class="rh-rhno">6</div>
+        <select class="rh-rhno"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6" selected>6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option></select>
         <div class="rh-mno">M9</div>
         <div class="rh-title">承認欲求</div>
         <div class="rh-time">3:30</div>
@@ -927,7 +961,7 @@
 
     <div class="rh-card" id="card-7" data-rh="7" data-m="11">
       <div class="rh-line1">
-        <div class="rh-rhno">7</div>
+        <select class="rh-rhno"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7" selected>7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option></select>
         <div class="rh-mno">M11</div>
         <div class="rh-title">何度でも何度でも</div>
         <div class="rh-time">4:12</div>
@@ -947,7 +981,7 @@
 
     <div class="rh-card" id="card-8" data-rh="8" data-m="4">
       <div class="rh-line1">
-        <div class="rh-rhno">8</div>
+        <select class="rh-rhno"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8" selected>8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option></select>
         <div class="rh-mno">M4</div>
         <div class="rh-title">五月雨よ</div>
         <div class="rh-time">3:38</div>
@@ -967,7 +1001,7 @@
 
     <div class="rh-card" id="card-9" data-rh="9" data-m="7">
       <div class="rh-line1">
-        <div class="rh-rhno">9</div>
+        <select class="rh-rhno"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9" selected>9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option></select>
         <div class="rh-mno">M7</div>
         <div class="rh-title">自業自得</div>
         <div class="rh-time">3:50</div>
@@ -987,7 +1021,7 @@
 
     <div class="rh-card" id="card-10" data-rh="10" data-m="8">
       <div class="rh-line1">
-        <div class="rh-rhno">10</div>
+        <select class="rh-rhno"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10" selected>10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option></select>
         <div class="rh-mno">M8</div>
         <div class="rh-title">隙間風よ</div>
         <div class="rh-time">4:05</div>
@@ -1007,7 +1041,7 @@
 
     <div class="rh-card" id="card-11" data-rh="11" data-m="10">
       <div class="rh-line1">
-        <div class="rh-rhno">11</div>
+        <select class="rh-rhno"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11" selected>11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option></select>
         <div class="rh-mno">M10</div>
         <div class="rh-title">マチネとソワレ</div>
         <div class="rh-time">4:22</div>
@@ -1027,7 +1061,7 @@
 
     <div class="rh-card" id="card-12" data-rh="12" data-m="12">
       <div class="rh-line1">
-        <div class="rh-rhno">12</div>
+        <select class="rh-rhno"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12" selected>12</option><option value="13">13</option><option value="14">14</option></select>
         <div class="rh-mno">M12</div>
         <div class="rh-title">ジャマイカビール</div>
         <div class="rh-time">3:55</div>
@@ -1047,7 +1081,7 @@
 
     <div class="rh-card" id="card-13" data-rh="13" data-m="13">
       <div class="rh-line1">
-        <div class="rh-rhno">13</div>
+        <select class="rh-rhno"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13" selected>13</option><option value="14">14</option></select>
         <div class="rh-mno">M13</div>
         <div class="rh-title">Start over!</div>
         <div class="rh-time">4:01</div>
@@ -1067,7 +1101,7 @@
 
     <div class="rh-card" id="card-14" data-rh="14" data-m="14">
       <div class="rh-line1">
-        <div class="rh-rhno">14</div>
+        <select class="rh-rhno"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14" selected>14</option></select>
         <div class="rh-mno">EN</div>
         <div class="rh-title">最終アンコール通し</div>
         <div class="rh-time">8:30</div>
@@ -1496,7 +1530,7 @@
   <button onclick="show('info')"><span class="ico">⚑</span>INFO<span class="badge">3</span></button>
   <button onclick="show('arrival')"><span class="ico">⏱</span>入り時間</button>
   <button onclick="show('hotel')"><span class="ico">★</span>HOTEL</button>
-  <button onclick="show('pass')"><span class="ico">●</span>PASS</button>
+  <button data-pass onclick="show('pass')"><span class="ico">●</span>PASS</button>
 </div>
 
 <script>
