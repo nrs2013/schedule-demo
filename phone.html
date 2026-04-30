@@ -255,8 +255,8 @@
     -webkit-tap-highlight-color: transparent;
   }
   body:not(.authed) .rh-rhno {
-    pointer-events: none;
-    cursor: default;
+    /* タップは出来る（PASS画面に誘導するため） */
+    opacity: 0.85;
   }
   /* × 選択時：RH#は赤系グレーに、カード全体も「リハなし」感に */
   .rh-card.no-rh .rh-rhno {
@@ -428,10 +428,10 @@
     letter-spacing: 0.02em;
   }
 
-  /* 2行目: タグ7個を四角ボックスで（モニター/場当たりは幅広めで折り返し防止） */
+  /* 2行目: タグ8個を四角ボックスで（モニター/場当たりは幅広めで折り返し防止） */
   .rh-line2 {
     display: grid;
-    grid-template-columns: 1.35fr 1.35fr 0.55fr 1fr 1fr 1fr 1fr;
+    grid-template-columns: 1.3fr 1.3fr 0.55fr 0.9fr 0.9fr 0.9fr 0.9fr 0.9fr;
     gap: 3px;
     align-items: stretch;
     margin: 2px 0 9px;
@@ -476,7 +476,8 @@
   .tag-pill.on.koutou  { background: rgba(126,194,122,0.18); border-color: rgba(126,194,122,0.7); color: #b8d9b0; }
   .tag-pill.on.shoumei { background: rgba(193,134,200,0.18); border-color: rgba(193,134,200,0.7); color: #d8b0e0; }
   .tag-pill.on.kikou   { background: rgba(110,198,200,0.18); border-color: rgba(110,198,200,0.7); color: #a8dcde; }
-  .tag-pill.on.zentai  { background: rgba(212,165,116,0.18); border-color: rgba(212,165,116,0.7); color: #e8c890; }
+  .tag-pill.on.float   { background: rgba(217,126,184,0.18); border-color: rgba(217,126,184,0.7); color: #e8b3d4; }
+  .tag-pill.on.block   { background: rgba(199,93,93,0.18);   border-color: rgba(199,93,93,0.7);   color: #e8a8a8; }
 
   /* 終了ボタン（押しやすく拡大、行内に収める） */
   .finish-btn {
@@ -977,7 +978,8 @@
         <span class="tag-pill koutou">口答</span>
         <span class="tag-pill shoumei">照明</span>
         <span class="tag-pill kikou">機構</span>
-        <span class="tag-pill zentai on">全体</span>
+      <span class="tag-pill float">フロート</span>
+      <span class="tag-pill block">ブロック</span>
       </div>
       <div class="rh-line3" contenteditable="true">場当たり込み・銀テのタイミング確認</div>
     </div>
@@ -997,7 +999,8 @@
         <span class="tag-pill koutou">口答</span>
         <span class="tag-pill shoumei on">照明</span>
         <span class="tag-pill kikou">機構</span>
-        <span class="tag-pill zentai">全体</span>
+      <span class="tag-pill float">フロート</span>
+      <span class="tag-pill block">ブロック</span>
       </div>
       <div class="rh-line3" contenteditable="true">Aメロ前ハケ動線確認</div>
     </div>
@@ -1017,7 +1020,8 @@
         <span class="tag-pill koutou">口答</span>
         <span class="tag-pill shoumei">照明</span>
         <span class="tag-pill kikou on">機構</span>
-        <span class="tag-pill zentai">全体</span>
+      <span class="tag-pill float">フロート</span>
+      <span class="tag-pill block">ブロック</span>
       </div>
       <div class="rh-line3" contenteditable="true">セリ上昇 Q→17 / 振付確認</div>
     </div>
@@ -1037,7 +1041,8 @@
         <span class="tag-pill koutou">口答</span>
         <span class="tag-pill shoumei">照明</span>
         <span class="tag-pill kikou">機構</span>
-        <span class="tag-pill zentai">全体</span>
+      <span class="tag-pill float">フロート</span>
+      <span class="tag-pill block">ブロック</span>
       </div>
       <div class="rh-line3" contenteditable="true">2サビ後の煽り尺確認</div>
     </div>
@@ -1057,7 +1062,8 @@
         <span class="tag-pill koutou">口答</span>
         <span class="tag-pill shoumei on">照明</span>
         <span class="tag-pill kikou">機構</span>
-        <span class="tag-pill zentai">全体</span>
+      <span class="tag-pill float">フロート</span>
+      <span class="tag-pill block">ブロック</span>
       </div>
       <div class="rh-line3" contenteditable="true">バラード・マイクスタンド出し位置</div>
     </div>
@@ -1077,7 +1083,8 @@
         <span class="tag-pill koutou on">口答</span>
         <span class="tag-pill shoumei">照明</span>
         <span class="tag-pill kikou">機構</span>
-        <span class="tag-pill zentai">全体</span>
+      <span class="tag-pill float">フロート</span>
+      <span class="tag-pill block">ブロック</span>
       </div>
       <div class="rh-line3" contenteditable="true">MC前後の口答合わせ</div>
     </div>
@@ -1097,7 +1104,8 @@
         <span class="tag-pill koutou">口答</span>
         <span class="tag-pill shoumei on">照明</span>
         <span class="tag-pill kikou on">機構</span>
-        <span class="tag-pill zentai">全体</span>
+      <span class="tag-pill float">フロート</span>
+      <span class="tag-pill block">ブロック</span>
       </div>
       <div class="rh-line3" contenteditable="true">花道セリ + 火薬合わせ</div>
     </div>
@@ -1117,7 +1125,8 @@
         <span class="tag-pill koutou">口答</span>
         <span class="tag-pill shoumei">照明</span>
         <span class="tag-pill kikou">機構</span>
-        <span class="tag-pill zentai">全体</span>
+      <span class="tag-pill float">フロート</span>
+      <span class="tag-pill block">ブロック</span>
       </div>
       <div class="rh-line3" contenteditable="true">イヤモニ Lvチェック</div>
     </div>
@@ -1137,7 +1146,8 @@
         <span class="tag-pill koutou">口答</span>
         <span class="tag-pill shoumei">照明</span>
         <span class="tag-pill kikou">機構</span>
-        <span class="tag-pill zentai on">全体</span>
+      <span class="tag-pill float">フロート</span>
+      <span class="tag-pill block">ブロック</span>
       </div>
       <div class="rh-line3" contenteditable="true">フォーメーション転換確認</div>
     </div>
@@ -1157,7 +1167,8 @@
         <span class="tag-pill koutou">口答</span>
         <span class="tag-pill shoumei">照明</span>
         <span class="tag-pill kikou on">機構</span>
-        <span class="tag-pill zentai">全体</span>
+      <span class="tag-pill float">フロート</span>
+      <span class="tag-pill block">ブロック</span>
       </div>
       <div class="rh-line3" contenteditable="true">セリ降下 Q→24</div>
     </div>
@@ -1177,7 +1188,8 @@
         <span class="tag-pill koutou">口答</span>
         <span class="tag-pill shoumei on">照明</span>
         <span class="tag-pill kikou">機構</span>
-        <span class="tag-pill zentai">全体</span>
+      <span class="tag-pill float">フロート</span>
+      <span class="tag-pill block">ブロック</span>
       </div>
       <div class="rh-line3" contenteditable="true">ストリングス・キュー確認</div>
     </div>
@@ -1197,7 +1209,8 @@
         <span class="tag-pill koutou on">口答</span>
         <span class="tag-pill shoumei">照明</span>
         <span class="tag-pill kikou">機構</span>
-        <span class="tag-pill zentai on">全体</span>
+      <span class="tag-pill float">フロート</span>
+      <span class="tag-pill block">ブロック</span>
       </div>
       <div class="rh-line3" contenteditable="true">煽り尺・MCのつなぎ確認</div>
     </div>
@@ -1217,7 +1230,8 @@
         <span class="tag-pill koutou">口答</span>
         <span class="tag-pill shoumei">照明</span>
         <span class="tag-pill kikou">機構</span>
-        <span class="tag-pill zentai on">全体</span>
+      <span class="tag-pill float">フロート</span>
+      <span class="tag-pill block">ブロック</span>
       </div>
       <div class="rh-line3" contenteditable="true">本編ラスト・退場までの動線</div>
     </div>
@@ -1237,7 +1251,8 @@
         <span class="tag-pill koutou">口答</span>
         <span class="tag-pill shoumei on">照明</span>
         <span class="tag-pill kikou on">機構</span>
-        <span class="tag-pill zentai on">全体</span>
+      <span class="tag-pill float">フロート</span>
+      <span class="tag-pill block">ブロック</span>
       </div>
       <div class="rh-line3" contenteditable="true">アンコール通し・銀テ2回目・退場まで</div>
     </div>
