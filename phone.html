@@ -428,11 +428,11 @@
     letter-spacing: 0.02em;
   }
 
-  /* 2行目: タグ8個を四角ボックスで（モニター/場当たりは幅広めで折り返し防止） */
+  /* 2行目: タグ8個を四角ボックスで（4文字タグは幅広・1〜2文字タグは狭く） */
   .rh-line2 {
     display: grid;
-    grid-template-columns: 1.3fr 1.3fr 0.55fr 0.9fr 0.9fr 0.9fr 0.9fr 0.9fr;
-    gap: 3px;
+    grid-template-columns: 1.25fr 1.25fr 0.5fr 0.8fr 0.8fr 0.8fr 1.25fr 1.25fr;
+    gap: 2px;
     align-items: stretch;
     margin: 2px 0 9px;
   }
@@ -448,11 +448,11 @@
   }
   .tag-pill {
     /* OFF: 文字だけ（枠なし・背景なし・グレー）／ ON: カテゴリ色で四角に塗る */
-    padding: 5px 2px 4px;
+    padding: 5px 1px 4px;
     text-align: center;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 500;
-    letter-spacing: 0;
+    letter-spacing: -0.01em;
     line-height: 1.2;
     cursor: pointer;
     user-select: none;
