@@ -36,6 +36,165 @@
     height: 100dvh;
   }
 
+  /* ── ツアー日付セレクター（最上部の1行） ───────── */
+  .tour-date-bar {
+    flex-shrink: 0;
+    display: flex;
+    align-items: stretch;
+    background: #141312;
+    border-bottom: 1px solid #2c2c2c;
+    height: 42px;
+  }
+  .tour-date-nav {
+    background: transparent;
+    border: none;
+    color: #787878;
+    font-size: 22px;
+    font-weight: 400;
+    width: 42px;
+    cursor: pointer;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+    transition: color 0.1s;
+  }
+  .tour-date-nav:active { color: #e89a4a; }
+  .tour-date-display {
+    flex: 1;
+    background: transparent;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    cursor: pointer;
+    color: inherit;
+    font-family: inherit;
+    -webkit-tap-highlight-color: transparent;
+    padding: 0;
+  }
+  .tour-date-main {
+    font-size: 15px;
+    font-weight: 700;
+    color: #e8e8e4;
+    letter-spacing: 0.05em;
+    font-variant-numeric: tabular-nums;
+  }
+  .tour-date-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    padding: 3px 8px;
+    border-radius: 3px;
+    border: 1px solid;
+  }
+  .tour-date-label.setup    { color: #a8a8d8; border-color: rgba(168,168,216,0.5); background: rgba(168,168,216,0.10); }
+  .tour-date-label.rehearsal{ color: #b8d9b0; border-color: rgba(126,194,122,0.5); background: rgba(126,194,122,0.10); }
+  .tour-date-label.bagari   { color: #f0d8a0; border-color: rgba(230,200,112,0.5); background: rgba(230,200,112,0.10); }
+  .tour-date-label.gp       { color: #f5b06a; border-color: rgba(232,154,74,0.5);  background: rgba(232,154,74,0.10); }
+  .tour-date-label.show     { color: #f0a09c; border-color: rgba(224,122,95,0.6);  background: rgba(224,122,95,0.12); }
+  .tour-date-label.off      { color: #787878; border-color: rgba(120,120,120,0.45); background: rgba(120,120,120,0.08); }
+
+  /* ── 日付選択モーダル ───────── */
+  .tour-date-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 110;
+    display: none;
+    flex-direction: column;
+    justify-content: flex-end;
+  }
+  .tour-date-modal.show { display: flex; }
+  .tour-date-modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+  }
+  .tour-date-modal-sheet {
+    position: relative;
+    background: #1f1e1c;
+    border-top: 1px solid #2c2c2c;
+    border-radius: 14px 14px 0 0;
+    padding-bottom: env(safe-area-inset-bottom, 16px);
+    max-height: 75vh;
+    display: flex;
+    flex-direction: column;
+    animation: picker-slide-up 0.22s ease-out;
+  }
+  .tour-date-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
+    border-bottom: 1px solid #2c2c2c;
+  }
+  .tour-date-modal-header button {
+    background: transparent;
+    border: none;
+    color: #787878;
+    font-size: 15px;
+    font-weight: 700;
+    font-family: inherit;
+    padding: 4px 8px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .tour-date-modal-title {
+    font-size: 13px;
+    letter-spacing: 0.25em;
+    color: #d8d8d4;
+    font-weight: 700;
+  }
+  .tour-date-range {
+    padding: 10px 16px 6px;
+    font-size: 11px;
+    color: #787878;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid #2c2c2c;
+  }
+  .tour-date-range strong { color: #e89a4a; font-weight: 700; }
+  .tour-date-list {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .tour-date-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-bottom: 1px solid #2a2a27;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.1s;
+  }
+  .tour-date-item:active { background: #2a2828; }
+  .tour-date-item.selected {
+    background: rgba(232,154,74,0.10);
+    border-left: 3px solid #e89a4a;
+    padding-left: 13px;
+  }
+  .tour-date-item-left {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+  .tour-date-item-date {
+    font-size: 17px;
+    font-weight: 700;
+    color: #e8e8e4;
+    font-variant-numeric: tabular-nums;
+  }
+  .tour-date-item-dow {
+    font-size: 13px;
+    color: #a8a8a0;
+    font-weight: 600;
+  }
+  .tour-date-item.today .tour-date-item-date { color: #e89a4a; }
+  .tour-date-item.today .tour-date-item-date::after {
+    content: ' ●';
+    font-size: 9px;
+    vertical-align: middle;
+  }
+
   /* ── ヘッダー（2段：日付 + 公演名） ───────── */
   .phone-header {
     flex-shrink: 0;
@@ -1005,9 +1164,18 @@
   }
 </style>
 
-<!-- ヘッダー（日付 + 公演名の2段） -->
+<!-- ツアー日付セレクター（最上部の1行） -->
+<div class="tour-date-bar">
+  <button class="tour-date-nav" onclick="changeTourDay(-1)">‹</button>
+  <button class="tour-date-display" onclick="openDatePicker()">
+    <span class="tour-date-main" id="tour-date-main">4/29 (水)</span>
+    <span class="tour-date-label rehearsal" id="tour-date-label">リハーサル</span>
+  </button>
+  <button class="tour-date-nav" onclick="changeTourDay(1)">›</button>
+</div>
+
+<!-- ヘッダー（公演名のみ） -->
 <div class="phone-header" id="header">
-  <div class="phone-header-date">2026.04.29 (水)</div>
   <div class="phone-header-row">
     <div class="phone-brand-mini">SCH</div>
     <div class="phone-concert-title">櫻坂46 5th Anniversary Live</div>
@@ -1899,6 +2067,22 @@
   <button data-pass onclick="show('pass')"><span class="ico">●</span>PASS</button>
 </div>
 
+<!-- ツアー日付選択モーダル -->
+<div class="tour-date-modal" id="tour-date-modal">
+  <div class="tour-date-modal-backdrop" onclick="closeDatePicker()"></div>
+  <div class="tour-date-modal-sheet">
+    <div class="tour-date-modal-header">
+      <button onclick="closeDatePicker()">閉じる</button>
+      <div class="tour-date-modal-title">ツアー日程</div>
+      <button>編集</button>
+    </div>
+    <div class="tour-date-range">
+      会場入り <strong>4/27</strong> 〜 千秋楽 <strong>5/3</strong>（7日間）
+    </div>
+    <div class="tour-date-list" id="tour-date-list"></div>
+  </div>
+</div>
+
 <!-- ホイール・ピッカー（RH順くるくる）-->
 <div class="picker-overlay" id="rh-picker">
   <div class="picker-backdrop" onclick="closeRhPicker()"></div>
@@ -2174,6 +2358,67 @@ function closeRhPicker() {
 
 // 初期：リハ順モード（×カードは隠れる）
 document.body.classList.add('sort-rh');
+
+// ── ツアー日程（モック）──
+const tourDays = [
+  { date: '4/27', dow: '月', label: '仕込み1日目',  cls: 'setup' },
+  { date: '4/28', dow: '火', label: '仕込み2日目',  cls: 'setup' },
+  { date: '4/29', dow: '水', label: 'リハーサル',   cls: 'rehearsal', today: true },
+  { date: '4/30', dow: '木', label: 'GP',           cls: 'gp' },
+  { date: '5/1',  dow: '金', label: '本番初日',     cls: 'show' },
+  { date: '5/2',  dow: '土', label: '本番2日目',    cls: 'show' },
+  { date: '5/3',  dow: '日', label: '千秋楽',       cls: 'show' },
+];
+let selectedDayIdx = 2; // 初期選択：4/29
+
+function renderDateBar() {
+  const d = tourDays[selectedDayIdx];
+  document.getElementById('tour-date-main').textContent = `${d.date} (${d.dow})`;
+  const label = document.getElementById('tour-date-label');
+  label.textContent = d.label;
+  label.className = 'tour-date-label ' + d.cls;
+}
+
+function renderDateList() {
+  const list = document.getElementById('tour-date-list');
+  list.innerHTML = tourDays.map((d, i) => {
+    const cls = ['tour-date-item'];
+    if (i === selectedDayIdx) cls.push('selected');
+    if (d.today) cls.push('today');
+    return `<div class="${cls.join(' ')}" onclick="selectTourDay(${i})">
+      <div class="tour-date-item-left">
+        <div class="tour-date-item-date">${d.date}</div>
+        <div class="tour-date-item-dow">(${d.dow})</div>
+      </div>
+      <div class="tour-date-label ${d.cls}">${d.label}</div>
+    </div>`;
+  }).join('');
+}
+
+function openDatePicker() {
+  renderDateList();
+  document.getElementById('tour-date-modal').classList.add('show');
+}
+
+function closeDatePicker() {
+  document.getElementById('tour-date-modal').classList.remove('show');
+}
+
+function selectTourDay(idx) {
+  selectedDayIdx = idx;
+  renderDateBar();
+  closeDatePicker();
+  // 本番では：ここで選んだ日付の RH/テクリハ/SCHEDULE/HOTEL データに切り替える
+}
+
+function changeTourDay(delta) {
+  const next = selectedDayIdx + delta;
+  if (next < 0 || next >= tourDays.length) return;
+  selectedDayIdx = next;
+  renderDateBar();
+}
+
+renderDateBar();
 </script>
 </body>
 </html>
