@@ -1129,24 +1129,39 @@
   .schedule-row-time.show-time { color: #e07a5f; }
   .schedule-row.muted .schedule-row-time { color: #787878; font-weight: 600; font-size: 22px; }
 
-  /* ── 時刻ホイールピッカー（HH:MM 2連） ───────── */
+  /* ── 時刻ホイールピッカー（HH:MM 2連／中央に寄せる） ───────── */
   .time-picker-wheels {
     position: relative;
     height: 200px;
     overflow: hidden;
     display: flex;
     align-items: stretch;
+    justify-content: center;
   }
-  .time-picker-wheels .picker-wheel { flex: 1; }
+  .time-picker-wheels .picker-wheel {
+    flex: 0 0 90px;
+    width: 90px;
+  }
   .time-picker-colon {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 28px;
+    font-size: 30px;
     font-weight: 700;
-    color: #787878;
-    width: 16px;
+    color: #d8d8d4;
+    width: 18px;
     z-index: 2;
+    padding-bottom: 2px;
+  }
+  /* 時刻ピッカー内のハイライト線は HH:MM ブロックの幅に合わせる */
+  .time-picker-wheels .picker-wheel-line {
+    left: 50%;
+    right: auto;
+    width: 210px;
+    transform: translateX(-105px);
+  }
+  .time-picker-wheels .picker-wheel-mask {
+    width: 100%;
   }
   .schedule-date {
     font-size: 18px;
