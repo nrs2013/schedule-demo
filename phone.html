@@ -1110,26 +1110,34 @@
     background: transparent;
     border: none;
     font-family: inherit;
-    padding: 0;
+    padding: 4px 0;
     text-align: right;
     min-width: 90px;
-    -webkit-appearance: none;
-    appearance: none;
-    cursor: text;
-  }
-  .schedule-row-time::-webkit-calendar-picker-indicator { display: none; }
-  body:not(.authed) .schedule-row-time {
-    pointer-events: none;
-    cursor: default;
-  }
-  body.authed .schedule-row-time {
     cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
   }
-  body.authed .schedule-row-time:hover, body.authed .schedule-row-time:focus {
-    color: #f5b06a;
-    outline: none;
-  }
+  .schedule-row-time:active { color: #f5b06a; }
   .schedule-row.muted .schedule-row-time { color: #787878; font-weight: 600; font-size: 22px; }
+
+  /* ── 時刻ホイールピッカー（HH:MM 2連） ───────── */
+  .time-picker-wheels {
+    position: relative;
+    height: 200px;
+    overflow: hidden;
+    display: flex;
+    align-items: stretch;
+  }
+  .time-picker-wheels .picker-wheel { flex: 1; }
+  .time-picker-colon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    font-weight: 700;
+    color: #787878;
+    width: 16px;
+    z-index: 2;
+  }
   .schedule-date {
     font-size: 18px;
     font-weight: 700;
@@ -1245,11 +1253,11 @@
     <div class="schedule-card">
       <div class="schedule-row">
         <div class="schedule-row-label">テクリハ開始</div>
-        <input class="schedule-row-time" type="time" value="10:00" readonly />
+        <button type="button" class="schedule-row-time" data-time="10:00" onclick="openTimePicker(this)">10:00</button>
       </div>
       <div class="schedule-row">
         <div class="schedule-row-label">テクリハ終了</div>
-        <input class="schedule-row-time" type="time" value="13:00" readonly />
+        <button type="button" class="schedule-row-time" data-time="13:00" onclick="openTimePicker(this)">13:00</button>
       </div>
     </div>
 
@@ -1257,11 +1265,11 @@
     <div class="schedule-card">
       <div class="schedule-row">
         <div class="schedule-row-label">リハーサル開始</div>
-        <input class="schedule-row-time" type="time" value="14:00" readonly />
+        <button type="button" class="schedule-row-time" data-time="14:00" onclick="openTimePicker(this)">14:00</button>
       </div>
       <div class="schedule-row">
         <div class="schedule-row-label">リハーサル終了</div>
-        <input class="schedule-row-time" type="time" value="16:30" readonly />
+        <button type="button" class="schedule-row-time" data-time="16:30" onclick="openTimePicker(this)">16:30</button>
       </div>
     </div>
 
@@ -1269,11 +1277,11 @@
     <div class="schedule-card">
       <div class="schedule-row muted">
         <div class="schedule-row-label">客入れ</div>
-        <input class="schedule-row-time" type="time" value="17:30" readonly />
+        <button type="button" class="schedule-row-time" data-time="17:30" onclick="openTimePicker(this)">17:30</button>
       </div>
       <div class="schedule-row">
         <div class="schedule-row-label">本番開始</div>
-        <input class="schedule-row-time" type="time" value="18:30" readonly />
+        <button type="button" class="schedule-row-time" data-time="18:30" onclick="openTimePicker(this)">18:30</button>
       </div>
     </div>
 
@@ -2148,6 +2156,27 @@
   </div>
 </div>
 
+<!-- ホイール・ピッカー（時刻 HH:MM）-->
+<div class="picker-overlay" id="time-picker">
+  <div class="picker-backdrop" onclick="closeTimePicker()"></div>
+  <div class="picker-sheet">
+    <div class="picker-header">
+      <button class="picker-cancel" onclick="closeTimePicker()">キャンセル</button>
+      <div class="picker-title" id="time-picker-title">時刻</div>
+      <button onclick="commitTimePicker()">決定</button>
+    </div>
+    <div class="time-picker-wheels">
+      <div class="picker-wheel" id="time-picker-hour"></div>
+      <div class="time-picker-colon">:</div>
+      <div class="picker-wheel" id="time-picker-minute"></div>
+      <div class="picker-wheel-mask top"></div>
+      <div class="picker-wheel-mask bottom"></div>
+      <div class="picker-wheel-line top"></div>
+      <div class="picker-wheel-line bottom"></div>
+    </div>
+  </div>
+</div>
+
 <!-- ホイール・ピッカー（RH順くるくる）-->
 <div class="picker-overlay" id="rh-picker">
   <div class="picker-backdrop" onclick="closeRhPicker()"></div>
@@ -2199,8 +2228,6 @@ function tryUnlock() {
     document.body.classList.add('authed');
     // 終了ボタン全部有効化
     document.querySelectorAll('.finish-btn.disabled').forEach(b => b.classList.remove('disabled'));
-    // SCHEDULE時間も編集可能に
-    document.querySelectorAll('.schedule-row-time').forEach(i => i.removeAttribute('readonly'));
   } else {
     alert('パスワードが違います（デモ用: 1234）');
   }
@@ -2214,8 +2241,6 @@ function resetAuth() {
   document.body.classList.remove('authed');
   // done でないカードのボタンを再ロック
   document.querySelectorAll('.rh-card:not(.done) .finish-btn').forEach(b => b.classList.add('disabled'));
-  // SCHEDULE時間も再ロック
-  document.querySelectorAll('.schedule-row-time').forEach(i => i.setAttribute('readonly', ''));
 }
 
 // 終了ボタン トグル動作: 認証済みなら done のオン/オフを切り替え
@@ -2419,6 +2444,94 @@ function commitRhPicker() {
 function closeRhPicker() {
   document.getElementById('rh-picker').classList.remove('show');
   activeRhBtn = null;
+}
+
+// ── 時刻ホイールピッカー ──
+let activeTimeBtn = null;
+
+function openTimePicker(btn) {
+  if (!authed) { show('pass'); return; }
+  activeTimeBtn = btn;
+
+  const label = btn.parentElement.querySelector('.schedule-row-label')?.textContent || '時刻';
+  document.getElementById('time-picker-title').textContent = label;
+
+  const [curH, curM] = (btn.dataset.time || '00:00').split(':').map(Number);
+  const minuteStep = 5; // 5分刻み
+  const minuteIdx = Math.round(curM / minuteStep);
+
+  // 時のホイール 0〜23
+  const hourWheel = document.getElementById('time-picker-hour');
+  let html = '<div class="picker-wheel-spacer"></div>';
+  for (let h = 0; h < 24; h++) {
+    html += `<div class="picker-wheel-item" data-value="${h}">${String(h).padStart(2,'0')}</div>`;
+  }
+  html += '<div class="picker-wheel-spacer"></div>';
+  hourWheel.innerHTML = html;
+
+  // 分のホイール 0〜55 (5分刻み)
+  const minuteWheel = document.getElementById('time-picker-minute');
+  html = '<div class="picker-wheel-spacer"></div>';
+  for (let m = 0; m < 60; m += minuteStep) {
+    html += `<div class="picker-wheel-item" data-value="${m}">${String(m).padStart(2,'0')}</div>`;
+  }
+  html += '<div class="picker-wheel-spacer"></div>';
+  minuteWheel.innerHTML = html;
+
+  // モーダル表示
+  document.getElementById('time-picker').classList.add('show');
+
+  // スクロール位置を現在値に合わせる
+  setTimeout(() => {
+    hourWheel.scrollTop = curH * 40;
+    minuteWheel.scrollTop = minuteIdx * 40;
+    updateTimePickerHighlight(hourWheel);
+    updateTimePickerHighlight(minuteWheel);
+  }, 20);
+
+  hourWheel.onscroll = () => updateTimePickerHighlight(hourWheel);
+  minuteWheel.onscroll = () => updateTimePickerHighlight(minuteWheel);
+}
+
+function updateTimePickerHighlight(wheel) {
+  const items = wheel.querySelectorAll('.picker-wheel-item');
+  if (!items.length) return;
+  const containerRect = wheel.getBoundingClientRect();
+  const centerY = containerRect.top + containerRect.height / 2;
+  let closest = null, closestDist = Infinity;
+  items.forEach(item => {
+    item.classList.remove('center', 'near');
+    const r = item.getBoundingClientRect();
+    const itemCenter = r.top + r.height / 2;
+    const dist = Math.abs(itemCenter - centerY);
+    if (dist < closestDist) { closestDist = dist; closest = item; }
+  });
+  if (closest) {
+    closest.classList.add('center');
+    const arr = Array.from(items);
+    const idx = arr.indexOf(closest);
+    if (idx > 0) arr[idx - 1].classList.add('near');
+    if (idx < arr.length - 1) arr[idx + 1].classList.add('near');
+  }
+}
+
+function commitTimePicker() {
+  if (!activeTimeBtn) return;
+  const hourCenter = document.querySelector('#time-picker-hour .picker-wheel-item.center');
+  const minuteCenter = document.querySelector('#time-picker-minute .picker-wheel-item.center');
+  if (hourCenter && minuteCenter) {
+    const h = String(hourCenter.dataset.value).padStart(2, '0');
+    const m = String(minuteCenter.dataset.value).padStart(2, '0');
+    const t = `${h}:${m}`;
+    activeTimeBtn.dataset.time = t;
+    activeTimeBtn.textContent = t;
+  }
+  closeTimePicker();
+}
+
+function closeTimePicker() {
+  document.getElementById('time-picker').classList.remove('show');
+  activeTimeBtn = null;
 }
 
 // 初期：リハ順モード（×カードは隠れる）
