@@ -1123,8 +1123,8 @@
     border: none;
     color: #787878;
     cursor: pointer;
-    font-size: 11px;
-    letter-spacing: 0.04em;
+    font-size: 10px;
+    letter-spacing: 0;
     font-weight: 700;
     font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
     display: flex;
@@ -1133,7 +1133,7 @@
     justify-content: center;
     gap: 3px;
     position: relative;
-    padding-top: 6px;
+    padding: 6px 1px 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: clip;
@@ -1196,27 +1196,27 @@
   <div class="screen" id="screen-schedule">
     <div class="schedule-date">2026.04.29 (水)</div>
 
-    <div class="schedule-section-title">REHEARSAL</div>
-    <div class="schedule-card">
-      <div class="schedule-row">
-        <div class="schedule-row-label">リハーサル開始</div>
-        <input class="schedule-row-time" type="time" value="10:00" readonly />
-      </div>
-      <div class="schedule-row">
-        <div class="schedule-row-label">リハーサル終了</div>
-        <input class="schedule-row-time" type="time" value="16:00" readonly />
-      </div>
-    </div>
-
     <div class="schedule-section-title">テクリハ</div>
     <div class="schedule-card">
       <div class="schedule-row">
         <div class="schedule-row-label">テクリハ開始</div>
-        <input class="schedule-row-time" type="time" value="17:00" readonly />
+        <input class="schedule-row-time" type="time" value="10:00" readonly />
       </div>
       <div class="schedule-row">
         <div class="schedule-row-label">テクリハ終了</div>
-        <input class="schedule-row-time" type="time" value="21:00" readonly />
+        <input class="schedule-row-time" type="time" value="13:00" readonly />
+      </div>
+    </div>
+
+    <div class="schedule-section-title">REHEARSAL</div>
+    <div class="schedule-card">
+      <div class="schedule-row">
+        <div class="schedule-row-label">リハーサル開始</div>
+        <input class="schedule-row-time" type="time" value="14:00" readonly />
+      </div>
+      <div class="schedule-row">
+        <div class="schedule-row-label">リハーサル終了</div>
+        <input class="schedule-row-time" type="time" value="16:30" readonly />
       </div>
     </div>
 
@@ -2062,6 +2062,7 @@
   <button onclick="show('schedule')"><span class="ico">▤</span>SCHEDULE</button>
   <button onclick="show('tekuriha')"><span class="ico">◎</span>テクリハ</button>
   <button class="active" onclick="show('rh')"><span class="ico">▶</span>RH</button>
+  <button onclick="show('info')"><span class="ico">⚑</span>INFO<span class="badge">3</span></button>
   <button onclick="show('arrival')"><span class="ico">◷</span>入り時間</button>
   <button onclick="show('hotel')"><span class="ico">★</span>HOTEL</button>
   <button data-pass onclick="show('pass')"><span class="ico">●</span>PASS</button>
@@ -2104,7 +2105,7 @@
 
 <script>
 let authed = false;
-const topTabsHiddenScreens = ['schedule','tekuriha','arrival','hotel','pass'];
+const topTabsHiddenScreens = ['schedule','info','arrival','hotel','pass'];
 
 function show(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -2113,7 +2114,7 @@ function show(id) {
   const tabs = document.querySelectorAll('#bottom-tabs button');
   tabs.forEach((b, i) => {
     b.classList.remove('active');
-    const idx = ['schedule','tekuriha','rh','arrival','hotel','pass'][i];
+    const idx = ['schedule','tekuriha','rh','info','arrival','hotel','pass'][i];
     if (idx === id) b.classList.add('active');
   });
 
