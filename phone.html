@@ -258,17 +258,13 @@
     /* タップは出来る（PASS画面に誘導するため） */
     opacity: 0.85;
   }
-  /* × 選択時：RH#は赤系グレーに、カード全体も「リハなし」感に */
+  /* × 選択時：RH#のみグレー化（カードは暗くしない） */
   .rh-card.no-rh .rh-rhno {
     color: #5a5a55;
     font-weight: 400;
   }
-  .rh-card.no-rh .rh-title {
-    color: #787878;
-  }
-  .rh-card.no-rh {
-    opacity: 0.55;
-  }
+  /* リハ順モードでは×のカードを非表示 */
+  body.sort-rh .rh-card.no-rh { display: none; }
 
   /* ── ホイール・ピッカー（時計風くるくる）───────── */
   .picker-overlay {
@@ -1044,6 +1040,18 @@
       </div>
     </div>
 
+    <div class="schedule-section-title">テクリハ</div>
+    <div class="schedule-card">
+      <div class="schedule-row">
+        <div class="schedule-row-label">テクリハ開始</div>
+        <input class="schedule-row-time" type="time" value="17:00" readonly />
+      </div>
+      <div class="schedule-row">
+        <div class="schedule-row-label">テクリハ終了</div>
+        <input class="schedule-row-time" type="time" value="21:00" readonly />
+      </div>
+    </div>
+
     <div class="schedule-section-title">SHOW</div>
     <div class="schedule-card">
       <div class="schedule-row muted">
@@ -1350,9 +1358,9 @@
       <div class="rh-line3" contenteditable="true">イヤモニ Lvチェック</div>
     </div>
 
-    <div class="rh-card" id="card-9" data-rh="9" data-m="7">
+    <div class="rh-card no-rh" id="card-9" data-rh="9" data-m="7">
       <div class="rh-line1">
-        <button type="button" class="rh-rhno" data-value="9" onclick="openRhPicker(this)">9</button>
+        <button type="button" class="rh-rhno" data-value="x" onclick="openRhPicker(this)">×</button>
         <div class="rh-mno">M7</div>
         <div class="rh-title">自業自得</div>
         <div class="rh-time">3:50</div>
@@ -1371,9 +1379,9 @@
       <div class="rh-line3" contenteditable="true">フォーメーション転換確認</div>
     </div>
 
-    <div class="rh-card" id="card-10" data-rh="10" data-m="8">
+    <div class="rh-card no-rh" id="card-10" data-rh="10" data-m="8">
       <div class="rh-line1">
-        <button type="button" class="rh-rhno" data-value="10" onclick="openRhPicker(this)">10</button>
+        <button type="button" class="rh-rhno" data-value="x" onclick="openRhPicker(this)">×</button>
         <div class="rh-mno">M8</div>
         <div class="rh-title">隙間風よ</div>
         <div class="rh-time">4:05</div>
@@ -1413,9 +1421,9 @@
       <div class="rh-line3" contenteditable="true">ストリングス・キュー確認</div>
     </div>
 
-    <div class="rh-card" id="card-12" data-rh="12" data-m="12">
+    <div class="rh-card no-rh" id="card-12" data-rh="12" data-m="12">
       <div class="rh-line1">
-        <button type="button" class="rh-rhno" data-value="12" onclick="openRhPicker(this)">12</button>
+        <button type="button" class="rh-rhno" data-value="x" onclick="openRhPicker(this)">×</button>
         <div class="rh-mno">M12</div>
         <div class="rh-title">ジャマイカビール</div>
         <div class="rh-time">3:55</div>
@@ -1434,9 +1442,9 @@
       <div class="rh-line3" contenteditable="true">煽り尺・MCのつなぎ確認</div>
     </div>
 
-    <div class="rh-card" id="card-13" data-rh="13" data-m="13">
+    <div class="rh-card no-rh" id="card-13" data-rh="13" data-m="13">
       <div class="rh-line1">
-        <button type="button" class="rh-rhno" data-value="13" onclick="openRhPicker(this)">13</button>
+        <button type="button" class="rh-rhno" data-value="x" onclick="openRhPicker(this)">×</button>
         <div class="rh-mno">M13</div>
         <div class="rh-title">Start over!</div>
         <div class="rh-time">4:01</div>
@@ -1455,9 +1463,9 @@
       <div class="rh-line3" contenteditable="true">本編ラスト・退場までの動線</div>
     </div>
 
-    <div class="rh-card" id="card-14" data-rh="14" data-m="14">
+    <div class="rh-card no-rh" id="card-14" data-rh="14" data-m="14">
       <div class="rh-line1">
-        <button type="button" class="rh-rhno" data-value="14" onclick="openRhPicker(this)">14</button>
+        <button type="button" class="rh-rhno" data-value="x" onclick="openRhPicker(this)">×</button>
         <div class="rh-mno">EN</div>
         <div class="rh-title">最終アンコール通し</div>
         <div class="rh-time">8:30</div>
@@ -2024,6 +2032,10 @@ function setSortMode(mode, btn) {
   document.querySelectorAll('#top-tabs button').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
 
+  // body に sort-rh / sort-m クラスを設定（リハ順では × カードを非表示にする）
+  document.body.classList.toggle('sort-rh', mode === 'rh');
+  document.body.classList.toggle('sort-m', mode === 'm');
+
   // 現在表示中の画面のカードリストを対象に
   const activeScreen = document.querySelector('.screen.active');
   if (!activeScreen) return;
@@ -2159,6 +2171,9 @@ function closeRhPicker() {
   document.getElementById('rh-picker').classList.remove('show');
   activeRhBtn = null;
 }
+
+// 初期：リハ順モード（×カードは隠れる）
+document.body.classList.add('sort-rh');
 </script>
 </body>
 </html>
