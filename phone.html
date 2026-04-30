@@ -2364,13 +2364,35 @@ document.body.classList.add('sort-rh');
 const tourDays = [
   { date: '4/27', dow: '月', label: '仕込み1日目',  cls: 'setup' },
   { date: '4/28', dow: '火', label: '仕込み2日目',  cls: 'setup' },
-  { date: '4/29', dow: '水', label: 'リハーサル',   cls: 'rehearsal', today: true },
+  { date: '4/29', dow: '水', label: 'リハーサル',   cls: 'rehearsal' },
   { date: '4/30', dow: '木', label: 'GP',           cls: 'gp' },
   { date: '5/1',  dow: '金', label: '本番初日',     cls: 'show' },
   { date: '5/2',  dow: '土', label: '本番2日目',    cls: 'show' },
   { date: '5/3',  dow: '日', label: '千秋楽',       cls: 'show' },
 ];
-let selectedDayIdx = 2; // 初期選択：4/29
+
+// 端末の今日の日付からツアー内の該当日を自動選択
+function findTodayIndex() {
+  const now = new Date();
+  const todayStr = `${now.getMonth() + 1}/${now.getDate()}`;
+  const idx = tourDays.findIndex(d => d.date === todayStr);
+  if (idx >= 0) {
+    tourDays[idx].today = true;
+    return idx;
+  }
+  // ツアー範囲外なら：
+  // 過去日 → 千秋楽、未来日 → 初日
+  const todayMs = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const firstDay = parseDate(tourDays[0].date, now.getFullYear());
+  if (todayMs < firstDay) return 0;
+  return tourDays.length - 1;
+}
+function parseDate(mmdd, year) {
+  const [m, d] = mmdd.split('/').map(Number);
+  return new Date(year, m - 1, d).getTime();
+}
+
+let selectedDayIdx = findTodayIndex();
 
 function renderDateBar() {
   const d = tourDays[selectedDayIdx];
