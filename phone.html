@@ -245,29 +245,131 @@
     color: #e89a4a;
     line-height: 1;
     font-variant-numeric: tabular-nums;
-    min-width: 16px;
-    /* select 用にネイティブ装飾を消す */
-    appearance: none;
-    -webkit-appearance: none;
-    -moz-appearance: none;
+    min-width: 22px;
     background: transparent;
     border: none;
-    padding: 4px 4px 4px 0;
+    padding: 2px 0;
     margin: 0;
     cursor: pointer;
     text-align: left;
+    -webkit-tap-highlight-color: transparent;
   }
-  .rh-rhno::-ms-expand { display: none; }
-  .rh-rhno option {
-    background: #242424;
-    color: #e89a4a;
-    font-size: 16px;
-    font-weight: 700;
-  }
-  /* スマホで認証前は変更できない様にする */
   body:not(.authed) .rh-rhno {
     pointer-events: none;
     cursor: default;
+  }
+
+  /* ── ホイール・ピッカー（時計風くるくる）───────── */
+  .picker-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: none;
+    flex-direction: column;
+    justify-content: flex-end;
+  }
+  .picker-overlay.show { display: flex; }
+  .picker-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+  }
+  .picker-sheet {
+    position: relative;
+    background: #1f1e1c;
+    border-top: 1px solid #2c2c2c;
+    border-radius: 14px 14px 0 0;
+    padding-bottom: env(safe-area-inset-bottom, 16px);
+    animation: picker-slide-up 0.22s ease-out;
+  }
+  @keyframes picker-slide-up {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+  .picker-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    border-bottom: 1px solid #2c2c2c;
+  }
+  .picker-header button {
+    background: transparent;
+    border: none;
+    color: #e89a4a;
+    font-size: 16px;
+    font-weight: 700;
+    font-family: 'Noto Sans JP', -apple-system, sans-serif;
+    padding: 6px 10px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .picker-header .picker-cancel { color: #787878; }
+  .picker-title {
+    font-size: 13px;
+    letter-spacing: 0.25em;
+    color: #a8a8a8;
+    font-weight: 700;
+  }
+  .picker-wheel-container {
+    position: relative;
+    height: 200px;
+    overflow: hidden;
+  }
+  .picker-wheel {
+    height: 100%;
+    overflow-y: scroll;
+    scroll-snap-type: y mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .picker-wheel::-webkit-scrollbar { display: none; }
+  .picker-wheel-spacer { height: 80px; }
+  .picker-wheel-item {
+    height: 40px;
+    scroll-snap-align: center;
+    text-align: center;
+    font-size: 28px;
+    font-weight: 700;
+    color: #4a4a44;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-variant-numeric: tabular-nums;
+    transition: color 0.12s, transform 0.12s, opacity 0.12s;
+    opacity: 0.55;
+  }
+  .picker-wheel-item.center {
+    color: #e89a4a;
+    transform: scale(1.18);
+    opacity: 1;
+  }
+  .picker-wheel-item.near {
+    color: #a8a8a8;
+    opacity: 0.85;
+  }
+  .picker-wheel-line {
+    position: absolute;
+    left: 18px; right: 18px;
+    height: 1px;
+    background: rgba(232,154,74,0.35);
+    pointer-events: none;
+  }
+  .picker-wheel-line.top { top: 80px; }
+  .picker-wheel-line.bottom { top: 120px; }
+  .picker-wheel-mask {
+    position: absolute;
+    left: 0; right: 0;
+    height: 80px;
+    pointer-events: none;
+  }
+  .picker-wheel-mask.top {
+    top: 0;
+    background: linear-gradient(to bottom, #1f1e1c 30%, rgba(31,30,28,0.5) 70%, rgba(31,30,28,0));
+  }
+  .picker-wheel-mask.bottom {
+    bottom: 0;
+    background: linear-gradient(to top, #1f1e1c 30%, rgba(31,30,28,0.5) 70%, rgba(31,30,28,0));
   }
   .rh-mno {
     font-size: 20px;
@@ -324,7 +426,7 @@
     min-width: 0;
   }
   .tag-pill {
-    /* 四角ボックス：OFFも枠＋薄塗りで明確な箱、ONはカテゴリ色塗り */
+    /* 四角ボックス：OFFは枠線だけ・背景透明・文字グレー、ONはカテゴリ色塗り */
     padding: 5px 2px 4px;
     text-align: center;
     font-size: 12px;
@@ -337,10 +439,10 @@
     -webkit-tap-highlight-color: transparent;
     white-space: nowrap;
     overflow: hidden;
-    background: #1c1c1c;
-    border: 1px solid #3a3a37;
+    background: transparent;
+    border: 1px solid #353532;
     border-radius: 4px;
-    color: #5a5a55;
+    color: #6a6a64;
     transition: all 0.12s, transform 0.08s;
   }
   .tag-pill:active {
@@ -841,7 +943,7 @@
 
     <div class="rh-card done" id="card-1" data-rh="1" data-m="1">
       <div class="rh-line1">
-        <select class="rh-rhno"><option value="1" selected>1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option></select>
+        <button type="button" class="rh-rhno" data-value="1" onclick="openRhPicker(this)">1</button>
         <div class="rh-mno">M1</div>
         <div class="rh-title">OPENING VCR + Start Of The Show</div>
         <div class="rh-time">3:42</div>
@@ -861,7 +963,7 @@
 
     <div class="rh-card now" id="card-2" data-rh="2" data-m="3">
       <div class="rh-line1">
-        <select class="rh-rhno"><option value="1">1</option><option value="2" selected>2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option></select>
+        <button type="button" class="rh-rhno" data-value="2" onclick="openRhPicker(this)">2</button>
         <div class="rh-mno">M3</div>
         <div class="rh-title">Buddies</div>
         <div class="rh-time">4:18</div>
@@ -881,7 +983,7 @@
 
     <div class="rh-card" id="card-3" data-rh="3" data-m="5">
       <div class="rh-line1">
-        <select class="rh-rhno"><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option></select>
+        <button type="button" class="rh-rhno" data-value="3" onclick="openRhPicker(this)">3</button>
         <div class="rh-mno">M5</div>
         <div class="rh-title">流れ弾</div>
         <div class="rh-time">3:55</div>
@@ -901,7 +1003,7 @@
 
     <div class="rh-card" id="card-4" data-rh="4" data-m="2">
       <div class="rh-line1">
-        <select class="rh-rhno"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4" selected>4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option></select>
+        <button type="button" class="rh-rhno" data-value="4" onclick="openRhPicker(this)">4</button>
         <div class="rh-mno">M2</div>
         <div class="rh-title">摩擦係数</div>
         <div class="rh-time">3:48</div>
@@ -921,7 +1023,7 @@
 
     <div class="rh-card" id="card-5" data-rh="5" data-m="6">
       <div class="rh-line1">
-        <select class="rh-rhno"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5" selected>5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option></select>
+        <button type="button" class="rh-rhno" data-value="5" onclick="openRhPicker(this)">5</button>
         <div class="rh-mno">M6</div>
         <div class="rh-title">桜月</div>
         <div class="rh-time">4:35</div>
@@ -941,7 +1043,7 @@
 
     <div class="rh-card" id="card-6" data-rh="6" data-m="9">
       <div class="rh-line1">
-        <select class="rh-rhno"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6" selected>6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option></select>
+        <button type="button" class="rh-rhno" data-value="6" onclick="openRhPicker(this)">6</button>
         <div class="rh-mno">M9</div>
         <div class="rh-title">承認欲求</div>
         <div class="rh-time">3:30</div>
@@ -961,7 +1063,7 @@
 
     <div class="rh-card" id="card-7" data-rh="7" data-m="11">
       <div class="rh-line1">
-        <select class="rh-rhno"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7" selected>7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option></select>
+        <button type="button" class="rh-rhno" data-value="7" onclick="openRhPicker(this)">7</button>
         <div class="rh-mno">M11</div>
         <div class="rh-title">何度でも何度でも</div>
         <div class="rh-time">4:12</div>
@@ -981,7 +1083,7 @@
 
     <div class="rh-card" id="card-8" data-rh="8" data-m="4">
       <div class="rh-line1">
-        <select class="rh-rhno"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8" selected>8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option></select>
+        <button type="button" class="rh-rhno" data-value="8" onclick="openRhPicker(this)">8</button>
         <div class="rh-mno">M4</div>
         <div class="rh-title">五月雨よ</div>
         <div class="rh-time">3:38</div>
@@ -1001,7 +1103,7 @@
 
     <div class="rh-card" id="card-9" data-rh="9" data-m="7">
       <div class="rh-line1">
-        <select class="rh-rhno"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9" selected>9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option></select>
+        <button type="button" class="rh-rhno" data-value="9" onclick="openRhPicker(this)">9</button>
         <div class="rh-mno">M7</div>
         <div class="rh-title">自業自得</div>
         <div class="rh-time">3:50</div>
@@ -1021,7 +1123,7 @@
 
     <div class="rh-card" id="card-10" data-rh="10" data-m="8">
       <div class="rh-line1">
-        <select class="rh-rhno"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10" selected>10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option></select>
+        <button type="button" class="rh-rhno" data-value="10" onclick="openRhPicker(this)">10</button>
         <div class="rh-mno">M8</div>
         <div class="rh-title">隙間風よ</div>
         <div class="rh-time">4:05</div>
@@ -1041,7 +1143,7 @@
 
     <div class="rh-card" id="card-11" data-rh="11" data-m="10">
       <div class="rh-line1">
-        <select class="rh-rhno"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11" selected>11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option></select>
+        <button type="button" class="rh-rhno" data-value="11" onclick="openRhPicker(this)">11</button>
         <div class="rh-mno">M10</div>
         <div class="rh-title">マチネとソワレ</div>
         <div class="rh-time">4:22</div>
@@ -1061,7 +1163,7 @@
 
     <div class="rh-card" id="card-12" data-rh="12" data-m="12">
       <div class="rh-line1">
-        <select class="rh-rhno"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12" selected>12</option><option value="13">13</option><option value="14">14</option></select>
+        <button type="button" class="rh-rhno" data-value="12" onclick="openRhPicker(this)">12</button>
         <div class="rh-mno">M12</div>
         <div class="rh-title">ジャマイカビール</div>
         <div class="rh-time">3:55</div>
@@ -1081,7 +1183,7 @@
 
     <div class="rh-card" id="card-13" data-rh="13" data-m="13">
       <div class="rh-line1">
-        <select class="rh-rhno"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13" selected>13</option><option value="14">14</option></select>
+        <button type="button" class="rh-rhno" data-value="13" onclick="openRhPicker(this)">13</button>
         <div class="rh-mno">M13</div>
         <div class="rh-title">Start over!</div>
         <div class="rh-time">4:01</div>
@@ -1101,7 +1203,7 @@
 
     <div class="rh-card" id="card-14" data-rh="14" data-m="14">
       <div class="rh-line1">
-        <select class="rh-rhno"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14" selected>14</option></select>
+        <button type="button" class="rh-rhno" data-value="14" onclick="openRhPicker(this)">14</button>
         <div class="rh-mno">EN</div>
         <div class="rh-title">最終アンコール通し</div>
         <div class="rh-time">8:30</div>
@@ -1533,6 +1635,25 @@
   <button data-pass onclick="show('pass')"><span class="ico">●</span>PASS</button>
 </div>
 
+<!-- ホイール・ピッカー（RH順くるくる）-->
+<div class="picker-overlay" id="rh-picker">
+  <div class="picker-backdrop" onclick="closeRhPicker()"></div>
+  <div class="picker-sheet">
+    <div class="picker-header">
+      <button class="picker-cancel" onclick="closeRhPicker()">キャンセル</button>
+      <div class="picker-title">リハ順</div>
+      <button onclick="commitRhPicker()">決定</button>
+    </div>
+    <div class="picker-wheel-container">
+      <div class="picker-wheel" id="rh-picker-wheel"></div>
+      <div class="picker-wheel-mask top"></div>
+      <div class="picker-wheel-mask bottom"></div>
+      <div class="picker-wheel-line top"></div>
+      <div class="picker-wheel-line bottom"></div>
+    </div>
+  </div>
+</div>
+
 <script>
 let authed = false;
 const topTabsHiddenScreens = ['info','arrival','hotel','pass'];
@@ -1682,13 +1803,93 @@ function toggleTaxiForm(id) {
   el.classList.toggle('open');
 }
 
-// タグタップでトグル（誰でも編集可能）
+// タグタップでトグル（認証後のみ編集可能）
 document.addEventListener('click', (e) => {
   const t = e.target;
   if (t && t.classList && t.classList.contains('tag-pill')) {
+    if (!authed) { show('pass'); return; }
     t.classList.toggle('on');
   }
 });
+
+// ── ホイール・ピッカー（リハ順）──
+let activeRhBtn = null;
+let pickerScrollTimeout = null;
+
+function openRhPicker(btn) {
+  if (!authed) { show('pass'); return; }
+  activeRhBtn = btn;
+  const wheel = document.getElementById('rh-picker-wheel');
+  // アイテム生成: 1〜14
+  let html = '<div class="picker-wheel-spacer"></div>';
+  for (let i = 1; i <= 14; i++) {
+    html += `<div class="picker-wheel-item" data-value="${i}">${i}</div>`;
+  }
+  html += '<div class="picker-wheel-spacer"></div>';
+  wheel.innerHTML = html;
+
+  const overlay = document.getElementById('rh-picker');
+  overlay.classList.add('show');
+
+  // スクロール位置を現在値に合わせる
+  const cur = parseInt(btn.dataset.value, 10) || 1;
+  setTimeout(() => {
+    const items = wheel.querySelectorAll('.picker-wheel-item');
+    if (items[cur - 1]) {
+      // scrollTop で正確に中央寄せ
+      wheel.scrollTop = (cur - 1) * 40;
+    }
+    updatePickerHighlight();
+  }, 20);
+
+  wheel.onscroll = () => {
+    if (pickerScrollTimeout) clearTimeout(pickerScrollTimeout);
+    updatePickerHighlight();
+  };
+}
+
+function updatePickerHighlight() {
+  const wheel = document.getElementById('rh-picker-wheel');
+  const items = wheel.querySelectorAll('.picker-wheel-item');
+  if (!items.length) return;
+  const containerRect = wheel.getBoundingClientRect();
+  const centerY = containerRect.top + containerRect.height / 2;
+  let closest = null, closestDist = Infinity;
+  items.forEach(item => {
+    item.classList.remove('center', 'near');
+    const r = item.getBoundingClientRect();
+    const itemCenter = r.top + r.height / 2;
+    const dist = Math.abs(itemCenter - centerY);
+    if (dist < closestDist) { closestDist = dist; closest = item; }
+  });
+  if (closest) {
+    closest.classList.add('center');
+    // 上下の隣接アイテムを「near」に
+    const items = Array.from(wheel.querySelectorAll('.picker-wheel-item'));
+    const idx = items.indexOf(closest);
+    if (idx > 0) items[idx - 1].classList.add('near');
+    if (idx < items.length - 1) items[idx + 1].classList.add('near');
+  }
+}
+
+function commitRhPicker() {
+  const wheel = document.getElementById('rh-picker-wheel');
+  const center = wheel.querySelector('.picker-wheel-item.center');
+  if (center && activeRhBtn) {
+    const v = center.dataset.value;
+    activeRhBtn.dataset.value = v;
+    activeRhBtn.textContent = v;
+    // カードのdata-rhも更新（並び替え用）
+    const card = activeRhBtn.closest('.rh-card');
+    if (card) card.setAttribute('data-rh', v);
+  }
+  closeRhPicker();
+}
+
+function closeRhPicker() {
+  document.getElementById('rh-picker').classList.remove('show');
+  activeRhBtn = null;
+}
 </script>
 </body>
 </html>
