@@ -2450,7 +2450,7 @@ function closeRhPicker() {
 let activeTimeBtn = null;
 
 function openTimePicker(btn) {
-  if (!authed) { show('pass'); return; }
+  // 認証ゲートは一時OFF（誰でも編集可能 / 本番は認証ロックする想定）
   activeTimeBtn = btn;
 
   const label = btn.parentElement.querySelector('.schedule-row-label')?.textContent || '時刻';
