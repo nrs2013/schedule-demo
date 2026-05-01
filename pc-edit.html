@@ -425,6 +425,23 @@
     0%   { background: rgba(232,154,74,0.45); color: #fff; }
     100% { background: rgba(216,184,156,0.08); color: #d8b89c; }
   }
+  /* R45 診断バッジ: dict の中身を可視化（バグ調査用、見終わったら撤去） */
+  .pc-rh-debug {
+    font-family: 'JetBrains Mono', 'Noto Sans JP', monospace;
+    font-size: 10px;
+    color: #a8d4e8;
+    background: rgba(91,155,213,0.08);
+    border: 1px solid rgba(91,155,213,0.3);
+    border-radius: 6px;
+    padding: 3px 10px;
+    letter-spacing: 0.04em;
+    align-self: center;
+    flex-shrink: 0;
+    white-space: nowrap;
+    max-width: 540px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
   .pc-rh-date-big {
     font-family: 'JetBrains Mono', 'Noto Sans JP', monospace;
     font-size: 26px;
@@ -2432,6 +2449,7 @@
         <div class="pc-rh-title">
           <span class="pc-rh-mode-label">REHEARSAL</span>
           <span class="pc-rh-rendered-date" id="pc-rh-rendered-date" title="今この一覧が示している日付">— / —</span>
+          <span class="pc-rh-debug" id="pc-rh-debug" title="R45 診断: 現在の日付キー + 各曲の rhNo 一覧">debug: —</span>
         </div>
         <div class="pc-rh-hint">曲・MC・アンコール の追加から、リハ番号・タグ・メモまで全部ここで編集／日付ごとに別管理</div>
       </div>
@@ -3199,6 +3217,19 @@ function show(id) {
         void renderedDateEl.offsetWidth;
         renderedDateEl.classList.add('flash');
       }
+    }
+    // R45 診断バッジ：現在の dict の中身を可視化
+    const debugEl = document.getElementById('pc-rh-debug');
+    if (debugEl) {
+      const k = getCurrentDateKey();
+      const dict = rehearsalByDate[k] || {};
+      // 先頭8曲分の rhNo を一覧化
+      const summary = songs.slice(0, 8).map(function(s){
+        const r = dict[s.id];
+        if (!r) return s.id + ':-';
+        return s.id + ':' + (r.rhNo === null ? '×' : r.rhNo);
+      }).join(' ');
+      debugEl.textContent = '[' + k + '] ' + summary;
     }
     // セトリ順は orderIndex 順
     const setlist = songs.slice().sort(function(a,b){ return a.orderIndex - b.orderIndex; });
