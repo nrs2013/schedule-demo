@@ -3,10 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>REHEARSAL MODE — Mock</title>
+<title>SCHEDULE STUDIO</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@300;400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   * { box-sizing: border-box; }
   body {
@@ -17,48 +18,76 @@
     min-height: 100vh;
     padding: 0;
   }
-  /* 全画面プレビュー用の薄い案内バー（既存の screen-nav を圧縮） */
-  /* ── 画面セレクター ───────── */
+  /* 全画面プレビュー用の screen-nav（開発用・折りたたみ可） */
   .screen-nav {
     display: flex;
-    gap: 6px;
+    gap: 4px;
     flex-wrap: wrap;
     justify-content: center;
     align-items: center;
     margin: 0;
-    padding: 8px 12px;
+    padding: 4px 8px;
     border-bottom: 1px solid #2c2a27;
     background: #0d0c0b;
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: max-height 0.2s ease-out, opacity 0.2s, padding 0.2s;
   }
-  .screen-nav button { padding: 6px 12px !important; font-size: 10px !important; }
+  .screen-nav.expanded {
+    max-height: 80px;
+    padding: 6px 8px;
+    opacity: 1;
+  }
   .screen-nav button {
     background: #1c1b19;
-    color: #a8a8a0;
+    color: #76766f;
     border: 1px solid #2c2a27;
-    padding: 10px 16px;
+    padding: 4px 10px;
     border-radius: 4px;
     font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
-    font-size: 11px;
+    font-size: 9px;
     font-weight: 700;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.1em;
     cursor: pointer;
     text-transform: uppercase;
-    transition: all 0.15s;
+    transition: all 0.12s;
   }
-  .screen-nav button:hover { border-color: #e89a4a; color: #e8e8e2; }
+  .screen-nav button:hover { border-color: #5a5a53; color: #a8a8a0; }
   .screen-nav button.active {
-    background: #e89a4a;
-    color: #0a0a08;
-    border-color: #e89a4a;
+    background: rgba(232,154,74,0.15);
+    color: #e89a4a;
+    border-color: rgba(232,154,74,0.55);
   }
   .nav-title {
-    color: #76766f;
-    font-size: 9px;
-    letter-spacing: 0.2em;
+    color: #5a5a54;
+    font-size: 8px;
+    letter-spacing: 0.18em;
     text-transform: uppercase;
     font-weight: 600;
-    margin-right: 8px;
+    margin-right: 6px;
   }
+  /* screen-nav 開閉トグルバー */
+  .screen-nav-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 4px 0;
+    background: #0d0c0b;
+    border-bottom: 1px solid #2c2a27;
+    color: #5a5a54;
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    cursor: pointer;
+    user-select: none;
+    transition: color 0.12s;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+  .screen-nav-toggle:hover { color: #a8a8a0; }
+  .screen-nav-toggle::before { content: '▾'; transition: transform 0.2s; display: inline-block; }
+  .screen-nav-toggle.expanded::before { transform: rotate(180deg); }
   .screen { display: none; }
   .screen.active { display: block; animation: fadeIn 0.3s ease-out; }
   @keyframes fadeIn { from {opacity:0; transform: translateY(6px);} to {opacity:1;} }
@@ -72,6 +101,187 @@
     border-radius: 0;
     overflow: hidden;
   }
+  .pc-brand-strip {
+    background: #14130f;
+    color: rgba(232,154,74,0.72);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.42em;
+    text-align: center;
+    padding: 7px 0 6px;
+    border-bottom: 1px solid #2c2a27;
+    text-transform: uppercase;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+  }
+
+  /* ── マスター日付バー（公演タイトル＋日付ナビ） ───────── */
+  .master-date-bar {
+    background: linear-gradient(180deg, rgba(232,154,74,0.13) 0%, rgba(232,154,74,0.04) 100%), #14130f;
+    border-bottom: 1px solid rgba(232,154,74,0.35);
+    padding: 12px 28px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    position: relative;
+    box-shadow: 0 2px 12px rgba(232,154,74,0.08), inset 0 -1px 0 rgba(232,154,74,0.15);
+  }
+  /* 公演タイトル（左側）— DATE と同じ「ラベル横並び+大きいオレンジ値」型に統一 */
+  .master-concert-info {
+    display: flex; align-items: baseline; gap: 12px;
+    flex-shrink: 0;
+  }
+  .master-info-icon {
+    width: 36px; height: 36px;
+    background: rgba(232,154,74,0.10);
+    border: 1px solid rgba(232,154,74,0.4);
+    color: #d8b89c;
+    display: flex; align-items: center; justify-content: center;
+    font-style: italic;
+    font-weight: 700;
+    border-radius: 50%;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.12s, border-color 0.12s, color 0.12s, box-shadow 0.12s;
+    user-select: none;
+    line-height: 1;
+    align-self: center;
+    flex-shrink: 0;
+  }
+  .master-info-icon:hover {
+    background: rgba(232,154,74,0.20);
+    border-color: rgba(232,154,74,0.7);
+    color: #f0a85a;
+    box-shadow: 0 0 10px rgba(232,154,74,0.3);
+  }
+  .master-concert-label {
+    font-family: 'Bebas Neue', 'Noto Sans JP', -apple-system, sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.35em;
+    color: rgba(232,154,74,0.85);
+    font-weight: 400;
+    text-transform: uppercase;
+    align-self: center;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+  .master-concert-title {
+    background: transparent;
+    border: 1px solid transparent;
+    color: #f0a85a;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    padding: 2px 10px;
+    border-radius: 6px;
+    letter-spacing: 0.03em;
+    transition: border-color 0.12s, background 0.12s;
+    min-width: 380px;
+    text-shadow: 0 0 16px rgba(232,154,74,0.35);
+    line-height: 1.2;
+  }
+  .master-concert-title:hover { border-color: rgba(232,154,74,0.3); background: rgba(232,154,74,0.04); }
+  .master-concert-title:focus { outline: none; border-color: rgba(232,154,74,0.55); background: #14130f; }
+  .master-bar-divider {
+    width: 1px;
+    height: 28px;
+    background: linear-gradient(180deg, transparent, rgba(232,154,74,0.35) 30%, rgba(232,154,74,0.35) 70%, transparent);
+    margin: 0 6px;
+    flex-shrink: 0;
+  }
+  .master-date-spacer { flex: 1; }
+  .master-date-nav {
+    background: transparent;
+    border: 1px solid rgba(232,154,74,0.3);
+    color: #d8b89c;
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 18px;
+    font-weight: 700;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+    display: flex; align-items: center; justify-content: center;
+    line-height: 1;
+    padding: 0;
+  }
+  .master-date-nav:hover {
+    background: rgba(232,154,74,0.18);
+    border-color: #e89a4a;
+    color: #f0a85a;
+    box-shadow: 0 0 12px rgba(232,154,74,0.3);
+  }
+  .master-date-content {
+    display: flex; align-items: baseline; gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .master-date-label {
+    font-size: 10px;
+    font-family: 'Bebas Neue', 'Noto Sans JP', sans-serif;
+    color: rgba(232,154,74,0.85);
+    letter-spacing: 0.35em;
+    font-weight: 400;
+    margin-right: 4px;
+    text-transform: uppercase;
+    align-self: center;
+    line-height: 1;
+  }
+  .master-date-main {
+    font-family: 'JetBrains Mono', 'Noto Sans JP', monospace;
+    font-size: 28px;
+    font-weight: 700;
+    color: #f0a85a;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.04em;
+    text-shadow: 0 0 18px rgba(232,154,74,0.4);
+    line-height: 1.1;
+    cursor: pointer;
+    border-radius: 6px;
+    padding: 2px 6px;
+    transition: background 0.12s;
+    user-select: none;
+  }
+  .master-date-main:hover {
+    background: rgba(232,154,74,0.12);
+  }
+  .master-date-dow {
+    font-size: 18px;
+    color: #c8c8c0;
+    font-weight: 600;
+    margin-left: -4px;
+  }
+  .master-date-meta {
+    font-size: 12px;
+    color: #a8a8a0;
+    letter-spacing: 0.1em;
+    font-weight: 600;
+    align-self: center;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-left: 14px;
+    border-left: 1px solid rgba(232,154,74,0.25);
+    margin-left: 8px;
+  }
+  .master-date-meta-day {
+    color: #f0a85a;
+    font-weight: 700;
+    font-family: 'Bebas Neue', 'Noto Sans JP', sans-serif;
+    font-size: 14px;
+    letter-spacing: 0.18em;
+    line-height: 1;
+  }
+  .master-date-meta-venue {
+    color: #d8d8d4;
+    font-weight: 600;
+  }
+  .master-date-input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+    width: 1px; height: 1px;
+    left: 50%;
+    bottom: 4px;
+  }
   .pc-header {
     display: flex;
     align-items: end;
@@ -83,7 +293,7 @@
     width: 44px; height: 44px;
     background: #1c1b19;
     border: 1px solid #2c2a27;
-    border-radius: 4px;
+    border-radius: 6px;
     display: flex; align-items: center; justify-content: center;
     color: #a8a8a0;
     font-weight: 700;
@@ -93,7 +303,7 @@
     height: 44px;
     background: #1c1b19;
     border: 1px solid #2c2a27;
-    border-radius: 4px;
+    border-radius: 6px;
     padding: 0 14px;
     color: #e8e8e2;
     font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
@@ -111,23 +321,49 @@
   .label-stack input {
     width: 100%; height: 40px;
     background: #1c1b19; border: 1px solid #2c2a27;
-    border-radius: 4px; text-align: center;
+    border-radius: 6px; text-align: center;
     color: #e8e8e2;
-    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif; font-variant-numeric: tabular-nums;
-    font-size: 16px; font-weight: 600;
+    font-family: 'JetBrains Mono', 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', monospace;
+    font-variant-numeric: tabular-nums;
+    font-size: 15px; font-weight: 500;
   }
+  /* mode-tabs を2グループ並べる外側ラッパー */
+  .mode-tabs-wrap {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-left: auto;
+  }
+  .mode-tabs-group { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .mode-tabs-group-label {
+    font-size: 8px;
+    letter-spacing: 0.28em;
+    color: #5a5a54;
+    font-weight: 700;
+    text-transform: uppercase;
+    line-height: 1;
+    padding-left: 4px;
+    padding-right: 4px;
+  }
+  .mode-tabs-group.cds .mode-tabs-group-label { color: rgba(193,134,200,0.6); }
   .mode-tabs {
     display: flex; gap: 4px;
     background: #1c1b19;
     border: 1px solid #2c2a27;
     border-radius: 99px;
     padding: 4px;
-    margin-left: auto;
+  }
+  /* CDS（COUNT DOWN STUDIO）グループ：紫系を控えめに添える */
+  .mode-tabs.cds { border-color: rgba(193,134,200,0.25); background: #1b181c; }
+  .mode-tabs.cds button.active {
+    background: rgba(193,134,200,0.14);
+    color: #d8b0e0;
+    border-color: rgba(193,134,200,0.55);
   }
   .mode-tabs button {
     background: transparent;
-    border: none;
-    padding: 8px 16px;
+    border: 1px solid transparent;
+    padding: 7px 16px;
     font-size: 11px;
     font-weight: 700;
     letter-spacing: 0.12em;
@@ -136,10 +372,13 @@
     border-radius: 99px;
     text-transform: uppercase;
     font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+    transition: color 0.12s, background 0.12s, border-color 0.12s;
   }
+  .mode-tabs button:hover { color: #d8d8d4; }
   .mode-tabs button.active {
-    background: #e89a4a;
-    color: #0a0a08;
+    background: rgba(232,154,74,0.12);
+    color: #e89a4a;
+    border-color: rgba(232,154,74,0.55);
   }
   .pc-rh-header {
     padding: 16px 20px 12px;
@@ -147,8 +386,62 @@
     display: flex; align-items: center; justify-content: space-between; gap: 12px;
   }
   .pc-rh-title {
-    font-size: 13px; letter-spacing: 0.3em; color: #e89a4a;
-    font-weight: 700; text-transform: uppercase;
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .pc-rh-mode-label {
+    font-size: 10px;
+    font-family: 'Bebas Neue', 'Noto Sans JP', sans-serif;
+    color: #d8b89c;
+    font-weight: 400;
+    letter-spacing: 0.3em;
+    padding: 4px 12px;
+    background: rgba(232,154,74,0.10);
+    border: 1px solid rgba(232,154,74,0.4);
+    border-radius: 99px;
+    text-transform: uppercase;
+    flex-shrink: 0;
+    align-self: center;
+  }
+  /* REHEARSAL ヘッダーに「今描画されている日付」を視覚化（日付切替バグの検証用） */
+  .pc-rh-rendered-date {
+    font-family: 'JetBrains Mono', 'Noto Sans JP', monospace;
+    font-size: 12px;
+    color: #d8b89c;
+    background: rgba(216,184,156,0.08);
+    border: 1px solid rgba(216,184,156,0.25);
+    border-radius: 6px;
+    padding: 3px 10px;
+    letter-spacing: 0.05em;
+    align-self: center;
+    flex-shrink: 0;
+  }
+  .pc-rh-rendered-date.flash {
+    animation: pcRhRenderedDateFlash 0.6s ease-out;
+  }
+  @keyframes pcRhRenderedDateFlash {
+    0%   { background: rgba(232,154,74,0.45); color: #fff; }
+    100% { background: rgba(216,184,156,0.08); color: #d8b89c; }
+  }
+  .pc-rh-date-big {
+    font-family: 'JetBrains Mono', 'Noto Sans JP', monospace;
+    font-size: 26px;
+    font-weight: 700;
+    color: #f0a85a;
+    letter-spacing: 0.04em;
+    font-variant-numeric: tabular-nums;
+    text-shadow: 0 0 16px rgba(232,154,74,0.35);
+    line-height: 1.1;
+  }
+  .pc-rh-dow {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 16px;
+    color: #c8c8c0;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    margin-left: -6px;
   }
   .pc-rh-actions { display: flex; gap: 8px; }
   .pc-btn {
@@ -156,19 +449,39 @@
     background: #1c1b19;
     border: 1px solid #2c2a27;
     color: #a8a8a0;
-    border-radius: 4px;
+    border-radius: 6px;
     font-size: 11px;
     font-weight: 700;
     letter-spacing: 0.12em;
     cursor: pointer;
     text-transform: uppercase;
     font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+    transition: color 0.12s, border-color 0.12s, background 0.12s;
   }
-  .pc-btn.primary { background: #e89a4a; color: #0a0a08; border-color: #e89a4a; }
-  /* 列順: drag / M# / TITLE / TIME / RH# / TAGS(コンパクト) / MEMO(広く) / × */
+  .pc-btn:hover { color: #e8e8e2; border-color: #5a5a53; }
+  .pc-btn.primary { background: rgba(232,154,74,0.12); color: #e89a4a; border-color: rgba(232,154,74,0.55); }
+  .pc-btn.primary:hover { background: rgba(232,154,74,0.18); border-color: #e89a4a; }
+  /* + 追加 横の種類セレクト */
+  .pc-add-type-select {
+    background: #1c1b19;
+    border: 1px solid #2c2a27;
+    color: #d8d8d4;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+  }
+  .pc-add-type-select:focus { outline: none; border-color: rgba(232,154,74,0.55); }
+  /* LINE ブランドカラー（#06C755）に合わせた緑 */
+  .pc-btn.line { background: rgba(6,199,85,0.12); color: #4ad97a; border-color: rgba(6,199,85,0.55); }
+  .pc-btn.line:hover { background: rgba(6,199,85,0.18); border-color: #06c755; color: #6be38e; }
+  /* 列順: drag / M# / TITLE / TIME / RH# / TAGS(8タグ) / MEMO(広く) / × */
   .pc-table-header {
     display: grid;
-    grid-template-columns: 28px 50px minmax(160px, 0.8fr) 60px 50px 280px minmax(320px, 2.5fr) 26px;
+    grid-template-columns: 28px 50px minmax(160px, 0.8fr) 60px 50px 432px minmax(260px, 2fr) 26px;
     gap: 8px;
     padding: 6px 14px;
     background: #1a1918;
@@ -182,44 +495,1286 @@
   }
   .pc-row {
     display: grid;
-    grid-template-columns: 28px 50px minmax(160px, 0.8fr) 60px 50px 280px minmax(320px, 2.5fr) 26px;
+    grid-template-columns: 28px 50px minmax(160px, 0.8fr) 60px 50px 432px minmax(260px, 2fr) 26px;
     gap: 8px;
     padding: 6px 14px;
-    background: #242320;
+    background: #1f1e1b;
     border: 1px solid #2c2a27;
-    border-radius: 3px;
+    border-radius: 6px;
     margin: 2px 8px;
     align-items: center;
+    transition: border-color 0.12s, background 0.12s;
   }
+  .pc-row:hover { border-color: #5a5a53; }
   .pc-row.current {
-    background: #2a2018;
-    border-color: #e89a4a;
-    box-shadow: 0 0 0 1px rgba(232,154,74,0.25);
+    background: #221d18;
+    border-color: rgba(232,154,74,0.55);
   }
   .pc-row .drag {
     color: rgba(255,255,255,0.18);
     text-align: center;
     cursor: grab;
   }
-  /* M番号: 控えめなオレンジ薄、ゴシック */
+  /* M番号: 控えめ、グレーで通す（読み取り専用：CDSが源） */
   .pc-row .m-no {
-    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
-    font-weight: 700;
-    font-size: 14px;
-    color: rgba(232,154,74,0.55);
+    font-family: 'JetBrains Mono', 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', monospace;
+    font-weight: 500;
+    font-size: 13px;
+    color: #76766f;
     text-align: center;
     font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
+    cursor: default;
+  }
+  /* 特殊行のM#セルをCDS（song-row.tsx）と完全に同じバッジ仕様に揃える */
+  /*  MC=青／EN=暗緑／VCR=茶ゴールド／END=オレンジゴールド */
+  .pc-row.special-mc .m-no,
+  .pc-row.special-en .m-no,
+  .pc-row.special-vcr .m-no,
+  .pc-row.special-end .m-no {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    padding: 4px 0;
+    line-height: 1;
+    border-radius: 3px;
+    border: 1px solid transparent;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  }
+  .pc-row.special-mc  .m-no { color: #a8d4e8; background: rgba(106,150,184,0.32); border-color: rgba(106,150,184,0.7); }
+  .pc-row.special-en  .m-no { color: #b8d9b0; background: rgba(106,138,102,0.32); border-color: rgba(106,138,102,0.7); }
+  .pc-row.special-vcr .m-no { color: #e8c890; background: rgba(184,149,88,0.32); border-color: rgba(184,149,88,0.7); }
+  .pc-row.special-end .m-no { color: #f0c77a; background: rgba(232,176,74,0.38); border-color: rgba(232,176,74,0.8); }
+  /* MC 行のタイトルは少し控えめに（リハ対象外感） */
+  .pc-row.special-mc .title-cell { color: #a8a8a0; }
+  /* タイトル：編集可・hover/focusで枠 */
+  .pc-row .title-cell {
+    cursor: text;
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px solid transparent;
+    transition: background 0.12s, border-color 0.12s;
+  }
+  .pc-row .title-cell:hover { background: #14130f; border-color: #2c2a27; }
+  .pc-row .title-cell:focus { outline: none; background: #14130f; border-color: rgba(232,154,74,0.55); }
+  /* row-action（× 削除ボタン） */
+  .pc-row .row-action {
+    cursor: pointer;
+    transition: color 0.12s, background 0.12s;
+    border-radius: 4px;
+  }
+  .pc-row .row-action:hover {
+    color: #e07a5f;
+    background: rgba(224,122,95,0.10);
+  }
+  /* CDS リンク風ボタン（「CDSでセトリ編集」用） */
+  .pc-btn.cds-link {
+    background: rgba(193,134,200,0.10);
+    color: #d8b0e0;
+    border-color: rgba(193,134,200,0.45);
+  }
+  .pc-btn.cds-link:hover { background: rgba(193,134,200,0.18); border-color: #c186c8; color: #e8c8e8; }
+  /* タイトル下のヒント案内 */
+  .pc-rh-title-block { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .pc-rh-hint { font-size: 10px; color: #5a5a54; letter-spacing: 0.05em; font-weight: 400; }
+
+  /* ── 新タブ構造（A案：階層強調型 / Bebas Neue＋グラデ＋下線アクセント） ───────── */
+  .tab-bar {
+    background: linear-gradient(180deg, #16140f 0%, #1a1918 100%);
+    padding: 18px 28px 0;
+    border-bottom: 1px solid #2c2a27;
+    position: relative;
+  }
+  .tab-bar-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 4px;
+    position: relative;
+    z-index: 2;
+  }
+  /* 親タブ（SCHEDULE/REHEARSAL）：active時に下線アクセント＋子タブ帯と接続 */
+  .parent-tab {
+    position: relative;
+    background: transparent;
+    border: 1px solid transparent;
+    border-bottom: none;
+    color: #5a5a54;
+    padding: 13px 26px 14px;
+    border-radius: 8px 8px 0 0;
+    font-family: 'Bebas Neue', 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+    font-size: 17px;
+    font-weight: 400;
+    letter-spacing: 0.18em;
+    cursor: pointer;
+    transition: color 0.18s, background 0.18s, border-color 0.18s;
+    margin-bottom: -1px;
+  }
+  .parent-tab::after {
+    content: '';
+    position: absolute;
+    left: 16px; right: 16px;
+    bottom: -1px;
+    height: 2px;
+    background: transparent;
+    border-radius: 2px 2px 0 0;
+    transition: background 0.18s, left 0.18s, right 0.18s;
+  }
+  .parent-tab:hover { color: #d8d8d4; background: rgba(255,255,255,0.02); }
+  .parent-tab:hover::after { background: rgba(232,154,74,0.4); left: 26px; right: 26px; }
+  .parent-tab.active {
+    background: linear-gradient(180deg, rgba(232,154,74,0.16) 0%, rgba(232,154,74,0.08) 100%);
+    color: #f0a85a;
+    border-color: rgba(232,154,74,0.4);
+    border-bottom-color: rgba(232,154,74,0.08);
+    text-shadow: 0 0 18px rgba(232,154,74,0.4);
+  }
+  .parent-tab.active::after {
+    background: linear-gradient(90deg, transparent, #e89a4a 30%, #e89a4a 70%, transparent);
+    left: 0; right: 0;
+    bottom: -1px; height: 2px;
+  }
+  /* 子なし親タブ（INFO/SET LIST/SHOW）：active時は枠で完結（子タブ帯と接続しない） */
+  .parent-tab.no-children.active {
+    border-bottom-color: rgba(232,154,74,0.4);
+  }
+  .parent-tab.no-children.active::after { display: none; }
+  /* CDS グループ：紫系 */
+  .parent-tab.cds { border-color: transparent; color: #6a6a64; }
+  .parent-tab.cds.active {
+    background: linear-gradient(180deg, rgba(193,134,200,0.18) 0%, rgba(193,134,200,0.10) 100%);
+    color: #e0bce6;
+    border-color: rgba(193,134,200,0.45);
+    box-shadow: 0 2px 12px rgba(193,134,200,0.18), inset 0 1px 0 rgba(193,134,200,0.18);
+    text-shadow: 0 0 18px rgba(193,134,200,0.4);
+  }
+  .parent-tab.no-children.cds.active {
+    border-bottom-color: rgba(193,134,200,0.45);
+  }
+  .cds-divider {
+    width: 1px;
+    height: 24px;
+    background: linear-gradient(180deg, transparent, #2c2a27 30%, #2c2a27 70%, transparent);
+    margin: 0 14px 8px;
+    align-self: center;
+  }
+  .parent-tabs-spacer { flex: 1; }
+  /* tab-bar 内のLINEボタンは廃止（タブ整理で削除） */
+  /* 子タブ帯：A案モック準拠（margin-top -1px で親タブに重ねる／左右マージン無し→tab-bar padding を活用） */
+  .children-bar {
+    background:
+      linear-gradient(180deg, rgba(232,154,74,0.10) 0%, rgba(232,154,74,0.03) 100%),
+      #1a1918;
+    border: 1px solid rgba(232,154,74,0.4);
+    border-top: 1px solid rgba(232,154,74,0.08);
+    border-radius: 0 10px 10px 10px;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    box-shadow:
+      0 6px 20px rgba(0,0,0,0.35),
+      0 1px 0 rgba(232,154,74,0.06) inset,
+      0 -1px 0 rgba(232,154,74,0.18);
+    position: relative;
+    margin: -1px 0 18px;
+  }
+  .children-bar:empty { display: none; }
+  .children-label {
+    font-family: 'Bebas Neue', 'Noto Sans JP', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    color: rgba(232,154,74,0.85);
+    font-weight: 400;
+    margin-right: 8px;
+    text-transform: uppercase;
+  }
+  /* 子タブ：active 時グラデ＋浮き影 */
+  .child-tab {
+    background: rgba(20,19,15,0.55);
+    color: #a8a8a0;
+    border: 1px solid rgba(255,255,255,0.04);
+    padding: 8px 18px 9px;
+    border-radius: 99px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-transform: uppercase;
+  }
+  .child-tab:hover {
+    color: #f0e8d8;
+    background: rgba(232,154,74,0.10);
+    border-color: rgba(232,154,74,0.3);
+    transform: translateY(-1px);
+  }
+  .child-tab.active {
+    background: linear-gradient(135deg, #e89a4a 0%, #d4853a 100%);
+    color: #1a1108;
+    border-color: rgba(232,154,74,0.85);
+    box-shadow:
+      0 3px 12px rgba(232,154,74,0.35),
+      0 1px 0 rgba(255,210,150,0.4) inset,
+      0 -1px 0 rgba(120,70,30,0.4) inset;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+  }
+  /* 古い sub-tabs-wrap は不要（children-barで代替） */
+  .sub-tabs-wrap { display: none !important; }
+
+  /* ── モード別コンテンツ切替（第1階層） ───────── */
+  .mode-content { display: none; }
+  .mode-content.active { display: block; animation: pc-mode-fade 0.18s ease-out; }
+  @keyframes pc-mode-fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; } }
+
+  /* ── 第2階層：SCHEDULE 内のサブタブ（CALENDAR / HOTEL / 入り時間） ───────── */
+  .sub-tabs-wrap {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px 6px;
+    flex-wrap: wrap;
+  }
+  .sub-tabs {
+    display: flex; gap: 4px;
+    background: #161513;
+    border: 1px solid #2c2a27;
+    border-radius: 99px;
+    padding: 3px;
+  }
+  .sub-tabs button {
+    background: transparent;
+    border: 1px solid transparent;
+    padding: 6px 14px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: #76766f;
+    cursor: pointer;
+    border-radius: 99px;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+    transition: color 0.12s, background 0.12s, border-color 0.12s;
+    text-transform: uppercase;
+  }
+  .sub-tabs button:hover { color: #d8d8d4; }
+  .sub-tabs button.active {
+    background: rgba(232,154,74,0.10);
+    color: #e89a4a;
+    border-color: rgba(232,154,74,0.4);
+  }
+  .sub-tabs-hint {
+    font-size: 10px;
+    color: #5a5a54;
     letter-spacing: 0.05em;
   }
-  /* RH番号: メインアクセント、太い */
-  .pc-row .rh-no {
+  .sub-content { display: none; }
+  .sub-content.active { display: block; animation: pc-mode-fade 0.15s ease-out; }
+
+  /* ── HOTEL 編集画面 ───────── */
+  /* ツールバー（追加 / Excel取込 / テンプレDL） */
+  .hotel-toolbar {
+    display: flex;
+    gap: 8px;
+    padding: 0 16px 12px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .toolbar-btn {
+    background: #1c1b19;
+    border: 1px solid #2c2a27;
+    color: #a8a8a0;
+    border-radius: 6px;
+    padding: 8px 14px;
     font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: color 0.12s, border-color 0.12s, background 0.12s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .toolbar-btn:hover { color: #e8e8e2; border-color: #5a5a53; }
+  .toolbar-btn.primary {
+    background: rgba(232,154,74,0.12);
+    color: #e89a4a;
+    border-color: rgba(232,154,74,0.55);
+  }
+  .toolbar-btn.primary:hover { background: rgba(232,154,74,0.18); border-color: #e89a4a; }
+  .toolbar-hint {
+    font-size: 10px;
+    color: #5a5a54;
+    letter-spacing: 0.05em;
+    margin-left: auto;
+    align-self: center;
+  }
+  .hotel-file-input { display: none; }
+
+  /* レスポンシブ3列グリッド：PCで3列、画面狭くなったら自動で2列・1列に */
+  .hotel-list-wrap {
+    padding: 0 16px 24px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+    gap: 14px;
+    align-items: start;
+  }
+  .hotel-card {
+    background: #1c1b19;
+    border: 1px solid #2c2a27;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .hotel-card-head {
+    display: flex; align-items: center; justify-content: center; gap: 12px;
+    padding: 14px 16px;
+    border-bottom: 1px solid #2c2a27;
+    background: #1f1e1b;
+  }
+  .hotel-name-input {
+    flex: 1;
+    background: transparent;
+    border: 1px solid transparent;
+    color: #e8e8e2;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 700;
+    padding: 6px 10px;
+    border-radius: 4px;
+    text-align: center;
+    transition: border-color 0.12s, background 0.12s;
+  }
+  .hotel-name-input:hover { border-color: #2c2a27; background: #14130f; }
+  .hotel-name-input:focus { outline: none; border-color: rgba(232,154,74,0.55); background: #14130f; }
+  .hotel-info-grid {
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: 6px 12px;
+    padding: 12px 16px;
+    align-items: center;
+  }
+  .hotel-info-grid .info-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    color: #76766f;
+    text-transform: uppercase;
+  }
+  .hotel-info-grid input {
+    background: #14130f;
+    border: 1px solid #2c2a27;
+    color: #e8e8e2;
+    font-family: 'JetBrains Mono', 'Noto Sans JP', monospace;
+    font-size: 12px;
+    padding: 6px 10px;
+    border-radius: 4px;
+    transition: border-color 0.12s;
+  }
+  .hotel-info-grid input:focus { outline: none; border-color: rgba(232,154,74,0.55); }
+
+  /* Googleマップリンク（住所からURLエンコードで自動生成） */
+  .hotel-map-link-wrap {
+    padding: 0 16px 12px;
+  }
+  .hotel-map-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(106,150,184,0.12);
+    color: #a8d4e8;
+    border: 1px solid rgba(106,150,184,0.45);
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-decoration: none;
+    transition: background 0.12s, border-color 0.12s, color 0.12s;
+    font-family: inherit;
+  }
+  .hotel-map-link:hover { background: rgba(106,150,184,0.20); border-color: rgba(106,150,184,0.85); color: #c8e0f0; }
+  .hotel-map-link.disabled {
+    opacity: 0.35;
+    pointer-events: none;
+    background: #14130f;
+    color: #5a5a54;
+    border-color: #2c2a27;
+  }
+
+  .hotel-section {
+    border-top: 1px solid #2c2a27;
+    padding: 14px 16px;
+  }
+  .hotel-section-head {
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 11px;
     font-weight: 800;
+    letter-spacing: 0.2em;
+    color: #a8a8a0;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .hotel-section-count {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: #5a5a54;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+  }
+
+  .taxi-list, .member-list { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
+  .taxi-row, .member-row {
+    display: grid;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    background: #14130f;
+    border: 1px solid #2c2a27;
+    border-radius: 4px;
+    transition: border-color 0.12s;
+  }
+  .taxi-row { grid-template-columns: 80px 1fr 80px 28px; }
+  .member-row { grid-template-columns: 110px 1fr 28px; }
+  .taxi-row:hover, .member-row:hover { border-color: #5a5a53; }
+  .taxi-row input, .taxi-row select, .member-row input, .member-row select {
+    background: transparent;
+    border: 1px solid transparent;
+    color: #e8e8e2;
+    font-family: inherit;
+    font-size: 12px;
+    padding: 4px 6px;
+    border-radius: 3px;
+    transition: border-color 0.12s, background 0.12s;
+  }
+  .taxi-row input:hover, .taxi-row select:hover,
+  .member-row input:hover, .member-row select:hover { border-color: #2c2a27; background: #1c1b19; }
+  .taxi-row input:focus, .taxi-row select:focus,
+  .member-row input:focus, .member-row select:focus {
+    outline: none; border-color: rgba(232,154,74,0.55); background: #1c1b19;
+  }
+  .taxi-row .taxi-time {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    color: #e89a4a;
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+  }
+  .taxi-row .taxi-count-wrap {
+    display: flex; align-items: center; gap: 4px; justify-content: flex-end;
+    color: #a8a8a0; font-size: 11px;
+  }
+  .taxi-row .taxi-count-wrap input {
+    width: 50px; text-align: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    color: #e8e8e2;
+  }
+  .member-row .member-section-cell select {
+    width: 100%;
+    color: #b8d9b0;
+    font-weight: 600;
+  }
+  .row-del {
+    background: transparent;
+    border: none;
+    color: #5a5a54;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 0;
+    width: 28px; height: 28px;
+    border-radius: 4px;
+    transition: color 0.12s, background 0.12s;
+  }
+  .row-del:hover { color: #e07a5f; background: rgba(224,122,95,0.1); }
+
+  .add-btn {
+    background: rgba(232,154,74,0.08);
+    border: 1px dashed rgba(232,154,74,0.4);
+    color: #e89a4a;
+    padding: 8px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    transition: all 0.12s;
+    width: 100%;
+  }
+  .add-btn:hover { background: rgba(232,154,74,0.14); border-color: #e89a4a; border-style: solid; }
+
+  /* ── 全タブ共通：右上の LINE で送るボタン ───────── */
+  .global-line-btn {
+    background: rgba(6,199,85,0.12);
+    color: #4ad97a;
+    border: 1px solid rgba(6,199,85,0.55);
+    padding: 7px 14px;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: background 0.12s, border-color 0.12s, color 0.12s;
+    margin-left: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+  .global-line-btn:hover {
+    background: rgba(6,199,85,0.20);
+    border-color: #06c755;
+    color: #6be38e;
+  }
+
+  /* ── DAY SCHEDULE タブ ───────── */
+  .day-schedule-wrap {
+    padding: 22px 28px 28px;
+    max-width: 760px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .day-schedule-header {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-bottom: 4px;
+    padding: 4px 4px 14px;
+    border-bottom: 1px solid #2c2a27;
+  }
+  .day-schedule-mode-label {
+    font-size: 10px;
+    font-family: 'Bebas Neue', 'Noto Sans JP', sans-serif;
+    color: #d8b89c;
+    font-weight: 400;
+    letter-spacing: 0.3em;
+    padding: 4px 12px;
+    background: rgba(232,154,74,0.10);
+    border: 1px solid rgba(232,154,74,0.4);
+    border-radius: 99px;
+    text-transform: uppercase;
+    flex-shrink: 0;
+    align-self: center;
+  }
+  .day-schedule-date {
+    font-family: 'JetBrains Mono', 'Noto Sans JP', monospace;
+    font-size: 26px;
+    font-weight: 700;
+    color: #f0a85a;
+    letter-spacing: 0.04em;
+    font-variant-numeric: tabular-nums;
+    text-shadow: 0 0 16px rgba(232,154,74,0.35);
+    line-height: 1.1;
+  }
+  .day-schedule-dow {
+    font-size: 16px;
+    color: #c8c8c0;
+    font-weight: 600;
+    margin-left: -6px;
+  }
+  .day-schedule-hint {
+    font-size: 11px;
+    color: #5a5a54;
+    letter-spacing: 0.05em;
+    margin-left: auto;
+    align-self: center;
+  }
+
+  /* イベントカード（開始〜終了 + ラベル のみ。時刻早い順） */
+  .day-event-list-header {
+    display: grid;
+    grid-template-columns: 120px 18px 120px 1fr 32px;
+    gap: 10px;
+    padding: 6px 14px 8px;
+    font-family: 'Bebas Neue', 'Noto Sans JP', sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    color: #76766f;
+    font-weight: 400;
+    text-transform: uppercase;
+    border-bottom: 1px solid #2c2a27;
+    margin-bottom: 8px;
+  }
+  .day-event-list-header .dayh-cell {
+    text-align: center;
+  }
+  .day-event-list-header .dayh-cell.label {
+    text-align: left;
+    padding-left: 12px;
+    letter-spacing: 0.2em;
+  }
+  .day-event-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .day-event-card {
+    background: #1c1b19;
+    border: 1px solid #2c2a27;
+    border-radius: 6px;
+    padding: 10px 14px;
+    display: grid;
+    grid-template-columns: 120px 18px 120px 1fr 32px;
+    gap: 10px;
+    align-items: center;
+    transition: border-color 0.12s, background 0.12s;
+  }
+  .day-event-card:hover { border-color: #5a5a53; }
+  .day-event-time {
+    background: #14130f;
+    border: 1px solid #2c2a27;
+    color: #f0a85a;
+    font-family: 'JetBrains Mono', 'Noto Sans JP', monospace;
+    font-size: 22px;
+    font-weight: 700;
+    padding: 6px 10px;
+    border-radius: 5px;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.04em;
+    text-shadow: 0 0 12px rgba(232,154,74,0.22);
+    text-align: center;
+    transition: border-color 0.12s, background 0.12s;
+  }
+  .day-event-time.end {
+    color: #c8a070;
+    text-shadow: 0 0 10px rgba(200,160,112,0.18);
+  }
+  .day-event-time.end[value=""] { color: #5a5a54; }
+  .day-event-time:focus {
+    outline: none;
+    border-color: rgba(232,154,74,0.55);
+    background: rgba(232,154,74,0.05);
+  }
+  .day-event-tilde {
+    text-align: center;
+    color: #5a5a54;
+    font-size: 16px;
+    font-weight: 600;
+    user-select: none;
+  }
+  .day-event-label {
+    background: transparent;
+    border: 1px solid transparent;
+    color: #e8e8e2;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 5px;
+    letter-spacing: 0.02em;
+    transition: border-color 0.12s, background 0.12s;
+  }
+  .day-event-label:hover { border-color: #2c2a27; background: #14130f; }
+  .day-event-label:focus { outline: none; border-color: rgba(232,154,74,0.55); background: #14130f; }
+  .day-event-del {
+    background: transparent;
+    border: none;
+    color: #5a5a54;
+    cursor: pointer;
+    font-size: 18px;
+    width: 32px; height: 32px;
+    border-radius: 4px;
+    transition: color 0.12s, background 0.12s;
+  }
+  .day-event-del:hover { color: #e07a5f; background: rgba(224,122,95,0.1); }
+
+  .day-add-btn {
+    background: rgba(232,154,74,0.08);
+    border: 1px dashed rgba(232,154,74,0.4);
+    color: #e89a4a;
+    padding: 12px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    transition: all 0.12s;
+    width: 100%;
+    text-align: center;
+  }
+  .day-add-btn:hover { background: rgba(232,154,74,0.14); border-color: #e89a4a; border-style: solid; }
+
+  /* ── INFO タブ ───────── */
+  /* 認証セクション（未認証 / 認証済み 切替） */
+  .info-auth {
+    background: #14130f;
+    border: 1px solid #2c2a27;
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin: 0 20px 16px;
+    max-width: 800px;
+  }
+  .info-login-panel {
+    display: flex;
+    gap: 12px;
+    align-items: end;
+    flex-wrap: wrap;
+  }
+  .info-loggedin-panel {
+    display: none;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .info-loggedin-icon {
+    background: rgba(126,194,122,0.18);
+    border: 1px solid rgba(126,194,122,0.6);
+    color: #b8d9b0;
+    padding: 5px 12px;
+    border-radius: 99px;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.18em;
+  }
+  .info-loggedin-text {
+    font-size: 13px;
+    color: #d8d8d4;
+  }
+  .info-loggedin-name {
+    font-weight: 700;
+    color: #e89a4a;
+  }
+  .info-logout-btn {
+    background: transparent;
+    border: 1px solid #2c2a27;
+    color: #76766f;
+    padding: 6px 14px;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: color 0.12s, border-color 0.12s;
+    margin-left: auto;
+  }
+  .info-logout-btn:hover { color: #d8d8d4; border-color: #5a5a53; }
+  .info-login-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .info-login-input-group label {
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    color: #76766f;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+  .info-login-input-group input {
+    background: #1c1b19;
+    border: 1px solid #2c2a27;
+    color: #e8e8e2;
+    font-family: inherit;
+    font-size: 13px;
+    padding: 8px 10px;
+    border-radius: 4px;
+    width: 160px;
+  }
+  .info-login-input-group input:focus { outline: none; border-color: rgba(232,154,74,0.55); }
+  .info-login-btn {
+    background: rgba(232,154,74,0.12);
+    color: #e89a4a;
+    border: 1px solid rgba(232,154,74,0.55);
+    padding: 9px 18px;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: background 0.12s, border-color 0.12s;
+    height: 36px;
+    align-self: end;
+  }
+  .info-login-btn:hover { background: rgba(232,154,74,0.18); border-color: #e89a4a; }
+  .info-login-hint {
+    font-size: 10px;
+    color: #5a5a54;
+    letter-spacing: 0.05em;
+    align-self: center;
+    margin-left: auto;
+    max-width: 240px;
+    line-height: 1.5;
+  }
+
+  /* 認証されていない時：フォームを薄く */
+  .info-form.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+  .info-form.disabled .info-push-btn { cursor: not-allowed; }
+
+  .info-header { padding: 18px 20px 12px; }
+  .info-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #e8e8e2;
+    letter-spacing: 0.04em;
+    margin: 0 0 8px;
+  }
+  .info-desc {
+    font-size: 12px;
+    color: #a8a8a0;
+    margin: 0;
+    line-height: 1.7;
+    max-width: 800px;
+  }
+  .info-form {
+    background: #1c1b19;
+    border: 1px solid #2c2a27;
+    border-radius: 8px;
+    padding: 18px;
+    margin: 0 20px 20px;
+    max-width: 800px;
+  }
+  .info-field { margin-bottom: 16px; }
+  .info-field:last-of-type { margin-bottom: 18px; }
+  .info-label {
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    color: #76766f;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .info-input, .info-textarea {
+    width: 100%;
+    background: #14130f;
+    border: 1px solid #2c2a27;
+    color: #e8e8e2;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+    font-size: 14px;
+    padding: 10px 12px;
+    border-radius: 6px;
+    line-height: 1.6;
+    resize: vertical;
+    transition: border-color 0.12s;
+  }
+  .info-textarea { min-height: 130px; }
+  .info-input:focus, .info-textarea:focus {
+    outline: none;
+    border-color: rgba(232,154,74,0.55);
+  }
+  .info-actions {
+    display: flex; align-items: center; gap: 14px;
+    flex-wrap: wrap;
+  }
+  .info-push-btn {
+    background: rgba(6,199,85,0.14);
+    color: #4ad97a;
+    border: 1px solid rgba(6,199,85,0.6);
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: all 0.12s;
+  }
+  .info-push-btn:hover {
+    background: rgba(6,199,85,0.22);
+    border-color: #06c755;
+    color: #6be38e;
+  }
+  .info-push-hint {
+    font-size: 11px;
+    color: #5a5a54;
+    letter-spacing: 0.05em;
+  }
+  .info-history {
+    margin: 0 20px 20px;
+    max-width: 800px;
+  }
+  .info-history-head {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 0 12px;
+    border-bottom: 1px solid #2c2a27;
+    margin-bottom: 12px;
+  }
+  .info-history-title {
+    font-size: 11px;
+    color: #76766f;
+    letter-spacing: 0.2em;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+  .info-history-count {
+    font-size: 11px;
+    color: #5a5a54;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .info-history-item {
+    background: #1c1b19;
+    border: 1px solid #2c2a27;
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin-bottom: 8px;
+    transition: border-color 0.12s;
+  }
+  .info-history-item:hover { border-color: #5a5a53; }
+  .info-history-meta {
+    display: flex; gap: 10px; align-items: center;
+    font-size: 11px;
+    color: #76766f;
+    margin-bottom: 6px;
+    letter-spacing: 0.04em;
+  }
+  .info-history-time {
+    font-family: 'JetBrains Mono', 'Noto Sans JP', monospace;
+    color: #a8a8a0;
+    font-weight: 600;
+  }
+  .info-history-sender {
+    color: #e89a4a;
+    font-weight: 700;
+  }
+  .info-history-line { color: #5a5a54; }
+  .info-history-subject {
+    font-size: 14px;
+    font-weight: 700;
+    color: #e8e8e2;
+    margin-bottom: 6px;
+    letter-spacing: 0.02em;
+  }
+  .info-history-body {
+    font-size: 12px;
+    color: #d8d8d4;
+    line-height: 1.7;
+    white-space: pre-wrap;
+  }
+
+  /* ── 入り時間（縦1列・時刻早い順） ───────── */
+  .arrival-list-wrap {
+    padding: 0 16px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-width: 520px;
+  }
+  .arrival-card {
+    background: #1c1b19;
+    border: 1px solid #2c2a27;
+    border-radius: 6px;
+    padding: 10px 12px;
+    display: grid;
+    grid-template-columns: 96px 1fr 28px;
+    gap: 12px;
+    align-items: center;
+    transition: border-color 0.12s, background 0.12s;
+  }
+  .arrival-card:hover { border-color: #5a5a53; }
+  .arrival-time {
+    font-family: 'JetBrains Mono', 'Noto Sans JP', monospace;
+    font-weight: 700;
+    font-size: 18px;
+    color: #e89a4a;
+    font-variant-numeric: tabular-nums;
+    background: transparent;
+    border: 1px solid transparent;
+    padding: 5px 6px;
+    border-radius: 4px;
+    text-align: center;
+    transition: border-color 0.12s, background 0.12s;
+  }
+  .arrival-time:hover { border-color: #2c2a27; background: #14130f; }
+  .arrival-time:focus { outline: none; border-color: rgba(232,154,74,0.55); background: #14130f; }
+  .arrival-section-name {
+    background: transparent;
+    border: 1px solid transparent;
+    color: #e8e8e2;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-family: inherit;
+    letter-spacing: 0.04em;
+    transition: border-color 0.12s, background 0.12s;
+  }
+  .arrival-section-name:hover { border-color: #2c2a27; background: #14130f; }
+  .arrival-section-name:focus { outline: none; border-color: rgba(232,154,74,0.55); background: #14130f; }
+
+  /* プレースホルダ（テクリハ／SET LIST／SHOW タブ用） */
+  .mode-placeholder {
+    text-align: center;
+    padding: 80px 40px;
+    color: #76766f;
+  }
+  .mode-placeholder-title {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: 0.18em;
+    color: #a8a8a0;
+    margin-bottom: 14px;
+  }
+  .mode-placeholder-desc {
+    font-size: 12px;
+    line-height: 1.8;
+    color: #76766f;
+  }
+  .mode-placeholder-link {
+    color: #d8b0e0;
+    text-decoration: none;
+    border-bottom: 1px solid rgba(193,134,200,0.4);
+    padding-bottom: 1px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+  }
+  .mode-placeholder-link:hover { color: #e8c8e8; border-bottom-color: #c186c8; }
+
+  /* ── CALENDAR タブ ───────── */
+  .pc-cal-meta {
+    display: flex; gap: 24px; align-items: center;
+    padding: 10px 14px;
+    background: rgba(232,154,74,0.06);
+    border: 1px solid rgba(232,154,74,0.22);
+    border-radius: 6px;
+    font-size: 12px;
+    margin: 14px 16px 12px;
+    flex-wrap: wrap;
+  }
+  .pc-cal-meta-label {
+    font-size: 9px; color: #e89a4a;
+    letter-spacing: 0.25em;
+    font-weight: 800;
+    margin-right: 8px;
+  }
+  .pc-cal-meta-val {
+    color: #e8e8e2;
+    font-family: 'JetBrains Mono', 'Noto Sans JP', monospace;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .pc-cal-legend {
+    display: flex; gap: 14px; align-items: center; flex-wrap: wrap;
+    padding: 10px 14px;
+    background: #14130f;
+    border: 1px solid #2c2a27;
+    border-radius: 6px;
+    font-size: 11px;
+    margin: 0 16px 14px;
+  }
+  .pc-cal-legend-item { display: flex; align-items: center; gap: 6px; }
+  .pc-cal-legend-pill {
+    width: 18px; height: 12px; border-radius: 3px;
+    border: 1px solid transparent;
+  }
+  .pc-cal-legend-pill.show  { background: rgba(224,122,95,0.30);  border-color: rgba(224,122,95,0.5); }
+  .pc-cal-legend-pill.rh    { background: rgba(126,194,122,0.22); border-color: rgba(126,194,122,0.4); }
+  .pc-cal-legend-pill.tek   { background: rgba(106,150,184,0.32); border-color: rgba(106,150,184,0.5); }
+  .pc-cal-legend-pill.setup { background: rgba(184,149,88,0.32);  border-color: rgba(184,149,88,0.5); }
+  .pc-cal-legend-pill.stay  { background: rgba(168,168,160,0.10); }
+  .pc-cal-legend-label { color: #a8a8a0; letter-spacing: 0.05em; }
+
+  .pc-cal-grid {
+    display: grid;
+    grid-template-columns: minmax(640px, 1.6fr) minmax(280px, 1fr);
+    gap: 16px;
+    padding: 0 16px 16px;
+  }
+  .pc-cal-month-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .pc-cal-month-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #e8e8e4;
+    letter-spacing: 0.04em;
+    font-variant-numeric: tabular-nums;
+  }
+  .pc-cal-nav {
+    background: transparent;
+    border: 1px solid #2c2a27;
+    color: #a8a8a0;
+    width: 32px; height: 32px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: color 0.12s, border-color 0.12s;
+  }
+  .pc-cal-nav:hover { color: #e89a4a; border-color: rgba(232,154,74,0.55); }
+  .pc-cal-dow-row {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1px;
+    margin-bottom: 1px;
+  }
+  .pc-cal-dow {
+    text-align: center;
+    font-size: 10px;
+    font-weight: 700;
+    color: #76766f;
+    letter-spacing: 0.1em;
+    padding: 6px 0 5px;
+    background: #1c1b19;
+  }
+  .pc-cal-dow.sat { color: #88a8d0; }
+  .pc-cal-dow.sun { color: #d08888; }
+  .pc-cal-month-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1px;
+    background: #2c2a27;
+    border: 1px solid #2c2a27;
+    border-top: none;
+  }
+  .pc-cal-cell {
+    background: #1a1918;
+    padding: 6px;
+    min-height: 96px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+    transition: background 0.12s;
+  }
+  .pc-cal-cell:hover { background: #221f1c; }
+  .pc-cal-cell.outside { background: #141312; }
+  .pc-cal-cell.in-tour { background: rgba(232,154,74,0.04); }
+  .pc-cal-cell.today   { background: rgba(232,154,74,0.08); }
+  .pc-cal-cell.selected { box-shadow: inset 0 0 0 2px #e89a4a; }
+  .pc-cal-day-num {
+    font-size: 13px;
+    font-weight: 500;
+    color: #e8e8e4;
+    font-variant-numeric: tabular-nums;
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 4px;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+  .pc-cal-day-num.sat { color: #7faedc; }
+  .pc-cal-day-num.sun { color: #dc7f7f; }
+  .pc-cal-cell.outside .pc-cal-day-num { color: #3a3a37; }
+  .pc-cal-cell.outside .pc-cal-day-num.sat { color: #3a4854; }
+  .pc-cal-cell.outside .pc-cal-day-num.sun { color: #543a3a; }
+  .pc-cal-cell.today .pc-cal-day-num {
+    background: rgba(232,154,74,0.85);
+    color: #1a1a16;
+  }
+  .pc-cal-events {
+    display: flex; flex-direction: column; gap: 2px;
+    width: 100%; overflow: hidden; flex-grow: 1;
+  }
+  .pc-cal-pill {
+    font-family: 'JetBrains Mono', 'Noto Sans JP', monospace;
+    font-size: 9px;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: center;
+    line-height: 1.2;
+    border: 1px solid transparent;
+  }
+  .pc-cal-pill.show  { background: rgba(224,122,95,0.30);  color: #f5a89c; border-color: rgba(224,122,95,0.5); font-weight: 800; }
+  .pc-cal-pill.rh    { background: rgba(126,194,122,0.22); color: #b8d9b0; border-color: rgba(126,194,122,0.4); }
+  .pc-cal-pill.tek   { background: rgba(106,150,184,0.32); color: #a8d4e8; border-color: rgba(106,150,184,0.5); }
+  .pc-cal-pill.setup { background: rgba(184,149,88,0.32);  color: #e8c890; border-color: rgba(184,149,88,0.5); }
+  .pc-cal-pill.stay  { background: rgba(168,168,160,0.10); color: #787878; font-weight: 500; }
+
+  .pc-cal-detail {
+    background: #1c1b19;
+    border: 1px solid #2c2a27;
+    border-radius: 8px;
+    padding: 18px;
+    height: fit-content;
+    position: sticky;
+    top: 12px;
+  }
+  .pc-detail-date {
+    font-size: 24px;
+    font-weight: 700;
+    color: #e8e8e2;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
+    margin-bottom: 4px;
+  }
+  .pc-detail-dow {
+    font-size: 12px;
+    color: #a8a8a0;
+    letter-spacing: 0.1em;
+    margin-bottom: 14px;
+  }
+  .pc-detail-venue {
+    font-size: 14px;
+    font-weight: 600;
+    color: #e89a4a;
+    letter-spacing: 0.06em;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #2c2a27;
+  }
+  .pc-detail-section { margin-bottom: 14px; }
+  .pc-detail-section-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: #76766f;
+    letter-spacing: 0.2em;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+  }
+  .pc-detail-time-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 6px 0;
+    font-size: 13px;
+  }
+  .pc-detail-time-label { color: #a8a8a0; }
+  .pc-detail-time-val {
+    font-family: 'JetBrains Mono', 'Noto Sans JP', monospace;
+    font-weight: 700;
+    color: #e8e8e2;
+    font-variant-numeric: tabular-nums;
+  }
+  .pc-detail-time-val.show { color: #f5a89c; }
+  .pc-detail-time-val.door { color: #e8c890; }
+  .pc-detail-events { display: flex; flex-wrap: wrap; gap: 6px; }
+  .pc-detail-events .pc-cal-pill { font-size: 11px; padding: 4px 10px; }
+  .pc-detail-memo {
+    background: #14130f;
+    border: 1px solid #2c2a27;
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-size: 12px;
+    color: #d8d8d4;
+    line-height: 1.6;
+    min-height: 50px;
+  }
+  /* RH番号: メインアクセント（オレンジを残す唯一のID系・直接入力可） */
+  .pc-row .rh-no {
+    font-family: 'JetBrains Mono', 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', monospace;
+    font-weight: 700;
     font-size: 16px;
     color: #e89a4a;
     text-align: center;
     font-variant-numeric: tabular-nums;
+    cursor: text;
+    outline: none;
+    border-radius: 4px;
+    padding: 2px 0;
+    transition: background 0.12s, box-shadow 0.12s, color 0.12s;
+    -webkit-user-modify: read-write-plaintext-only;
   }
+  .pc-row .rh-no:hover { background: rgba(232,154,74,0.06); }
+  .pc-row .rh-no:focus { background: rgba(232,154,74,0.14); box-shadow: 0 0 0 1px rgba(232,154,74,0.5); }
+  .pc-row .rh-no.rh-none { color: #5a5a54; font-weight: 400; }
+  .pc-row .row-action { cursor: pointer; transition: color 0.12s; }
+  .pc-row .row-action:hover { color: #e07a5f; }
   .pc-row .title-cell {
     font-size: 14px;
     font-weight: 600;
@@ -228,9 +1783,9 @@
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
   .pc-row .time-cell {
-    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
-    font-weight: 600;
-    color: #e8b04a;
+    font-family: 'JetBrains Mono', 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', monospace;
+    font-weight: 500;
+    color: #d8d8d4;
     text-align: center;
     font-size: 13px;
     font-variant-numeric: tabular-nums;
@@ -240,14 +1795,14 @@
     min-width: 0;
   }
   .tag-btn {
-    padding: 3px 6px;
-    border-radius: 3px;
-    font-size: 10px;
+    padding: 4px 2px;
+    border-radius: 4px;
+    font-size: 11px;
     font-weight: 700;
-    letter-spacing: 0.05em;
-    background: #1c1b19;
-    border: 1px solid #2c2a27;
-    color: #5a5a54;
+    letter-spacing: -0.02em;
+    background: transparent;
+    border: 1px solid transparent;
+    color: #6a6a64;
     cursor: pointer;
     user-select: none;
     font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
@@ -255,13 +1810,21 @@
     flex: 1 1 0;
     min-width: 0;
     text-align: center;
+    overflow: hidden;
+    text-overflow: clip;
+    transition: color 0.12s, background 0.12s, border-color 0.12s;
+    box-sizing: border-box;
   }
-  .tag-btn.on.monitor { background: rgba(91,155,213,0.25); border-color: #5b9bd5; color: #a8d4e8; }
-  .tag-btn.on.bagari  { background: rgba(224,122,95,0.25);  border-color: #e07a5f; color: #f0b09c; }
-  .tag-btn.on.oto     { background: rgba(230,200,112,0.25); border-color: #e6c870; color: #f0d8a0; }
-  .tag-btn.on.koutou  { background: rgba(126,194,122,0.25); border-color: #7ec27a; color: #b8d9b0; }
-  .tag-btn.on.kikou   { background: rgba(110,198,200,0.25); border-color: #6ec6c8; color: #a8dcde; }
-  .tag-btn.on.zentai  { background: rgba(212,165,116,0.25); border-color: #d4a574; color: #e8c890; }
+  .tag-btn:hover { color: #d8d8d4; }
+  /* 点灯時：背景塗り＋色付き枠＋色付き文字（スマホ版と統一・透明度0.18） */
+  .tag-btn.on.monitor { background: rgba(91,155,213,0.18);  border-color: rgba(91,155,213,0.7);  color: #a8d4e8; }
+  .tag-btn.on.bagari  { background: rgba(224,122,95,0.18);  border-color: rgba(224,122,95,0.7);  color: #f0b09c; }
+  .tag-btn.on.oto     { background: rgba(230,200,112,0.18); border-color: rgba(230,200,112,0.7); color: #f0d8a0; }
+  .tag-btn.on.koutou  { background: rgba(126,194,122,0.18); border-color: rgba(126,194,122,0.7); color: #b8d9b0; }
+  .tag-btn.on.kigae   { background: rgba(196,168,136,0.18); border-color: rgba(196,168,136,0.7); color: #d8b89c; }
+  .tag-btn.on.shoumei { background: rgba(193,134,200,0.18); border-color: rgba(193,134,200,0.7); color: #d8b0e0; }
+  .tag-btn.on.kikou   { background: rgba(110,198,200,0.18); border-color: rgba(110,198,200,0.7); color: #a8dcde; }
+  .tag-btn.on.block   { background: rgba(199,93,93,0.18);   border-color: rgba(199,93,93,0.7);   color: #e8a8a8; }
   .pc-row .memo {
     background: #1d1b19;
     border: 1px solid #2c2a27;
@@ -810,6 +2373,7 @@
   .caption strong { color: #e89a4a; }
 </style>
 
+<div class="screen-nav-toggle" onclick="this.classList.toggle('expanded'); this.nextElementSibling.classList.toggle('expanded');">開発用 全画面プレビュー切替</div>
 <div class="screen-nav">
   <div class="nav-title">画面切替（クリック）</div>
   <button class="active" onclick="show('pc')">PC編集</button>
@@ -824,45 +2388,64 @@
 <!-- ════════ PC編集画面 ════════ -->
 <div class="screen active" id="screen-pc">
   <div class="pc-frame">
-    <div class="pc-header">
-      <div class="info-icon-btn">i</div>
-      <input class="concert-title-input" value="櫻坂46 5th Anniversary Live" />
-      <div class="label-stack" style="width: 130px;">
-        <span>DATE</span>
-        <input type="date" value="2026-04-29" style="font-family: 'Noto Sans JP', sans-serif; font-size: 13px; border-color: #e89a4a; box-shadow: 0 0 0 1px rgba(232,154,74,0.2);" />
+    <div class="pc-brand-strip">SCHEDULE STUDIO</div>
+
+    <!-- ── マスター日付バー（公演タイトル＋日付ナビ統合） ───────── -->
+    <div class="master-date-bar">
+      <!-- 左：公演タイトル（DATE と同じ横並びスタイル） -->
+      <div class="master-concert-info">
+        <span class="master-concert-label">CONCERT TITLE</span>
+        <input class="master-concert-title" value="櫻坂46 5th Anniversary Live" />
       </div>
-      <div class="label-stack">
-        <span>REHEARSAL</span>
-        <input value="10:00" />
+      <span class="master-bar-divider"></span>
+      <!-- 中央〜右：日付ナビ -->
+      <button class="master-date-nav" data-date-nav="prev" title="前日">‹</button>
+      <div class="master-date-content">
+        <span class="master-date-label">DATE</span>
+        <span class="master-date-main" id="master-date-main" title="クリックで日付を選択">2026.04.29</span>
+        <span class="master-date-dow" id="master-date-dow">(水)</span>
+        <span class="master-date-meta">
+          <span class="master-date-meta-day" id="master-date-day">DAY 1</span>
+          <span class="master-date-meta-venue" id="master-date-venue">横浜アリーナ</span>
+        </span>
       </div>
-      <div class="label-stack">
-        <span>RH END</span>
-        <input value="16:00" style="border-color:#e89a4a; box-shadow:0 0 0 1px rgba(232,154,74,0.2);" />
-      </div>
-      <div class="label-stack">
-        <span>DOOR OPEN</span>
-        <input value="17:30" />
-      </div>
-      <div class="label-stack">
-        <span>SHOW START</span>
-        <input value="18:30" />
-      </div>
-      <div class="mode-tabs">
-        <button>CALENDAR</button>
-        <button>SET LIST</button>
-        <button class="active">REHEARSAL</button>
-        <button>テクリハ</button>
-        <button>SHOW</button>
-      </div>
+      <button class="master-date-nav" data-date-nav="next" title="翌日">›</button>
+      <span class="master-date-spacer"></span>
+      <input type="date" class="master-date-input" id="master-date-input" value="2026-04-29">
     </div>
 
+    <!-- ── 新タブ構造（A案）親タブ＋動的 children-bar ───────── -->
+    <div class="tab-bar">
+      <div class="tab-bar-row">
+        <button class="parent-tab active" data-parent="schedule">SCHEDULE</button>
+        <button class="parent-tab" data-parent="day-schedule">DAY SCHEDULE</button>
+        <button class="parent-tab" data-parent="rehearsal">REHEARSAL</button>
+        <button class="parent-tab no-children" data-parent="info">INFO</button>
+      </div>
+      <div class="children-bar" id="children-bar"></div>
+    </div><!-- /tab-bar -->
+
+    <!-- ── mode-content: REHEARSAL（既存内容） ───────── -->
+    <div class="mode-content" id="mode-rehearsal">
     <div class="pc-rh-header">
-      <div class="pc-rh-title">REHEARSAL — 2026.04.29 (水)</div>
+      <div class="pc-rh-title-block">
+        <div class="pc-rh-title">
+          <span class="pc-rh-mode-label">REHEARSAL</span>
+          <span class="pc-rh-rendered-date" id="pc-rh-rendered-date" title="今この一覧が示している日付">— / —</span>
+        </div>
+        <div class="pc-rh-hint">曲・MC・アンコール の追加から、リハ番号・タグ・メモまで全部ここで編集／日付ごとに別管理</div>
+      </div>
       <div class="pc-rh-actions">
-        <button class="pc-btn">セトリ順</button>
-        <button class="pc-btn primary">リハ順</button>
-        <button class="pc-btn">＋ 曲を追加</button>
-        <button class="pc-btn primary">📱 LINE に送る</button>
+        <button id="pc-btn-set" class="pc-btn primary">セトリ順</button>
+        <button id="pc-btn-rh"  class="pc-btn">リハ順</button>
+        <select id="pc-add-song-type" class="pc-add-type-select">
+          <option value="song">曲</option>
+          <option value="mc">MC</option>
+          <option value="encore">アンコール</option>
+          <option value="event">VCR/イベント</option>
+          <option value="end">END</option>
+        </select>
+        <button id="pc-btn-add-song" class="pc-btn primary">＋ 追加</button>
       </div>
     </div>
 
@@ -877,96 +2460,144 @@
       <div></div>
     </div>
 
-    <div class="pc-row current">
-      <div class="drag">⋮⋮</div>
-      <div class="m-no">M1</div>
-      <div class="title-cell">OPENING VCR + Start Of The Show</div>
-      <div class="time-cell">3:42</div>
-      <div class="rh-no">1</div>
-      <div class="tag-cell">
-        <span class="tag-btn">モニター</span>
-        <span class="tag-btn on bagari">場当たり</span>
-        <span class="tag-btn">音</span>
-        <span class="tag-btn">口答</span>
-        <span class="tag-btn">機構</span>
-        <span class="tag-btn on zentai">全体</span>
+    <div id="pc-rows-container"></div>
+    </div><!-- /mode-rehearsal -->
+
+    <!-- ── mode-content: SCHEDULE（親タブ：CALENDAR/HOTEL/入り時間 を内包） ───────── -->
+    <div class="mode-content active" id="mode-schedule">
+      <div class="sub-tabs-wrap">
+        <div class="sub-tabs">
+          <button class="active" data-sub="calendar">CALENDAR</button>
+          <button data-sub="hotel">HOTEL</button>
+          <button data-sub="arrival">入り時間</button>
+        </div>
+        <div class="sub-tabs-hint">PCで編集 → スマホで閲覧</div>
       </div>
-      <div class="memo">場当たり込み・銀テのタイミング確認</div>
-      <div class="row-action">×</div>
+
+      <!-- 子: CALENDAR -->
+      <div class="sub-content active" id="sub-calendar">
+        <div class="pc-cal-meta">
+          <span><span class="pc-cal-meta-label">TOUR</span><span class="pc-cal-meta-val">2026.04.28 → 05.17</span></span>
+          <span><span class="pc-cal-meta-label">TODAY</span><span class="pc-cal-meta-val">2026.05.01 (金)</span></span>
+          <span><span class="pc-cal-meta-label">VENUES</span><span class="pc-cal-meta-val">横浜 → 東京 → 大阪 → 福岡</span></span>
+        </div>
+        <div class="pc-cal-legend" id="pc-cal-legend"></div>
+        <div class="pc-cal-grid">
+          <div id="pc-cal-month"></div>
+          <div class="pc-cal-detail" id="pc-cal-detail"></div>
+        </div>
+      </div>
+
+      <!-- 子: HOTEL -->
+      <div class="sub-content" id="sub-hotel">
+        <div class="hotel-toolbar">
+          <button class="toolbar-btn primary" data-action="add-hotel">＋ HOTEL を追加</button>
+          <button class="toolbar-btn" data-action="import-excel">📊 Excel から取込</button>
+          <button class="toolbar-btn" data-action="download-template">📥 テンプレートDL</button>
+          <input type="file" class="hotel-file-input" id="hotel-file-input" accept=".xlsx,.xls">
+          <span class="toolbar-hint">PCでは横に列を増やす ／ スマホは縦スクロールで閲覧</span>
+        </div>
+        <div class="hotel-list-wrap" id="hotel-list-wrap"></div>
+      </div>
+
     </div>
 
-    <div class="pc-row">
-      <div class="drag">⋮⋮</div>
-      <div class="m-no">M3</div>
-      <div class="title-cell">Buddies</div>
-      <div class="time-cell">4:18</div>
-      <div class="rh-no">2</div>
-      <div class="tag-cell">
-        <span class="tag-btn on monitor">モニター</span>
-        <span class="tag-btn">場当たり</span>
-        <span class="tag-btn on oto">音</span>
-        <span class="tag-btn">口答</span>
-        <span class="tag-btn">機構</span>
-        <span class="tag-btn">全体</span>
+    <!-- ── mode-content: テクリハ ───────── -->
+    <div class="mode-content" id="mode-tekuriha">
+      <div class="pc-rh-header">
+        <div class="pc-rh-title-block">
+          <div class="pc-rh-title">
+            <span class="pc-rh-mode-label">TEKURIHA</span>
+          </div>
+          <div class="pc-rh-hint">テクニカルリハーサル — B1〜B4 ブロック単位で進行管理</div>
+        </div>
       </div>
-      <div class="memo">Aメロ前ハケ動線確認</div>
-      <div class="row-action">×</div>
+      <div class="mode-placeholder">
+        <div class="mode-placeholder-title">テクリハ</div>
+        <div class="mode-placeholder-desc">仕込み・テクニカルリハーサルの段取り画面（実装予定）</div>
+      </div>
     </div>
 
-    <div class="pc-row">
-      <div class="drag">⋮⋮</div>
-      <div class="m-no">M5</div>
-      <div class="title-cell">流れ弾</div>
-      <div class="time-cell">3:55</div>
-      <div class="rh-no">3</div>
-      <div class="tag-cell">
-        <span class="tag-btn">モニター</span>
-        <span class="tag-btn on bagari">場当たり</span>
-        <span class="tag-btn">音</span>
-        <span class="tag-btn">口答</span>
-        <span class="tag-btn on kikou">機構</span>
-        <span class="tag-btn">全体</span>
+    <!-- ── mode-content: DAY SCHEDULE（子: 入り時間 / STAGE SCHEDULE） ───────── -->
+    <div class="mode-content" id="mode-day-schedule">
+      <!-- 子: 入り時間（左） -->
+      <div class="sub-content active" id="sub-arrival">
+        <div class="hotel-toolbar">
+          <button class="toolbar-btn primary" data-action="add-arrival">＋ セクションを追加</button>
+          <button class="toolbar-btn" data-action="import-arrival-excel">📊 Excel から取込</button>
+          <button class="toolbar-btn" data-action="download-arrival-template">📥 テンプレートDL</button>
+          <input type="file" class="hotel-file-input" id="arrival-file-input" accept=".xlsx,.xls">
+          <span class="toolbar-hint">時刻順で自動ソート ／ PCで編集 → スマホで閲覧</span>
+        </div>
+        <div class="arrival-list-wrap" id="arrival-list-wrap"></div>
       </div>
-      <div class="memo">セリ上昇 Q→17 / 振付確認</div>
-      <div class="row-action">×</div>
+      <!-- 子: STAGE SCHEDULE（右） -->
+      <div class="sub-content" id="sub-stage-schedule">
+      <div class="day-schedule-wrap">
+        <div class="day-schedule-header">
+          <span class="day-schedule-mode-label">DAY SCHEDULE</span>
+          <span class="day-schedule-hint">時刻早い順・自由に項目追加可／スマホで一目見える</span>
+        </div>
+        <div class="day-event-list-header">
+          <span class="dayh-cell">START</span>
+          <span></span>
+          <span class="dayh-cell">END</span>
+          <span class="dayh-cell label">項目名</span>
+          <span></span>
+        </div>
+        <div class="day-event-list" id="day-event-list"></div>
+        <button class="day-add-btn" data-action="add-day-event">＋ タイム項目を追加</button>
+      </div>
+      </div><!-- /sub-stage-schedule -->
     </div>
 
-    <div class="pc-row">
-      <div class="drag">⋮⋮</div>
-      <div class="m-no">M9</div>
-      <div class="title-cell">承認欲求</div>
-      <div class="time-cell">3:30</div>
-      <div class="rh-no">4</div>
-      <div class="tag-cell">
-        <span class="tag-btn">モニター</span>
-        <span class="tag-btn">場当たり</span>
-        <span class="tag-btn">音</span>
-        <span class="tag-btn on koutou">口答</span>
-        <span class="tag-btn">機構</span>
-        <span class="tag-btn">全体</span>
+    <!-- ── mode-content: INFO（自由入力＋LINEプッシュ＋履歴） ───────── -->
+    <div class="mode-content" id="mode-info">
+      <div class="info-header">
+        <h2 class="info-title">📢 INFO ／ お知らせ配信</h2>
+        <p class="info-desc">本文を書いて「📱 LINE プッシュ送信」を押すと、公式アカウント友達追加済みのスタッフ全員のLINEに通知が届く。<br>※ 送信にはパスワード認証（PASSWORD：1234）が必要。認証済みなら誰でも送信可能、履歴に名前が残る。</p>
       </div>
-      <div class="memo">MC前後の口答合わせ</div>
-      <div class="row-action">×</div>
-    </div>
-
-    <div class="pc-row">
-      <div class="drag">⋮⋮</div>
-      <div class="m-no">EN</div>
-      <div class="title-cell">Start over!</div>
-      <div class="time-cell">4:01</div>
-      <div class="rh-no">5</div>
-      <div class="tag-cell">
-        <span class="tag-btn">モニター</span>
-        <span class="tag-btn">場当たり</span>
-        <span class="tag-btn">音</span>
-        <span class="tag-btn">口答</span>
-        <span class="tag-btn">機構</span>
-        <span class="tag-btn on zentai">全体</span>
+      <div class="info-auth">
+        <div class="info-login-panel" id="info-login-panel">
+          <div class="info-login-input-group">
+            <label>あなたの名前</label>
+            <input type="text" id="info-login-name" placeholder="例：のむ" autocomplete="off">
+          </div>
+          <div class="info-login-input-group">
+            <label>パスワード</label>
+            <input type="password" id="info-login-pass" placeholder="1234" maxlength="10" autocomplete="off">
+          </div>
+          <button class="info-login-btn" data-action="info-login">🔓 ログイン</button>
+          <span class="info-login-hint">認証通った人なら誰でも送信できる<br>送信履歴に名前が記録される</span>
+        </div>
+        <div class="info-loggedin-panel" id="info-loggedin-panel">
+          <span class="info-loggedin-icon">✓ 認証済み</span>
+          <span class="info-loggedin-text"><span class="info-loggedin-name" id="info-loggedin-name"></span> として送信できます</span>
+          <button class="info-logout-btn" data-action="info-logout">ログアウト</button>
+        </div>
       </div>
-      <div class="memo">アンコール通し・銀テ2回目・退場まで</div>
-      <div class="row-action">×</div>
+      <div class="info-form" id="info-form">
+        <div class="info-field">
+          <label class="info-label">件名（タイトル）</label>
+          <input type="text" id="info-subject" placeholder="例：【緊急】明日の集合場所変更" class="info-input">
+        </div>
+        <div class="info-field">
+          <label class="info-label">本文</label>
+          <textarea id="info-body" rows="8" placeholder="本文を自由入力（改行・絵文字OK）&#10;例：&#10;明日のリハ集合は東口楽屋ではなく西口楽屋に変更です。&#10;よろしくお願いします。" class="info-textarea"></textarea>
+        </div>
+        <div class="info-actions">
+          <button class="info-push-btn" data-action="info-push">📱 LINE プッシュ送信</button>
+          <span class="info-push-hint">スタッフ全員のLINEに通知（モック動作）</span>
+        </div>
+      </div>
+      <div class="info-history">
+        <div class="info-history-head">
+          <span class="info-history-title">— 過去の送信履歴 —</span>
+          <span class="info-history-count" id="info-history-count">0 件</span>
+        </div>
+        <div class="info-history-list" id="info-history-list"></div>
+      </div>
     </div>
-  </div>
 </div>
 
 <!-- ════════ スマホ：RH ════════ -->
@@ -1406,6 +3037,1502 @@ function show(id) {
   });
   window.scrollTo({top: 0, behavior: 'smooth'});
 }
+</script>
+
+<script>
+// ── SCHEDULE STUDIO PC編集：曲データ＋セトリ順／リハ順切替＋タグON/OFF＋追加・削除 ──
+(function(){
+  // CDS の LocalSong 形式に揃える（曲データのマスターは CDS、SCHEDULE は rhNo/tags/memo を被せるだけ）
+  const songs = [
+    {id:1,  orderIndex:1,  title:'OPENING VCR',                    durationSeconds:222, isEvent:true,  isMC:false, isEncore:false, isEnd:false, rhNo:1,    tags:['bagari','shoumei','kikou','block'], memo:'場当たり込み・銀テのタイミング確認'},
+    {id:2,  orderIndex:2,  title:'BAN',                              durationSeconds:245, isEvent:false, isMC:false, isEncore:false, isEnd:false, rhNo:null, tags:[],                                   memo:''},
+    {id:3,  orderIndex:3,  title:'Buddies',                          durationSeconds:258, isEvent:false, isMC:false, isEncore:false, isEnd:false, rhNo:2,    tags:['monitor','oto','kigae'],            memo:'Aメロ前ハケ動線確認'},
+    {id:4,  orderIndex:4,  title:'桜月',                              durationSeconds:270, isEvent:false, isMC:false, isEncore:false, isEnd:false, rhNo:null, tags:[],                                   memo:''},
+    {id:5,  orderIndex:5,  title:'流れ弾',                            durationSeconds:235, isEvent:false, isMC:false, isEncore:false, isEnd:false, rhNo:3,    tags:['bagari','shoumei','kikou'],         memo:'セリ上昇 Q→17 / 振付確認'},
+    {id:6,  orderIndex:6,  title:'なぜ 恋をして来なかったんだろう？', durationSeconds:252, isEvent:false, isMC:false, isEncore:false, isEnd:false, rhNo:4,    tags:['monitor','oto'],                    memo:'2A後の段差注意'},
+    {id:7,  orderIndex:7,  title:'ドローン',                          durationSeconds:240, isEvent:false, isMC:false, isEncore:false, isEnd:false, rhNo:5,    tags:['bagari','shoumei','kikou','block'], memo:'ドローン Q合わせ・LED連動'},
+    {id:8,  orderIndex:8,  title:'MC',                                durationSeconds:300, isEvent:false, isMC:true,  isEncore:false, isEnd:false, rhNo:null, tags:[],                                   memo:''},
+    {id:9,  orderIndex:9,  title:'承認欲求',                          durationSeconds:210, isEvent:false, isMC:false, isEncore:false, isEnd:false, rhNo:6,    tags:['koutou'],                           memo:'MC前後の口答合わせ'},
+    {id:10, orderIndex:10, title:'One-Way Street',                   durationSeconds:228, isEvent:false, isMC:false, isEncore:false, isEnd:false, rhNo:null, tags:[],                                   memo:''},
+    {id:11, orderIndex:11, title:'Cool',                              durationSeconds:202, isEvent:false, isMC:false, isEncore:false, isEnd:false, rhNo:null, tags:[],                                   memo:''},
+    {id:12, orderIndex:12, title:'桜月（リプライズ）',                  durationSeconds:150, isEvent:false, isMC:false, isEncore:false, isEnd:false, rhNo:null, tags:[],                                   memo:''},
+    {id:13, orderIndex:13, title:'桜の音',                            durationSeconds:255, isEvent:false, isMC:false, isEncore:false, isEnd:false, rhNo:null, tags:[],                                   memo:''},
+    {id:14, orderIndex:14, title:'Tokyo新景',                         durationSeconds:248, isEvent:false, isMC:false, isEncore:false, isEnd:false, rhNo:null, tags:[],                                   memo:''},
+    {id:15, orderIndex:15, title:'Start over!',                       durationSeconds:241, isEvent:false, isMC:false, isEncore:true,  isEnd:false, rhNo:7,    tags:['bagari','shoumei','kikou','block'], memo:'アンコール通し・銀テ2回目・退場まで'}
+  ];
+
+  // ── 日付別リハーサル計画（rhNo/tags/memo を日付ごとに保持） ──
+  // 曲データ（title/M#/time/種別）は CDS が源で日付関係なく共通
+  // リハ計画（rhNo/tags/memo）は SCHEDULE STUDIO が日付ごとに保持
+  const rehearsalByDate = {};
+  function getCurrentDateKey(){
+    const ms = window.__masterDateState;
+    if (ms && ms.current) {
+      const d = ms.current;
+      return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    }
+    return '2026-04-29'; // フォールバック（マスター日付バー読み込み前）
+  }
+  function getRehearsalData(songId){
+    const k = getCurrentDateKey();
+    if (!rehearsalByDate[k]) {
+      rehearsalByDate[k] = {};
+      // 4/29 のみ初期サンプルとして songs の値をコピー、それ以外の日は空（rhNo=null/tags=[]/memo='')
+      if (k === '2026-04-29') {
+        songs.forEach(function(s){
+          rehearsalByDate[k][s.id] = {
+            rhNo: (s.rhNo === undefined ? null : s.rhNo),
+            tags: s.tags ? s.tags.slice() : [],
+            memo: s.memo || ''
+          };
+        });
+      }
+    }
+    if (!rehearsalByDate[k][songId]) {
+      rehearsalByDate[k][songId] = { rhNo: null, tags: [], memo: '' };
+    }
+    return rehearsalByDate[k][songId];
+  }
+
+  const TAGS = [
+    {key:'monitor', label:'モニター'},
+    {key:'bagari',  label:'場当たり'},
+    {key:'oto',     label:'音'},
+    {key:'koutou',  label:'口答'},
+    {key:'kigae',   label:'着替'},
+    {key:'shoumei', label:'照明'},
+    {key:'kikou',   label:'機構'},
+    {key:'block',   label:'ブロック'}
+  ];
+
+  const state = { viewMode: 'set' };
+
+  // 秒 → "M:SS" 形式
+  function formatTime(seconds){
+    if (seconds == null) return '—';
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return m + ':' + String(s).padStart(2, '0');
+  }
+
+  // M# を計算（通常曲は M1/M2..、MC は MC1/MC2、アンコール は EN1/EN2、VCR は VCR1）
+  function computeMNo(song, setlist){
+    if (song.isEnd) return 'END';
+    if (song.isEncore) {
+      const list = setlist.filter(function(s){return s.isEncore;});
+      const idx = list.indexOf(song) + 1;
+      return list.length > 1 ? 'EN' + idx : 'EN';
+    }
+    if (song.isMC) {
+      const list = setlist.filter(function(s){return s.isMC;});
+      const idx = list.indexOf(song) + 1;
+      return 'MC' + idx;
+    }
+    if (song.isEvent) {
+      const list = setlist.filter(function(s){return s.isEvent;});
+      const idx = list.indexOf(song) + 1;
+      return list.length > 1 ? 'VCR' + idx : 'VCR';
+    }
+    const list = setlist.filter(function(s){return !s.isMC && !s.isEncore && !s.isEvent && !s.isEnd;});
+    const idx = list.indexOf(song) + 1;
+    return 'M' + idx;
+  }
+
+  const container = document.getElementById('pc-rows-container');
+  const btnSet = document.getElementById('pc-btn-set');
+  const btnRh  = document.getElementById('pc-btn-rh');
+
+  function escHtml(s){
+    return (s==null?'':String(s)).replace(/[&<>"']/g, function(c){
+      return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];
+    });
+  }
+
+  function rowHtml(song, setlist){
+    const reh = getRehearsalData(song.id); // ← その日のリハ計画
+    const tagsHtml = TAGS.map(function(t){
+      const on = reh.tags.indexOf(t.key) >= 0 ? ' on' : '';
+      return '<span class="tag-btn ' + t.key + on + '" data-id="' + song.id + '" data-tag="' + t.key + '">' + escHtml(t.label) + '</span>';
+    }).join('');
+    const isCurrent = reh.rhNo === 1 ? ' current' : '';
+    const rhDisp = reh.rhNo === null ? '×' : reh.rhNo;
+    const rhCls = reh.rhNo === null ? ' rh-none' : '';
+    const mNo = computeMNo(song, setlist);
+    const time = formatTime(song.durationSeconds);
+    let specialCls = '';
+    if (song.isEnd)         specialCls = ' special-end';
+    else if (song.isEncore) specialCls = ' special-en';
+    else if (song.isMC)     specialCls = ' special-mc';
+    else if (song.isEvent)  specialCls = ' special-vcr';
+    return ''
+      + '<div class="pc-row' + isCurrent + specialCls + '" data-id="' + song.id + '">'
+      +   '<div class="drag" title="ドラッグで並び替え（実装予定）">⋮⋮</div>'
+      +   '<div class="m-no">' + escHtml(mNo) + '</div>'
+      +   '<div class="title-cell" contenteditable="true" data-field="title" data-id="' + song.id + '" title="クリックで曲名編集">' + escHtml(song.title) + '</div>'
+      +   '<div class="time-cell">' + escHtml(time) + '</div>'
+      +   '<div class="rh-no' + rhCls + '" contenteditable="true" data-id="' + song.id + '" data-field="rhNo" title="数字を入力 ／ 空欄＝リハなし ／ Enterで確定">' + rhDisp + '</div>'
+      +   '<div class="tag-cell">' + tagsHtml + '</div>'
+      +   '<div class="memo" contenteditable="true" data-field="memo" data-id="' + song.id + '">' + escHtml(reh.memo) + '</div>'
+      +   '<div class="row-action" data-action="del-song" data-id="' + song.id + '" title="この曲を削除">×</div>'
+      + '</div>';
+  }
+
+  function render(){
+    // ヘッダーに「今描画している日付」を表示（日付切替が反映されてるかが視覚で分かる）
+    const renderedDateEl = document.getElementById('pc-rh-rendered-date');
+    if (renderedDateEl) {
+      let label = '— / —';
+      if (typeof window.__masterDateState !== 'undefined' && window.__masterDateState.current) {
+        const d = window.__masterDateState.current;
+        const DOW = ['日','月','火','水','木','金','土'];
+        label = d.getFullYear() + '.' +
+                String(d.getMonth()+1).padStart(2,'0') + '.' +
+                String(d.getDate()).padStart(2,'0') +
+                ' (' + DOW[d.getDay()] + ')';
+      }
+      const prev = renderedDateEl.textContent;
+      renderedDateEl.textContent = label;
+      // 日付が前と違ったら一瞬光らせる（切替が分かりやすい）
+      if (prev !== label) {
+        renderedDateEl.classList.remove('flash');
+        // 強制リフロー（再アニメーションのため）
+        void renderedDateEl.offsetWidth;
+        renderedDateEl.classList.add('flash');
+      }
+    }
+    // セトリ順は orderIndex 順
+    const setlist = songs.slice().sort(function(a,b){ return a.orderIndex - b.orderIndex; });
+    let list;
+    if (state.viewMode === 'rh') {
+      list = setlist.slice().sort(function(a,b){
+        const ra = getRehearsalData(a.id);
+        const rb = getRehearsalData(b.id);
+        if (ra.rhNo===null && rb.rhNo===null) return a.orderIndex - b.orderIndex;
+        if (ra.rhNo===null) return 1;
+        if (rb.rhNo===null) return -1;
+        return ra.rhNo - rb.rhNo;
+      });
+    } else {
+      list = setlist;
+    }
+    container.innerHTML = list.map(function(s){ return rowHtml(s, setlist); }).join('');
+    btnSet.classList.toggle('primary', state.viewMode==='set');
+    btnRh.classList.toggle('primary',  state.viewMode==='rh');
+  }
+
+  container.addEventListener('click', function(e){
+    const tagEl = e.target.closest && e.target.closest('.tag-btn');
+    if (tagEl) {
+      const id = +tagEl.getAttribute('data-id');
+      const tag = tagEl.getAttribute('data-tag');
+      const reh = getRehearsalData(id);
+      if (reh.tags.indexOf(tag) >= 0) reh.tags = reh.tags.filter(function(t){return t!==tag;});
+      else reh.tags.push(tag);
+      render();
+      return;
+    }
+    // 曲削除（× ボタン）
+    const delEl = e.target.closest && e.target.closest('[data-action="del-song"]');
+    if (delEl) {
+      const id = +delEl.getAttribute('data-id');
+      const song = songs.find(function(s){return s.id===id;});
+      if (!song) return;
+      if (confirm('「' + (song.title || '無題') + '」を削除しますか？\nこの曲のリハ計画（タグ・メモ）も全日程分まとめて削除されます。')) {
+        const idx = songs.findIndex(function(s){return s.id===id;});
+        if (idx >= 0) {
+          songs.splice(idx, 1);
+          // rehearsalByDate からも該当曲のデータを全日付分削除
+          Object.keys(rehearsalByDate).forEach(function(k){
+            if (rehearsalByDate[k]) delete rehearsalByDate[k][id];
+          });
+          render();
+        }
+      }
+      return;
+    }
+  });
+
+  // rh-no で Enter キーを押したら確定（改行を入れない）
+  container.addEventListener('keydown', function(e){
+    const el = e.target;
+    if (el && el.classList && el.classList.contains('rh-no') && e.key === 'Enter') {
+      e.preventDefault();
+      el.blur();
+    }
+  });
+
+  // rh-no にフォーカスが入った瞬間、中身を全選択（即上書きできるように）
+  container.addEventListener('focusin', function(e){
+    const el = e.target;
+    if (el && el.classList && el.classList.contains('rh-no')) {
+      // 次のフレームで選択（focus イベントの後にカーソルがセットされるのを待つ）
+      requestAnimationFrame(function(){
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+      });
+    }
+  });
+
+  // 入力中（focus 中）の値も即時保存：日付切替で blur が発火しなくてもデータが残るように
+  container.addEventListener('input', function(e){
+    const el = e.target;
+    if (!el || !el.dataset || !el.dataset.field) return;
+    const id = +el.getAttribute('data-id');
+    const field = el.getAttribute('data-field');
+    if (field === 'memo') {
+      const reh = getRehearsalData(id);
+      reh.memo = el.innerText;
+    } else if (field === 'title') {
+      const song = songs.find(function(s){return s.id===id;});
+      if (song) song.title = el.innerText;
+    }
+    // rhNo は数字パースが必要なので blur で確定
+  });
+
+  container.addEventListener('blur', function(e){
+    const el = e.target;
+    if (!el || !el.dataset || !el.dataset.field) return;
+    const id = +el.getAttribute('data-id');
+    const field = el.getAttribute('data-field');
+    const song = songs.find(function(s){return s.id===id;});
+    if (!song) return;
+    if (field === 'rhNo') {
+      const reh = getRehearsalData(id);
+      const t = el.innerText.trim();
+      let newVal;
+      if (t === '' || t === '×' || t === 'x' || t === 'X') newVal = null;
+      else { const n = parseInt(t, 10); newVal = isNaN(n) ? reh.rhNo : n; }
+      if (newVal !== reh.rhNo) {
+        reh.rhNo = newVal;
+        // リハ順表示中は順序が変わるので再レンダー、セトリ順はその場だけ更新
+        if (state.viewMode === 'rh') {
+          render();
+        } else {
+          el.innerText = newVal === null ? '×' : String(newVal);
+          el.classList.toggle('rh-none', newVal === null);
+        }
+      } else {
+        el.innerText = newVal === null ? '×' : String(newVal);
+      }
+    } else if (field === 'memo') {
+      const reh = getRehearsalData(id);
+      reh.memo = el.innerText;
+    } else if (field === 'title') {
+      song.title = el.innerText; // タイトルは曲データ（日付関係なし）
+    }
+  }, true);
+
+  btnSet.addEventListener('click', function(){ state.viewMode='set'; render(); });
+  btnRh.addEventListener('click',  function(){ state.viewMode='rh';  render(); });
+
+  // ＋ 追加：種類セレクトに応じて曲・MC・アンコール・VCR・END を追加
+  const btnAddSong = document.getElementById('pc-btn-add-song');
+  const addTypeSel = document.getElementById('pc-add-song-type');
+  if (btnAddSong && addTypeSel) {
+    btnAddSong.addEventListener('click', function(){
+      const type = addTypeSel.value;
+      const maxOrder = songs.reduce(function(m, s){ return Math.max(m, s.orderIndex || 0); }, 0);
+      const newSong = {
+        id: Date.now(), // 簡易ユニークID
+        orderIndex: maxOrder + 1,
+        title: type === 'mc' ? 'MC' : (type === 'event' ? 'VCR' : (type === 'end' ? 'END' : '（タイトル未定）')),
+        durationSeconds: 0,
+        isEvent:  type === 'event',
+        isMC:     type === 'mc',
+        isEncore: type === 'encore',
+        isEnd:    type === 'end'
+      };
+      songs.push(newSong);
+      render();
+    });
+  }
+
+  // マスター日付バーから呼ばれる：日付変更時にリハ計画を再レンダー
+  window.__rehearsalRender = render;
+
+  render();
+})();
+</script>
+
+<!-- ════ CALENDAR + mode-tabs 切替 ════ -->
+<script>
+(function(){
+  const TODAY      = new Date(2026, 4, 1);
+  const TOUR_START = new Date(2026, 3, 28);
+  const TOUR_END   = new Date(2026, 4, 17);
+
+  const calEvents = [
+    { date:'2026-04-28', type:'setup', label:'仕込み',   venue:'横浜アリーナ' },
+    { date:'2026-04-29', type:'tek',   label:'テクリハ', venue:'横浜アリーナ' },
+    { date:'2026-04-29', type:'rh',    label:'リハ',     venue:'横浜アリーナ' },
+    { date:'2026-04-29', type:'show',  label:'Day1',     venue:'横浜アリーナ' },
+    { date:'2026-04-30', type:'rh',    label:'リハ',     venue:'横浜アリーナ' },
+    { date:'2026-04-30', type:'show',  label:'Day2',     venue:'横浜アリーナ' },
+    { date:'2026-05-01', type:'stay',  label:'移動',     venue:'→ 東京' },
+    { date:'2026-05-02', type:'setup', label:'仕込み',   venue:'東京ドーム' },
+    { date:'2026-05-03', type:'tek',   label:'テクリハ', venue:'東京ドーム' },
+    { date:'2026-05-03', type:'rh',    label:'リハ',     venue:'東京ドーム' },
+    { date:'2026-05-03', type:'show',  label:'Day1',     venue:'東京ドーム' },
+    { date:'2026-05-04', type:'rh',    label:'リハ',     venue:'東京ドーム' },
+    { date:'2026-05-04', type:'show',  label:'Day2',     venue:'東京ドーム' },
+    { date:'2026-05-05', type:'stay',  label:'移動',     venue:'→ 大阪' },
+    { date:'2026-05-06', type:'stay',  label:'休',       venue:'大阪滞在' },
+    { date:'2026-05-07', type:'stay',  label:'休',       venue:'大阪滞在' },
+    { date:'2026-05-08', type:'setup', label:'仕込み',   venue:'京セラドーム' },
+    { date:'2026-05-09', type:'rh',    label:'リハ',     venue:'京セラドーム' },
+    { date:'2026-05-09', type:'show',  label:'Day1',     venue:'京セラドーム' },
+    { date:'2026-05-10', type:'show',  label:'Day2',     venue:'京セラドーム' },
+    { date:'2026-05-11', type:'stay',  label:'移動',     venue:'→ 福岡' },
+    { date:'2026-05-12', type:'stay',  label:'休',       venue:'福岡滞在' },
+    { date:'2026-05-13', type:'stay',  label:'休',       venue:'福岡滞在' },
+    { date:'2026-05-14', type:'stay',  label:'休',       venue:'福岡滞在' },
+    { date:'2026-05-15', type:'setup', label:'仕込み',   venue:'PayPayドーム' },
+    { date:'2026-05-16', type:'rh',    label:'リハ',     venue:'PayPayドーム' },
+    { date:'2026-05-16', type:'show',  label:'Day1',     venue:'PayPayドーム' },
+    { date:'2026-05-17', type:'show',  label:'千秋楽',   venue:'PayPayドーム' }
+  ];
+
+  const showTimes = {
+    '横浜アリーナ':    { door:'17:30', show:'18:30' },
+    '東京ドーム':      { door:'16:30', show:'17:30' },
+    '京セラドーム':    { door:'17:00', show:'18:00' },
+    'PayPayドーム':    { door:'17:00', show:'18:00' }
+  };
+
+  const DOW_LABELS = ['月','火','水','木','金','土','日'];
+  const DOW_FULL   = ['日','月','火','水','木','金','土'];
+
+  function fmtDateKey(d){
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+  function isInTour(d){ return d >= TOUR_START && d <= TOUR_END; }
+  function isToday(d){ return fmtDateKey(d) === fmtDateKey(TODAY); }
+  function isSameDay(a,b){ return fmtDateKey(a) === fmtDateKey(b); }
+  function getEvents(d){
+    const k = fmtDateKey(d);
+    return calEvents.filter(function(e){ return e.date === k; });
+  }
+  function buildMonth(year, month){
+    const first = new Date(year, month, 1);
+    const last  = new Date(year, month + 1, 0);
+    const cells = [];
+    const startDay = first.getDay() === 0 ? 7 : first.getDay();
+    for (let i = startDay - 1; i > 0; i--) {
+      const d = new Date(year, month, 1 - i);
+      cells.push({ date:d, outside:true });
+    }
+    for (let i = 1; i <= last.getDate(); i++) {
+      cells.push({ date:new Date(year, month, i), outside:false });
+    }
+    while (cells.length < 42) {
+      const lastD = new Date(cells[cells.length-1].date);
+      lastD.setDate(lastD.getDate() + 1);
+      cells.push({ date:lastD, outside:true });
+    }
+    return cells;
+  }
+  function dowClass(d){
+    const w = d.getDay();
+    if (w === 6) return 'sat';
+    if (w === 0) return 'sun';
+    return '';
+  }
+
+  let calState = { selected: TODAY, year: TODAY.getFullYear(), month: TODAY.getMonth() };
+
+  function renderMonth(){
+    const monthEl = document.getElementById('pc-cal-month');
+    if (!monthEl) return;
+    const cells = buildMonth(calState.year, calState.month);
+
+    let html = '<div class="pc-cal-month-header">';
+    html += '<button class="pc-cal-nav" data-nav="prev">‹</button>';
+    html += '<div class="pc-cal-month-title">' + calState.year + '年 ' + (calState.month+1) + '月</div>';
+    html += '<button class="pc-cal-nav" data-nav="next">›</button>';
+    html += '</div>';
+
+    html += '<div class="pc-cal-dow-row">';
+    DOW_LABELS.forEach(function(l, i){
+      const cls = i === 5 ? 'sat' : (i === 6 ? 'sun' : '');
+      html += '<div class="pc-cal-dow ' + cls + '">' + l + '</div>';
+    });
+    html += '</div>';
+
+    html += '<div class="pc-cal-month-grid">';
+    cells.forEach(function(c){
+      const d = c.date;
+      const cls = [];
+      if (c.outside) cls.push('outside');
+      else if (isToday(d)) cls.push('today');
+      else if (isInTour(d)) cls.push('in-tour');
+      if (calState.selected && isSameDay(d, calState.selected)) cls.push('selected');
+      const evs = c.outside ? [] : getEvents(d);
+      const eventsHtml = evs.slice(0, 3).map(function(e){
+        return '<span class="pc-cal-pill ' + e.type + '">' + e.label + '</span>';
+      }).join('');
+      html += '<div class="pc-cal-cell ' + cls.join(' ') + '" data-date="' + fmtDateKey(d) + '">';
+      html += '<div class="pc-cal-day-num ' + dowClass(d) + '">' + d.getDate() + '</div>';
+      html += '<div class="pc-cal-events">' + eventsHtml + '</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+
+    monthEl.innerHTML = html;
+
+    monthEl.querySelectorAll('.pc-cal-cell').forEach(function(el){
+      el.addEventListener('click', function(){
+        const dk = el.getAttribute('data-date');
+        if (!dk) return;
+        const parts = dk.split('-').map(Number);
+        calState.selected = new Date(parts[0], parts[1]-1, parts[2]);
+        renderMonth();
+        renderDetail();
+      });
+    });
+    monthEl.querySelectorAll('[data-nav]').forEach(function(b){
+      b.addEventListener('click', function(){
+        const dir = b.getAttribute('data-nav') === 'prev' ? -1 : 1;
+        const d = new Date(calState.year, calState.month + dir, 1);
+        calState.year = d.getFullYear();
+        calState.month = d.getMonth();
+        renderMonth();
+      });
+    });
+  }
+
+  function renderDetail(){
+    const detailEl = document.getElementById('pc-cal-detail');
+    if (!detailEl) return;
+    const d = calState.selected || TODAY;
+    const evs = getEvents(d);
+    const dow = DOW_FULL[d.getDay()];
+    const venue = evs.length > 0 ? evs[0].venue : '';
+    const showLike = evs.find(function(e){ return e.type === 'show'; });
+    const tk = venue && showTimes[venue] ? showTimes[venue] : null;
+
+    let html = ''
+      + '<div class="pc-detail-date">' + (d.getMonth()+1) + '/' + d.getDate() + ' (' + dow + ')</div>'
+      + '<div class="pc-detail-dow">' + d.getFullYear() + '年' + (d.getMonth()+1) + '月' + d.getDate() + '日</div>';
+    if (venue) {
+      html += '<div class="pc-detail-venue">' + venue + '</div>';
+    } else {
+      html += '<div class="pc-detail-venue" style="color:#5a5a54">— 予定なし —</div>';
+    }
+    if (evs.length > 0) {
+      html += '<div class="pc-detail-section">';
+      html += '<div class="pc-detail-section-label">EVENTS</div>';
+      html += '<div class="pc-detail-events">';
+      evs.forEach(function(e){
+        html += '<span class="pc-cal-pill ' + e.type + '">' + e.label + '</span>';
+      });
+      html += '</div></div>';
+    }
+    if (showLike && tk) {
+      html += '<div class="pc-detail-section">';
+      html += '<div class="pc-detail-section-label">SHOW</div>';
+      html += '<div class="pc-detail-time-row"><span class="pc-detail-time-label">DOOR OPEN</span><span class="pc-detail-time-val door">' + tk.door + '</span></div>';
+      html += '<div class="pc-detail-time-row"><span class="pc-detail-time-label">SHOW TIME</span><span class="pc-detail-time-val show">' + tk.show + '</span></div>';
+      html += '</div>';
+    }
+    html += '<div class="pc-detail-section">';
+    html += '<div class="pc-detail-section-label">MEMO</div>';
+    const memo = (showLike && showLike.label === '千秋楽') ? '千秋楽。退場アナウンス・銀テ最後の演出を念入りに確認。'
+                : (showLike ? '本番。リハ反映済み。タグ・メモは「リハーサル」タブで確認。'
+                : (evs.find(function(e){return e.type === 'setup';}) ? '仕込み日。LED・卓・照明・楽器の搬入。'
+                : (evs.find(function(e){return e.type === 'stay';}) ? '移動・滞在。' : '—')));
+    html += '<div class="pc-detail-memo">' + memo + '</div>';
+    html += '</div>';
+
+    detailEl.innerHTML = html;
+  }
+
+  function renderLegend(){
+    const el = document.getElementById('pc-cal-legend');
+    if (!el) return;
+    el.innerHTML = ''
+      + '<div class="pc-cal-legend-item"><span class="pc-cal-legend-pill show"></span><span class="pc-cal-legend-label">本番</span></div>'
+      + '<div class="pc-cal-legend-item"><span class="pc-cal-legend-pill rh"></span><span class="pc-cal-legend-label">リハ</span></div>'
+      + '<div class="pc-cal-legend-item"><span class="pc-cal-legend-pill tek"></span><span class="pc-cal-legend-label">テクリハ</span></div>'
+      + '<div class="pc-cal-legend-item"><span class="pc-cal-legend-pill setup"></span><span class="pc-cal-legend-label">仕込み</span></div>'
+      + '<div class="pc-cal-legend-item"><span class="pc-cal-legend-pill stay"></span><span class="pc-cal-legend-label">移動 / 滞在</span></div>'
+      + '<div class="pc-cal-legend-item" style="margin-left:auto"><span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:rgba(232,154,74,0.85);margin-right:6px;vertical-align:middle"></span><span class="pc-cal-legend-label">今日</span></div>';
+  }
+
+  // ── 新タブ構造（A案）：parent-tab → children-bar → mode-content/sub-content ──
+  let calRendered = false, hotelRendered = false, arrivalRendered = false, infoRendered = false;
+
+  const tabConfig = {
+    childrenOf: {
+      schedule: [
+        { id: 'calendar',       label: 'CALENDAR' },
+        { id: 'hotel',          label: 'HOTEL' }
+      ],
+      'day-schedule': [
+        { id: 'arrival',        label: '入り時間' },
+        { id: 'stage-schedule', label: 'STAGE SCHEDULE' }
+      ],
+      rehearsal: [
+        { id: 'rehearsal-main', label: '全体リハーサル' },
+        { id: 'tekuriha',       label: 'テクリハ' }
+      ]
+    },
+    contentForChild: {
+      'calendar':       { mode: 'mode-schedule',     sub: 'sub-calendar' },
+      'hotel':          { mode: 'mode-schedule',     sub: 'sub-hotel' },
+      'arrival':        { mode: 'mode-day-schedule', sub: 'sub-arrival' },
+      'stage-schedule': { mode: 'mode-day-schedule', sub: 'sub-stage-schedule' },
+      'tekuriha':       { mode: 'mode-tekuriha',     sub: null },
+      'rehearsal-main': { mode: 'mode-rehearsal',    sub: null }
+    },
+    contentForParent: {
+      info: 'mode-info'
+    }
+  };
+  const tabState = {
+    activeParent: 'schedule',
+    activeChildBy: { schedule: 'calendar', 'day-schedule': 'arrival', rehearsal: 'rehearsal-main' }
+  };
+
+  function showParent(parent){
+    tabState.activeParent = parent;
+    document.querySelectorAll('.parent-tab').forEach(function(b){
+      b.classList.toggle('active', b.getAttribute('data-parent') === parent);
+    });
+    const bar = document.getElementById('children-bar');
+    if (!bar) return;
+    const children = tabConfig.childrenOf[parent];
+    if (children) {
+      const activeChild = tabState.activeChildBy[parent] || children[0].id;
+      bar.style.display = '';
+      bar.innerHTML = '<span class="children-label">↳</span>' +
+        children.map(function(c){
+          const a = c.id === activeChild ? ' active' : '';
+          return '<button class="child-tab' + a + '" data-child="' + c.id + '">' + c.label + '</button>';
+        }).join('');
+      bar.querySelectorAll('[data-child]').forEach(function(b){
+        b.addEventListener('click', function(){ showChild(b.getAttribute('data-child')); });
+      });
+      showChild(activeChild);
+    } else {
+      bar.style.display = 'none';
+      bar.innerHTML = '';
+      showSingleMode(parent);
+    }
+  }
+
+  function showChild(child){
+    const parent = tabState.activeParent;
+    tabState.activeChildBy[parent] = child;
+    document.querySelectorAll('.child-tab').forEach(function(b){
+      b.classList.toggle('active', b.getAttribute('data-child') === child);
+    });
+    const target = tabConfig.contentForChild[child];
+    if (!target) return;
+    document.querySelectorAll('.mode-content').forEach(function(c){ c.classList.remove('active'); });
+    document.querySelectorAll('.sub-content').forEach(function(c){ c.classList.remove('active'); });
+    const modeEl = document.getElementById(target.mode);
+    if (modeEl) modeEl.classList.add('active');
+    if (target.sub) {
+      const subEl = document.getElementById(target.sub);
+      if (subEl) subEl.classList.add('active');
+    }
+    if (child === 'calendar' && !calRendered) {
+      renderLegend(); renderMonth(); renderDetail();
+      calRendered = true;
+    }
+    if (child === 'hotel' && !hotelRendered) {
+      renderHotels(); hotelRendered = true;
+    }
+    if (child === 'arrival') {
+      renderArrivals(); // 日付別なので毎回再レンダー
+    }
+    if (child === 'stage-schedule') {
+      renderDaySchedule(); // 日付別なので毎回再レンダー
+    }
+    if (child === 'rehearsal-main') {
+      // 日付別なので毎回再レンダー（最新のリハ計画 rhNo/tags/memo を反映）
+      if (typeof window.__rehearsalRender === 'function') {
+        window.__rehearsalRender();
+      }
+    }
+  }
+
+  function showSingleMode(parent){
+    document.querySelectorAll('.mode-content').forEach(function(c){ c.classList.remove('active'); });
+    document.querySelectorAll('.sub-content').forEach(function(c){ c.classList.remove('active'); });
+    const targetId = tabConfig.contentForParent[parent];
+    if (targetId) {
+      const el = document.getElementById(targetId);
+      if (el) el.classList.add('active');
+    }
+    if (parent === 'info' && !infoRendered) {
+      renderInfoHistory();
+      updateInfoAuthUI();
+      infoRendered = true;
+    }
+    if (parent === 'day-schedule') {
+      renderDaySchedule();
+    }
+  }
+
+  document.querySelectorAll('.parent-tab').forEach(function(b){
+    b.addEventListener('click', function(){
+      showParent(b.getAttribute('data-parent'));
+    });
+  });
+
+  // 初期表示：SCHEDULE > CALENDAR
+  showParent('schedule');
+
+  // ── DAY SCHEDULE：日付別の自由イベントリスト（開始〜終了 + ラベル） ──
+  const dailyEvents = {};
+  let nextDayEventId = 100;
+
+  function fmtMKey_d(d){
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+  function getDayEvents(d){
+    const k = fmtMKey_d(d);
+    if (!dailyEvents[k]) {
+      dailyEvents[k] = [
+        { id: nextDayEventId++, startTime:'09:00', endTime:'10:00', label:'音響チェック' },
+        { id: nextDayEventId++, startTime:'10:00', endTime:'13:00', label:'テクリハ' },
+        { id: nextDayEventId++, startTime:'13:00', endTime:'14:00', label:'無音タイム / 楽屋準備' },
+        { id: nextDayEventId++, startTime:'14:00', endTime:'16:30', label:'リハーサル' },
+        { id: nextDayEventId++, startTime:'17:30', endTime:'',      label:'DOOR OPEN' },
+        { id: nextDayEventId++, startTime:'18:30', endTime:'',      label:'SHOW TIME' }
+      ];
+    }
+    return dailyEvents[k];
+  }
+
+  function dayEventCardHtml(ev){
+    return ''
+      + '<div class="day-event-card" data-day-event="' + ev.id + '">'
+      +   '<input type="text" class="day-event-time" value="' + escH(ev.startTime) + '" data-field="startTime" placeholder="10:00" inputmode="numeric" maxlength="5">'
+      +   '<span class="day-event-tilde">〜</span>'
+      +   '<input type="text" class="day-event-time end" value="' + escH(ev.endTime || '') + '" data-field="endTime" placeholder="—" inputmode="numeric" maxlength="5">'
+      +   '<input type="text" class="day-event-label" value="' + escH(ev.label) + '" data-field="label" placeholder="項目名（例：音響チェック）">'
+      +   '<button class="day-event-del" data-action="del-day-event" title="削除">×</button>'
+      + '</div>';
+  }
+
+  function renderDaySchedule(){
+    const list = document.getElementById('day-event-list');
+    if (!list) return;
+    const events = getDayEvents(masterDateState.current);
+    const sorted = events.slice().sort(function(a,b){
+      return (a.startTime || '99:99').localeCompare(b.startTime || '99:99');
+    });
+    list.innerHTML = sorted.map(dayEventCardHtml).join('');
+  }
+
+  // 入力変更 → データ更新（startTime 変更時は再ソート）
+  document.addEventListener('change', function(e){
+    const card = e.target && e.target.closest && e.target.closest('.day-event-card');
+    if (!card) return;
+    const id = +card.getAttribute('data-day-event');
+    const events = getDayEvents(masterDateState.current);
+    const ev = events.find(function(x){ return x.id === id; });
+    if (!ev) return;
+    const field = e.target.getAttribute('data-field');
+    if (!field) return;
+    ev[field] = e.target.value;
+    if (field === 'startTime') renderDaySchedule();
+  });
+
+  // 追加・削除
+  document.addEventListener('click', function(e){
+    const t = e.target;
+    const action = t && t.getAttribute && t.getAttribute('data-action');
+    if (action === 'add-day-event') {
+      const events = getDayEvents(masterDateState.current);
+      events.push({
+        id: nextDayEventId++,
+        startTime: '12:00',
+        endTime: '',
+        label: ''
+      });
+      renderDaySchedule();
+    } else if (action === 'del-day-event') {
+      const card = t.closest('.day-event-card');
+      if (!card) return;
+      const id = +card.getAttribute('data-day-event');
+      const events = getDayEvents(masterDateState.current);
+      const idx = events.findIndex(function(x){ return x.id === id; });
+      if (idx >= 0) {
+        events.splice(idx, 1);
+        renderDaySchedule();
+      }
+    }
+  });
+
+  // ── マスター日付バー：全タブの日付がここに紐付く ──
+  const masterDateState = {
+    current: new Date(2026, 3, 29) // 2026/4/29 (水) 初期値
+  };
+  // 別 IIFE（曲データ管理）から参照できるよう window にエクスポート
+  window.__masterDateState = masterDateState;
+  // ツアーの日付 → 会場・Day 番号マッピング
+  const tourSchedule = {
+    '2026-04-28': { day: '仕込み',  venue: '横浜アリーナ' },
+    '2026-04-29': { day: 'DAY 1',  venue: '横浜アリーナ' },
+    '2026-04-30': { day: 'DAY 2',  venue: '横浜アリーナ' },
+    '2026-05-01': { day: '移動',    venue: '→ 東京' },
+    '2026-05-02': { day: '仕込み',  venue: '東京ドーム' },
+    '2026-05-03': { day: 'DAY 1',  venue: '東京ドーム' },
+    '2026-05-04': { day: 'DAY 2',  venue: '東京ドーム' },
+    '2026-05-05': { day: '移動',    venue: '→ 大阪' },
+    '2026-05-06': { day: '休',      venue: '大阪滞在' },
+    '2026-05-07': { day: '休',      venue: '大阪滞在' },
+    '2026-05-08': { day: '仕込み',  venue: '京セラドーム' },
+    '2026-05-09': { day: 'DAY 1',  venue: '京セラドーム' },
+    '2026-05-10': { day: 'DAY 2',  venue: '京セラドーム' },
+    '2026-05-11': { day: '移動',    venue: '→ 福岡' },
+    '2026-05-12': { day: '休',      venue: '福岡滞在' },
+    '2026-05-13': { day: '休',      venue: '福岡滞在' },
+    '2026-05-14': { day: '休',      venue: '福岡滞在' },
+    '2026-05-15': { day: '仕込み',  venue: 'PayPayドーム' },
+    '2026-05-16': { day: 'DAY 1',  venue: 'PayPayドーム' },
+    '2026-05-17': { day: '千秋楽',  venue: 'PayPayドーム' }
+  };
+  const DOW_ARR_M = ['日','月','火','水','木','金','土'];
+
+  function fmtMasterDate(d){
+    return d.getFullYear() + '.' + String(d.getMonth()+1).padStart(2,'0') + '.' + String(d.getDate()).padStart(2,'0');
+  }
+  function fmtMasterKey(d){
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+
+  function syncAllDateDisplays(){
+    const d = masterDateState.current;
+    const dateMain = fmtMasterDate(d);
+    const dow = '(' + DOW_ARR_M[d.getDay()] + ')';
+    const key = fmtMasterKey(d);
+    const tour = tourSchedule[key];
+
+    const elMain  = document.getElementById('master-date-main');
+    const elDow   = document.getElementById('master-date-dow');
+    const elDay   = document.getElementById('master-date-day');
+    const elVenue = document.getElementById('master-date-venue');
+    const elInp   = document.getElementById('master-date-input');
+    if (elMain)  elMain.textContent  = dateMain;
+    if (elDow)   elDow.textContent   = dow;
+    if (elDay)   elDay.textContent   = tour ? tour.day : '—';
+    if (elVenue) elVenue.textContent = tour ? tour.venue : '—';
+    if (elInp)   elInp.value         = key;
+
+    // 各タブの日付ヘッダー（pc-rh-title 内）を一括更新
+    document.querySelectorAll('.pc-rh-date-big[data-master-date-display]').forEach(function(el){
+      el.textContent = dateMain;
+    });
+    document.querySelectorAll('.pc-rh-dow[data-master-date-display]').forEach(function(el){
+      el.textContent = dow;
+    });
+
+    // DAY SCHEDULE の input を更新
+    renderDaySchedule();
+
+    // 入り時間も日付別なので再レンダー
+    if (typeof renderArrivals === 'function') {
+      renderArrivals();
+    }
+
+    // REHEARSAL タブを再レンダー（その日のリハ計画 rhNo/tags/memo に切替）
+    if (typeof window.__rehearsalRender === 'function') {
+      window.__rehearsalRender();
+    }
+
+    // CALENDAR の選択日も連動
+    if (typeof calState !== 'undefined') {
+      calState.selected = new Date(d);
+      const monthEl = document.getElementById('pc-cal-month');
+      if (monthEl && monthEl.innerHTML) {
+        // 表示中の月と異なる場合は月も合わせる
+        if (calState.year !== d.getFullYear() || calState.month !== d.getMonth()) {
+          calState.year = d.getFullYear();
+          calState.month = d.getMonth();
+        }
+        renderMonth();
+        renderDetail();
+      }
+    }
+  }
+
+  function changeMasterDate(d){
+    // 編集中の要素があれば、強制的に blur して値を確定させてから日付変更
+    if (document.activeElement && document.activeElement !== document.body) {
+      try { document.activeElement.blur(); } catch(e) {}
+    }
+    masterDateState.current = d;
+    syncAllDateDisplays();
+  }
+
+  function shiftMasterDate(delta){
+    const newD = new Date(masterDateState.current);
+    newD.setDate(newD.getDate() + delta);
+    changeMasterDate(newD);
+  }
+
+  document.querySelectorAll('[data-date-nav]').forEach(function(b){
+    b.addEventListener('click', function(){
+      const dir = b.getAttribute('data-date-nav') === 'prev' ? -1 : 1;
+      shiftMasterDate(dir);
+    });
+  });
+
+  const masterDateMain = document.getElementById('master-date-main');
+  const masterDateInput = document.getElementById('master-date-input');
+  if (masterDateMain && masterDateInput) {
+    masterDateMain.addEventListener('click', function(){
+      masterDateInput.focus();
+      if (typeof masterDateInput.showPicker === 'function') {
+        try { masterDateInput.showPicker(); } catch(e) {}
+      }
+    });
+    masterDateInput.addEventListener('change', function(e){
+      const v = e.target.value;
+      if (!v) return;
+      const parts = v.split('-').map(Number);
+      changeMasterDate(new Date(parts[0], parts[1]-1, parts[2]));
+    });
+  }
+
+  // 初期同期
+  syncAllDateDisplays();
+
+  // ── HOTEL 編集（基本情報＋タクシー配車＋宿泊メンバー） ──
+  const SECTIONS = ['演出','制作','舞監','PA','照明','映像','VJ','レーザー','特効','美術','衣装'];
+
+  let nextHotelTaxiId = 100, nextHotelMemberId = 100, nextHotelId = 100, nextArrivalId = 100;
+
+  // 入り時間データ：日付別管理（仕込み日と本番日で違うので必須）
+  const arrivalSectionsByDate = {};
+  function fmtMKey_arrival(d){
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+  function getArrivalSections(d){
+    const k = fmtMKey_arrival(d);
+    if (!arrivalSectionsByDate[k]) {
+      if (k === '2026-04-29') {
+        // 4/29 のみ初期サンプル
+        arrivalSectionsByDate[k] = [
+          { id: nextArrivalId++, section:'演出',       time:'08:30' },
+          { id: nextArrivalId++, section:'PA',         time:'09:00' },
+          { id: nextArrivalId++, section:'照明',       time:'09:30' },
+          { id: nextArrivalId++, section:'VJ',         time:'10:00' },
+          { id: nextArrivalId++, section:'機構',       time:'10:30' },
+          { id: nextArrivalId++, section:'特効',       time:'11:00' },
+          { id: nextArrivalId++, section:'早替え',     time:'11:30' },
+          { id: nextArrivalId++, section:'ヘアメイク', time:'12:00' }
+        ];
+      } else {
+        arrivalSectionsByDate[k] = [];
+      }
+    }
+    return arrivalSectionsByDate[k];
+  }
+
+  function arrivalCardHtml(a){
+    return ''
+      + '<div class="arrival-card" data-arrival="' + a.id + '">'
+      +   '<input type="time" class="arrival-time" value="' + escH(a.time) + '" data-field="time">'
+      +   '<input type="text" class="arrival-section-name" value="' + escH(a.section) + '" data-field="section" placeholder="セクション名（例：PA）">'
+      +   '<button class="row-del" data-action="del-arrival" title="削除">×</button>'
+      + '</div>';
+  }
+
+  function renderArrivals(){
+    const wrap = document.getElementById('arrival-list-wrap');
+    if (!wrap) return;
+    const list = getArrivalSections(masterDateState.current);
+    const sorted = list.slice().sort(function(a,b){
+      const ta = a.time || '99:99';
+      const tb = b.time || '99:99';
+      return ta.localeCompare(tb);
+    });
+    wrap.innerHTML = sorted.map(arrivalCardHtml).join('');
+  }
+
+  function findArrival(id){
+    const list = getArrivalSections(masterDateState.current);
+    return list.find(function(x){ return x.id === +id; });
+  }
+
+  function importArrivalsFromRows(rows){
+    const dataRows = [];
+    for (let i = 1; i < rows.length; i++) {
+      const r = rows[i];
+      if (!r || r.length === 0) continue;
+      if (r.every(function(c){ return c == null || String(c).trim() === ''; })) continue;
+      dataRows.push(r);
+    }
+    if (dataRows.length === 0) {
+      alert('Excel に入り時間データが見つかりませんでした。\n\n列順は左から：セクション名 / 時刻\nテンプレートDL ボタンから雛形を入手できます。');
+      return;
+    }
+    const ok = confirm('Excel から ' + dataRows.length + ' 件のセクションを取り込みます。\n\n既存の ' + arrivalSections.length + ' 件は置き換えられます。続けますか？');
+    if (!ok) return;
+    const newList = dataRows.map(function(r){
+      // 時刻は文字列も Excelの時間値も来るので保険
+      let t = r[1];
+      if (typeof t === 'number') {
+        // Excel シリアル時刻（0-1の小数）→ "HH:MM"
+        const totalMin = Math.round(t * 24 * 60);
+        const hh = String(Math.floor(totalMin / 60)).padStart(2, '0');
+        const mm = String(totalMin % 60).padStart(2, '0');
+        t = hh + ':' + mm;
+      } else {
+        t = String(t || '').trim();
+      }
+      return {
+        id: nextArrivalId++,
+        section: String(r[0] || '').trim(),
+        time:    t
+      };
+    });
+    const list = getArrivalSections(masterDateState.current);
+    list.length = 0;
+    newList.forEach(function(a){ list.push(a); });
+    renderArrivals();
+    alert(newList.length + ' 件のセクションを取込みました（' + fmtMKey_arrival(masterDateState.current) + ' のリスト）');
+  }
+
+  function downloadArrivalTemplate(){
+    if (typeof XLSX === 'undefined') {
+      alert('Excel書き出しライブラリ(SheetJS)がまだ読込まれていません。少し待ってから再度お試しください。');
+      return;
+    }
+    const data = [
+      ['セクション', '時刻'],
+      ['演出',       '08:30'],
+      ['PA',         '09:00'],
+      ['照明',       '09:30'],
+      ['VJ',         '10:00'],
+      ['機構',       '10:30'],
+      ['特効',       '11:00'],
+      ['早替え',     '11:30'],
+      ['ヘアメイク', '12:00'],
+      ['', '']
+    ];
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    ws['!cols'] = [{wch:18}, {wch:10}];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, '入り時間');
+    XLSX.writeFile(wb, 'schedule-studio-arrival-template.xlsx');
+  }
+  const hotels = [
+    {
+      id:1, venue:'横浜アリーナ',
+      name:'横浜ロイヤルパークホテル',
+      address:'神奈川県横浜市西区みなとみらい2-2-1-3',
+      tel:'045-221-1111',
+      url:'https://www.yrph.com',
+      taxis:[
+        {id:1, time:'07:00', section:'PA',     count:3},
+        {id:2, time:'07:30', section:'照明',   count:2},
+        {id:3, time:'08:00', section:'演出',   count:1}
+      ],
+      members:[
+        {id:1, section:'演出', name:'のむ'},
+        {id:2, section:'制作', name:'田中'},
+        {id:3, section:'舞監', name:'佐藤'},
+        {id:4, section:'PA',   name:'山田'},
+        {id:5, section:'照明', name:'鈴木'}
+      ]
+    },
+    {
+      id:2, venue:'東京ドーム',
+      name:'メトロポリタン丸の内',
+      address:'東京都千代田区丸の内1-7-12',
+      tel:'03-3211-2233',
+      url:'https://www.metropolitan-marunouchi.jp',
+      taxis:[
+        {id:1, time:'06:30', section:'PA',     count:4},
+        {id:2, time:'07:00', section:'照明',   count:3},
+        {id:3, time:'07:30', section:'映像',   count:2}
+      ],
+      members:[
+        {id:1, section:'演出', name:'のむ'},
+        {id:2, section:'制作', name:'田中'},
+        {id:3, section:'舞監', name:'佐藤'},
+        {id:4, section:'PA',   name:'山田'},
+        {id:5, section:'照明', name:'鈴木'},
+        {id:6, section:'映像', name:'高橋'},
+        {id:7, section:'VJ',   name:'伊藤'}
+      ]
+    },
+    {
+      id:3, venue:'京セラドーム',
+      name:'スイスホテル南海大阪',
+      address:'大阪府大阪市中央区難波5-1-60',
+      tel:'06-6646-1111',
+      url:'https://www.swissotel.com/nankai-osaka',
+      taxis:[
+        {id:1, time:'07:00', section:'PA',     count:3},
+        {id:2, time:'07:30', section:'照明',   count:2}
+      ],
+      members:[
+        {id:1, section:'演出', name:'のむ'},
+        {id:2, section:'制作', name:'田中'},
+        {id:3, section:'PA',   name:'山田'}
+      ]
+    },
+    {
+      id:4, venue:'PayPayドーム',
+      name:'グランドハイアット福岡',
+      address:'福岡県福岡市博多区住吉1-2-82',
+      tel:'092-282-1234',
+      url:'https://www.hyatt.com',
+      taxis:[
+        {id:1, time:'06:00', section:'PA',     count:4},
+        {id:2, time:'06:30', section:'照明',   count:3},
+        {id:3, time:'07:00', section:'映像',   count:2},
+        {id:4, time:'07:30', section:'演出',   count:1}
+      ],
+      members:[
+        {id:1, section:'演出', name:'のむ'},
+        {id:2, section:'制作', name:'田中'},
+        {id:3, section:'舞監', name:'佐藤'},
+        {id:4, section:'PA',   name:'山田'}
+      ]
+    }
+  ];
+
+  function escH(s){ return (s==null?'':String(s)).replace(/[&<>"']/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; }); }
+
+  function hotelCardHtml(h){
+    const taxisHtml = h.taxis.map(function(t){
+      return ''
+        + '<div class="taxi-row" data-hotel="' + h.id + '" data-taxi="' + t.id + '">'
+        +   '<input type="time" class="taxi-time" value="' + escH(t.time) + '" data-field="time">'
+        +   '<input type="text" class="taxi-section" value="' + escH(t.section) + '" data-field="section" placeholder="セクション">'
+        +   '<span class="taxi-count-wrap"><input type="number" min="1" value="' + t.count + '" data-field="count">台</span>'
+        +   '<button class="row-del" data-action="del-taxi" title="削除">×</button>'
+        + '</div>';
+    }).join('');
+
+    const sectionOptions = SECTIONS.map(function(s){ return '<option value="' + escH(s) + '">' + escH(s) + '</option>'; }).join('');
+
+    const membersHtml = h.members.map(function(m){
+      const opts = SECTIONS.map(function(s){
+        const sel = s === m.section ? ' selected' : '';
+        return '<option value="' + escH(s) + '"' + sel + '>' + escH(s) + '</option>';
+      }).join('');
+      return ''
+        + '<div class="member-row" data-hotel="' + h.id + '" data-member="' + m.id + '">'
+        +   '<div class="member-section-cell"><select data-field="section">' + opts + '</select></div>'
+        +   '<input type="text" class="member-name" value="' + escH(m.name) + '" data-field="name" placeholder="名前">'
+        +   '<button class="row-del" data-action="del-member" title="削除">×</button>'
+        + '</div>';
+    }).join('');
+
+    const mapHref = h.address ? 'https://maps.google.com/?q=' + encodeURIComponent(h.address) : '#';
+    const mapClass = h.address ? '' : ' disabled';
+    return ''
+      + '<div class="hotel-card" data-hotel="' + h.id + '">'
+      +   '<div class="hotel-card-head">'
+      +     '<input class="hotel-name-input" value="' + escH(h.name) + '" data-field="name" placeholder="ホテル名">'
+      +   '</div>'
+      +   '<div class="hotel-info-grid">'
+      +     '<div class="info-label">住所</div><input value="' + escH(h.address) + '" data-field="address">'
+      +     '<div class="info-label">電話</div><input value="' + escH(h.tel) + '" data-field="tel">'
+      +     '<div class="info-label">URL</div><input value="' + escH(h.url) + '" data-field="url">'
+      +   '</div>'
+      +   '<div class="hotel-map-link-wrap">'
+      +     '<a class="hotel-map-link' + mapClass + '" href="' + mapHref + '" target="_blank" rel="noopener" title="' + (h.address ? 'Googleマップで住所を開く' : '住所が未入力です') + '">📍 Google マップで開く</a>'
+      +   '</div>'
+      +   '<div class="hotel-section">'
+      +     '<div class="hotel-section-head">🚕 タクシー配車 <span class="hotel-section-count">' + h.taxis.length + ' 件</span></div>'
+      +     '<div class="taxi-list">' + taxisHtml + '</div>'
+      +     '<button class="add-btn" data-action="add-taxi" data-hotel="' + h.id + '">＋ 配車を追加</button>'
+      +   '</div>'
+      +   '<div class="hotel-section">'
+      +     '<div class="hotel-section-head">宿泊メンバー <span class="hotel-section-count">' + h.members.length + ' 名</span></div>'
+      +     '<div class="member-list">' + membersHtml + '</div>'
+      +     '<button class="add-btn" data-action="add-member" data-hotel="' + h.id + '">＋ メンバーを追加</button>'
+      +   '</div>'
+      + '</div>';
+  }
+
+  function renderHotels(){
+    const wrap = document.getElementById('hotel-list-wrap');
+    if (!wrap) return;
+    wrap.innerHTML = hotels.map(hotelCardHtml).join('');
+  }
+
+  function findHotel(id){ return hotels.find(function(h){ return h.id === +id; }); }
+
+  // クリック委譲：追加・削除・取込
+  document.addEventListener('click', function(e){
+    const t = e.target;
+    const action = t.getAttribute && t.getAttribute('data-action');
+    if (!action) return;
+    if (action === 'add-taxi') {
+      const h = findHotel(t.getAttribute('data-hotel')); if (!h) return;
+      h.taxis.push({ id: nextHotelTaxiId++, time:'08:00', section:'', count:1 });
+      renderHotels();
+    } else if (action === 'add-member') {
+      const h = findHotel(t.getAttribute('data-hotel')); if (!h) return;
+      h.members.push({ id: nextHotelMemberId++, section:'演出', name:'' });
+      renderHotels();
+    } else if (action === 'del-taxi') {
+      const row = t.closest('.taxi-row');
+      const h = findHotel(row.getAttribute('data-hotel')); if (!h) return;
+      const tid = +row.getAttribute('data-taxi');
+      h.taxis = h.taxis.filter(function(x){ return x.id !== tid; });
+      renderHotels();
+    } else if (action === 'del-member') {
+      const row = t.closest('.member-row');
+      const h = findHotel(row.getAttribute('data-hotel')); if (!h) return;
+      const mid = +row.getAttribute('data-member');
+      h.members = h.members.filter(function(x){ return x.id !== mid; });
+      renderHotels();
+    } else if (action === 'add-hotel') {
+      hotels.push({
+        id: nextHotelId++,
+        name: '（新規ホテル）',
+        address: '',
+        tel: '',
+        url: '',
+        taxis: [],
+        members: []
+      });
+      renderHotels();
+    } else if (action === 'import-excel') {
+      const inp = document.getElementById('hotel-file-input');
+      if (inp) inp.click();
+    } else if (action === 'download-template') {
+      downloadHotelTemplate();
+    } else if (action === 'add-arrival') {
+      const list = getArrivalSections(masterDateState.current);
+      list.push({
+        id: nextArrivalId++,
+        section: '',
+        time: '09:00'
+      });
+      renderArrivals();
+    } else if (action === 'del-arrival') {
+      const row = t.closest('.arrival-card');
+      if (!row) return;
+      const aid = +row.getAttribute('data-arrival');
+      const list = getArrivalSections(masterDateState.current);
+      const idx = list.findIndex(function(x){ return x.id === aid; });
+      if (idx >= 0) { list.splice(idx, 1); renderArrivals(); }
+    } else if (action === 'import-arrival-excel') {
+      const inp = document.getElementById('arrival-file-input');
+      if (inp) inp.click();
+    } else if (action === 'download-arrival-template') {
+      downloadArrivalTemplate();
+    } else if (action === 'info-push') {
+      handleInfoPush();
+    } else if (action === 'info-login') {
+      handleInfoLogin();
+    } else if (action === 'info-logout') {
+      handleInfoLogout();
+    }
+  });
+
+  // 「LINEで送る」ボタンはR23整理で削除済み（URL共有はOSのシェア機能 or 個別タブ別途検討）
+
+  // ── INFO タブ ──
+  // 認証ステート（パスワード 1234・PASSタブと同じ流儀）
+  const infoAuth = { authed: false, userName: '' };
+  const INFO_PASSWORD = '1234';
+
+  function updateInfoAuthUI(){
+    const loginPanel = document.getElementById('info-login-panel');
+    const loggedinPanel = document.getElementById('info-loggedin-panel');
+    const formEl = document.getElementById('info-form');
+    const nameEl = document.getElementById('info-loggedin-name');
+    if (!loginPanel || !loggedinPanel || !formEl) return;
+    if (infoAuth.authed) {
+      loginPanel.style.display = 'none';
+      loggedinPanel.style.display = 'flex';
+      if (nameEl) nameEl.textContent = infoAuth.userName;
+      formEl.classList.remove('disabled');
+    } else {
+      loginPanel.style.display = 'flex';
+      loggedinPanel.style.display = 'none';
+      formEl.classList.add('disabled');
+    }
+  }
+
+  function handleInfoLogin(){
+    const nameEl = document.getElementById('info-login-name');
+    const passEl = document.getElementById('info-login-pass');
+    if (!nameEl || !passEl) return;
+    const name = nameEl.value.trim();
+    const pass = passEl.value;
+    if (!name) { alert('あなたの名前を入力してください。'); nameEl.focus(); return; }
+    if (pass !== INFO_PASSWORD) {
+      alert('パスワードが違います。\n（モック：1234）');
+      passEl.focus();
+      passEl.select();
+      return;
+    }
+    infoAuth.authed = true;
+    infoAuth.userName = name;
+    passEl.value = '';
+    updateInfoAuthUI();
+  }
+
+  function handleInfoLogout(){
+    if (!confirm('ログアウトしますか？\n（送信中の本文は失われます）')) return;
+    infoAuth.authed = false;
+    infoAuth.userName = '';
+    const subjEl = document.getElementById('info-subject');
+    const bodyEl = document.getElementById('info-body');
+    if (subjEl) subjEl.value = '';
+    if (bodyEl) bodyEl.value = '';
+    updateInfoAuthUI();
+  }
+
+  let nextInfoId = 100;
+  const infoHistory = [
+    { id:1, sentAt:'2026-04-30 18:42', sender:'のむ', subject:'【明日】集合場所変更', body:'明日のリハ集合は東口楽屋ではなく\n西口楽屋に変更です。\nよろしくお願いします！' },
+    { id:2, sentAt:'2026-04-30 12:15', sender:'のむ', subject:'昼食のお知らせ', body:'本日の昼食は楽屋にお弁当が用意されてます。\nアレルギー対応希望の方は事前にご連絡ください。' },
+    { id:3, sentAt:'2026-04-29 09:30', sender:'のむ', subject:'おはようございます', body:'本日は本番初日です。\n気合い入れていきましょう！🔥' }
+  ];
+
+  function renderInfoHistory(){
+    const wrap = document.getElementById('info-history-list');
+    const cnt = document.getElementById('info-history-count');
+    if (!wrap || !cnt) return;
+    const sorted = infoHistory.slice().sort(function(a,b){ return b.sentAt.localeCompare(a.sentAt); });
+    wrap.innerHTML = sorted.map(function(h){
+      return ''
+        + '<div class="info-history-item">'
+        +   '<div class="info-history-meta">'
+        +     '<span class="info-history-time">' + escH(h.sentAt) + '</span>'
+        +     '<span class="info-history-line">|</span>'
+        +     '<span>by</span>'
+        +     '<span class="info-history-sender">' + escH(h.sender) + '</span>'
+        +   '</div>'
+        +   '<div class="info-history-subject">' + escH(h.subject) + '</div>'
+        +   '<div class="info-history-body">' + escH(h.body) + '</div>'
+        + '</div>';
+    }).join('');
+    cnt.textContent = infoHistory.length + ' 件';
+  }
+
+  function handleInfoPush(){
+    if (!infoAuth.authed) {
+      alert('🔒 送信にはログインが必要です。\n\n上のフォームに名前とパスワード（1234）を入れてログインしてください。');
+      return;
+    }
+    const subjEl = document.getElementById('info-subject');
+    const bodyEl = document.getElementById('info-body');
+    if (!subjEl || !bodyEl) return;
+    const subj = subjEl.value.trim();
+    const body = bodyEl.value.trim();
+    if (!subj && !body) {
+      alert('件名 or 本文を入力してください。');
+      return;
+    }
+    const previewBody = body.length > 80 ? body.substring(0, 80) + '...' : body;
+    const ok = confirm(
+      '📱 LINE プッシュ送信（モック）\n\n' +
+      '件名：' + (subj || '（無題）') + '\n' +
+      '本文：' + (previewBody || '（空）') + '\n\n' +
+      '【本物】公式アカウント友達追加済みのスタッフ全員のLINEに\n' +
+      'プッシュ通知が届きます。\n' +
+      '【現状】モック動作で送信履歴に記録されるだけです。\n\n' +
+      '続けますか？'
+    );
+    if (!ok) return;
+    const now = new Date();
+    const ts = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0')
+             + ' ' + String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+    infoHistory.push({
+      id: nextInfoId++,
+      sentAt: ts,
+      sender: infoAuth.userName || '匿名',
+      subject: subj || '（無題）',
+      body: body
+    });
+    renderInfoHistory();
+    subjEl.value = '';
+    bodyEl.value = '';
+    alert('✅ 送信履歴に記録しました（モック）。\n\n本物のプッシュ通知には Firebase Functions ＋ LINE Messaging API の実装が必要です。');
+  }
+
+  // 入り時間 input change
+  document.addEventListener('change', function(e){
+    const el = e.target;
+    const card = el.closest && el.closest('.arrival-card');
+    if (!card) return;
+    const a = findArrival(card.getAttribute('data-arrival'));
+    if (!a) return;
+    const field = el.getAttribute('data-field');
+    if (field) {
+      a[field] = el.value;
+      // 時刻変更時はソートが変わるので再描画
+      if (field === 'time') renderArrivals();
+    }
+  });
+
+  // 入り時間 Excel 取込
+  const arrivalFileInput = document.getElementById('arrival-file-input');
+  if (arrivalFileInput) {
+    arrivalFileInput.addEventListener('change', function(e){
+      const file = e.target.files[0];
+      if (!file) return;
+      if (typeof XLSX === 'undefined') {
+        alert('Excel取込ライブラリ(SheetJS)がまだ読込まれていません。');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = function(ev){
+        try {
+          const data = new Uint8Array(ev.target.result);
+          const wb = XLSX.read(data, { type: 'array', cellDates: false });
+          const ws = wb.Sheets[wb.SheetNames[0]];
+          const rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true });
+          importArrivalsFromRows(rows);
+        } catch (err) {
+          alert('Excel の読み込みに失敗しました：' + err.message);
+        }
+      };
+      reader.readAsArrayBuffer(file);
+      e.target.value = '';
+    });
+  }
+
+  // ── Excel取込：ファイル選択 → 解析 → ホテル一覧を置換 ──
+  const hotelFileInput = document.getElementById('hotel-file-input');
+  if (hotelFileInput) {
+    hotelFileInput.addEventListener('change', function(e){
+      const file = e.target.files[0];
+      if (!file) return;
+      if (typeof XLSX === 'undefined') {
+        alert('Excel取込ライブラリ(SheetJS)がまだ読込まれていません。少し待ってから再度お試しください。');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = function(ev){
+        try {
+          const data = new Uint8Array(ev.target.result);
+          const wb = XLSX.read(data, { type: 'array' });
+          const ws = wb.Sheets[wb.SheetNames[0]];
+          const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
+          importHotelsFromRows(rows);
+        } catch (err) {
+          alert('Excel の読み込みに失敗しました：' + err.message);
+        }
+      };
+      reader.readAsArrayBuffer(file);
+      e.target.value = '';
+    });
+  }
+
+  function importHotelsFromRows(rows){
+    // 列順：A=SECTION, B=名前, C=HOTEL名 ／ 1行目はヘッダー
+    const dataRows = [];
+    for (let i = 1; i < rows.length; i++) {
+      const r = rows[i];
+      if (!r || r.length === 0) continue;
+      if (r.every(function(c){ return c == null || String(c).trim() === ''; })) continue;
+      dataRows.push(r);
+    }
+    if (dataRows.length === 0) {
+      alert('Excel にデータが見つかりませんでした。\n\n列順は左から：SECTION / 名前 / HOTEL名\nテンプレートDL ボタンから雛形を入手できます。');
+      return;
+    }
+
+    // ホテル名でグルーピング
+    const hotelMap = new Map(); // hotelName -> { members: [{section, name}, ...] }
+    dataRows.forEach(function(r){
+      const section = String(r[0] || '').trim();
+      const name    = String(r[1] || '').trim();
+      const hname   = String(r[2] || '').trim();
+      if (!hname) return; // ホテル名なしはスキップ
+      if (!hotelMap.has(hname)) hotelMap.set(hname, { members: [] });
+      hotelMap.get(hname).members.push({ section: section, name: name });
+    });
+
+    if (hotelMap.size === 0) {
+      alert('ホテル名（C列）が空の行ばかりでした。HOTEL名 が入っている行が必要です。');
+      return;
+    }
+
+    const totalMembers = dataRows.length;
+    const ok = confirm(
+      'Excel から ' + hotelMap.size + ' ホテル（合計 ' + totalMembers + ' 名）を取り込みます。\n\n' +
+      '既存のホテル ' + hotels.length + ' 件は置き換えられます。\n' +
+      '住所・電話・URL は空のまま生成されるので、後で手動入力してください。\n\n' +
+      '続けますか？'
+    );
+    if (!ok) return;
+
+    const newList = [];
+    hotelMap.forEach(function(g, hname){
+      newList.push({
+        id: nextHotelId++,
+        name: hname,
+        address: '',
+        tel: '',
+        url: '',
+        taxis: [],
+        members: g.members.map(function(m){
+          return { id: nextHotelMemberId++, section: m.section || '演出', name: m.name };
+        })
+      });
+    });
+    hotels.length = 0;
+    newList.forEach(function(h){ hotels.push(h); });
+    renderHotels();
+    alert(newList.length + ' ホテル / 合計 ' + totalMembers + ' 名を取込みました。\n\n住所・電話・URL は各カードで手動入力してください。');
+  }
+
+  function downloadHotelTemplate(){
+    if (typeof XLSX === 'undefined') {
+      alert('Excel書き出しライブラリ(SheetJS)がまだ読込まれていません。少し待ってから再度お試しください。');
+      return;
+    }
+    const data = [
+      ['SECTION', '名前', 'HOTEL名'],
+      ['演出',   'のむ',   '横浜ロイヤルパークホテル'],
+      ['制作',   '田中',   '横浜ロイヤルパークホテル'],
+      ['照明',   '鈴木',   '横浜ロイヤルパークホテル'],
+      ['舞監',   '佐藤',   'メトロポリタン丸の内'],
+      ['映像',   '高橋',   'メトロポリタン丸の内'],
+      ['VJ',     '伊藤',   'メトロポリタン丸の内'],
+      ['PA',     '山田',   'スイスホテル南海大阪'],
+      ['特効',   '渡辺',   'グランドハイアット福岡'],
+      ['', '', '']
+    ];
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    ws['!cols'] = [{wch:14}, {wch:14}, {wch:30}];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'HOTEL割り');
+    XLSX.writeFile(wb, 'schedule-studio-hotel-template.xlsx');
+  }
+
+  // input 変更：データに反映（再レンダーは行わず軽く保持）
+  document.addEventListener('change', function(e){
+    const el = e.target;
+    const field = el.getAttribute && el.getAttribute('data-field');
+    if (!field) return;
+    const card = el.closest('.hotel-card'); if (!card) return;
+    const h = findHotel(card.getAttribute('data-hotel')); if (!h) return;
+    const taxiRow = el.closest('.taxi-row');
+    const memberRow = el.closest('.member-row');
+    if (taxiRow) {
+      const t = h.taxis.find(function(x){ return x.id === +taxiRow.getAttribute('data-taxi'); });
+      if (t) t[field] = field === 'count' ? +el.value : el.value;
+    } else if (memberRow) {
+      const m = h.members.find(function(x){ return x.id === +memberRow.getAttribute('data-member'); });
+      if (m) m[field] = el.value;
+    } else {
+      h[field] = el.value;
+    }
+  });
+})();
 </script>
 </body>
 </html>
