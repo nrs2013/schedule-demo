@@ -8,7 +8,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260430.2300">
+<meta name="build-version" content="20260501.0030">
 <title>SCHEDULE STUDIO</title>
 <script>
 // 自動更新検知：ページを開く度にサーバの最新版を確認、新しければ即リロード
@@ -1284,19 +1284,22 @@
   .cal-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
+    grid-auto-rows: 72px;
     gap: 1px;
     background: #2c2c2c;
     border: 1px solid #2c2c2c;
     border-top: none;
   }
   .cal-cell {
-    min-height: 68px;
+    height: 72px;
     background: #1a1a1a;
-    padding: 5px 3px 5px;
+    padding: 5px 3px 4px;
     cursor: pointer;
     display: flex;
     flex-direction: column;
     align-items: center;
+    overflow: hidden;
+    box-sizing: border-box;
     -webkit-tap-highlight-color: transparent;
     transition: background 0.1s;
   }
@@ -1311,14 +1314,17 @@
     font-weight: 500;
     color: #e8e8e4;
     font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
     width: 26px;
     height: 26px;
     line-height: 26px;
     text-align: center;
     border-radius: 50%;
-    margin-bottom: 3px;
-    letter-spacing: -0.01em;
+    margin: 0 auto 3px;
+    letter-spacing: 0;
     flex-shrink: 0;
+    box-sizing: border-box;
+    display: block;
   }
   .cal-day-num.sat { color: #7faedc; }
   .cal-day-num.sun { color: #dc7f7f; }
@@ -1326,11 +1332,11 @@
   .cal-cell.outside .cal-day-num.sat { color: #3a4854; }
   .cal-cell.outside .cal-day-num.sun { color: #543a3a; }
 
-  /* 今日：オレンジの丸で囲むだけ、サイズは他と完全に同じ */
+  /* 今日：オレンジの丸で囲むだけ、サイズ・太さは他と完全に同じ */
   .cal-cell.today .cal-day-num {
     background: #e89a4a;
     color: #0a0a08 !important;
-    font-weight: 700;
+    font-weight: 600;
   }
 
   .cal-events {
