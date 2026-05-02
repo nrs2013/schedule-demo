@@ -3161,6 +3161,14 @@ function show(id) {
   const container = document.getElementById('pc-rows-container');
   const btnSet = document.getElementById('pc-btn-set');
   const btnRh  = document.getElementById('pc-btn-rh');
+  // R48: 必須DOM要素が見つからなければ早期リターン（IIFEより前のHTML破損から守る防御層）
+  if (!container || !btnSet || !btnRh) {
+    if (typeof console !== 'undefined' && console.error) {
+      console.error('[SCHEDULE STUDIO] REHEARSAL タブの必須要素が見つかりません。HTML を確認してください。',
+                    { container: !!container, btnSet: !!btnSet, btnRh: !!btnRh });
+    }
+    return;
+  }
 
   function escHtml(s){
     return (s==null?'':String(s)).replace(/[&<>"']/g, function(c){
@@ -3412,7 +3420,12 @@ function show(id) {
     }
   };
 
-  render();
+  // R48: マスター日付バー（IIFE #3）が masterDateState を定義する前は描画しない。
+  // フォールバックの '2026-04-29' で 4/29 サンプルを誤って初期表示として固定するリスクを回避。
+  // IIFE #3 の syncAllDateDisplays() が走る時点で改めて render される。
+  if (window.__masterDateState && window.__masterDateState.current) {
+    render();
+  }
 })();
 </script>
 
