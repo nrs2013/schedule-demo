@@ -3392,6 +3392,26 @@ function show(id) {
   // マスター日付バーから呼ばれる：日付変更時にリハ計画を再レンダー
   window.__rehearsalRender = render;
 
+  // R47: 編集中の rhNo/memo/title セルの値を、現在の日付の dict に明示保存するヘルパー。
+  // 日付切替時、blur ハンドラだけに頼らず確実に値が保存されるよう保険として追加。
+  window.__rehearsalSaveCurrent = function(id, field, val) {
+    if (!id || !field) return;
+    if (field === 'rhNo') {
+      const reh = getRehearsalData(id);
+      const t = (val || '').trim();
+      let newVal;
+      if (t === '' || t === '×' || t === 'x' || t === 'X') newVal = null;
+      else { const n = parseInt(t, 10); newVal = isNaN(n) ? reh.rhNo : n; }
+      reh.rhNo = newVal;
+    } else if (field === 'memo') {
+      const reh = getRehearsalData(id);
+      reh.memo = val || '';
+    } else if (field === 'title') {
+      const song = songs.find(function(s){return s.id===id;});
+      if (song) song.title = val || '';
+    }
+  };
+
   render();
 })();
 </script>
@@ -3905,7 +3925,16 @@ function show(id) {
 
   function changeMasterDate(d){
     if (window.__diag) window.__diag.change++;
-    // 編集中の要素があれば、強制的に blur して値を確定させてから日付変更
+    // R47: 編集中の rhNo/memo/title セルがあれば、blur に頼らず先に明示保存（旧日付dict へ）
+    const ae = document.activeElement;
+    if (ae && ae !== document.body && ae.getAttribute && typeof window.__rehearsalSaveCurrent === 'function') {
+      const id = +ae.getAttribute('data-id');
+      const field = ae.getAttribute('data-field');
+      if (id && field) {
+        try { window.__rehearsalSaveCurrent(id, field, ae.innerText); } catch(e) {}
+      }
+    }
+    // 編集中の要素から focus を外し（contenteditable の確定）、その後で日付を切替
     if (document.activeElement && document.activeElement !== document.body) {
       try { document.activeElement.blur(); } catch(e) {}
     }
@@ -3925,10 +3954,8 @@ function show(id) {
       if (window.__diag) window.__diag.click++;
       const dir = b.getAttribute('data-date-nav') === 'prev' ? -1 : 1;
       shiftMasterDate(dir);
-      // クリック直後に diag をバッジに反映するため REHEARSAL render を呼ぶ
-      if (typeof window.__rehearsalRender === 'function') {
-        window.__rehearsalRender();
-      }
+      // shiftMasterDate → changeMasterDate → syncAllDateDisplays → __rehearsalRender
+      // のチェーンで既に再描画されるため、ここでの追加呼出は不要 (R47 で削除)
     });
   });
 
@@ -4022,7 +4049,7 @@ function show(id) {
       alert('Excel に入り時間データが見つかりませんでした。\n\n列順は左から：セクション名 / 時刻\nテンプレートDL ボタンから雛形を入手できます。');
       return;
     }
-    const ok = confirm('Excel から ' + dataRows.length + ' 件のセクションを取り込みます。\n\n既存の ' + arrivalSections.length + ' 件は置き換えられます。続けますか？');
+    const ok = confirm('Excel から ' + dataRows.length + ' 件のセクションを取り込みます。\n\n既存の ' + getArrivalSections(masterDateState.current).length + ' 件は置き換えられます。続けますか？');
     if (!ok) return;
     const newList = dataRows.map(function(r){
       // 時刻は文字列も Excelの時間値も来るので保険
