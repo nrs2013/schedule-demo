@@ -425,7 +425,7 @@
     0%   { background: rgba(232,154,74,0.45); color: #fff; }
     100% { background: rgba(216,184,156,0.08); color: #d8b89c; }
   }
-  /* R45 診断バッジ: dict の中身を可視化（バグ調査用、見終わったら撤去） */
+  /* R45/R46 診断バッジ: dict の中身 + 関数呼出カウンタ（バグ調査用、見終わったら撤去） */
   .pc-rh-debug {
     font-family: 'JetBrains Mono', 'Noto Sans JP', monospace;
     font-size: 10px;
@@ -438,7 +438,7 @@
     align-self: center;
     flex-shrink: 0;
     white-space: nowrap;
-    max-width: 540px;
+    max-width: 720px;
     overflow: hidden;
     text-overflow: ellipsis;
   }
@@ -3060,6 +3060,8 @@ function show(id) {
 <script>
 // ── SCHEDULE STUDIO PC編集：曲データ＋セトリ順／リハ順切替＋タグON/OFF＋追加・削除 ──
 (function(){
+  // R46 診断: 各関数の呼出回数とボタンクリック数を記録
+  if (!window.__diag) window.__diag = { click:0, shift:0, change:0, sync:0, render:0 };
   // CDS の LocalSong 形式に揃える（曲データのマスターは CDS、SCHEDULE は rhNo/tags/memo を被せるだけ）
   const songs = [
     {id:1,  orderIndex:1,  title:'OPENING VCR',                    durationSeconds:222, isEvent:true,  isMC:false, isEncore:false, isEnd:false, rhNo:1,    tags:['bagari','shoumei','kikou','block'], memo:'場当たり込み・銀テのタイミング確認'},
@@ -3196,6 +3198,7 @@ function show(id) {
   }
 
   function render(){
+    if (window.__diag) window.__diag.render++;
     // ヘッダーに「今描画している日付」を表示（日付切替が反映されてるかが視覚で分かる）
     const renderedDateEl = document.getElementById('pc-rh-rendered-date');
     if (renderedDateEl) {
@@ -3218,18 +3221,23 @@ function show(id) {
         renderedDateEl.classList.add('flash');
       }
     }
-    // R45 診断バッジ：現在の dict の中身を可視化
+    // R45/R46 診断バッジ：現在の dict の中身 + 各関数の呼出回数
     const debugEl = document.getElementById('pc-rh-debug');
     if (debugEl) {
       const k = getCurrentDateKey();
       const dict = rehearsalByDate[k] || {};
-      // 先頭8曲分の rhNo を一覧化
-      const summary = songs.slice(0, 8).map(function(s){
+      // 先頭4曲分の rhNo を一覧化（カウンタ表示の幅を確保するため短縮）
+      const summary = songs.slice(0, 4).map(function(s){
         const r = dict[s.id];
         if (!r) return s.id + ':-';
         return s.id + ':' + (r.rhNo === null ? '×' : r.rhNo);
       }).join(' ');
-      debugEl.textContent = '[' + k + '] ' + summary;
+      // R46: ボタンクリックと各関数呼出のカウンタを併記
+      const c = window.__diag || {};
+      const counters = 'clk=' + (c.click||0) + ' sft=' + (c.shift||0) +
+                       ' chg=' + (c.change||0) + ' sync=' + (c.sync||0) +
+                       ' rdr=' + (c.render||0);
+      debugEl.textContent = '[' + k + '] ' + summary + ' | ' + counters;
     }
     // セトリ順は orderIndex 順
     const setlist = songs.slice().sort(function(a,b){ return a.orderIndex - b.orderIndex; });
@@ -3840,6 +3848,7 @@ function show(id) {
   }
 
   function syncAllDateDisplays(){
+    if (window.__diag) window.__diag.sync++;
     const d = masterDateState.current;
     const dateMain = fmtMasterDate(d);
     const dow = '(' + DOW_ARR_M[d.getDay()] + ')';
@@ -3895,6 +3904,7 @@ function show(id) {
   }
 
   function changeMasterDate(d){
+    if (window.__diag) window.__diag.change++;
     // 編集中の要素があれば、強制的に blur して値を確定させてから日付変更
     if (document.activeElement && document.activeElement !== document.body) {
       try { document.activeElement.blur(); } catch(e) {}
@@ -3904,6 +3914,7 @@ function show(id) {
   }
 
   function shiftMasterDate(delta){
+    if (window.__diag) window.__diag.shift++;
     const newD = new Date(masterDateState.current);
     newD.setDate(newD.getDate() + delta);
     changeMasterDate(newD);
@@ -3911,8 +3922,13 @@ function show(id) {
 
   document.querySelectorAll('[data-date-nav]').forEach(function(b){
     b.addEventListener('click', function(){
+      if (window.__diag) window.__diag.click++;
       const dir = b.getAttribute('data-date-nav') === 'prev' ? -1 : 1;
       shiftMasterDate(dir);
+      // クリック直後に diag をバッジに反映するため REHEARSAL render を呼ぶ
+      if (typeof window.__rehearsalRender === 'function') {
+        window.__rehearsalRender();
+      }
     });
   });
 
