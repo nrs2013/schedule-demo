@@ -3989,8 +3989,12 @@ function show(id) {
     });
   }
 
-  // 初期同期
-  syncAllDateDisplays();
+  // R49: 初期同期はIIFEの最後で呼ぶ。
+  // syncAllDateDisplays は内部で renderArrivals() を呼ぶが、
+  // arrivalSectionsByDate（line 4001 付近）が後ろで宣言されているため、
+  // ここで呼ぶと TDZ エラー（Cannot access 'arrivalSectionsByDate' before initialization）が発生し、
+  // チェーン途中で停止して __rehearsalRender が呼ばれず、日付切替で REHEARSAL が更新されないバグの原因。
+  // → IIFE の末尾に移動（line 4622 直前）。
 
   // ── HOTEL 編集（基本情報＋タクシー配車＋宿泊メンバー） ──
   const SECTIONS = ['演出','制作','舞監','PA','照明','映像','VJ','レーザー','特効','美術','衣装'];
@@ -4619,6 +4623,9 @@ function show(id) {
       h[field] = el.value;
     }
   });
+
+  // R49: 初期同期（IIFE 末尾で呼ぶことで、上の const/let 宣言がすべて済んだ後に実行される）
+  syncAllDateDisplays();
 })();
 </script>
 </body>
