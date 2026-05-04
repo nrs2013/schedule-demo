@@ -1817,6 +1817,27 @@
     border-color: #e89a4a;
     color: #f0a85a;
   }
+  /* R53: 保存ボタン */
+  .pc-detail-save-btn {
+    background: rgba(232,154,74,0.18);
+    border: 1px solid #e89a4a;
+    color: #f0a85a;
+    padding: 4px 14px;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.12s, border-color 0.12s, color 0.12s;
+  }
+  .pc-detail-save-btn:hover {
+    background: rgba(232,154,74,0.30);
+  }
+  .pc-detail-save-btn.saved {
+    background: rgba(126,194,122,0.20);
+    border-color: rgba(126,194,122,0.55);
+    color: #b8d9b0;
+  }
   .pc-detail-export-btn,
   .pc-detail-import-btn {
     background: transparent;
@@ -3723,8 +3744,8 @@ function show(id) {
   function saveShowTimes()  { saveJSON(LS_KEY_SHOW_TIMES, showTimes); }
   function saveCalMemos()   { saveJSON(LS_KEY_MEMOS, calMemos); }
 
-  // R51 B1: 編集モード状態
-  let calEditMode = false;
+  // R53: 編集モード/閲覧モードの分け廃止 → 常に編集UI
+  // calEditMode フラグは互換のため残す（true 固定）が、もう参照は不要
 
   const DOW_LABELS = ['月','火','水','木','金','土','日'];
   const DOW_FULL   = ['日','月','火','水','木','金','土'];
@@ -3827,7 +3848,7 @@ function show(id) {
     });
   }
 
-  // R51 B1: カレンダー右パネルの描画（閲覧/編集モード分岐）
+  // R53: カレンダー右パネルの描画（常に編集UI、保存ボタン付き）
   function renderDetail(){
     const detailEl = document.getElementById('pc-cal-detail');
     if (!detailEl) return;
@@ -3836,64 +3857,22 @@ function show(id) {
     const dow = DOW_FULL[d.getDay()];
     const dateKey = fmtDateKey(d);
     const venue = evs.length > 0 ? evs[0].venue : '';
-    const showLike = evs.find(function(e){ return e.type === 'show'; });
-    const tk = venue && showTimes[venue] ? showTimes[venue] : null;
 
-    // ヘッダー：日付＋編集ボタン（閲覧/編集どちらにも表示）
-    const editBtnLabel = calEditMode ? '完了' : '編集';
-    const editBtnClass = calEditMode ? 'pc-detail-edit-btn editing' : 'pc-detail-edit-btn';
+    // ヘッダー：日付＋エクスポート/インポート/保存ボタン
     let html = '<div class="pc-detail-header">';
     html += '<div>';
     html += '<div class="pc-detail-date">' + (d.getMonth()+1) + '/' + d.getDate() + ' (' + dow + ')</div>';
     html += '<div class="pc-detail-dow">' + d.getFullYear() + '年' + (d.getMonth()+1) + '月' + d.getDate() + '日</div>';
     html += '</div>';
     html += '<div class="pc-detail-header-actions">';
-    if (calEditMode) {
-      html += '<button class="pc-detail-export-btn" data-action="export-cal" title="JSONエクスポート">⤓</button>';
-      html += '<button class="pc-detail-import-btn" data-action="import-cal" title="JSONインポート">⤒</button>';
-    }
-    html += '<button class="' + editBtnClass + '" data-action="toggle-edit">' + editBtnLabel + '</button>';
+    html += '<button class="pc-detail-export-btn" data-action="export-cal" title="JSONエクスポート">⤓</button>';
+    html += '<button class="pc-detail-import-btn" data-action="import-cal" title="JSONインポート">⤒</button>';
+    html += '<button class="pc-detail-save-btn" data-action="save-cal" title="カレンダーに反映して保存">保存</button>';
     html += '</div>';
     html += '</div>';
 
-    if (calEditMode) {
-      // 編集モード
-      html += renderDetailEditBody(d, evs, dateKey, venue);
-    } else {
-      // 閲覧モード（既存のロジック踏襲）
-      if (venue) {
-        html += '<div class="pc-detail-venue">' + escH(venue) + '</div>';
-      } else {
-        html += '<div class="pc-detail-venue" style="color:#5a5a54">— 予定なし —</div>';
-      }
-      if (evs.length > 0) {
-        html += '<div class="pc-detail-section">';
-        html += '<div class="pc-detail-section-label">EVENTS</div>';
-        html += '<div class="pc-detail-events">';
-        evs.forEach(function(e){
-          html += '<span class="pc-cal-pill ' + e.type + '">' + escH(e.label) + '</span>';
-        });
-        html += '</div></div>';
-      }
-      if (showLike && tk) {
-        html += '<div class="pc-detail-section">';
-        html += '<div class="pc-detail-section-label">SHOW</div>';
-        html += '<div class="pc-detail-time-row"><span class="pc-detail-time-label">DOOR OPEN</span><span class="pc-detail-time-val door">' + escH(tk.door) + '</span></div>';
-        html += '<div class="pc-detail-time-row"><span class="pc-detail-time-label">SHOW TIME</span><span class="pc-detail-time-val show">' + escH(tk.show) + '</span></div>';
-        html += '</div>';
-      }
-      html += '<div class="pc-detail-section">';
-      html += '<div class="pc-detail-section-label">MEMO</div>';
-      // ユーザー編集メモがあればそれ、なければ自動生成テキスト
-      const userMemo = calMemos[dateKey];
-      const memo = (userMemo !== undefined && userMemo !== '') ? userMemo
-                  : ((showLike && showLike.label === '千秋楽') ? '千秋楽。退場アナウンス・銀テ最後の演出を念入りに確認。'
-                  : (showLike ? '本番。リハ反映済み。タグ・メモは「リハーサル」タブで確認。'
-                  : (evs.find(function(e){return e.type === 'setup';}) ? '仕込み日。LED・卓・照明・楽器の搬入。'
-                  : (evs.find(function(e){return e.type === 'stay';}) ? '移動・滞在。' : '—'))));
-      html += '<div class="pc-detail-memo">' + escH(memo) + '</div>';
-      html += '</div>';
-    }
+    // 編集UI（常に表示）
+    html += renderDetailEditBody(d, evs, dateKey, venue);
 
     detailEl.innerHTML = html;
     attachDetailHandlers(d, dateKey);
@@ -3978,20 +3957,37 @@ function show(id) {
     return html;
   }
 
-  // R51 B1: 編集モードのイベントハンドラ
+  // R53: 編集UIのイベントハンドラ（常に編集モード、保存ボタン対応）
   function attachDetailHandlers(d, dateKey) {
     const detailEl = document.getElementById('pc-cal-detail');
     if (!detailEl) return;
 
-    // 編集モード切替（閲覧/編集どちらでも）
-    detailEl.querySelectorAll('[data-action="toggle-edit"]').forEach(function(b){
+    // 保存ボタン：明示的にカレンダーに反映＋視覚フィードバック
+    detailEl.querySelectorAll('[data-action="save-cal"]').forEach(function(b){
       b.addEventListener('click', function(){
-        calEditMode = !calEditMode;
-        renderDetail();
+        // 編集中の input/textarea を確定（blur で値が保存される仕組みを発火）
+        const ae = document.activeElement;
+        if (ae && detailEl.contains(ae)) {
+          try { ae.blur(); } catch(e) {}
+        }
+        // localStorage に念のため再保存
+        saveCalEvents();
+        saveShowTimes();
+        saveCalMemos();
+        // カレンダー再描画（左の月ビューに反映）
+        renderMonth();
+        // 視覚フィードバック「✓ 反映」
+        const btn = detailEl.querySelector('[data-action="save-cal"]');
+        if (btn) {
+          btn.textContent = '✓ 反映';
+          btn.classList.add('saved');
+          setTimeout(function(){
+            btn.textContent = '保存';
+            btn.classList.remove('saved');
+          }, 1200);
+        }
       });
     });
-
-    if (!calEditMode) return;
 
     // 会場変更
     const venueSelect = detailEl.querySelector('[data-field="venue"]');
