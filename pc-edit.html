@@ -512,18 +512,24 @@
     font-weight: 700;
   }
   .pc-row {
+    /* R50 Phase A2: 左に細いアクセント縦線でカード感を出す（Mail-Check の case-card 風） */
     display: grid;
     grid-template-columns: 28px 50px minmax(160px, 0.8fr) 60px 50px 432px minmax(260px, 2fr) 26px;
     gap: 8px;
     padding: 6px 14px;
     background: #1f1e1b;
     border: 1px solid #2c2a27;
+    border-left: 3px solid rgba(232,154,74,0.35);
     border-radius: 6px;
-    margin: 2px 8px;
+    margin: 3px 8px;
     align-items: center;
     transition: border-color 0.12s, background 0.12s;
   }
-  .pc-row:hover { border-color: #5a5a53; }
+  /* R50 Phase A2: hover で左アクセントが濃くなる */
+  .pc-row:hover {
+    border-color: #5a5a53;
+    border-left-color: rgba(232,154,74,0.7);
+  }
   .pc-row.current {
     background: #221d18;
     border-color: rgba(232,154,74,0.55);
@@ -563,6 +569,11 @@
   .pc-row.special-en  .m-no { color: #b8d9b0; background: rgba(106,138,102,0.32); border-color: rgba(106,138,102,0.7); }
   .pc-row.special-vcr .m-no { color: #e8c890; background: rgba(184,149,88,0.32); border-color: rgba(184,149,88,0.7); }
   .pc-row.special-end .m-no { color: #f0c77a; background: rgba(232,176,74,0.38); border-color: rgba(232,176,74,0.8); }
+  /* R50 Phase A2: 種別ごとに左アクセント縦線の色を変える */
+  .pc-row.special-mc  { border-left-color: rgba(106,150,184,0.55); }
+  .pc-row.special-en  { border-left-color: rgba(106,138,102,0.55); }
+  .pc-row.special-vcr { border-left-color: rgba(184,149,88,0.55); }
+  .pc-row.special-end { border-left-color: rgba(232,176,74,0.7); }
   /* MC 行のタイトルは少し控えめに（リハ対象外感） */
   .pc-row.special-mc .title-cell { color: #a8a8a0; }
   /* タイトル：編集可・hover/focusで枠 */
