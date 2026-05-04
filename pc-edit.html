@@ -1716,6 +1716,36 @@
   .pc-cal-pill.tek   { background: rgba(106,150,184,0.32); color: #a8d4e8; border-color: rgba(106,150,184,0.5); }
   .pc-cal-pill.setup { background: rgba(184,149,88,0.32);  color: #e8c890; border-color: rgba(184,149,88,0.5); }
   .pc-cal-pill.stay  { background: rgba(168,168,160,0.10); color: #787878; font-weight: 500; }
+  /* R54: 連続イベントを横バー化（同会場・同種別で繋がってる感を出す） */
+  /* 隣のセルとの隙間を margin で詰めて視覚的に1本の帯に見せる */
+  .pc-cal-pill.bar-start {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    border-right: 0;
+    margin-right: -7px;
+    text-align: left;
+    padding-left: 6px;
+    padding-right: 0;
+  }
+  .pc-cal-pill.bar-mid {
+    border-radius: 0;
+    border-left: 0;
+    border-right: 0;
+    margin-left: -7px;
+    margin-right: -7px;
+    padding-left: 0;
+    padding-right: 0;
+    min-height: 14px; /* ラベル無しでもバーの高さを保つ */
+  }
+  .pc-cal-pill.bar-end {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-left: 0;
+    margin-left: -7px;
+    padding-left: 0;
+    padding-right: 6px;
+    text-align: left;
+  }
 
   .pc-cal-detail {
     background: #1c1b19;
@@ -3760,6 +3790,18 @@ function show(id) {
     const k = fmtDateKey(d);
     return calEvents.filter(function(e){ return e.date === k; });
   }
+  // R54: 同じ会場・同じ種別のイベントが前後の日にあるか判定（横バー連結のため）
+  function isContinuousEvent(d, ev){
+    if (!ev || !ev.type) return { hasPrev:false, hasNext:false };
+    const prevD = new Date(d); prevD.setDate(d.getDate() - 1);
+    const nextD = new Date(d); nextD.setDate(d.getDate() + 1);
+    const prevEvs = getEvents(prevD);
+    const nextEvs = getEvents(nextD);
+    const same = function(e2){
+      return e2.type === ev.type && (e2.venue || '') === (ev.venue || '');
+    };
+    return { hasPrev: prevEvs.some(same), hasNext: nextEvs.some(same) };
+  }
   function buildMonth(year, month){
     const first = new Date(year, month, 1);
     const last  = new Date(year, month + 1, 0);
@@ -3816,7 +3858,15 @@ function show(id) {
       if (calState.selected && isSameDay(d, calState.selected)) cls.push('selected');
       const evs = c.outside ? [] : getEvents(d);
       const eventsHtml = evs.slice(0, 3).map(function(e){
-        return '<span class="pc-cal-pill ' + e.type + '">' + e.label + '</span>';
+        // R54: 同じ会場・同じ種別が前後の日にあれば横バー化
+        const cont = isContinuousEvent(d, e);
+        const positionCls = (cont.hasPrev && cont.hasNext) ? ' bar-mid'
+                          : cont.hasNext ? ' bar-start'
+                          : cont.hasPrev ? ' bar-end'
+                          : '';
+        // 連続グループの最初の日にだけラベル表示（macOS 風）
+        const labelText = cont.hasPrev ? '' : e.label;
+        return '<span class="pc-cal-pill ' + e.type + positionCls + '">' + escH(labelText) + '</span>';
       }).join('');
       html += '<div class="pc-cal-cell ' + cls.join(' ') + '" data-date="' + fmtDateKey(d) + '">';
       html += '<div class="pc-cal-day-num ' + dowClass(d) + '">' + d.getDate() + '</div>';
