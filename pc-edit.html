@@ -3709,6 +3709,15 @@ function show(id) {
   let showTimes = loadJSON(LS_KEY_SHOW_TIMES, JSON.parse(JSON.stringify(DEFAULT_SHOW_TIMES)));
   let calMemos  = loadJSON(LS_KEY_MEMOS, {});
 
+  // R52: 起動時に空ラベル（trim 後 ''）のイベントを掃除（過去にできちゃった残骸も自動削除）
+  (function cleanupEmptyEvents() {
+    const before = calEvents.length;
+    calEvents = calEvents.filter(function(e){
+      return e && e.label && String(e.label).trim() !== '';
+    });
+    if (calEvents.length !== before) saveCalEvents();
+  })();
+
   // 保存ヘルパー
   function saveCalEvents()  { saveJSON(LS_KEY_EVENTS, calEvents); }
   function saveShowTimes()  { saveJSON(LS_KEY_SHOW_TIMES, showTimes); }
@@ -4041,10 +4050,19 @@ function show(id) {
 
       const labelInp = row.querySelector('[data-field="label"]');
       if (labelInp && indexInAll >= 0) {
+        // R52: ラベルを空にしたら、そのイベントを自動削除（カレンダーから消す）
         labelInp.addEventListener('blur', function(){
-          calEvents[indexInAll].label = labelInp.value;
-          saveCalEvents();
-          renderMonth();
+          const newLabel = (labelInp.value || '').trim();
+          if (newLabel === '') {
+            calEvents.splice(indexInAll, 1);
+            saveCalEvents();
+            renderDetail();
+            renderMonth();
+          } else {
+            calEvents[indexInAll].label = newLabel;
+            saveCalEvents();
+            renderMonth();
+          }
         });
       }
     });
