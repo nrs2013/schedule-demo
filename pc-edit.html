@@ -3882,7 +3882,13 @@ function show(id) {
         const dk = el.getAttribute('data-date');
         if (!dk) return;
         const parts = dk.split('-').map(Number);
-        calState.selected = new Date(parts[0], parts[1]-1, parts[2]);
+        const newDate = new Date(parts[0], parts[1]-1, parts[2]);
+        calState.selected = newDate;
+        // R55: 別月のセル（outside の薄字の日）をクリックしたら、その月へ自動ジャンプ
+        if (newDate.getFullYear() !== calState.year || newDate.getMonth() !== calState.month) {
+          calState.year = newDate.getFullYear();
+          calState.month = newDate.getMonth();
+        }
         renderMonth();
         renderDetail();
       });
