@@ -1784,6 +1784,199 @@
     line-height: 1.6;
     min-height: 50px;
   }
+  /* R51 B1: カレンダー編集UI ── ここから ── */
+  .pc-detail-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .pc-detail-header-actions {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  .pc-detail-edit-btn {
+    background: transparent;
+    border: 1px solid #5a5a53;
+    color: #a8a8a0;
+    padding: 4px 12px;
+    font-size: 11px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: border-color 0.12s, color 0.12s, background 0.12s;
+  }
+  .pc-detail-edit-btn:hover {
+    border-color: #e89a4a;
+    color: #f0a85a;
+  }
+  .pc-detail-edit-btn.editing {
+    background: rgba(232,154,74,0.18);
+    border-color: #e89a4a;
+    color: #f0a85a;
+  }
+  .pc-detail-export-btn,
+  .pc-detail-import-btn {
+    background: transparent;
+    border: 1px solid #5a5a53;
+    color: #a8a8a0;
+    padding: 4px 8px;
+    font-size: 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: border-color 0.12s, color 0.12s;
+  }
+  .pc-detail-export-btn:hover,
+  .pc-detail-import-btn:hover {
+    border-color: #e89a4a;
+    color: #f0a85a;
+  }
+  .pc-detail-venue-select,
+  .pc-detail-event-type,
+  .pc-detail-event-add-type {
+    background: #1f1e1b;
+    color: #d8d8d4;
+    border: 1px solid #2c2a27;
+    border-radius: 4px;
+    padding: 4px 6px;
+    font-family: inherit;
+    font-size: 11px;
+    cursor: pointer;
+  }
+  .pc-detail-venue-select:focus,
+  .pc-detail-event-type:focus {
+    outline: none;
+    border-color: rgba(232,154,74,0.55);
+  }
+  .pc-detail-add-venue-btn {
+    background: transparent;
+    color: #a8a8a0;
+    border: 1px solid #5a5a53;
+    padding: 3px 8px;
+    font-size: 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: border-color 0.12s, color 0.12s;
+  }
+  .pc-detail-add-venue-btn:hover {
+    border-color: #e89a4a;
+    color: #f0a85a;
+  }
+  .pc-detail-events-edit {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .pc-detail-event-row {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+  }
+  .pc-detail-event-label {
+    flex: 1;
+    min-width: 0;
+    background: #1f1e1b;
+    color: #d8d8d4;
+    border: 1px solid #2c2a27;
+    border-radius: 4px;
+    padding: 4px 6px;
+    font-family: inherit;
+    font-size: 11px;
+  }
+  .pc-detail-event-label:focus {
+    outline: none;
+    border-color: rgba(232,154,74,0.55);
+  }
+  .pc-detail-event-del {
+    background: transparent;
+    color: #76766f;
+    border: 1px solid #2c2a27;
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 12px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: color 0.12s, border-color 0.12s;
+    flex-shrink: 0;
+  }
+  .pc-detail-event-del:hover {
+    color: #e07a5f;
+    border-color: #e07a5f;
+  }
+  .pc-detail-event-add {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px dashed #2c2a27;
+  }
+  .pc-detail-event-add-label {
+    flex: 1;
+    min-width: 0;
+    background: #1f1e1b;
+    color: #d8d8d4;
+    border: 1px solid #2c2a27;
+    border-radius: 4px;
+    padding: 4px 6px;
+    font-family: inherit;
+    font-size: 11px;
+  }
+  .pc-detail-event-add-label:focus {
+    outline: none;
+    border-color: rgba(232,154,74,0.55);
+  }
+  .pc-detail-event-add-btn {
+    background: rgba(232,154,74,0.18);
+    border: 1px solid rgba(232,154,74,0.55);
+    color: #f0a85a;
+    padding: 4px 10px;
+    font-size: 11px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.12s;
+    flex-shrink: 0;
+  }
+  .pc-detail-event-add-btn:hover {
+    background: rgba(232,154,74,0.30);
+  }
+  .pc-detail-time-input {
+    background: #1f1e1b;
+    color: #d8d8d4;
+    border: 1px solid #2c2a27;
+    border-radius: 4px;
+    padding: 3px 6px;
+    font-family: inherit;
+    font-size: 12px;
+  }
+  .pc-detail-time-input:focus {
+    outline: none;
+    border-color: rgba(232,154,74,0.55);
+  }
+  .pc-detail-memo-edit {
+    width: 100%;
+    background: #1f1e1b;
+    color: #d8d8d4;
+    border: 1px solid #2c2a27;
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-family: inherit;
+    font-size: 12px;
+    line-height: 1.6;
+    resize: vertical;
+    min-height: 60px;
+    box-sizing: border-box;
+  }
+  .pc-detail-memo-edit:focus {
+    outline: none;
+    border-color: rgba(232,154,74,0.55);
+  }
+  /* R51 B1: カレンダー編集UI ── ここまで ── */
   /* RH番号: メインアクセント（オレンジを残す唯一のID系・直接入力可） */
   .pc-row .rh-no {
     font-family: 'JetBrains Mono', 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', monospace;
@@ -3448,7 +3641,8 @@ function show(id) {
   const TOUR_START = new Date(2026, 3, 28);
   const TOUR_END   = new Date(2026, 4, 17);
 
-  const calEvents = [
+  // R51 B1: カレンダーデータの初期値（localStorage に何も無いときのデフォルト）
+  const DEFAULT_CAL_EVENTS = [
     { date:'2026-04-28', type:'setup', label:'仕込み',   venue:'横浜アリーナ' },
     { date:'2026-04-29', type:'tek',   label:'テクリハ', venue:'横浜アリーナ' },
     { date:'2026-04-29', type:'rh',    label:'リハ',     venue:'横浜アリーナ' },
@@ -3479,12 +3673,49 @@ function show(id) {
     { date:'2026-05-17', type:'show',  label:'千秋楽',   venue:'PayPayドーム' }
   ];
 
-  const showTimes = {
+  const DEFAULT_SHOW_TIMES = {
     '横浜アリーナ':    { door:'17:30', show:'18:30' },
     '東京ドーム':      { door:'16:30', show:'17:30' },
     '京セラドーム':    { door:'17:00', show:'18:00' },
     'PayPayドーム':    { door:'17:00', show:'18:00' }
   };
+
+  // R51 B1: localStorage 読み書きヘルパー
+  const LS_KEY_EVENTS = 'schedule-studio:calEvents:v1';
+  const LS_KEY_SHOW_TIMES = 'schedule-studio:showTimes:v1';
+  const LS_KEY_MEMOS = 'schedule-studio:calMemos:v1';
+
+  function loadJSON(key, defaultVal) {
+    try {
+      const v = localStorage.getItem(key);
+      if (v === null) return defaultVal;
+      const parsed = JSON.parse(v);
+      return parsed;
+    } catch (e) {
+      console.warn('[SCHEDULE STUDIO] localStorage 読込失敗:', key, e);
+      return defaultVal;
+    }
+  }
+  function saveJSON(key, val) {
+    try {
+      localStorage.setItem(key, JSON.stringify(val));
+    } catch (e) {
+      console.warn('[SCHEDULE STUDIO] localStorage 保存失敗:', key, e);
+    }
+  }
+
+  // R51 B1: 起動時に localStorage から復元、なければ DEFAULT を使う
+  let calEvents = loadJSON(LS_KEY_EVENTS, JSON.parse(JSON.stringify(DEFAULT_CAL_EVENTS)));
+  let showTimes = loadJSON(LS_KEY_SHOW_TIMES, JSON.parse(JSON.stringify(DEFAULT_SHOW_TIMES)));
+  let calMemos  = loadJSON(LS_KEY_MEMOS, {});
+
+  // 保存ヘルパー
+  function saveCalEvents()  { saveJSON(LS_KEY_EVENTS, calEvents); }
+  function saveShowTimes()  { saveJSON(LS_KEY_SHOW_TIMES, showTimes); }
+  function saveCalMemos()   { saveJSON(LS_KEY_MEMOS, calMemos); }
+
+  // R51 B1: 編集モード状態
+  let calEditMode = false;
 
   const DOW_LABELS = ['月','火','水','木','金','土','日'];
   const DOW_FULL   = ['日','月','火','水','木','金','土'];
@@ -3587,50 +3818,355 @@ function show(id) {
     });
   }
 
+  // R51 B1: カレンダー右パネルの描画（閲覧/編集モード分岐）
   function renderDetail(){
     const detailEl = document.getElementById('pc-cal-detail');
     if (!detailEl) return;
     const d = calState.selected || TODAY;
     const evs = getEvents(d);
     const dow = DOW_FULL[d.getDay()];
+    const dateKey = fmtDateKey(d);
     const venue = evs.length > 0 ? evs[0].venue : '';
     const showLike = evs.find(function(e){ return e.type === 'show'; });
     const tk = venue && showTimes[venue] ? showTimes[venue] : null;
 
-    let html = ''
-      + '<div class="pc-detail-date">' + (d.getMonth()+1) + '/' + d.getDate() + ' (' + dow + ')</div>'
-      + '<div class="pc-detail-dow">' + d.getFullYear() + '年' + (d.getMonth()+1) + '月' + d.getDate() + '日</div>';
-    if (venue) {
-      html += '<div class="pc-detail-venue">' + venue + '</div>';
-    } else {
-      html += '<div class="pc-detail-venue" style="color:#5a5a54">— 予定なし —</div>';
+    // ヘッダー：日付＋編集ボタン（閲覧/編集どちらにも表示）
+    const editBtnLabel = calEditMode ? '完了' : '編集';
+    const editBtnClass = calEditMode ? 'pc-detail-edit-btn editing' : 'pc-detail-edit-btn';
+    let html = '<div class="pc-detail-header">';
+    html += '<div>';
+    html += '<div class="pc-detail-date">' + (d.getMonth()+1) + '/' + d.getDate() + ' (' + dow + ')</div>';
+    html += '<div class="pc-detail-dow">' + d.getFullYear() + '年' + (d.getMonth()+1) + '月' + d.getDate() + '日</div>';
+    html += '</div>';
+    html += '<div class="pc-detail-header-actions">';
+    if (calEditMode) {
+      html += '<button class="pc-detail-export-btn" data-action="export-cal" title="JSONエクスポート">⤓</button>';
+      html += '<button class="pc-detail-import-btn" data-action="import-cal" title="JSONインポート">⤒</button>';
     }
-    if (evs.length > 0) {
-      html += '<div class="pc-detail-section">';
-      html += '<div class="pc-detail-section-label">EVENTS</div>';
-      html += '<div class="pc-detail-events">';
-      evs.forEach(function(e){
-        html += '<span class="pc-cal-pill ' + e.type + '">' + e.label + '</span>';
-      });
-      html += '</div></div>';
-    }
-    if (showLike && tk) {
-      html += '<div class="pc-detail-section">';
-      html += '<div class="pc-detail-section-label">SHOW</div>';
-      html += '<div class="pc-detail-time-row"><span class="pc-detail-time-label">DOOR OPEN</span><span class="pc-detail-time-val door">' + tk.door + '</span></div>';
-      html += '<div class="pc-detail-time-row"><span class="pc-detail-time-label">SHOW TIME</span><span class="pc-detail-time-val show">' + tk.show + '</span></div>';
-      html += '</div>';
-    }
-    html += '<div class="pc-detail-section">';
-    html += '<div class="pc-detail-section-label">MEMO</div>';
-    const memo = (showLike && showLike.label === '千秋楽') ? '千秋楽。退場アナウンス・銀テ最後の演出を念入りに確認。'
-                : (showLike ? '本番。リハ反映済み。タグ・メモは「リハーサル」タブで確認。'
-                : (evs.find(function(e){return e.type === 'setup';}) ? '仕込み日。LED・卓・照明・楽器の搬入。'
-                : (evs.find(function(e){return e.type === 'stay';}) ? '移動・滞在。' : '—')));
-    html += '<div class="pc-detail-memo">' + memo + '</div>';
+    html += '<button class="' + editBtnClass + '" data-action="toggle-edit">' + editBtnLabel + '</button>';
+    html += '</div>';
     html += '</div>';
 
+    if (calEditMode) {
+      // 編集モード
+      html += renderDetailEditBody(d, evs, dateKey, venue);
+    } else {
+      // 閲覧モード（既存のロジック踏襲）
+      if (venue) {
+        html += '<div class="pc-detail-venue">' + escH(venue) + '</div>';
+      } else {
+        html += '<div class="pc-detail-venue" style="color:#5a5a54">— 予定なし —</div>';
+      }
+      if (evs.length > 0) {
+        html += '<div class="pc-detail-section">';
+        html += '<div class="pc-detail-section-label">EVENTS</div>';
+        html += '<div class="pc-detail-events">';
+        evs.forEach(function(e){
+          html += '<span class="pc-cal-pill ' + e.type + '">' + escH(e.label) + '</span>';
+        });
+        html += '</div></div>';
+      }
+      if (showLike && tk) {
+        html += '<div class="pc-detail-section">';
+        html += '<div class="pc-detail-section-label">SHOW</div>';
+        html += '<div class="pc-detail-time-row"><span class="pc-detail-time-label">DOOR OPEN</span><span class="pc-detail-time-val door">' + escH(tk.door) + '</span></div>';
+        html += '<div class="pc-detail-time-row"><span class="pc-detail-time-label">SHOW TIME</span><span class="pc-detail-time-val show">' + escH(tk.show) + '</span></div>';
+        html += '</div>';
+      }
+      html += '<div class="pc-detail-section">';
+      html += '<div class="pc-detail-section-label">MEMO</div>';
+      // ユーザー編集メモがあればそれ、なければ自動生成テキスト
+      const userMemo = calMemos[dateKey];
+      const memo = (userMemo !== undefined && userMemo !== '') ? userMemo
+                  : ((showLike && showLike.label === '千秋楽') ? '千秋楽。退場アナウンス・銀テ最後の演出を念入りに確認。'
+                  : (showLike ? '本番。リハ反映済み。タグ・メモは「リハーサル」タブで確認。'
+                  : (evs.find(function(e){return e.type === 'setup';}) ? '仕込み日。LED・卓・照明・楽器の搬入。'
+                  : (evs.find(function(e){return e.type === 'stay';}) ? '移動・滞在。' : '—'))));
+      html += '<div class="pc-detail-memo">' + escH(memo) + '</div>';
+      html += '</div>';
+    }
+
     detailEl.innerHTML = html;
+    attachDetailHandlers(d, dateKey);
+  }
+
+  // R51 B1: 編集モードの本体UI生成
+  function renderDetailEditBody(d, evs, dateKey, venue) {
+    let html = '';
+
+    // 会場
+    html += '<div class="pc-detail-section">';
+    html += '<div class="pc-detail-section-label">会場</div>';
+    html += '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">';
+    html += '<select class="pc-detail-venue-select" data-field="venue">';
+    html += '<option value="">— 未設定 —</option>';
+    Object.keys(showTimes).forEach(function(v){
+      const sel = (v === venue) ? ' selected' : '';
+      html += '<option value="' + escH(v) + '"' + sel + '>' + escH(v) + '</option>';
+    });
+    if (venue && !showTimes[venue]) {
+      // showTimes に登録されてない会場名を保持
+      html += '<option value="' + escH(venue) + '" selected>' + escH(venue) + '</option>';
+    }
+    html += '</select>';
+    html += '<button class="pc-detail-add-venue-btn" data-action="add-venue">+ 会場</button>';
+    html += '</div>';
+    html += '</div>';
+
+    // EVENTS
+    html += '<div class="pc-detail-section">';
+    html += '<div class="pc-detail-section-label">EVENTS</div>';
+    html += '<div class="pc-detail-events-edit">';
+    if (evs.length === 0) {
+      html += '<div style="color:#5a5a54;font-size:11px;padding:4px 0;">— イベント未登録 —</div>';
+    } else {
+      evs.forEach(function(e, i){
+        html += '<div class="pc-detail-event-row" data-index="' + i + '">';
+        html += '<select class="pc-detail-event-type" data-field="type">';
+        [['setup','仕込み'], ['tek','テクリハ'], ['rh','リハ'], ['show','本番'], ['stay','移動/休']].forEach(function(p){
+          const sel = (p[0] === e.type) ? ' selected' : '';
+          html += '<option value="' + p[0] + '"' + sel + '>' + p[1] + '</option>';
+        });
+        html += '</select>';
+        html += '<input type="text" class="pc-detail-event-label" value="' + escH(e.label) + '" data-field="label" placeholder="ラベル">';
+        html += '<button class="pc-detail-event-del" data-action="delete-event" data-index="' + i + '" title="削除">×</button>';
+        html += '</div>';
+      });
+    }
+    // 追加フォーム
+    html += '<div class="pc-detail-event-add">';
+    html += '<select class="pc-detail-event-add-type">';
+    [['rh','リハ'], ['tek','テクリハ'], ['show','本番'], ['setup','仕込み'], ['stay','移動/休']].forEach(function(p){
+      html += '<option value="' + p[0] + '">' + p[1] + '</option>';
+    });
+    html += '</select>';
+    html += '<input type="text" class="pc-detail-event-add-label" placeholder="ラベル（例：Day1）">';
+    html += '<button class="pc-detail-event-add-btn" data-action="add-event">+追加</button>';
+    html += '</div>';
+    html += '</div></div>';
+
+    // SHOW（時間編集 - 会場の showTimes を直接編集）
+    if (venue && showTimes[venue]) {
+      const tk = showTimes[venue];
+      html += '<div class="pc-detail-section">';
+      html += '<div class="pc-detail-section-label">SHOW（' + escH(venue) + '）</div>';
+      html += '<div class="pc-detail-time-row"><span class="pc-detail-time-label">DOOR OPEN</span>';
+      html += '<input type="time" class="pc-detail-time-input" value="' + escH(tk.door) + '" data-field="door">';
+      html += '</div>';
+      html += '<div class="pc-detail-time-row"><span class="pc-detail-time-label">SHOW TIME</span>';
+      html += '<input type="time" class="pc-detail-time-input" value="' + escH(tk.show) + '" data-field="show">';
+      html += '</div>';
+      html += '</div>';
+    }
+
+    // MEMO
+    const userMemo = calMemos[dateKey] || '';
+    html += '<div class="pc-detail-section">';
+    html += '<div class="pc-detail-section-label">MEMO</div>';
+    html += '<textarea class="pc-detail-memo-edit" data-field="memo" placeholder="自由メモ">' + escH(userMemo) + '</textarea>';
+    html += '</div>';
+
+    return html;
+  }
+
+  // R51 B1: 編集モードのイベントハンドラ
+  function attachDetailHandlers(d, dateKey) {
+    const detailEl = document.getElementById('pc-cal-detail');
+    if (!detailEl) return;
+
+    // 編集モード切替（閲覧/編集どちらでも）
+    detailEl.querySelectorAll('[data-action="toggle-edit"]').forEach(function(b){
+      b.addEventListener('click', function(){
+        calEditMode = !calEditMode;
+        renderDetail();
+      });
+    });
+
+    if (!calEditMode) return;
+
+    // 会場変更
+    const venueSelect = detailEl.querySelector('[data-field="venue"]');
+    if (venueSelect) {
+      venueSelect.addEventListener('change', function(){
+        const newVenue = venueSelect.value;
+        // 同日のイベントの venue を更新
+        let updated = false;
+        calEvents.forEach(function(e){
+          if (e.date === dateKey) { e.venue = newVenue; updated = true; }
+        });
+        if (updated) saveCalEvents();
+        renderDetail();
+        renderMonth();
+      });
+    }
+
+    // 会場追加
+    const addVenueBtn = detailEl.querySelector('[data-action="add-venue"]');
+    if (addVenueBtn) {
+      addVenueBtn.addEventListener('click', function(){
+        const newVenue = prompt('新しい会場名を入力してください（例：幕張メッセ）');
+        if (!newVenue || !newVenue.trim()) return;
+        const v = newVenue.trim();
+        if (!showTimes[v]) {
+          showTimes[v] = { door: '17:30', show: '18:30' };
+          saveShowTimes();
+        }
+        // 同日のイベントが既にあれば venue を更新
+        let updated = false;
+        calEvents.forEach(function(e){
+          if (e.date === dateKey) { e.venue = v; updated = true; }
+        });
+        if (updated) saveCalEvents();
+        renderDetail();
+        renderMonth();
+      });
+    }
+
+    // 既存イベント編集（type / label）
+    detailEl.querySelectorAll('.pc-detail-event-row').forEach(function(row){
+      const i = +row.getAttribute('data-index');
+      const evsForDate = getEvents(d);
+      const targetEv = evsForDate[i];
+      if (!targetEv) return;
+      const indexInAll = calEvents.indexOf(targetEv);
+
+      const typeSel = row.querySelector('[data-field="type"]');
+      if (typeSel && indexInAll >= 0) {
+        typeSel.addEventListener('change', function(){
+          calEvents[indexInAll].type = typeSel.value;
+          saveCalEvents();
+          renderMonth();
+        });
+      }
+
+      const labelInp = row.querySelector('[data-field="label"]');
+      if (labelInp && indexInAll >= 0) {
+        labelInp.addEventListener('blur', function(){
+          calEvents[indexInAll].label = labelInp.value;
+          saveCalEvents();
+          renderMonth();
+        });
+      }
+    });
+
+    // イベント削除
+    detailEl.querySelectorAll('[data-action="delete-event"]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        const i = +btn.getAttribute('data-index');
+        const evsForDate = getEvents(d);
+        const targetEv = evsForDate[i];
+        if (!targetEv) return;
+        const indexInAll = calEvents.indexOf(targetEv);
+        if (indexInAll < 0) return;
+        calEvents.splice(indexInAll, 1);
+        saveCalEvents();
+        renderDetail();
+        renderMonth();
+      });
+    });
+
+    // イベント追加
+    const addEventBtn = detailEl.querySelector('[data-action="add-event"]');
+    if (addEventBtn) {
+      addEventBtn.addEventListener('click', function(){
+        const typeSel = detailEl.querySelector('.pc-detail-event-add-type');
+        const labelInp = detailEl.querySelector('.pc-detail-event-add-label');
+        const type = typeSel.value;
+        const label = (labelInp.value || '').trim();
+        if (!label) {
+          alert('ラベルを入力してください（例：Day1, テクリハ）');
+          return;
+        }
+        // 同日の既存イベントから venue を継承
+        const evsForDate = getEvents(d);
+        const venue = evsForDate.length > 0 ? evsForDate[0].venue : '';
+        calEvents.push({ date: dateKey, type: type, label: label, venue: venue });
+        saveCalEvents();
+        renderDetail();
+        renderMonth();
+      });
+    }
+
+    // SHOW 時間編集
+    detailEl.querySelectorAll('.pc-detail-time-input').forEach(function(inp){
+      inp.addEventListener('change', function(){
+        const evsForDate = getEvents(d);
+        const venue = evsForDate.length > 0 ? evsForDate[0].venue : '';
+        if (!venue) return;
+        if (!showTimes[venue]) showTimes[venue] = { door: '17:30', show: '18:30' };
+        const field = inp.getAttribute('data-field');
+        showTimes[venue][field] = inp.value;
+        saveShowTimes();
+      });
+    });
+
+    // メモ編集
+    const memoTa = detailEl.querySelector('[data-field="memo"]');
+    if (memoTa) {
+      memoTa.addEventListener('blur', function(){
+        calMemos[dateKey] = memoTa.value;
+        saveCalMemos();
+      });
+    }
+
+    // JSON エクスポート
+    const exportBtn = detailEl.querySelector('[data-action="export-cal"]');
+    if (exportBtn) {
+      exportBtn.addEventListener('click', function(){
+        const data = {
+          calEvents: calEvents,
+          showTimes: showTimes,
+          calMemos: calMemos,
+          exportedAt: new Date().toISOString()
+        };
+        const json = JSON.stringify(data, null, 2);
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'schedule-studio-cal-' + new Date().toISOString().slice(0,10) + '.json';
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+    }
+
+    // JSON インポート
+    const importBtn = detailEl.querySelector('[data-action="import-cal"]');
+    if (importBtn) {
+      importBtn.addEventListener('click', function(){
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'application/json';
+        input.onchange = function(e){
+          const file = e.target.files[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = function(ev){
+            try {
+              const data = JSON.parse(ev.target.result);
+              if (!data.calEvents || !Array.isArray(data.calEvents)) {
+                alert('カレンダーデータが見つかりません。');
+                return;
+              }
+              if (!confirm('現在のカレンダーデータを置き換えます。よろしいですか？')) return;
+              calEvents = data.calEvents;
+              if (data.showTimes) showTimes = data.showTimes;
+              if (data.calMemos) calMemos = data.calMemos;
+              saveCalEvents();
+              saveShowTimes();
+              saveCalMemos();
+              renderDetail();
+              renderMonth();
+              alert('インポート完了');
+            } catch (err) {
+              alert('JSON ファイルの読み込みに失敗しました：' + err.message);
+            }
+          };
+          reader.readAsText(file);
+        };
+        input.click();
+      });
+    }
   }
 
   function renderLegend(){
