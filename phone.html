@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260506.0400">
+<meta name="build-version" content="20260506.0500">
 <title>SCHEDULE STUDIO</title>
 <!-- R57 LIFF: LINE Front-end Framework SDK（LINE 内で開いたときに認識させる） -->
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
@@ -1620,8 +1620,8 @@
   <button class="tour-date-nav" onclick="changeTourDay(1)">›</button>
 </div>
 
-<!-- ヘッダー（公演名のみ） -->
-<div class="phone-header" id="header">
+<!-- R74: コンサートタイトル行を非表示にして表示領域を稼ぐ -->
+<div class="phone-header" id="header" style="display:none;">
   <div class="phone-header-row">
     <div class="phone-brand-mini">SCH</div>
     <div class="phone-concert-title">櫻坂46 5th Anniversary Live</div>
