@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260506.0230">
+<meta name="build-version" content="20260506.0300">
 <title>SCHEDULE STUDIO</title>
 <!-- R57 LIFF: LINE Front-end Framework SDK（LINE 内で開いたときに認識させる） -->
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
@@ -448,10 +448,11 @@
     box-shadow: 0 6px 12px rgba(0,0,0,0.5);
   }
   .rh-countdown-card {
+    /* R71: 上下幅を詰める */
     background: #242424;
     border: 1px solid #2c2c2c;
     border-radius: 8px;
-    padding: 8px 14px;
+    padding: 6px 14px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -469,25 +470,30 @@
     position: relative;
   }
   .rh-countdown-label {
-    font-size: 13px;
-    letter-spacing: 0.3em;
+    /* R71: letter-spacing を詰めて1行に収める */
+    font-size: 12px;
+    letter-spacing: 0.10em;
     color: #a8a8a8;
     font-weight: 700;
     text-transform: uppercase;
+    white-space: nowrap;
   }
   .rh-countdown-meta {
-    font-size: 14px;
+    /* R71: 1行に収める */
+    font-size: 12px;
     color: #787878;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
   }
   .rh-countdown-meta strong { color: #a8a8a8; font-weight: 600; }
   .rh-countdown-time {
+    /* R71: 数字も少し抑えて全体を細く */
     font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif !important;
-    font-size: 46px;
+    font-size: 36px;
     font-weight: 500;
     font-style: normal;
     color: #e89a4a;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.02em;
     line-height: 1;
     font-variant-numeric: tabular-nums;
     position: relative;
