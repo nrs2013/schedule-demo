@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260505.2300">
+<meta name="build-version" content="20260505.2330">
 <title>SCHEDULE STUDIO</title>
 <!-- R57 LIFF: LINE Front-end Framework SDK（LINE 内で開いたときに認識させる） -->
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
@@ -2186,225 +2186,8 @@
 
   <!-- ════ HOTEL ════ -->
   <div class="screen" id="screen-hotel">
-
-    <!-- ホテル①: 多数派 -->
-    <div class="hotel-block">
-      <div class="hotel-block-head">
-        <div class="hotel-name">ホテルメトロポリタン仙台</div>
-        <dl class="hotel-info-grid">
-          <dt>住所</dt><dd>宮城県仙台市青葉区中央1-1-1</dd>
-          <dt>電話</dt><dd><a href="tel:0222682525">022-268-2525</a></dd>
-          <dt>URL</dt><dd><a href="#">metropolitan-sendai.jp</a></dd>
-        </dl>
-        <a class="hotel-map-btn" href="https://maps.google.com/?q=ホテルメトロポリタン仙台" target="_blank">
-          📍 MAP
-        </a>
-      </div>
-
-      <!-- タクシー配車（誰でも編集可・5分刻みプルダウン） -->
-      <div class="taxi-section">
-        <div class="taxi-head">
-          <div class="taxi-title">🚕 タクシー配車</div>
-        </div>
-        <div class="taxi-list">
-          <div class="taxi-row">
-            <span class="taxi-time">07:00</span>
-            <span class="taxi-section-name">PA</span>
-            <span class="taxi-count">3 台</span>
-            <button class="taxi-del" title="削除">×</button>
-          </div>
-          <div class="taxi-row">
-            <span class="taxi-time">07:30</span>
-            <span class="taxi-section-name">照明</span>
-            <span class="taxi-count">2 台</span>
-            <button class="taxi-del" title="削除">×</button>
-          </div>
-          <div class="taxi-row">
-            <span class="taxi-time">08:00</span>
-            <span class="taxi-section-name">演出・制作</span>
-            <span class="taxi-count">1 台</span>
-            <button class="taxi-del" title="削除">×</button>
-          </div>
-        </div>
-        <button class="taxi-add-btn" onclick="toggleTaxiForm('taxi-form-1')">＋ 配車を追加</button>
-        <div class="taxi-form" id="taxi-form-1">
-          <div class="taxi-form-row">
-            <select class="time-pulldown"></select>
-            <input type="text" placeholder="セクション名 (例: VJ)" />
-            <input type="number" placeholder="台数" min="1" value="1" />
-          </div>
-          <div class="taxi-form-actions">
-            <button class="cancel" onclick="toggleTaxiForm('taxi-form-1')">キャンセル</button>
-            <button class="save">登録</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="hotel-members-head">
-        <span>宿泊メンバー</span>
-        <span style="color:#d8d8d4">35名</span>
-      </div>
-      <div class="hotel-member-row">
-        <div class="hotel-member-section">演出</div>
-        <div class="hotel-member-name">のむ</div>
-      </div>
-      <div class="hotel-member-row">
-        <div class="hotel-member-section">制作</div>
-        <div class="hotel-member-name">田中</div>
-      </div>
-      <div class="hotel-member-row">
-        <div class="hotel-member-section">舞監</div>
-        <div class="hotel-member-name">佐藤</div>
-      </div>
-      <div class="hotel-member-row">
-        <div class="hotel-member-section">PA</div>
-        <div class="hotel-member-name">山田</div>
-      </div>
-      <div class="hotel-member-row">
-        <div class="hotel-member-section">照明</div>
-        <div class="hotel-member-name">鈴木</div>
-      </div>
-      <div class="hotel-member-row">
-        <div class="hotel-member-section">特効</div>
-        <div class="hotel-member-name">中村</div>
-      </div>
-      <div class="hotel-member-row">
-        <div class="hotel-member-name" style="color:#787878">…他29名</div>
-        <div></div>
-      </div>
-    </div>
-
-    <!-- ホテル②: 別組 -->
-    <div class="hotel-block">
-      <div class="hotel-block-head">
-        <div class="hotel-name">ホテル仙台ガーデンパレス</div>
-        <dl class="hotel-info-grid">
-          <dt>住所</dt><dd>宮城県仙台市青葉区本町2-3-65</dd>
-          <dt>電話</dt><dd><a href="tel:0222632101">022-263-2101</a></dd>
-          <dt>URL</dt><dd><a href="#">sendai-gardenpalace.co.jp</a></dd>
-        </dl>
-        <a class="hotel-map-btn" href="https://maps.google.com/?q=仙台ガーデンパレス" target="_blank">
-          📍 MAP
-        </a>
-      </div>
-
-      <!-- タクシー配車 -->
-      <div class="taxi-section">
-        <div class="taxi-head">
-          <div class="taxi-title">🚕 タクシー配車</div>
-        </div>
-        <div class="taxi-list">
-          <div class="taxi-row">
-            <span class="taxi-time">07:45</span>
-            <span class="taxi-section-name">VJ</span>
-            <span class="taxi-count">1 台</span>
-            <button class="taxi-del" title="削除">×</button>
-          </div>
-          <div class="taxi-row">
-            <span class="taxi-time">08:15</span>
-            <span class="taxi-section-name">早替え・衣装</span>
-            <span class="taxi-count">2 台</span>
-            <button class="taxi-del" title="削除">×</button>
-          </div>
-        </div>
-        <button class="taxi-add-btn" onclick="toggleTaxiForm('taxi-form-2')">＋ 配車を追加</button>
-        <div class="taxi-form" id="taxi-form-2">
-          <div class="taxi-form-row">
-            <select class="time-pulldown"></select>
-            <input type="text" placeholder="セクション名" />
-            <input type="number" placeholder="台数" min="1" value="1" />
-          </div>
-          <div class="taxi-form-actions">
-            <button class="cancel" onclick="toggleTaxiForm('taxi-form-2')">キャンセル</button>
-            <button class="save">登録</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="hotel-members-head">
-        <span>宿泊メンバー</span>
-        <span style="color:#d8d8d4">28名</span>
-      </div>
-      <div class="hotel-member-row">
-        <div class="hotel-member-section">VJ</div>
-        <div class="hotel-member-name">小林</div>
-      </div>
-      <div class="hotel-member-row">
-        <div class="hotel-member-section">早替え</div>
-        <div class="hotel-member-name">高橋</div>
-      </div>
-      <div class="hotel-member-row">
-        <div class="hotel-member-section">衣装</div>
-        <div class="hotel-member-name">渡辺</div>
-      </div>
-      <div class="hotel-member-row">
-        <div class="hotel-member-section">機構</div>
-        <div class="hotel-member-name">伊藤</div>
-      </div>
-      <div class="hotel-member-row">
-        <div class="hotel-member-name" style="color:#787878">…他24名</div>
-        <div></div>
-      </div>
-    </div>
-
-    <!-- ホテル③: ダンサー組 -->
-    <div class="hotel-block">
-      <div class="hotel-block-head">
-        <div class="hotel-name">ANAホリデイ・イン仙台</div>
-        <dl class="hotel-info-grid">
-          <dt>住所</dt><dd>宮城県仙台市青葉区花京院1-2-12</dd>
-          <dt>電話</dt><dd><a href="tel:0222663355">022-266-3355</a></dd>
-          <dt>URL</dt><dd><a href="#">anahi-sendai.com</a></dd>
-        </dl>
-        <a class="hotel-map-btn" href="https://maps.google.com/?q=ANAホリデイイン仙台" target="_blank">
-          📍 MAP
-        </a>
-      </div>
-
-      <!-- タクシー配車 -->
-      <div class="taxi-section">
-        <div class="taxi-head">
-          <div class="taxi-title">🚕 タクシー配車</div>
-        </div>
-        <div class="taxi-list">
-          <div class="taxi-row">
-            <span class="taxi-time">09:00</span>
-            <span class="taxi-section-name">ダンサー</span>
-            <span class="taxi-count">8 台</span>
-            <button class="taxi-del" title="削除">×</button>
-          </div>
-        </div>
-        <button class="taxi-add-btn" onclick="toggleTaxiForm('taxi-form-3')">＋ 配車を追加</button>
-        <div class="taxi-form" id="taxi-form-3">
-          <div class="taxi-form-row">
-            <select class="time-pulldown"></select>
-            <input type="text" placeholder="セクション名" />
-            <input type="number" placeholder="台数" min="1" value="1" />
-          </div>
-          <div class="taxi-form-actions">
-            <button class="cancel" onclick="toggleTaxiForm('taxi-form-3')">キャンセル</button>
-            <button class="save">登録</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="hotel-members-head">
-        <span>宿泊メンバー</span>
-        <span style="color:#d8d8d4">42名</span>
-      </div>
-      <div class="hotel-member-row">
-        <div class="hotel-member-section">×38</div>
-        <div class="hotel-member-name">ダンサーチーム</div>
-      </div>
-      <div class="hotel-member-row">
-        <div class="hotel-member-section">×4</div>
-        <div class="hotel-member-name">振付師</div>
-      </div>
-    </div>
-
-    <div style="font-size: 14px; color:#5a5a5a; margin: 8px 4px 20px; text-align:center;">
-      ※ ホテル割り当てはPC側でExcel取り込みから設定
-    </div>
+    <!-- R62 M4: PCと共有の hotels から動的レンダリング -->
+    <div id="hotel-list-host"></div>
   </div>
 
   <!-- ════ PASS ════ -->
@@ -3295,6 +3078,100 @@ window.changeTourDay = function(delta) {
 
 // 起動時にも1回
 renderArrivalListPhone();
+
+// ════════════════════════════════════════════════════════════
+// R62 M4: HOTEL を pc-edit.html と localStorage 共有
+// ════════════════════════════════════════════════════════════
+const LS_KEY_HOTELS = 'schedule-studio:hotels:v1';
+const DEFAULT_HOTELS = [
+  {
+    id:1, venue:'横浜アリーナ',
+    name:'横浜ロイヤルパークホテル',
+    address:'神奈川県横浜市西区みなとみらい2-2-1-3',
+    tel:'045-221-1111',
+    url:'https://www.yrph.com',
+    taxis:[
+      {id:1, time:'07:00', section:'PA',     count:3},
+      {id:2, time:'07:30', section:'照明',   count:2},
+      {id:3, time:'08:00', section:'演出',   count:1}
+    ],
+    members:[
+      {id:1, section:'演出', name:'のむ'},
+      {id:2, section:'制作', name:'田中'},
+      {id:3, section:'舞監', name:'佐藤'},
+      {id:4, section:'PA',   name:'山田'},
+      {id:5, section:'照明', name:'鈴木'}
+    ]
+  }
+];
+let hotels = loadJSON(LS_KEY_HOTELS, JSON.parse(JSON.stringify(DEFAULT_HOTELS)));
+function saveHotels() { saveJSON(LS_KEY_HOTELS, hotels); }
+
+function renderHotelListPhone() {
+  const host = document.getElementById('hotel-list-host');
+  if (!host) return;
+  if (!hotels || hotels.length === 0) {
+    host.innerHTML = '<div style="color:#5a5a55;font-size:13px;padding:20px;text-align:center;">— ホテル未登録 —</div>';
+    return;
+  }
+  let html = '';
+  hotels.forEach(function(h){
+    let taxiList = '';
+    if (h.taxis && h.taxis.length) {
+      h.taxis.forEach(function(t){
+        taxiList += '<div class="taxi-row">' +
+          '<span class="taxi-time">' + escHtmlPhone(t.time||'') + '</span>' +
+          '<span class="taxi-section-name">' + escHtmlPhone(t.section||'') + '</span>' +
+          '<span class="taxi-count">' + (t.count||0) + ' 台</span>' +
+        '</div>';
+      });
+    }
+    let memberList = '';
+    if (h.members && h.members.length) {
+      h.members.forEach(function(m){
+        memberList += '<div class="hotel-member-row">' +
+          '<div class="hotel-member-section">' + escHtmlPhone(m.section||'') + '</div>' +
+          '<div class="hotel-member-name">' + escHtmlPhone(m.name||'') + '</div>' +
+        '</div>';
+      });
+    }
+    const memberCount = (h.members || []).length;
+    const mapsQ = encodeURIComponent(h.name || '');
+    const urlText = h.url ? h.url.replace(/^https?:\/\//, '').replace(/\/$/, '') : '';
+    html += '<div class="hotel-block">' +
+      '<div class="hotel-block-head">' +
+        '<div class="hotel-name">' + escHtmlPhone(h.name || '') + '</div>' +
+        '<dl class="hotel-info-grid">' +
+          (h.venue  ? '<dt>会場</dt><dd>' + escHtmlPhone(h.venue) + '</dd>' : '') +
+          (h.address? '<dt>住所</dt><dd>' + escHtmlPhone(h.address) + '</dd>' : '') +
+          (h.tel    ? '<dt>電話</dt><dd><a href="tel:' + escHtmlPhone(h.tel.replace(/-/g,'')) + '">' + escHtmlPhone(h.tel) + '</a></dd>' : '') +
+          (h.url    ? '<dt>URL</dt><dd><a href="' + escHtmlPhone(h.url) + '" target="_blank">' + escHtmlPhone(urlText) + '</a></dd>' : '') +
+        '</dl>' +
+        (h.name ? '<a class="hotel-map-btn" href="https://maps.google.com/?q=' + mapsQ + '" target="_blank">📍 MAP</a>' : '') +
+      '</div>' +
+      (taxiList ? (
+        '<div class="taxi-section">' +
+          '<div class="taxi-head"><div class="taxi-title">🚕 タクシー配車</div></div>' +
+          '<div class="taxi-list">' + taxiList + '</div>' +
+        '</div>'
+      ) : '') +
+      (memberList ? (
+        '<div class="hotel-members-head">' +
+          '<span>宿泊メンバー</span>' +
+          '<span style="color:#d8d8d4">' + memberCount + '名</span>' +
+        '</div>' + memberList
+      ) : '') +
+    '</div>';
+  });
+  host.innerHTML = html;
+}
+
+const _showAfterM4 = window.show;
+window.show = function(id) {
+  _showAfterM4(id);
+  if (id === 'hotel') renderHotelListPhone();
+};
+renderHotelListPhone();
 </script>
 
 <!-- R57 LIFF: 初期化（LINE 内で開いたときに認識させる。失敗してもアプリ本体は動く） -->

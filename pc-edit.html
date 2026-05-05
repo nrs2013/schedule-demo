@@ -4741,7 +4741,9 @@ function show(id) {
     XLSX.utils.book_append_sheet(wb, ws, '入り時間');
     XLSX.writeFile(wb, 'schedule-studio-arrival-template.xlsx');
   }
-  const hotels = [
+  // R62 M4: hotels を localStorage に永続化（phone.html と共有）
+  const LS_KEY_HOTELS = 'schedule-studio:hotels:v1';
+  const DEFAULT_HOTELS = [
     {
       id:1, venue:'横浜アリーナ',
       name:'横浜ロイヤルパークホテル',
@@ -4818,6 +4820,8 @@ function show(id) {
       ]
     }
   ];
+  let hotels = loadJSON(LS_KEY_HOTELS, JSON.parse(JSON.stringify(DEFAULT_HOTELS)));
+  function saveHotels() { saveJSON(LS_KEY_HOTELS, hotels); }
 
   function escH(s){ return (s==null?'':String(s)).replace(/[&<>"']/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; }); }
 
@@ -4891,22 +4895,26 @@ function show(id) {
     if (action === 'add-taxi') {
       const h = findHotel(t.getAttribute('data-hotel')); if (!h) return;
       h.taxis.push({ id: nextHotelTaxiId++, time:'08:00', section:'', count:1 });
+      saveHotels(); // R62 M4
       renderHotels();
     } else if (action === 'add-member') {
       const h = findHotel(t.getAttribute('data-hotel')); if (!h) return;
       h.members.push({ id: nextHotelMemberId++, section:'演出', name:'' });
+      saveHotels(); // R62 M4
       renderHotels();
     } else if (action === 'del-taxi') {
       const row = t.closest('.taxi-row');
       const h = findHotel(row.getAttribute('data-hotel')); if (!h) return;
       const tid = +row.getAttribute('data-taxi');
       h.taxis = h.taxis.filter(function(x){ return x.id !== tid; });
+      saveHotels(); // R62 M4
       renderHotels();
     } else if (action === 'del-member') {
       const row = t.closest('.member-row');
       const h = findHotel(row.getAttribute('data-hotel')); if (!h) return;
       const mid = +row.getAttribute('data-member');
       h.members = h.members.filter(function(x){ return x.id !== mid; });
+      saveHotels(); // R62 M4
       renderHotels();
     } else if (action === 'add-hotel') {
       hotels.push({
@@ -4918,6 +4926,7 @@ function show(id) {
         taxis: [],
         members: []
       });
+      saveHotels(); // R62 M4
       renderHotels();
     } else if (action === 'import-excel') {
       const inp = document.getElementById('hotel-file-input');
@@ -5203,6 +5212,7 @@ function show(id) {
     });
     hotels.length = 0;
     newList.forEach(function(h){ hotels.push(h); });
+    saveHotels(); // R62 M4
     renderHotels();
     alert(newList.length + ' ホテル / 合計 ' + totalMembers + ' 名を取込みました。\n\n住所・電話・URL は各カードで手動入力してください。');
   }
@@ -5249,6 +5259,7 @@ function show(id) {
     } else {
       h[field] = el.value;
     }
+    saveHotels(); // R62 M4
   });
 
   // R49: 初期同期（IIFE 末尾で呼ぶことで、上の const/let 宣言がすべて済んだ後に実行される）
