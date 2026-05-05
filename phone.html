@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260506.0100">
+<meta name="build-version" content="20260506.0130">
 <title>SCHEDULE STUDIO</title>
 <!-- R57 LIFF: LINE Front-end Framework SDK（LINE 内で開いたときに認識させる） -->
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
@@ -345,6 +345,29 @@
   .phone-top-tabs button.active {
     color: #e89a4a;
     border-bottom-color: #e89a4a;
+  }
+  /* R68 P1.1: 上タブを1段にまとめる */
+  .phone-top-tabs-bar {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: row;
+    background: #1a1a1a;
+    border-bottom: 1px solid #2c2c2c;
+  }
+  .phone-top-tabs-bar .phone-top-tabs {
+    flex: 1;
+    border-bottom: 0; /* 親の border-bottom を使うので個別は消す */
+  }
+  .phone-top-tabs-bar .phone-top-tabs button {
+    min-width: 60px; /* 幅が狭くなるので min-width を縮める */
+    padding: 10px 6px;
+    font-size: 13px;
+    letter-spacing: 0.10em;
+  }
+  .top-tabs-divider {
+    width: 1px;
+    background: #2c2c2c;
+    flex-shrink: 0;
   }
 
   /* ── ボディ ───────── */
@@ -1571,16 +1594,18 @@
   </div>
 </div>
 
-<!-- R67 P1: 上タブ（リハーサルの中で「全体リハ／テクリハ」切替） -->
-<div class="phone-top-tabs" id="top-tabs-rehearsal" style="display:none;">
-  <button class="active" data-sub="rh" onclick="showRehearsalSub('rh')">全体リハ</button>
-  <button data-sub="tekuriha" onclick="showRehearsalSub('tekuriha')">テクリハ</button>
-</div>
-
-<!-- 上タブ（全体リハの中で「セトリ順／リハ順」切替） -->
-<div class="phone-top-tabs" id="top-tabs">
-  <button onclick="setSortMode('m', this)">セトリ順</button>
-  <button class="active" onclick="setSortMode('rh', this)">リハ順</button>
+<!-- R68 P1.1: 上タブを1段にまとめて表示領域を稼ぐ -->
+<!-- 左半分=画面切替（全体リハ/テクリハ）／右半分=ソート（セトリ順/リハ順、全体リハ時のみ表示） -->
+<div class="phone-top-tabs-bar" id="top-tabs-bar" style="display:none;">
+  <div class="phone-top-tabs" id="top-tabs-rehearsal">
+    <button class="active" data-sub="rh" onclick="showRehearsalSub('rh')">全体リハ</button>
+    <button data-sub="tekuriha" onclick="showRehearsalSub('tekuriha')">テクリハ</button>
+  </div>
+  <div class="top-tabs-divider"></div>
+  <div class="phone-top-tabs" id="top-tabs">
+    <button onclick="setSortMode('m', this)">セトリ順</button>
+    <button class="active" onclick="setSortMode('rh', this)">リハ順</button>
+  </div>
 </div>
 
 <!-- ボディ -->
@@ -2333,13 +2358,17 @@ function show(id) {
     if (m && m[1] === activeBottomTab) b.classList.add('active');
   });
 
-  // 上タブ：top-tabs-rehearsal は リハーサル系（テクリハ／全体リハ）の時だけ表示
+  // R68 P1.1: 上タブを1段にまとめた構造の制御
+  // - top-tabs-bar：リハーサル系（テクリハ／全体リハ）の時だけ表示
+  // - 中の top-tabs（セトリ順/リハ順）は「全体リハ」のときだけ表示
+  const ttBar = document.getElementById('top-tabs-bar');
   const ttReh = document.getElementById('top-tabs-rehearsal');
   const ttRh  = document.getElementById('top-tabs');
+  const ttDiv = document.querySelector('.top-tabs-divider');
   const isRehearsalScreen = (actualScreenId === 'rh' || actualScreenId === 'tekuriha');
-  if (ttReh) ttReh.style.display = isRehearsalScreen ? 'flex' : 'none';
-  // セトリ順/リハ順の上タブは「全体リハ」(rh) のときだけ
+  if (ttBar) ttBar.style.display = isRehearsalScreen ? 'flex' : 'none';
   if (ttRh)  ttRh.style.display  = (actualScreenId === 'rh') ? 'flex' : 'none';
+  if (ttDiv) ttDiv.style.display = (actualScreenId === 'rh') ? 'block' : 'none';
   // リハーサル上タブの active 切替
   if (isRehearsalScreen && ttReh) {
     ttReh.querySelectorAll('button').forEach(b => b.classList.remove('active'));
