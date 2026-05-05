@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260505.2120">
+<meta name="build-version" content="20260505.2200">
 <title>SCHEDULE STUDIO</title>
 <!-- R57 LIFF: LINE Front-end Framework SDK（LINE 内で開いたときに認識させる） -->
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
@@ -1366,10 +1366,35 @@
     text-align: center;
     line-height: 1.3;
   }
-  .cal-event-pill.show { background: rgba(224,122,95,0.30); color: #f5a89c; font-weight: 700; }
-  .cal-event-pill.rh   { background: rgba(126,194,122,0.22); color: #b8d9b0; }
-  .cal-event-pill.tek  { background: rgba(110,198,200,0.22); color: #a8dcde; }
-  .cal-event-pill.stay { background: rgba(168,168,160,0.10); color: #787878; font-weight: 500; }
+  .cal-event-pill.show  { background: rgba(224,122,95,0.30); color: #f5a89c; font-weight: 700; }
+  .cal-event-pill.rh    { background: rgba(126,194,122,0.22); color: #b8d9b0; }
+  .cal-event-pill.tek   { background: rgba(110,198,200,0.22); color: #a8dcde; }
+  .cal-event-pill.setup { background: rgba(184,149,88,0.32);  color: #e8c890; }
+  .cal-event-pill.stay  { background: rgba(168,168,160,0.10); color: #787878; font-weight: 500; }
+  /* R59: 連続イベントを横バー化（同会場・同種別を繋ぐ） */
+  .cal-event-pill.bar-start {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    margin-right: -3px;
+    text-align: left;
+    padding-left: 4px;
+    padding-right: 0;
+  }
+  .cal-event-pill.bar-mid {
+    border-radius: 0;
+    margin-left: -3px;
+    margin-right: -3px;
+    padding-left: 0;
+    padding-right: 0;
+    min-height: 12px;
+  }
+  .cal-event-pill.bar-end {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    margin-left: -3px;
+    padding-left: 0;
+    padding-right: 4px;
+  }
 
   /* ── 日タップ時の編集シート（ボトム） ───────── */
   .cal-day-sheet {
@@ -3011,6 +3036,92 @@ function changeTourDay(delta) {
 // 初期化：ツアー期間からカレンダーを作って今日に合わせる
 refreshTour();
 
+// ════════════════════════════════════════════════════════════
+// R59: PC（pc-edit.html）と localStorage 共有のデータ層
+// pc-edit.html を「軸」として、ここはそれを読み込む
+// ════════════════════════════════════════════════════════════
+const LS_KEY_EVENTS    = 'schedule-studio:calEvents:v1';
+const LS_KEY_SHOW_TIMES = 'schedule-studio:showTimes:v1';
+const LS_KEY_MEMOS     = 'schedule-studio:calMemos:v1';
+
+const DEFAULT_CAL_EVENTS = [
+  { date:'2026-04-28', type:'setup', label:'仕込み',   venue:'横浜アリーナ' },
+  { date:'2026-04-29', type:'tek',   label:'テクリハ', venue:'横浜アリーナ' },
+  { date:'2026-04-29', type:'rh',    label:'リハ',     venue:'横浜アリーナ' },
+  { date:'2026-04-29', type:'show',  label:'Day1',     venue:'横浜アリーナ' },
+  { date:'2026-04-30', type:'rh',    label:'リハ',     venue:'横浜アリーナ' },
+  { date:'2026-04-30', type:'show',  label:'Day2',     venue:'横浜アリーナ' },
+  { date:'2026-05-01', type:'stay',  label:'移動',     venue:'→ 東京' },
+  { date:'2026-05-02', type:'setup', label:'仕込み',   venue:'東京ドーム' },
+  { date:'2026-05-03', type:'tek',   label:'テクリハ', venue:'東京ドーム' },
+  { date:'2026-05-03', type:'rh',    label:'リハ',     venue:'東京ドーム' },
+  { date:'2026-05-03', type:'show',  label:'Day1',     venue:'東京ドーム' },
+  { date:'2026-05-04', type:'rh',    label:'リハ',     venue:'東京ドーム' },
+  { date:'2026-05-04', type:'show',  label:'Day2',     venue:'東京ドーム' },
+  { date:'2026-05-05', type:'stay',  label:'移動',     venue:'→ 大阪' },
+  { date:'2026-05-06', type:'stay',  label:'休',       venue:'大阪滞在' },
+  { date:'2026-05-07', type:'stay',  label:'休',       venue:'大阪滞在' },
+  { date:'2026-05-08', type:'setup', label:'仕込み',   venue:'京セラドーム' },
+  { date:'2026-05-09', type:'rh',    label:'リハ',     venue:'京セラドーム' },
+  { date:'2026-05-09', type:'show',  label:'Day1',     venue:'京セラドーム' },
+  { date:'2026-05-10', type:'show',  label:'Day2',     venue:'京セラドーム' },
+  { date:'2026-05-11', type:'stay',  label:'移動',     venue:'→ 福岡' },
+  { date:'2026-05-12', type:'stay',  label:'休',       venue:'福岡滞在' },
+  { date:'2026-05-13', type:'stay',  label:'休',       venue:'福岡滞在' },
+  { date:'2026-05-14', type:'stay',  label:'休',       venue:'福岡滞在' },
+  { date:'2026-05-15', type:'setup', label:'仕込み',   venue:'PayPayドーム' },
+  { date:'2026-05-16', type:'rh',    label:'リハ',     venue:'PayPayドーム' },
+  { date:'2026-05-16', type:'show',  label:'Day1',     venue:'PayPayドーム' },
+  { date:'2026-05-17', type:'show',  label:'千秋楽',   venue:'PayPayドーム' }
+];
+const DEFAULT_SHOW_TIMES = {
+  '横浜アリーナ':    { door:'17:30', show:'18:30' },
+  '東京ドーム':      { door:'16:30', show:'17:30' },
+  '京セラドーム':    { door:'17:00', show:'18:00' },
+  'PayPayドーム':    { door:'17:00', show:'18:00' }
+};
+function loadJSON(key, def) {
+  try {
+    const v = localStorage.getItem(key);
+    if (v === null) return def;
+    return JSON.parse(v);
+  } catch (e) { return def; }
+}
+function saveJSON(key, val) {
+  try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) {}
+}
+let calEvents = loadJSON(LS_KEY_EVENTS, JSON.parse(JSON.stringify(DEFAULT_CAL_EVENTS)));
+let showTimes = loadJSON(LS_KEY_SHOW_TIMES, JSON.parse(JSON.stringify(DEFAULT_SHOW_TIMES)));
+let calMemos  = loadJSON(LS_KEY_MEMOS, {});
+// 空ラベル掃除
+(function cleanupEmptyEvents() {
+  const before = calEvents.length;
+  calEvents = calEvents.filter(e => e && e.label && String(e.label).trim() !== '');
+  if (calEvents.length !== before) saveJSON(LS_KEY_EVENTS, calEvents);
+})();
+function saveCalEvents() { saveJSON(LS_KEY_EVENTS, calEvents); }
+function saveShowTimes() { saveJSON(LS_KEY_SHOW_TIMES, showTimes); }
+function saveCalMemos()  { saveJSON(LS_KEY_MEMOS, calMemos); }
+function fmtCalKey(d) {
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+function getEventsForDate(d) {
+  const k = fmtCalKey(d);
+  return calEvents.filter(e => e.date === k);
+}
+function isContinuousEvent(d, ev) {
+  if (!ev || !ev.type) return { hasPrev:false, hasNext:false };
+  const prev = new Date(d); prev.setDate(d.getDate() - 1);
+  const next = new Date(d); next.setDate(d.getDate() + 1);
+  const prevEvs = getEventsForDate(prev);
+  const nextEvs = getEventsForDate(next);
+  const same = e2 => e2.type === ev.type && (e2.venue || '') === (ev.venue || '');
+  return { hasPrev: prevEvs.some(same), hasNext: nextEvs.some(same) };
+}
+function escHtmlPhone(s) {
+  return (s==null?'':String(s)).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+}
+
 // ── ツアー全体カレンダー（読み取り専用）──
 // 各日のスケジュール（モック・PC側で編集される想定）
 const tourSchedules = {
@@ -3085,21 +3196,20 @@ function renderCalendarMonth() {
     if (dow === 5) numCls.push('sat');
     if (dow === 6) numCls.push('sun');
 
-    // イベントピル：実際の予定がある場合のみ。空のツアー日は背景の薄塗りだけで表現
+    // R59: calEvents（PC と共有）から取得して、連続バー（同会場・同種別を繋ぐ）で表示
     let events = '';
-    if (sched && inTour) {
-      if (sched.show && sched.show !== '--') {
-        events += `<div class="cal-event-pill show">${sched.show} 本番</div>`;
-      }
-      if (sched.rehearsal && sched.rehearsal[0] !== '--') {
-        events += `<div class="cal-event-pill rh">リハ</div>`;
-      }
-      if (sched.tekuriha && sched.tekuriha[0] !== '--') {
-        events += `<div class="cal-event-pill tek">テクリハ</div>`;
-      }
-    }
+    const evs = (!isOutside) ? getEventsForDate(d) : [];
+    evs.slice(0, 3).forEach(function(e){
+      const cont = isContinuousEvent(d, e);
+      const positionCls = (cont.hasPrev && cont.hasNext) ? ' bar-mid'
+                        : cont.hasNext ? ' bar-start'
+                        : cont.hasPrev ? ' bar-end'
+                        : '';
+      const label = cont.hasPrev ? '' : escHtmlPhone(e.label);
+      events += `<div class="cal-event-pill ${e.type}${positionCls}">${label}</div>`;
+    });
 
-    const iso = d.toISOString().slice(0, 10);
+    const iso = fmtCalKey(d);
     html += `<div class="${cellCls.join(' ')}" onclick="openCalDaySheet('${iso}')">
       <div class="${numCls.join(' ')}">${d.getDate()}</div>
       <div class="cal-events">${events}</div>
