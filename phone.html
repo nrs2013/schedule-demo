@@ -8,8 +8,10 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260501.0030">
+<meta name="build-version" content="20260505.2120">
 <title>SCHEDULE STUDIO</title>
+<!-- R57 LIFF: LINE Front-end Framework SDK（LINE 内で開いたときに認識させる） -->
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <script>
 // 自動更新検知：ページを開く度にサーバの最新版を確認、新しければ即リロード
 (async function checkForUpdate() {
@@ -3140,6 +3142,26 @@ window.show = function(id) {
     renderCalendarMonth();
   }
 };
+</script>
+
+<!-- R57 LIFF: 初期化（LINE 内で開いたときに認識させる。失敗してもアプリ本体は動く） -->
+<script>
+(function(){
+  if (typeof liff === 'undefined') {
+    console.warn('[LIFF] SDK not loaded - skipping init (アプリは通常Webとして動きます)');
+    return;
+  }
+  liff.init({ liffId: '2009978771-HFu2qVD8' })
+    .then(function(){
+      console.log('[LIFF] init OK',
+                  '| isInClient:', liff.isInClient(),
+                  '| isLoggedIn:', liff.isLoggedIn(),
+                  '| os:', liff.getOS && liff.getOS());
+    })
+    .catch(function(err){
+      console.warn('[LIFF] init failed:', err);
+    });
+})();
 </script>
 </body>
 </html>
