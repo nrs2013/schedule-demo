@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260505.2330">
+<meta name="build-version" content="20260506.0000">
 <title>SCHEDULE STUDIO</title>
 <!-- R57 LIFF: LINE Front-end Framework SDK（LINE 内で開いたときに認識させる） -->
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
@@ -3172,6 +3172,34 @@ window.show = function(id) {
   if (id === 'hotel') renderHotelListPhone();
 };
 renderHotelListPhone();
+</script>
+
+<!-- R63 F-Alt: 起動時に URL の #sync=... を見て自動取込 -->
+<script>
+(function importSyncFromHash() {
+  if (typeof location === 'undefined' || !location.hash) return;
+  const m = location.hash.match(/^#sync=(.+)$/);
+  if (!m) return;
+  try {
+    const b64 = m[1];
+    const json = decodeURIComponent(escape(atob(b64)));
+    const data = JSON.parse(json);
+    function set(k, v) { if (v != null) localStorage.setItem(k, JSON.stringify(v)); }
+    set('schedule-studio:calEvents:v1', data.calEvents);
+    set('schedule-studio:showTimes:v1', data.showTimes);
+    set('schedule-studio:calMemos:v1', data.calMemos);
+    set('schedule-studio:arrivalSectionsByDate:v1', data.arrivalSectionsByDate);
+    set('schedule-studio:hotels:v1', data.hotels);
+    if (window.history && window.history.replaceState) {
+      window.history.replaceState(null, '', location.pathname + location.search);
+    }
+    alert('✅ 同期データを取り込みました。リロードします。\n\n（同期日時: ' + (data.syncedAt || '不明') + '）');
+    setTimeout(function(){ location.reload(); }, 100);
+  } catch (e) {
+    console.warn('[SYNC] import failed:', e);
+    alert('❌ 同期URL の読込に失敗しました。\n\n' + e.message);
+  }
+})();
 </script>
 
 <!-- R57 LIFF: 初期化（LINE 内で開いたときに認識させる。失敗してもアプリ本体は動く） -->

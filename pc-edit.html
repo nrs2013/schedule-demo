@@ -1870,6 +1870,20 @@
     border-color: rgba(126,194,122,0.55);
     color: #b8d9b0;
   }
+  .pc-detail-share-btn {
+    background: rgba(106,150,184,0.18);
+    border: 1px solid rgba(106,150,184,0.55);
+    color: #a8d4e8;
+    padding: 4px 8px;
+    font-size: 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.12s;
+  }
+  .pc-detail-share-btn:hover {
+    background: rgba(106,150,184,0.30);
+  }
   .pc-detail-export-btn,
   .pc-detail-import-btn {
     background: transparent;
@@ -3923,6 +3937,7 @@ function show(id) {
     html += '<div class="pc-detail-dow">' + d.getFullYear() + '年' + (d.getMonth()+1) + '月' + d.getDate() + '日</div>';
     html += '</div>';
     html += '<div class="pc-detail-header-actions">';
+    html += '<button class="pc-detail-share-btn" data-action="share-sync" title="📲 同期URLをLINEで共有（スタッフのスマホに反映）">📲</button>';
     html += '<button class="pc-detail-export-btn" data-action="export-cal" title="JSONエクスポート">⤓</button>';
     html += '<button class="pc-detail-import-btn" data-action="import-cal" title="JSONインポート">⤒</button>';
     html += '<button class="pc-detail-save-btn" data-action="save-cal" title="カレンダーに反映して保存">保存</button>';
@@ -4019,6 +4034,15 @@ function show(id) {
   function attachDetailHandlers(d, dateKey) {
     const detailEl = document.getElementById('pc-cal-detail');
     if (!detailEl) return;
+
+    // R63 F-Alt: 📲 同期URL コピー
+    detailEl.querySelectorAll('[data-action="share-sync"]').forEach(function(b){
+      b.addEventListener('click', function(){
+        if (typeof window.__generateSyncUrlForPhone === 'function') {
+          window.__generateSyncUrlForPhone();
+        }
+      });
+    });
 
     // 保存ボタン：明示的にカレンダーに反映＋視覚フィードバック
     detailEl.querySelectorAll('[data-action="save-cal"]').forEach(function(b){
@@ -5262,8 +5286,61 @@ function show(id) {
     saveHotels(); // R62 M4
   });
 
+  // R63 F-Alt: PC側に「📲 同期URL生成」機能を追加
+  // 全 localStorage を JSON 化 → Base64 → URL ハッシュに埋め込んで phone.html へのリンクを生成
+  window.__generateSyncUrlForPhone = function() {
+    const data = {
+      calEvents: calEvents,
+      showTimes: showTimes,
+      calMemos: calMemos,
+      arrivalSectionsByDate: (typeof arrivalSectionsByDate !== 'undefined') ? arrivalSectionsByDate : null,
+      hotels: (typeof hotels !== 'undefined') ? hotels : null,
+      syncedAt: new Date().toISOString()
+    };
+    const json = JSON.stringify(data);
+    const b64 = btoa(unescape(encodeURIComponent(json)));
+    const url = 'https://nrs2013.github.io/schedule-studio/phone.html#sync=' + b64;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(function(){
+        alert('📲 同期URL をクリップボードにコピーしました。\n\nLINE グループに貼り付けて送信すると、スタッフがタップした瞬間にスマホ版に最新データ（予定・入り時間・HOTEL）が自動反映されます。\n\nURL長: ' + url.length + ' 文字');
+      }).catch(function(){
+        prompt('クリップボードに自動コピーできませんでした。下記をコピーして使ってください:', url);
+      });
+    } else {
+      prompt('下記の URL をコピーしてLINEで共有してください:', url);
+    }
+  };
+
   // R49: 初期同期（IIFE 末尾で呼ぶことで、上の const/let 宣言がすべて済んだ後に実行される）
   syncAllDateDisplays();
+})();
+</script>
+
+<!-- R63 F-Alt: 起動時に URL の #sync=... を見て自動取込（共通取込ロジック） -->
+<script>
+(function importSyncFromHash() {
+  if (typeof location === 'undefined' || !location.hash) return;
+  const m = location.hash.match(/^#sync=(.+)$/);
+  if (!m) return;
+  try {
+    const b64 = m[1];
+    const json = decodeURIComponent(escape(atob(b64)));
+    const data = JSON.parse(json);
+    function set(k, v) { if (v != null) localStorage.setItem(k, JSON.stringify(v)); }
+    set('schedule-studio:calEvents:v1', data.calEvents);
+    set('schedule-studio:showTimes:v1', data.showTimes);
+    set('schedule-studio:calMemos:v1', data.calMemos);
+    set('schedule-studio:arrivalSectionsByDate:v1', data.arrivalSectionsByDate);
+    set('schedule-studio:hotels:v1', data.hotels);
+    if (window.history && window.history.replaceState) {
+      window.history.replaceState(null, '', location.pathname + location.search);
+    }
+    alert('✅ 同期データを取り込みました。リロードします。\n\n（同期日時: ' + (data.syncedAt || '不明') + '）');
+    setTimeout(function(){ location.reload(); }, 100);
+  } catch (e) {
+    console.warn('[SYNC] import failed:', e);
+    alert('❌ 同期URL の読込に失敗しました。\n\n' + e.message);
+  }
 })();
 </script>
 
