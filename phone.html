@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260505.2230">
+<meta name="build-version" content="20260505.2300">
 <title>SCHEDULE STUDIO</title>
 <!-- R57 LIFF: LINE Front-end Framework SDK（LINE 内で開いたときに認識させる） -->
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
@@ -2178,86 +2178,8 @@
 
     <!-- 既存リスト（誰でも追加・編集できる） -->
     <div style="font-size: 14px; letter-spacing:0.2em; color:#787878; margin: 0 4px 8px; text-transform:uppercase; font-weight:700;">— 登録済み —</div>
-
-    <div class="arrival-section">
-      <div class="arrival-section-row">
-        <div class="arrival-section-name">PA</div>
-        <div style="display:flex; align-items:center;">
-          <span class="arrival-section-time">09:00</span>
-          <button class="arrival-edit-btn">編集</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="arrival-section">
-      <div class="arrival-section-row">
-        <div class="arrival-section-name">照明</div>
-        <div style="display:flex; align-items:center;">
-          <span class="arrival-section-time">09:30</span>
-          <button class="arrival-edit-btn">編集</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="arrival-section">
-      <div class="arrival-section-row">
-        <div class="arrival-section-name">VJ</div>
-        <div style="display:flex; align-items:center;">
-          <span class="arrival-section-time">10:00</span>
-          <button class="arrival-edit-btn">編集</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="arrival-section">
-      <div class="arrival-section-row">
-        <div class="arrival-section-name">機構</div>
-        <div style="display:flex; align-items:center;">
-          <span class="arrival-section-time">10:30</span>
-          <button class="arrival-edit-btn">編集</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="arrival-section">
-      <div class="arrival-section-row">
-        <div class="arrival-section-name">特効</div>
-        <div style="display:flex; align-items:center;">
-          <span class="arrival-section-time">11:00</span>
-          <button class="arrival-edit-btn">編集</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="arrival-section">
-      <div class="arrival-section-row">
-        <div class="arrival-section-name">早替え</div>
-        <div style="display:flex; align-items:center;">
-          <span class="arrival-section-time">11:30</span>
-          <button class="arrival-edit-btn">編集</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="arrival-section">
-      <div class="arrival-section-row">
-        <div class="arrival-section-name">ヘアメイク</div>
-        <div style="display:flex; align-items:center;">
-          <span class="arrival-section-time">12:00</span>
-          <button class="arrival-edit-btn">編集</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="arrival-section">
-      <div class="arrival-section-row">
-        <div class="arrival-section-name">演出</div>
-        <div style="display:flex; align-items:center;">
-          <span class="arrival-section-time">08:30</span>
-          <button class="arrival-edit-btn">編集</button>
-        </div>
-      </div>
-    </div>
+    <!-- R61 M3: PCと共有の arrivalSectionsByDate から動的レンダリング -->
+    <div id="arrival-list-host"></div>
 
     <div style="height:20px"></div>
   </div>
@@ -3304,6 +3226,75 @@ window.show = function(id) {
 
 // R60 M2: 起動時にも一度更新（初期表示で showTimes が反映されてないと困るので）
 updateScheduleTabFromCalEvents();
+
+// ════════════════════════════════════════════════════════════
+// R61 M3: 入り時間（arrival）を pc-edit.html と localStorage 共有
+// ════════════════════════════════════════════════════════════
+const LS_KEY_ARRIVALS = 'schedule-studio:arrivalSectionsByDate:v1';
+const DEFAULT_ARRIVALS_BY_DATE = {
+  '2026-04-29': [
+    { id: 1001, section:'演出',       time:'08:30' },
+    { id: 1002, section:'PA',         time:'09:00' },
+    { id: 1003, section:'照明',       time:'09:30' },
+    { id: 1004, section:'VJ',         time:'10:00' },
+    { id: 1005, section:'機構',       time:'10:30' },
+    { id: 1006, section:'特効',       time:'11:00' },
+    { id: 1007, section:'早替え',     time:'11:30' },
+    { id: 1008, section:'ヘアメイク', time:'12:00' }
+  ]
+};
+let arrivalSectionsByDate = loadJSON(LS_KEY_ARRIVALS, JSON.parse(JSON.stringify(DEFAULT_ARRIVALS_BY_DATE)));
+function saveArrivals() { saveJSON(LS_KEY_ARRIVALS, arrivalSectionsByDate); }
+
+function renderArrivalListPhone() {
+  const host = document.getElementById('arrival-list-host');
+  if (!host) return;
+  const iso = getCurrentDateIso();
+  if (!iso) { host.innerHTML = '<div style="color:#5a5a55; font-size:13px; padding:14px; text-align:center;">日付未選択</div>'; return; }
+  const list = arrivalSectionsByDate[iso] || [];
+  if (list.length === 0) {
+    host.innerHTML = '<div style="color:#5a5a55; font-size:13px; padding:14px; text-align:center;">— この日の入り時間は未登録 —</div>';
+    return;
+  }
+  const sorted = list.slice().sort(function(a, b){
+    const ta = a.time || '99:99';
+    const tb = b.time || '99:99';
+    return ta.localeCompare(tb);
+  });
+  let html = '';
+  sorted.forEach(function(s){
+    html += '<div class="arrival-section">' +
+      '<div class="arrival-section-row">' +
+        '<div class="arrival-section-name">' + escHtmlPhone(s.section || '') + '</div>' +
+        '<div style="display:flex; align-items:center;">' +
+          '<span class="arrival-section-time">' + escHtmlPhone(s.time || '--:--') + '</span>' +
+          '<button class="arrival-edit-btn">編集</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  });
+  host.innerHTML = html;
+}
+
+// show / selectTourDay / changeTourDay をさらに拡張（M2 のラッパーの上にもう一段）
+const _showAfterM3 = window.show;
+window.show = function(id) {
+  _showAfterM3(id);
+  if (id === 'arrival') renderArrivalListPhone();
+};
+const _selectTourDayAfterM3 = window.selectTourDay || selectTourDay;
+window.selectTourDay = function(idx) {
+  _selectTourDayAfterM3(idx);
+  renderArrivalListPhone();
+};
+const _changeTourDayAfterM3 = window.changeTourDay || changeTourDay;
+window.changeTourDay = function(delta) {
+  _changeTourDayAfterM3(delta);
+  renderArrivalListPhone();
+};
+
+// 起動時にも1回
+renderArrivalListPhone();
 </script>
 
 <!-- R57 LIFF: 初期化（LINE 内で開いたときに認識させる。失敗してもアプリ本体は動く） -->

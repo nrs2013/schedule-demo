@@ -4622,7 +4622,10 @@ function show(id) {
   let nextHotelTaxiId = 100, nextHotelMemberId = 100, nextHotelId = 100, nextArrivalId = 100;
 
   // 入り時間データ：日付別管理（仕込み日と本番日で違うので必須）
-  const arrivalSectionsByDate = {};
+  // R61 M3: localStorage に永続化（phone.html と共有）
+  const LS_KEY_ARRIVALS = 'schedule-studio:arrivalSectionsByDate:v1';
+  let arrivalSectionsByDate = loadJSON(LS_KEY_ARRIVALS, {});
+  function saveArrivals() { saveJSON(LS_KEY_ARRIVALS, arrivalSectionsByDate); }
   function fmtMKey_arrival(d){
     return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
   }
@@ -4644,6 +4647,7 @@ function show(id) {
       } else {
         arrivalSectionsByDate[k] = [];
       }
+      saveArrivals(); // R61 M3
     }
     return arrivalSectionsByDate[k];
   }
@@ -4709,6 +4713,7 @@ function show(id) {
     const list = getArrivalSections(masterDateState.current);
     list.length = 0;
     newList.forEach(function(a){ list.push(a); });
+    saveArrivals(); // R61 M3
     renderArrivals();
     alert(newList.length + ' 件のセクションを取込みました（' + fmtMKey_arrival(masterDateState.current) + ' のリスト）');
   }
@@ -4926,6 +4931,7 @@ function show(id) {
         section: '',
         time: '09:00'
       });
+      saveArrivals(); // R61 M3
       renderArrivals();
     } else if (action === 'del-arrival') {
       const row = t.closest('.arrival-card');
@@ -4933,7 +4939,7 @@ function show(id) {
       const aid = +row.getAttribute('data-arrival');
       const list = getArrivalSections(masterDateState.current);
       const idx = list.findIndex(function(x){ return x.id === aid; });
-      if (idx >= 0) { list.splice(idx, 1); renderArrivals(); }
+      if (idx >= 0) { list.splice(idx, 1); saveArrivals(); renderArrivals(); }
     } else if (action === 'import-arrival-excel') {
       const inp = document.getElementById('arrival-file-input');
       if (inp) inp.click();
@@ -5082,6 +5088,7 @@ function show(id) {
     const field = el.getAttribute('data-field');
     if (field) {
       a[field] = el.value;
+      saveArrivals(); // R61 M3
       // 時刻変更時はソートが変わるので再描画
       if (field === 'time') renderArrivals();
     }
