@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260506.0130">
+<meta name="build-version" content="20260506.0200">
 <title>SCHEDULE STUDIO</title>
 <!-- R57 LIFF: LINE Front-end Framework SDK（LINE 内で開いたときに認識させる） -->
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
@@ -1594,12 +1594,11 @@
   </div>
 </div>
 
-<!-- R68 P1.1: 上タブを1段にまとめて表示領域を稼ぐ -->
-<!-- 左半分=画面切替（全体リハ/テクリハ）／右半分=ソート（セトリ順/リハ順、全体リハ時のみ表示） -->
+<!-- R69 P1.2: 常時1段4ボタン構成。左=テクリハ/全体リハ、右=セトリ順/リハ順 -->
 <div class="phone-top-tabs-bar" id="top-tabs-bar" style="display:none;">
   <div class="phone-top-tabs" id="top-tabs-rehearsal">
-    <button class="active" data-sub="rh" onclick="showRehearsalSub('rh')">全体リハ</button>
     <button data-sub="tekuriha" onclick="showRehearsalSub('tekuriha')">テクリハ</button>
+    <button class="active" data-sub="rh" onclick="showRehearsalSub('rh')">全体リハ</button>
   </div>
   <div class="top-tabs-divider"></div>
   <div class="phone-top-tabs" id="top-tabs">
@@ -2358,18 +2357,17 @@ function show(id) {
     if (m && m[1] === activeBottomTab) b.classList.add('active');
   });
 
-  // R68 P1.1: 上タブを1段にまとめた構造の制御
-  // - top-tabs-bar：リハーサル系（テクリハ／全体リハ）の時だけ表示
-  // - 中の top-tabs（セトリ順/リハ順）は「全体リハ」のときだけ表示
+  // R69 P1.2: 上タブは常時1段4ボタン（リハーサル系画面のときだけバー全体を表示）
   const ttBar = document.getElementById('top-tabs-bar');
   const ttReh = document.getElementById('top-tabs-rehearsal');
   const ttRh  = document.getElementById('top-tabs');
   const ttDiv = document.querySelector('.top-tabs-divider');
   const isRehearsalScreen = (actualScreenId === 'rh' || actualScreenId === 'tekuriha');
   if (ttBar) ttBar.style.display = isRehearsalScreen ? 'flex' : 'none';
-  if (ttRh)  ttRh.style.display  = (actualScreenId === 'rh') ? 'flex' : 'none';
-  if (ttDiv) ttDiv.style.display = (actualScreenId === 'rh') ? 'block' : 'none';
-  // リハーサル上タブの active 切替
+  // リハーサル系画面なら左右両方とも表示する（4ボタン横並び）
+  if (ttRh)  ttRh.style.display  = isRehearsalScreen ? 'flex' : 'none';
+  if (ttDiv) ttDiv.style.display = isRehearsalScreen ? 'block' : 'none';
+  // 左側のリハーサル上タブの active 切替
   if (isRehearsalScreen && ttReh) {
     ttReh.querySelectorAll('button').forEach(b => b.classList.remove('active'));
     const subBtn = ttReh.querySelector('button[data-sub="' + actualScreenId + '"]');
