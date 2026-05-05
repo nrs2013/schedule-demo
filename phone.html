@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260505.2210">
+<meta name="build-version" content="20260505.2230">
 <title>SCHEDULE STUDIO</title>
 <!-- R57 LIFF: LINE Front-end Framework SDK（LINE 内で開いたときに認識させる） -->
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
@@ -3033,7 +3033,8 @@ function selectTourDay(idx) {
   selectedDayIdx = idx;
   renderDateBar();
   closeDatePicker();
-  // 本番では：ここで選んだ日付の RH/テクリハ/SCHEDULE/HOTEL データに切り替える
+  // R60 M2: 日付切替のたびに SCHEDULE タブの内容も calEvents/showTimes から更新
+  if (typeof updateScheduleTabFromCalEvents === 'function') updateScheduleTabFromCalEvents();
 }
 
 function changeTourDay(delta) {
@@ -3041,6 +3042,7 @@ function changeTourDay(delta) {
   if (next < 0 || next >= tourDays.length) return;
   selectedDayIdx = next;
   renderDateBar();
+  if (typeof updateScheduleTabFromCalEvents === 'function') updateScheduleTabFromCalEvents();
 }
 
 // 初期化：ツアー期間からカレンダーを作って今日に合わせる
@@ -3254,6 +3256,36 @@ function closeCalDaySheet() {
   document.getElementById('cal-day-sheet').classList.remove('show');
 }
 
+// R60 M2: SCHEDULE タブを開いた時に showTimes から DOOR OPEN/SHOW TIME を更新する関数
+function getCurrentDateIso() {
+  if (typeof tourDays === 'undefined' || !tourDays.length) return null;
+  if (typeof selectedDayIdx === 'undefined') return null;
+  const d = tourDays[selectedDayIdx];
+  return d && d.iso ? d.iso : null;
+}
+function getCurrentVenue() {
+  const iso = getCurrentDateIso();
+  if (!iso) return '';
+  const events = calEvents.filter(e => e.date === iso);
+  return events.length > 0 ? events[0].venue : '';
+}
+function updateScheduleTabFromCalEvents() {
+  const venue = getCurrentVenue();
+  const tk = venue && showTimes[venue] ? showTimes[venue] : null;
+  const doorBtn = document.querySelector('#screen-schedule .schedule-row-time.door-open');
+  const showBtn = document.querySelector('#screen-schedule .schedule-row-time.show-time');
+  if (doorBtn) {
+    const t = tk && tk.door ? tk.door : '--:--';
+    doorBtn.textContent = t;
+    doorBtn.setAttribute('data-time', (t === '--:--') ? '00:00' : t);
+  }
+  if (showBtn) {
+    const t = tk && tk.show ? tk.show : '--:--';
+    showBtn.textContent = t;
+    showBtn.setAttribute('data-time', (t === '--:--') ? '00:00' : t);
+  }
+}
+
 // 既存のshow()を拡張：tour-calendar画面に飛んだ時にレンダリング
 const _origShow = show;
 window.show = function(id) {
@@ -3264,7 +3296,14 @@ window.show = function(id) {
     calCurrentMonth.setDate(1);
     renderCalendarMonth();
   }
+  // R60 M2: SCHEDULE タブが開かれたら showTimes から最新の時間を反映
+  if (id === 'schedule') {
+    updateScheduleTabFromCalEvents();
+  }
 };
+
+// R60 M2: 起動時にも一度更新（初期表示で showTimes が反映されてないと困るので）
+updateScheduleTabFromCalEvents();
 </script>
 
 <!-- R57 LIFF: 初期化（LINE 内で開いたときに認識させる。失敗してもアプリ本体は動く） -->
