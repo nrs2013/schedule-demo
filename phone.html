@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <!-- R58: アプリ色（ダーク）に合わせる -->
@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260506.0020">
+<meta name="build-version" content="20260506.0030">
 <title>SCHEDULE STUDIO</title>
 <!-- R57 LIFF: LINE Front-end Framework SDK（LINE 内で開いたときに認識させる） -->
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
@@ -1494,12 +1494,16 @@
 
   /* ── 下タブ ───────── */
   .phone-bottom-tabs {
+    /* R66: viewport-fit=cover でホームインジケータまで使う場合、
+       button の高さ 64px を維持しつつ下に safe-area 分の余白を確保。
+       こうすると下の白い帯は消えつつ、ボタンは完全に見える。 */
     flex-shrink: 0;
     display: flex;
     background: #1a1a1a;
     border-top: 1px solid #2c2c2c;
-    height: 64px;
-    padding-bottom: env(safe-area-inset-bottom, 0);
+    height: calc(64px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    box-sizing: border-box;
   }
   .phone-bottom-tabs button {
     flex: 1;
