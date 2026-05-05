@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260506.0330">
+<meta name="build-version" content="20260506.0400">
 <title>SCHEDULE STUDIO</title>
 <!-- R57 LIFF: LINE Front-end Framework SDK（LINE 内で開いたときに認識させる） -->
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
@@ -358,41 +358,39 @@
     flex: 1;
     border-bottom: 0;
   }
-  /* R72 P1.4: 左右どちらもピル風で統一。左=緑基調、右=オレンジ基調 */
+  /* R73: 左右両方ともピル風統一、左=緑、右=オレンジ。!important で既存ルールを確実に上書き */
   .phone-top-tabs-bar #top-tabs-rehearsal,
   .phone-top-tabs-bar #top-tabs {
-    align-items: center;
-    padding: 6px;
-    gap: 4px;
-    background: #161616;
+    align-items: center !important;
+    padding: 6px !important;
+    gap: 4px !important;
+    background: #161616 !important;
+    overflow: visible !important;
   }
   .phone-top-tabs-bar #top-tabs-rehearsal button,
   .phone-top-tabs-bar #top-tabs button {
-    flex: 1;
-    min-width: 0;
-    padding: 7px 8px;
-    font-size: 12px;
-    letter-spacing: 0.08em;
-    border: 1px solid #2c2c2c;
-    border-radius: 16px;
-    background: #1d1d1d;
-    color: #888;
-    text-transform: none;
-    border-bottom: 1px solid #2c2c2c; /* 既存ルールで border-bottom: 2px が来るのを上書き */
+    flex: 1 !important;
+    min-width: 0 !important;
+    padding: 7px 8px !important;
+    font-size: 12px !important;
+    letter-spacing: 0.08em !important;
+    border: 1px solid #2c2c2c !important;
+    border-radius: 16px !important;
+    background: #1d1d1d !important;
+    color: #888 !important;
+    text-transform: none !important;
   }
-  /* 左：テクリハ／全体リハ = 緑基調（リハーサル系の色） */
+  /* 左：テクリハ／全体リハ = 緑基調 */
   .phone-top-tabs-bar #top-tabs-rehearsal button.active {
-    background: rgba(126,194,122,0.18);
-    border-color: #7ec27a;
-    color: #b8d9b0;
-    border-bottom-color: #7ec27a;
+    background: rgba(126,194,122,0.18) !important;
+    border-color: #7ec27a !important;
+    color: #b8d9b0 !important;
   }
-  /* 右：セトリ順／リハ順 = オレンジ基調（既存のテーマ色） */
+  /* 右：セトリ順／リハ順 = オレンジ基調 */
   .phone-top-tabs-bar #top-tabs button.active {
-    background: rgba(232,154,74,0.18);
-    border-color: #e89a4a;
-    color: #e89a4a;
-    border-bottom-color: #e89a4a;
+    background: rgba(232,154,74,0.18) !important;
+    border-color: #e89a4a !important;
+    color: #e89a4a !important;
   }
   .top-tabs-divider {
     width: 1px;
@@ -1767,7 +1765,7 @@
       <div class="rh-countdown-card">
         <div class="rh-countdown-left">
           <div class="rh-countdown-label">テクリハ終了まで</div>
-          <div class="rh-countdown-meta">予定 <strong>21:00</strong> ・ 残り <span class="rh-remain-inline">4</span> 項目</div>
+          <div class="rh-countdown-meta">予定 <strong>21:00</strong></div>
         </div>
         <div class="rh-countdown-time">02:34:18</div>
       </div>
@@ -1873,7 +1871,7 @@
       <div class="rh-countdown-card">
         <div class="rh-countdown-left">
           <div class="rh-countdown-label">リハ終了まで</div>
-          <div class="rh-countdown-meta">予定 <strong>16:00</strong> ・ 残り <span class="rh-remain-inline" id="remain-num">13</span> 曲</div>
+          <div class="rh-countdown-meta">予定 <strong>16:00</strong></div>
         </div>
         <div class="rh-countdown-time" id="rh-cd">02:34:18</div>
       </div>
