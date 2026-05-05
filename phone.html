@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260506.0300">
+<meta name="build-version" content="20260506.0330">
 <title>SCHEDULE STUDIO</title>
 <!-- R57 LIFF: LINE Front-end Framework SDK（LINE 内で開いたときに認識させる） -->
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
@@ -358,27 +358,15 @@
     flex: 1;
     border-bottom: 0;
   }
-  /* R70 P1.3: 左半分（テクリハ／全体リハ）= タブ風（下線で active） */
-  .phone-top-tabs-bar #top-tabs-rehearsal button {
-    min-width: 60px;
-    padding: 10px 6px;
-    font-size: 13px;
-    letter-spacing: 0.10em;
-    border-bottom: 2px solid transparent;
-    border-radius: 0;
-  }
-  .phone-top-tabs-bar #top-tabs-rehearsal button.active {
-    color: #e89a4a;
-    border-bottom-color: #e89a4a;
-    background: transparent;
-  }
-  /* R70 P1.3: 右半分（セトリ順／リハ順）= ピル風（角丸ボタン、active で背景塗り） */
+  /* R72 P1.4: 左右どちらもピル風で統一。左=緑基調、右=オレンジ基調 */
+  .phone-top-tabs-bar #top-tabs-rehearsal,
   .phone-top-tabs-bar #top-tabs {
     align-items: center;
     padding: 6px;
     gap: 4px;
     background: #161616;
   }
+  .phone-top-tabs-bar #top-tabs-rehearsal button,
   .phone-top-tabs-bar #top-tabs button {
     flex: 1;
     min-width: 0;
@@ -390,12 +378,21 @@
     background: #1d1d1d;
     color: #888;
     text-transform: none;
+    border-bottom: 1px solid #2c2c2c; /* 既存ルールで border-bottom: 2px が来るのを上書き */
   }
+  /* 左：テクリハ／全体リハ = 緑基調（リハーサル系の色） */
+  .phone-top-tabs-bar #top-tabs-rehearsal button.active {
+    background: rgba(126,194,122,0.18);
+    border-color: #7ec27a;
+    color: #b8d9b0;
+    border-bottom-color: #7ec27a;
+  }
+  /* 右：セトリ順／リハ順 = オレンジ基調（既存のテーマ色） */
   .phone-top-tabs-bar #top-tabs button.active {
     background: rgba(232,154,74,0.18);
     border-color: #e89a4a;
     color: #e89a4a;
-    border-bottom-color: #e89a4a; /* 念のため上書き（既存ルール対策） */
+    border-bottom-color: #e89a4a;
   }
   .top-tabs-divider {
     width: 1px;
