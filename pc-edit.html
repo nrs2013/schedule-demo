@@ -8,6 +8,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@300;400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<!-- R56 LIFF: LINE Front-end Framework SDK -->
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   * { box-sizing: border-box; }
   body {
@@ -5244,6 +5246,26 @@ function show(id) {
 
   // R49: 初期同期（IIFE 末尾で呼ぶことで、上の const/let 宣言がすべて済んだ後に実行される）
   syncAllDateDisplays();
+})();
+</script>
+
+<!-- R56 LIFF: LINE Front-end Framework 初期化（LINE 内で開いたときに認識させる） -->
+<script>
+(function(){
+  if (typeof liff === 'undefined') {
+    console.warn('[LIFF] SDK not loaded - skipping init (アプリは通常Webとして動きます)');
+    return;
+  }
+  liff.init({ liffId: '2009978771-HFu2qVD8' })
+    .then(function(){
+      console.log('[LIFF] init OK',
+                  '| isInClient:', liff.isInClient(),
+                  '| isLoggedIn:', liff.isLoggedIn(),
+                  '| os:', liff.getOS && liff.getOS());
+    })
+    .catch(function(err){
+      console.warn('[LIFF] init failed:', err);
+    });
 })();
 </script>
 </body>
