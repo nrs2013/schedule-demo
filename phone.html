@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260506.0530">
+<meta name="build-version" content="20260506.0600">
 <title>SCHEDULE STUDIO</title>
 <!-- R57 LIFF: LINE Front-end Framework SDK（LINE 内で開いたときに認識させる） -->
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
@@ -503,11 +503,12 @@
 
   /* ── RHカード: 3行レイアウト ───────── */
   .rh-card {
+    /* R76: スマホでより多くの曲を一度に見られるよう、行を詰める */
     background: #242424;
     border: 1px solid #2c2c2c;
     border-radius: 6px;
-    padding: 11px 11px 12px;
-    margin-bottom: 6px;
+    padding: 8px 10px 9px;
+    margin-bottom: 4px;
     position: relative;
     transition: all 0.15s;
   }
@@ -521,20 +522,21 @@
   }
 
   /* 1行目: RH No / M No / 曲名 / 時間 / 終了ボタン */
+  /* R76: gap・margin・font を詰める */
   .rh-line1 {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-bottom: 7px;
+    gap: 6px;
+    margin-bottom: 4px;
   }
   .rh-rhno {
     font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
     font-weight: 700;
-    font-size: 20px;
+    font-size: 17px;
     color: #e89a4a;
     line-height: 1;
     font-variant-numeric: tabular-nums;
-    min-width: 22px;
+    min-width: 18px;
     background: transparent;
     border: none;
     padding: 2px 0;
@@ -678,20 +680,22 @@
     background: linear-gradient(to top, #1f1e1c 30%, rgba(31,30,28,0.5) 70%, rgba(31,30,28,0));
   }
   .rh-mno {
-    font-size: 20px;
+    /* R76: 20px → 17px */
+    font-size: 17px;
     font-weight: 300;
     color: #a8a8a8;
     letter-spacing: 0.05em;
     line-height: 1;
     font-variant-numeric: tabular-nums;
-    min-width: 22px;
+    min-width: 18px;
   }
   /* セトリ順モード: M# が主役、RH# が脇役 */
   .rh-card.m-mode .rh-rhno { color: #a8a8a8; font-weight: 300; }
   .rh-card.m-mode .rh-mno { color: #e89a4a; font-weight: 400; }
   .rh-title {
+    /* R76: 20px → 16px */
     flex: 1;
-    font-size: 20px;
+    font-size: 16px;
     font-weight: 600;
     color: #e8e8e8;
     overflow: hidden;
@@ -704,8 +708,9 @@
     color: #787878;
   }
   .rh-time {
+    /* R76: 16px → 13px */
     font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
-    font-size: 16px;
+    font-size: 13px;
     color: #e6c870;
     font-weight: 500;
     font-variant-numeric: tabular-nums;
@@ -714,19 +719,21 @@
   }
 
   /* 2行目: タグ8個を四角ボックスで（4文字3個・2文字4個・1文字1個） */
+  /* R76: margin を詰める */
   .rh-line2 {
     display: grid;
     grid-template-columns: 1.45fr 1.45fr 0.5fr 0.85fr 0.85fr 0.85fr 0.85fr 1.45fr;
     gap: 2px;
     align-items: stretch;
-    margin: 2px 0 9px;
+    margin: 2px 0 6px;
   }
   /* 3行目: メモ（自由入力／改行で縦に伸びる／細めの文字でガチャ感を抑える） */
+  /* R76: 14px → 12px */
   .rh-line3 {
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 300;
     color: #c8c8c4 !important;
-    line-height: 1.55;
+    line-height: 1.5;
     letter-spacing: 0.01em;
     min-width: 0;
     white-space: pre-wrap;

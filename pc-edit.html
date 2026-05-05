@@ -1492,43 +1492,48 @@
     gap: 6px;
     max-width: 520px;
   }
+  /* R75: arrival-card を day-event-card と統一（時間=ボックス、ラベル=フラット） */
   .arrival-card {
     background: #1c1b19;
     border: 1px solid #2c2a27;
     border-radius: 6px;
-    padding: 10px 12px;
+    padding: 10px 14px;
     display: grid;
-    grid-template-columns: 96px 1fr 28px;
-    gap: 12px;
+    grid-template-columns: 120px 1fr 32px;
+    gap: 10px;
     align-items: center;
     transition: border-color 0.12s, background 0.12s;
   }
   .arrival-card:hover { border-color: #5a5a53; }
+  /* arrival-time を day-event-time と同じ見た目に */
   .arrival-time {
+    background: #14130f;
+    border: 1px solid #2c2a27;
+    color: #f0a85a;
     font-family: 'JetBrains Mono', 'Noto Sans JP', monospace;
+    font-size: 22px;
     font-weight: 700;
-    font-size: 18px;
-    color: #e89a4a;
+    padding: 6px 10px;
+    border-radius: 5px;
     font-variant-numeric: tabular-nums;
-    background: transparent;
-    border: 1px solid transparent;
-    padding: 5px 6px;
-    border-radius: 4px;
+    letter-spacing: 0.04em;
+    text-shadow: 0 0 12px rgba(232,154,74,0.22);
     text-align: center;
     transition: border-color 0.12s, background 0.12s;
   }
-  .arrival-time:hover { border-color: #2c2a27; background: #14130f; }
-  .arrival-time:focus { outline: none; border-color: rgba(232,154,74,0.55); background: #14130f; }
+  .arrival-time:hover { border-color: #5a5a53; }
+  .arrival-time:focus { outline: none; border-color: rgba(232,154,74,0.55); }
+  /* arrival-section-name を day-event-label と同じ見た目に */
   .arrival-section-name {
     background: transparent;
     border: 1px solid transparent;
     color: #e8e8e2;
-    font-size: 14px;
-    font-weight: 600;
-    padding: 6px 10px;
-    border-radius: 4px;
     font-family: inherit;
-    letter-spacing: 0.04em;
+    font-size: 15px;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 5px;
+    letter-spacing: 0.02em;
     transition: border-color 0.12s, background 0.12s;
   }
   .arrival-section-name:hover { border-color: #2c2a27; background: #14130f; }
