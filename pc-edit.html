@@ -915,26 +915,27 @@
     border: 1px solid transparent;
     color: #e8e8e2;
     font-family: inherit;
-    font-size: 16px;
+    font-size: 18px;
     font-weight: 500;
-    padding: 6px 10px;
+    padding: 8px 12px;
     border-radius: 4px;
     text-align: center;
     transition: border-color 0.12s, background 0.12s;
+    letter-spacing: 0.04em;
   }
   .hotel-name-input:hover { border-color: #2c2a27; background: #14130f; }
   .hotel-name-input:focus { outline: none; border-color: rgba(232,154,74,0.55); background: #14130f; }
   .hotel-info-grid {
     display: grid;
-    grid-template-columns: 80px 1fr;
-    gap: 6px 12px;
-    padding: 12px 16px;
+    grid-template-columns: 90px 1fr;
+    gap: 8px 14px;
+    padding: 14px 18px;
     align-items: center;
   }
   .hotel-info-grid .info-label {
-    font-size: 10px;
+    font-size: 12px;
     font-weight: 500;
-    letter-spacing: 0.18em;
+    letter-spacing: 0.14em;
     color: #76766f;
     text-transform: uppercase;
   }
@@ -942,13 +943,13 @@
     background: #14130f;
     border: 1px solid #2c2a27;
     color: #e8e8e2;
-    font-family: 'JetBrains Mono', 'Noto Sans JP', monospace;
-    font-size: 12px;
-    padding: 6px 10px;
-    border-radius: 4px;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+    font-size: 14px;
+    padding: 8px 12px;
+    border-radius: 5px;
     transition: border-color 0.12s;
   }
-  .hotel-info-grid input:focus { outline: none; border-color: rgba(232,154,74,0.55); }
+  .hotel-info-grid input:focus { outline: none; border-color: rgba(216,184,120,0.55); }
 
   /* Googleマップリンク（住所からURLエンコードで自動生成） */
   .hotel-map-link-wrap {
@@ -1000,57 +1001,59 @@
     letter-spacing: 0.05em;
   }
 
-  .taxi-list, .member-list { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
+  .taxi-list, .member-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
   .taxi-row, .member-row {
     display: grid;
     align-items: center;
-    gap: 8px;
-    padding: 6px 8px;
+    gap: 10px;
+    padding: 10px 12px;
     background: #14130f;
     border: 1px solid #2c2a27;
-    border-radius: 4px;
+    border-radius: 6px;
     transition: border-color 0.12s;
   }
-  .taxi-row { grid-template-columns: 80px 1fr 80px 28px; }
-  .member-row { grid-template-columns: 110px 1fr 28px; }
+  .taxi-row { grid-template-columns: 100px 1fr 110px 28px; }
+  .member-row { grid-template-columns: 130px 1fr 28px; }
   .taxi-row:hover, .member-row:hover { border-color: #5a5a53; }
   .taxi-row input, .taxi-row select, .member-row input, .member-row select {
     background: transparent;
     border: 1px solid transparent;
     color: #e8e8e2;
     font-family: inherit;
-    font-size: 12px;
-    padding: 4px 6px;
-    border-radius: 3px;
+    font-size: 14px;
+    padding: 6px 8px;
+    border-radius: 4px;
     transition: border-color 0.12s, background 0.12s;
   }
   .taxi-row input:hover, .taxi-row select:hover,
   .member-row input:hover, .member-row select:hover { border-color: #2c2a27; background: #1c1b19; }
   .taxi-row input:focus, .taxi-row select:focus,
   .member-row input:focus, .member-row select:focus {
-    outline: none; border-color: rgba(232,154,74,0.55); background: #1c1b19;
+    outline: none; border-color: rgba(216,184,120,0.55); background: #1c1b19;
   }
   .taxi-row .taxi-time {
     font-family: 'JetBrains Mono', 'Noto Sans JP', monospace;
     font-weight: 500;
-    color: #e89a4a;
+    color: #e8e8e2;
     font-variant-numeric: tabular-nums;
     text-align: center;
+    font-size: 16px;
   }
   .taxi-row .taxi-count-wrap {
-    display: flex; align-items: center; gap: 4px; justify-content: flex-end;
-    color: #a8a8a0; font-size: 11px;
+    display: flex; align-items: center; gap: 6px; justify-content: flex-end;
+    color: #a8a8a0; font-size: 13px;
   }
   .taxi-row .taxi-count-wrap input {
-    width: 50px; text-align: center;
+    width: 56px; text-align: center;
     font-family: 'JetBrains Mono', 'Noto Sans JP', monospace;
     font-weight: 500;
     color: #e8e8e2;
+    font-size: 16px;
   }
   .member-row .member-section-cell select {
     width: 100%;
-    color: #b8d9b0;
-    font-weight: 600;
+    color: #d8d8d4;
+    font-weight: 500;
   }
   .row-del {
     background: transparent;
