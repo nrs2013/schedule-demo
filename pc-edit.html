@@ -4409,8 +4409,29 @@ function show(id) {
   showParent('schedule');
 
   // ── DAY SCHEDULE：日付別の自由イベントリスト（開始〜終了 + ラベル） ──
-  const dailyEvents = {};
+  // R77 P2: localStorage 永続化＋スマホと共有
+  const LS_KEY_DAY_EVENTS = 'schedule-studio:dayEvents:v1';
+  const DEFAULT_DAY_EVENT_TEMPLATE = [
+    { startTime:'09:00', endTime:'10:00', label:'音響チェック' },
+    { startTime:'10:00', endTime:'13:00', label:'テクリハ' },
+    { startTime:'13:00', endTime:'14:00', label:'無音タイム / 楽屋準備' },
+    { startTime:'14:00', endTime:'16:30', label:'リハーサル' },
+    { startTime:'17:30', endTime:'',      label:'DOOR OPEN' },
+    { startTime:'18:30', endTime:'',      label:'SHOW TIME' }
+  ];
+  const dailyEvents = loadJSON(LS_KEY_DAY_EVENTS, {});
+  function saveDayEvents() { saveJSON(LS_KEY_DAY_EVENTS, dailyEvents); }
   let nextDayEventId = 100;
+  // 既存データから max(id)+1 を計算
+  (function initNextDayEventId(){
+    Object.values(dailyEvents).forEach(function(arr){
+      if (Array.isArray(arr)) arr.forEach(function(ev){
+        if (ev && typeof ev.id === 'number' && ev.id >= nextDayEventId) {
+          nextDayEventId = ev.id + 1;
+        }
+      });
+    });
+  })();
 
   function fmtMKey_d(d){
     return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
@@ -4418,14 +4439,10 @@ function show(id) {
   function getDayEvents(d){
     const k = fmtMKey_d(d);
     if (!dailyEvents[k]) {
-      dailyEvents[k] = [
-        { id: nextDayEventId++, startTime:'09:00', endTime:'10:00', label:'音響チェック' },
-        { id: nextDayEventId++, startTime:'10:00', endTime:'13:00', label:'テクリハ' },
-        { id: nextDayEventId++, startTime:'13:00', endTime:'14:00', label:'無音タイム / 楽屋準備' },
-        { id: nextDayEventId++, startTime:'14:00', endTime:'16:30', label:'リハーサル' },
-        { id: nextDayEventId++, startTime:'17:30', endTime:'',      label:'DOOR OPEN' },
-        { id: nextDayEventId++, startTime:'18:30', endTime:'',      label:'SHOW TIME' }
-      ];
+      dailyEvents[k] = DEFAULT_DAY_EVENT_TEMPLATE.map(function(t){
+        return { id: nextDayEventId++, startTime: t.startTime, endTime: t.endTime, label: t.label };
+      });
+      saveDayEvents();
     }
     return dailyEvents[k];
   }
@@ -4462,6 +4479,7 @@ function show(id) {
     const field = e.target.getAttribute('data-field');
     if (!field) return;
     ev[field] = e.target.value;
+    saveDayEvents();
     if (field === 'startTime') renderDaySchedule();
   });
 
@@ -4477,6 +4495,7 @@ function show(id) {
         endTime: '',
         label: ''
       });
+      saveDayEvents();
       renderDaySchedule();
     } else if (action === 'del-day-event') {
       const card = t.closest('.day-event-card');
@@ -4486,6 +4505,7 @@ function show(id) {
       const idx = events.findIndex(function(x){ return x.id === id; });
       if (idx >= 0) {
         events.splice(idx, 1);
+        saveDayEvents();
         renderDaySchedule();
       }
     }
@@ -5300,6 +5320,7 @@ function show(id) {
       calMemos: calMemos,
       arrivalSectionsByDate: (typeof arrivalSectionsByDate !== 'undefined') ? arrivalSectionsByDate : null,
       hotels: (typeof hotels !== 'undefined') ? hotels : null,
+      dayEvents: (typeof dailyEvents !== 'undefined') ? dailyEvents : null,
       syncedAt: new Date().toISOString()
     };
     const json = JSON.stringify(data);
@@ -5337,6 +5358,7 @@ function show(id) {
     set('schedule-studio:calMemos:v1', data.calMemos);
     set('schedule-studio:arrivalSectionsByDate:v1', data.arrivalSectionsByDate);
     set('schedule-studio:hotels:v1', data.hotels);
+    set('schedule-studio:dayEvents:v1', data.dayEvents);
     if (window.history && window.history.replaceState) {
       window.history.replaceState(null, '', location.pathname + location.search);
     }

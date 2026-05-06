@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260506.0600">
+<meta name="build-version" content="20260506.0900">
 <title>SCHEDULE STUDIO</title>
 <!-- R57 LIFF: LINE Front-end Framework SDK（LINE 内で開いたときに認識させる） -->
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
@@ -1217,6 +1217,103 @@
   .schedule-row-time.show-time { color: #e07a5f; }
   .schedule-row.muted .schedule-row-time { color: #787878; font-weight: 600; font-size: 22px; }
 
+  /* ── R77 P2: PC の DAY SCHEDULE と同期した1行リスト ───────── */
+  .schedule-day-card {
+    background: #242424;
+    border: 1px solid #2c2c2c;
+    border-radius: 10px;
+    padding: 4px 0;
+    margin-bottom: 14px;
+  }
+  .schedule-day-row {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid #2c2c2c;
+    gap: 14px;
+  }
+  .schedule-day-row:last-child { border-bottom: none; }
+  .schedule-day-time {
+    font-size: 18px;
+    font-weight: 700;
+    color: #e89a4a;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
+    min-width: 130px;
+    text-align: left;
+    flex-shrink: 0;
+  }
+  .schedule-day-time.door-open { color: #e6c870; }
+  .schedule-day-time.show-time { color: #e07a5f; }
+  .schedule-day-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #d8d8d4;
+    letter-spacing: 0.04em;
+    flex: 1;
+    text-align: right;
+    word-break: break-word;
+  }
+
+  /* 編集モード（authed のとき）：3入力欄＋削除 */
+  .schedule-day-row.edit {
+    gap: 6px;
+    padding: 10px 10px;
+  }
+  .sde-time {
+    width: 60px;
+    background: #1a1a1a;
+    border: 1px solid #3a3a3a;
+    border-radius: 6px;
+    color: #e89a4a;
+    font-size: 14px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+    padding: 6px 0;
+    font-family: inherit;
+  }
+  .sde-time.end { color: #b0b0b0; }
+  .sde-tilde { color: #8a8a8a; font-size: 13px; }
+  .sde-label {
+    flex: 1;
+    background: #1a1a1a;
+    border: 1px solid #3a3a3a;
+    border-radius: 6px;
+    color: #d8d8d4;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 6px 8px;
+    font-family: inherit;
+    min-width: 0;
+  }
+  .sde-del {
+    background: #2a1a1a;
+    border: 1px solid #4a2a2a;
+    color: #d87878;
+    width: 30px;
+    height: 30px;
+    border-radius: 6px;
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .sde-add {
+    display: block;
+    width: calc(100% - 24px);
+    margin: 8px 12px 14px;
+    background: #1a2a1a;
+    border: 1px dashed #4a6a4a;
+    color: #7ec27a;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+  }
+
   /* ── 時刻ホイールピッカー（HH:MM 2連／中央に寄せる） ───────── */
   .time-picker-wheels {
     position: relative;
@@ -1724,44 +1821,12 @@
       </span>
       <span class="tour-cal-btn-arrow">›</span>
     </button>
-    <div class="schedule-section-title" style="margin-top:6px;">テクリハ</div>
-    <div class="schedule-card">
-      <div class="schedule-row">
-        <div class="schedule-row-label">テクリハ開始</div>
-        <button type="button" class="schedule-row-time" data-time="10:00" onclick="openTimePicker(this)">10:00</button>
-      </div>
-      <div class="schedule-row">
-        <div class="schedule-row-label">テクリハ終了</div>
-        <button type="button" class="schedule-row-time" data-time="13:00" onclick="openTimePicker(this)">13:00</button>
-      </div>
-    </div>
-
-    <div class="schedule-section-title">REHEARSAL</div>
-    <div class="schedule-card">
-      <div class="schedule-row">
-        <div class="schedule-row-label">リハーサル開始</div>
-        <button type="button" class="schedule-row-time" data-time="14:00" onclick="openTimePicker(this)">14:00</button>
-      </div>
-      <div class="schedule-row">
-        <div class="schedule-row-label">リハーサル終了</div>
-        <button type="button" class="schedule-row-time" data-time="16:30" onclick="openTimePicker(this)">16:30</button>
-      </div>
-    </div>
-
-    <div class="schedule-section-title">SHOW</div>
-    <div class="schedule-card">
-      <div class="schedule-row">
-        <div class="schedule-row-label">DOOR OPEN</div>
-        <button type="button" class="schedule-row-time door-open" data-time="17:30" onclick="openTimePicker(this)">17:30</button>
-      </div>
-      <div class="schedule-row">
-        <div class="schedule-row-label">SHOW TIME</div>
-        <button type="button" class="schedule-row-time show-time" data-time="18:30" onclick="openTimePicker(this)">18:30</button>
-      </div>
-    </div>
+    <!-- R77 P2: PC の DAY SCHEDULE と同期（自由項目・1行表示） -->
+    <div class="schedule-section-title" style="margin-top:6px;">DAY SCHEDULE</div>
+    <div id="schedule-day-list-host"></div>
 
     <div style="font-size:11px; color:#5a5a55; text-align:center; margin-top:18px; letter-spacing:0.08em;">
-      ※ PCと相互リンク（あとから書いた人が優先）
+      ※ PCの DAY SCHEDULE タブと連動（PC側で編集）
     </div>
   </div>
 
@@ -2434,6 +2499,8 @@ function tryUnlock() {
     document.body.classList.add('authed');
     // 終了ボタン全部有効化
     document.querySelectorAll('.finish-btn.disabled').forEach(b => b.classList.remove('disabled'));
+    // R77 P3: SCHEDULE タブを編集UI に切り替え
+    if (typeof renderScheduleDayListPhone === 'function') renderScheduleDayListPhone();
   } else {
     alert('パスワードが違います（デモ用: 1234）');
   }
@@ -2447,6 +2514,8 @@ function resetAuth() {
   document.body.classList.remove('authed');
   // done でないカードのボタンを再ロック
   document.querySelectorAll('.rh-card:not(.done) .finish-btn').forEach(b => b.classList.add('disabled'));
+  // R77 P3: SCHEDULE タブを閲覧UI に戻す
+  if (typeof renderScheduleDayListPhone === 'function') renderScheduleDayListPhone();
 }
 
 // 終了ボタン トグル動作: 認証済みなら done のオン/オフを切り替え
@@ -3190,6 +3259,153 @@ window.changeTourDay = function(delta) {
 renderArrivalListPhone();
 
 // ════════════════════════════════════════════════════════════
+// R77 P2: DAY SCHEDULE（日付別自由イベント）を pc-edit.html と localStorage 共有
+// ════════════════════════════════════════════════════════════
+const LS_KEY_DAY_EVENTS = 'schedule-studio:dayEvents:v1';
+let dailyEventsPhone = loadJSON(LS_KEY_DAY_EVENTS, {});
+
+function reloadDayEventsPhone() {
+  dailyEventsPhone = loadJSON(LS_KEY_DAY_EVENTS, {});
+}
+
+function renderScheduleDayListPhone() {
+  const host = document.getElementById('schedule-day-list-host');
+  if (!host) return;
+  // 毎回 localStorage から最新を取得（PCで更新→画面切替時に反映）
+  reloadDayEventsPhone();
+  const iso = getCurrentDateIso();
+  if (!iso) {
+    host.innerHTML = '<div style="color:#5a5a55; font-size:13px; padding:14px; text-align:center;">日付未選択</div>';
+    return;
+  }
+  const isEditable = (typeof authed !== 'undefined') && authed === true;
+  const list = dailyEventsPhone[iso] || [];
+
+  // 空＋編集不可：未登録メッセージ
+  if (list.length === 0 && !isEditable) {
+    host.innerHTML = '<div style="color:#5a5a55; font-size:13px; padding:14px 14px 18px; text-align:center; line-height:1.6;">— この日の DAY SCHEDULE は未登録 —<br><span style="font-size:11px;">PASS で認証すると編集できます</span></div>';
+    return;
+  }
+
+  // 並べ替え（編集中は ID で安定ソート、表示時は startTime 順）
+  const sorted = list.slice();
+  if (!isEditable) {
+    sorted.sort(function(a, b){
+      const ta = a.startTime || '99:99';
+      const tb = b.startTime || '99:99';
+      return ta.localeCompare(tb);
+    });
+  }
+
+  let html = '<div class="schedule-day-card">';
+  sorted.forEach(function(ev){
+    const start = ev.startTime || '';
+    const end = ev.endTime || '';
+    const label = ev.label || '';
+    const labelLower = String(label).toLowerCase();
+    let timeClass = '';
+    if (labelLower.indexOf('door') >= 0) timeClass = ' door-open';
+    else if (labelLower.indexOf('show') >= 0) timeClass = ' show-time';
+
+    if (isEditable) {
+      // 編集モード：3つの入力欄＋削除ボタン
+      html += '<div class="schedule-day-row edit" data-day-id="' + ev.id + '">' +
+        '<input type="text" class="sde-time" data-field="startTime" value="' + escHtmlPhone(start) + '" placeholder="09:00" inputmode="numeric" maxlength="5">' +
+        '<span class="sde-tilde">〜</span>' +
+        '<input type="text" class="sde-time end" data-field="endTime" value="' + escHtmlPhone(end) + '" placeholder="—" inputmode="numeric" maxlength="5">' +
+        '<input type="text" class="sde-label" data-field="label" value="' + escHtmlPhone(label) + '" placeholder="項目名">' +
+        '<button class="sde-del" data-action="del-day-ev" title="削除">×</button>' +
+        '</div>';
+    } else {
+      // 閲覧モード：1行表示
+      const timeStr = end ? ((start || '--:--') + '〜' + end) : (start || '--:--');
+      html += '<div class="schedule-day-row">' +
+        '<div class="schedule-day-time' + timeClass + '">' + escHtmlPhone(timeStr) + '</div>' +
+        '<div class="schedule-day-label">' + escHtmlPhone(label) + '</div>' +
+        '</div>';
+    }
+  });
+  html += '</div>';
+
+  // 編集モード：追加ボタン
+  if (isEditable) {
+    html += '<button type="button" class="sde-add" data-action="add-day-ev">＋ 項目を追加</button>';
+  }
+
+  host.innerHTML = html;
+}
+
+// 編集モード：イベント・追加・削除
+document.addEventListener('change', function(e){
+  if (typeof authed === 'undefined' || !authed) return;
+  const row = e.target && e.target.closest && e.target.closest('.schedule-day-row.edit');
+  if (!row) return;
+  const id = +row.getAttribute('data-day-id');
+  const iso = getCurrentDateIso();
+  if (!iso) return;
+  const list = dailyEventsPhone[iso] || [];
+  const ev = list.find(function(x){ return x.id === id; });
+  if (!ev) return;
+  const field = e.target.getAttribute('data-field');
+  if (!field) return;
+  ev[field] = e.target.value;
+  saveJSON(LS_KEY_DAY_EVENTS, dailyEventsPhone);
+});
+
+document.addEventListener('click', function(e){
+  if (typeof authed === 'undefined' || !authed) return;
+  const t = e.target;
+  const action = t && t.getAttribute && t.getAttribute('data-action');
+  if (action === 'add-day-ev') {
+    const iso = getCurrentDateIso();
+    if (!iso) return;
+    if (!dailyEventsPhone[iso]) dailyEventsPhone[iso] = [];
+    // 既存の最大 id + 1（衝突防止のため localStorage 全体から計算）
+    let maxId = 100;
+    Object.values(dailyEventsPhone).forEach(function(arr){
+      if (Array.isArray(arr)) arr.forEach(function(x){
+        if (x && typeof x.id === 'number' && x.id >= maxId) maxId = x.id + 1;
+      });
+    });
+    dailyEventsPhone[iso].push({ id: maxId, startTime: '', endTime: '', label: '' });
+    saveJSON(LS_KEY_DAY_EVENTS, dailyEventsPhone);
+    renderScheduleDayListPhone();
+  } else if (action === 'del-day-ev') {
+    const row = t.closest('.schedule-day-row.edit');
+    if (!row) return;
+    const id = +row.getAttribute('data-day-id');
+    const iso = getCurrentDateIso();
+    if (!iso) return;
+    const list = dailyEventsPhone[iso] || [];
+    const idx = list.findIndex(function(x){ return x.id === id; });
+    if (idx >= 0) {
+      list.splice(idx, 1);
+      saveJSON(LS_KEY_DAY_EVENTS, dailyEventsPhone);
+      renderScheduleDayListPhone();
+    }
+  }
+});
+
+const _showAfterDayEvents = window.show;
+window.show = function(id) {
+  _showAfterDayEvents(id);
+  if (id === 'schedule') renderScheduleDayListPhone();
+};
+const _selectTourDayAfterDayEvents = window.selectTourDay || selectTourDay;
+window.selectTourDay = function(idx) {
+  _selectTourDayAfterDayEvents(idx);
+  renderScheduleDayListPhone();
+};
+const _changeTourDayAfterDayEvents = window.changeTourDay || changeTourDay;
+window.changeTourDay = function(delta) {
+  _changeTourDayAfterDayEvents(delta);
+  renderScheduleDayListPhone();
+};
+
+// 起動時にも1回
+renderScheduleDayListPhone();
+
+// ════════════════════════════════════════════════════════════
 // R62 M4: HOTEL を pc-edit.html と localStorage 共有
 // ════════════════════════════════════════════════════════════
 const LS_KEY_HOTELS = 'schedule-studio:hotels:v1';
@@ -3313,18 +3529,68 @@ renderHotelListPhone();
 </script>
 
 <!-- R57 LIFF: 初期化（LINE 内で開いたときに認識させる。失敗してもアプリ本体は動く） -->
+<!-- R78: iPad で LINE 経由でアクセスされたら、データ込みで Safari に自動リダイレクト -->
 <script>
 (function(){
   if (typeof liff === 'undefined') {
     console.warn('[LIFF] SDK not loaded - skipping init (アプリは通常Webとして動きます)');
     return;
   }
+
+  // iPad 判定（古い iPad は UA に "iPad"、新しい iPadOS は "Macintosh"+touch）
+  function isIpadDevice() {
+    var ua = navigator.userAgent || '';
+    if (ua.indexOf('iPad') !== -1) return true;
+    if (ua.indexOf('Macintosh') !== -1 && (navigator.maxTouchPoints || 0) > 1) return true;
+    return false;
+  }
+
+  // 現在の localStorage 全部を Base64 化して #sync= ハッシュに詰める
+  function buildSafariRedirectUrl() {
+    try {
+      var data = {
+        calEvents:              JSON.parse(localStorage.getItem('schedule-studio:calEvents:v1') || 'null'),
+        showTimes:              JSON.parse(localStorage.getItem('schedule-studio:showTimes:v1') || 'null'),
+        calMemos:               JSON.parse(localStorage.getItem('schedule-studio:calMemos:v1') || 'null'),
+        arrivalSectionsByDate:  JSON.parse(localStorage.getItem('schedule-studio:arrivalSectionsByDate:v1') || 'null'),
+        hotels:                 JSON.parse(localStorage.getItem('schedule-studio:hotels:v1') || 'null'),
+        dayEvents:              JSON.parse(localStorage.getItem('schedule-studio:dayEvents:v1') || 'null'),
+        syncedAt: new Date().toISOString()
+      };
+      var json = JSON.stringify(data);
+      var b64 = btoa(unescape(encodeURIComponent(json)));
+      return 'https://nrs2013.github.io/schedule-studio/phone.html#sync=' + b64;
+    } catch (e) {
+      console.warn('[LIFF→Safari] build url failed:', e);
+      return 'https://nrs2013.github.io/schedule-studio/phone.html?from=liff_ipad';
+    }
+  }
+
   liff.init({ liffId: '2009978771-HFu2qVD8' })
     .then(function(){
+      var inClient = liff.isInClient && liff.isInClient();
       console.log('[LIFF] init OK',
-                  '| isInClient:', liff.isInClient(),
-                  '| isLoggedIn:', liff.isLoggedIn(),
-                  '| os:', liff.getOS && liff.getOS());
+                  '| isInClient:', inClient,
+                  '| isLoggedIn:', liff.isLoggedIn && liff.isLoggedIn(),
+                  '| os:', liff.getOS && liff.getOS(),
+                  '| isIpad:', isIpadDevice());
+
+      // R78: iPad の LINE 内アクセスは Safari に飛ばす
+      if (inClient && isIpadDevice()) {
+        var url = buildSafariRedirectUrl();
+        console.log('[LIFF→Safari] redirect:', url.length, 'chars');
+        try {
+          liff.openWindow({ url: url, external: true });
+          // openWindow が反映される時間を確保してから LIFF を閉じる
+          setTimeout(function(){
+            try { liff.closeWindow(); } catch(e){}
+          }, 600);
+        } catch (e) {
+          console.warn('[LIFF→Safari] openWindow failed:', e);
+          // フォールバック：通常の location 遷移
+          location.href = url;
+        }
+      }
     })
     .catch(function(err){
       console.warn('[LIFF] init failed:', err);
