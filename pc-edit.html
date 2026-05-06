@@ -1189,7 +1189,7 @@
     border-radius: 6px;
     padding: 12px 16px;
     display: grid;
-    grid-template-columns: auto 18px auto 1fr 28px;
+    grid-template-columns: 145px 18px 145px 1fr 28px;
     gap: 12px;
     align-items: center;
     transition: border-color 0.12s, background 0.12s;
@@ -1573,7 +1573,7 @@
     border-radius: 6px;
     padding: 12px 16px;
     display: grid;
-    grid-template-columns: auto 1fr 28px;
+    grid-template-columns: 145px 1fr 28px;
     gap: 12px;
     align-items: center;
     transition: border-color 0.12s, background 0.12s;
@@ -1988,6 +1988,7 @@
     border-color: #e89a4a;
     color: #f0a85a;
   }
+  .pc-detail-venue-select,
   .pc-detail-event-type,
   .pc-detail-event-add-type {
     background: #1f1e1b;
@@ -1999,24 +2000,25 @@
     font-size: 11px;
     cursor: pointer;
   }
+  .pc-detail-venue-select:focus,
   .pc-detail-event-type:focus {
     outline: none;
     border-color: rgba(232,154,74,0.55);
   }
-  .pc-detail-venue-input {
-    background: #1f1e1b;
-    color: #d8d8d4;
-    border: 1px solid #2c2a27;
+  .pc-detail-add-venue-btn {
+    background: transparent;
+    color: #a8a8a0;
+    border: 1px solid #5a5a53;
+    padding: 3px 8px;
+    font-size: 10px;
     border-radius: 4px;
-    padding: 4px 6px;
+    cursor: pointer;
     font-family: inherit;
-    font-size: 11px;
-    width: 220px;
-    max-width: 100%;
+    transition: border-color 0.12s, color 0.12s;
   }
-  .pc-detail-venue-input:focus {
-    outline: none;
-    border-color: rgba(232,154,74,0.55);
+  .pc-detail-add-venue-btn:hover {
+    border-color: #e89a4a;
+    color: #f0a85a;
   }
   .pc-detail-events-edit {
     display: flex;
@@ -4029,15 +4031,23 @@ function show(id) {
   function renderDetailEditBody(d, evs, dateKey, venue) {
     let html = '';
 
-    // 会場（自由入力＋過去会場のサジェスト）
+    // 会場
     html += '<div class="pc-detail-section">';
     html += '<div class="pc-detail-section-label">会場</div>';
-    html += '<input type="text" class="pc-detail-venue-input" data-field="venue" list="pc-detail-venue-list" value="' + escH(venue || '') + '" placeholder="会場名（例：幕張メッセ）">';
-    html += '<datalist id="pc-detail-venue-list">';
+    html += '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">';
+    html += '<select class="pc-detail-venue-select" data-field="venue">';
+    html += '<option value="">— 未設定 —</option>';
     Object.keys(showTimes).forEach(function(v){
-      html += '<option value="' + escH(v) + '"></option>';
+      const sel = (v === venue) ? ' selected' : '';
+      html += '<option value="' + escH(v) + '"' + sel + '>' + escH(v) + '</option>';
     });
-    html += '</datalist>';
+    if (venue && !showTimes[venue]) {
+      // showTimes に登録されてない会場名を保持
+      html += '<option value="' + escH(venue) + '" selected>' + escH(venue) + '</option>';
+    }
+    html += '</select>';
+    html += '<button class="pc-detail-add-venue-btn" data-action="add-venue">+ 会場</button>';
+    html += '</div>';
     html += '</div>';
 
     // EVENTS
@@ -4137,20 +4147,37 @@ function show(id) {
       });
     });
 
-    // 会場変更（自由入力／datalist 候補からの選択も拾う）
-    const venueInput = detailEl.querySelector('[data-field="venue"]');
-    if (venueInput) {
-      venueInput.addEventListener('change', function(){
-        const newVenue = venueInput.value.trim();
-        // 新規会場名なら showTimes に DOOR/SHOW のデフォルト時刻で登録
-        if (newVenue && !showTimes[newVenue]) {
-          showTimes[newVenue] = { door: '17:30', show: '18:30' };
-          saveShowTimes();
-        }
+    // 会場変更
+    const venueSelect = detailEl.querySelector('[data-field="venue"]');
+    if (venueSelect) {
+      venueSelect.addEventListener('change', function(){
+        const newVenue = venueSelect.value;
         // 同日のイベントの venue を更新
         let updated = false;
         calEvents.forEach(function(e){
           if (e.date === dateKey) { e.venue = newVenue; updated = true; }
+        });
+        if (updated) saveCalEvents();
+        renderDetail();
+        renderMonth();
+      });
+    }
+
+    // 会場追加
+    const addVenueBtn = detailEl.querySelector('[data-action="add-venue"]');
+    if (addVenueBtn) {
+      addVenueBtn.addEventListener('click', function(){
+        const newVenue = prompt('新しい会場名を入力してください（例：幕張メッセ）');
+        if (!newVenue || !newVenue.trim()) return;
+        const v = newVenue.trim();
+        if (!showTimes[v]) {
+          showTimes[v] = { door: '17:30', show: '18:30' };
+          saveShowTimes();
+        }
+        // 同日のイベントが既にあれば venue を更新
+        let updated = false;
+        calEvents.forEach(function(e){
+          if (e.date === dateKey) { e.venue = v; updated = true; }
         });
         if (updated) saveCalEvents();
         renderDetail();
@@ -4495,42 +4522,27 @@ function show(id) {
     return dailyEvents[k];
   }
 
-  // R79: 時／分を別々のプルダウンに（時0〜23、分0/5/.../55）
-  function timeHourOptions(selected) {
-    let html = '<option value="">--</option>';
+  // R79: 5分刻み時刻プルダウン（00:00 〜 23:55、288項目を1個の select に）
+  function timeOptionsHtml(selected) {
+    let html = '<option value="">--:--</option>';
     for (let h = 0; h < 24; h++) {
-      const hh = String(h).padStart(2, '0');
-      const sel = (hh === selected) ? ' selected' : '';
-      html += '<option value="' + hh + '"' + sel + '>' + hh + '</option>';
+      for (let m = 0; m < 60; m += 5) {
+        const hh = String(h).padStart(2, '0');
+        const mm = String(m).padStart(2, '0');
+        const v = hh + ':' + mm;
+        const sel = (v === selected) ? ' selected' : '';
+        html += '<option value="' + v + '"' + sel + '>' + v + '</option>';
+      }
     }
     return html;
-  }
-  function timeMinOptions(selected) {
-    let html = '<option value="">--</option>';
-    for (let m = 0; m < 60; m += 5) {
-      const mm = String(m).padStart(2, '0');
-      const sel = (mm === selected) ? ' selected' : '';
-      html += '<option value="' + mm + '"' + sel + '>' + mm + '</option>';
-    }
-    return html;
-  }
-  function timePairHtml(value, fieldName) {
-    const parts = (value || '').split(':');
-    const h = parts[0] || '';
-    const m = parts[1] || '';
-    return '<span class="time-pair" data-field="' + fieldName + '">' +
-      '<select class="time-hour" data-time-part="hour">' + timeHourOptions(h) + '</select>' +
-      '<span class="time-colon">:</span>' +
-      '<select class="time-min" data-time-part="min">' + timeMinOptions(m) + '</select>' +
-      '</span>';
   }
 
   function dayEventCardHtml(ev){
     return ''
       + '<div class="day-event-card" data-day-event="' + ev.id + '">'
-      +   timePairHtml(ev.startTime, 'startTime')
+      +   '<select class="day-event-time" data-field="startTime">' + timeOptionsHtml(ev.startTime) + '</select>'
       +   '<span class="day-event-tilde">〜</span>'
-      +   timePairHtml(ev.endTime || '', 'endTime')
+      +   '<select class="day-event-time end" data-field="endTime">' + timeOptionsHtml(ev.endTime || '') + '</select>'
       +   '<input type="text" class="day-event-label" value="' + escH(ev.label) + '" data-field="label" placeholder="項目名（例：音響チェック）">'
       +   '<button class="row-del" data-action="del-day-event" title="削除">×</button>'
       + '</div>';
@@ -4554,19 +4566,6 @@ function show(id) {
     const events = getDayEvents(masterDateState.current);
     const ev = events.find(function(x){ return x.id === id; });
     if (!ev) return;
-    // 時／分を分けたプルダウンの場合：time-pair から HH:MM を組み立て
-    const pair = e.target.closest && e.target.closest('.time-pair');
-    if (pair) {
-      const field = pair.getAttribute('data-field');
-      if (!field) return;
-      const h = pair.querySelector('.time-hour').value;
-      const m = pair.querySelector('.time-min').value;
-      ev[field] = (h && m) ? (h + ':' + m) : '';
-      saveDayEvents();
-      if (field === 'startTime') renderDaySchedule();
-      return;
-    }
-    // それ以外（label など）は従来通り
     const field = e.target.getAttribute('data-field');
     if (!field) return;
     ev[field] = e.target.value;
@@ -4795,7 +4794,7 @@ function show(id) {
   function arrivalCardHtml(a){
     return ''
       + '<div class="arrival-card" data-arrival="' + a.id + '">'
-      +   timePairHtml(a.time, 'time')
+      +   '<select class="arrival-time" data-field="time">' + timeOptionsHtml(a.time) + '</select>'
       +   '<input type="text" class="arrival-section-name" value="' + escH(a.section) + '" data-field="section" placeholder="セクション名（例：PA）">'
       +   '<button class="row-del" data-action="del-arrival" title="削除">×</button>'
       + '</div>';
@@ -5234,18 +5233,6 @@ function show(id) {
     if (!card) return;
     const a = findArrival(card.getAttribute('data-arrival'));
     if (!a) return;
-    // 時／分を分けたプルダウンの場合：time-pair から HH:MM を組み立て
-    const pair = el.closest && el.closest('.time-pair');
-    if (pair) {
-      const field = pair.getAttribute('data-field');
-      if (!field) return;
-      const h = pair.querySelector('.time-hour').value;
-      const m = pair.querySelector('.time-min').value;
-      a[field] = (h && m) ? (h + ':' + m) : '';
-      saveArrivals();
-      if (field === 'time') renderArrivals();
-      return;
-    }
     const field = el.getAttribute('data-field');
     if (field) {
       a[field] = el.value;

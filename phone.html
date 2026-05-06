@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260506.1200">
+<meta name="build-version" content="20260506.1300">
 <title>SCHEDULE STUDIO</title>
 <!-- R57 LIFF: LINE Front-end Framework SDK（LINE 内で開いたときに認識させる） -->
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
@@ -3304,34 +3304,19 @@ function reloadDayEventsPhone() {
   dailyEventsPhone = loadJSON(LS_KEY_DAY_EVENTS, {});
 }
 
-// R79: 時／分を分けたプルダウン
-function timeHourOptionsPhone(selected) {
-  let html = '<option value="">--</option>';
+// R79: 5分刻み時刻プルダウン（00:00 〜 23:55、288項目を1個の select に）
+function timeOptionsHtmlPhone(selected) {
+  let html = '<option value="">--:--</option>';
   for (let h = 0; h < 24; h++) {
-    const hh = String(h).padStart(2, '0');
-    const sel = (hh === selected) ? ' selected' : '';
-    html += '<option value="' + hh + '"' + sel + '>' + hh + '</option>';
+    for (let m = 0; m < 60; m += 5) {
+      const hh = String(h).padStart(2, '0');
+      const mm = String(m).padStart(2, '0');
+      const v = hh + ':' + mm;
+      const sel = (v === selected) ? ' selected' : '';
+      html += '<option value="' + v + '"' + sel + '>' + v + '</option>';
+    }
   }
   return html;
-}
-function timeMinOptionsPhone(selected) {
-  let html = '<option value="">--</option>';
-  for (let m = 0; m < 60; m += 5) {
-    const mm = String(m).padStart(2, '0');
-    const sel = (mm === selected) ? ' selected' : '';
-    html += '<option value="' + mm + '"' + sel + '>' + mm + '</option>';
-  }
-  return html;
-}
-function timePairHtmlPhone(value, fieldName) {
-  const parts = (value || '').split(':');
-  const h = parts[0] || '';
-  const m = parts[1] || '';
-  return '<span class="time-pair" data-field="' + fieldName + '">' +
-    '<select class="time-hour" data-time-part="hour">' + timeHourOptionsPhone(h) + '</select>' +
-    '<span class="time-colon">:</span>' +
-    '<select class="time-min" data-time-part="min">' + timeMinOptionsPhone(m) + '</select>' +
-    '</span>';
 }
 
 function renderScheduleDayListPhone() {
@@ -3373,9 +3358,9 @@ function renderScheduleDayListPhone() {
     if (isEditable) {
       // 編集モード：3つの入力欄＋削除ボタン
       html += '<div class="schedule-day-row edit" data-day-id="' + ev.id + '">' +
-        timePairHtmlPhone(start, 'startTime') +
+        '<select class="sde-time" data-field="startTime">' + timeOptionsHtmlPhone(start) + '</select>' +
         '<span class="sde-tilde">〜</span>' +
-        timePairHtmlPhone(end, 'endTime') +
+        '<select class="sde-time end" data-field="endTime">' + timeOptionsHtmlPhone(end) + '</select>' +
         '<input type="text" class="sde-label" data-field="label" value="' + escHtmlPhone(label) + '" placeholder="項目名">' +
         '<button class="sde-del" data-action="del-day-ev" title="削除">×</button>' +
         '</div>';
@@ -3409,18 +3394,6 @@ document.addEventListener('change', function(e){
   const list = dailyEventsPhone[iso] || [];
   const ev = list.find(function(x){ return x.id === id; });
   if (!ev) return;
-  // 時／分を分けたプルダウンの場合：time-pair から HH:MM を組み立て
-  const pair = e.target.closest && e.target.closest('.time-pair');
-  if (pair) {
-    const field = pair.getAttribute('data-field');
-    if (!field) return;
-    const h = pair.querySelector('.time-hour').value;
-    const m = pair.querySelector('.time-min').value;
-    ev[field] = (h && m) ? (h + ':' + m) : '';
-    saveJSON(LS_KEY_DAY_EVENTS, dailyEventsPhone);
-    if (field === 'startTime') renderScheduleDayListPhone();
-    return;
-  }
   const field = e.target.getAttribute('data-field');
   if (!field) return;
   ev[field] = e.target.value;
