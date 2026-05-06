@@ -1072,11 +1072,11 @@
 
   /* DAY SCHEDULE: 入り時間（左）と STAGE SCHEDULE（右）を横並び表示・全体中央寄せ */
   #mode-day-schedule.active {
-    display: flex;
-    gap: 16px;
-    align-items: flex-start;
-    max-width: 880px;
-    margin: 0 auto;
+    display: flex !important;
+    gap: 16px !important;
+    align-items: flex-start !important;
+    max-width: 880px !important;
+    margin: 0 auto !important;
   }
   #mode-day-schedule.active > #sub-arrival,
   #mode-day-schedule.active > #sub-stage-schedule {
@@ -1085,31 +1085,31 @@
     min-width: 0;
   }
   #mode-day-schedule.active .day-schedule-wrap {
-    max-width: 480px;
-    margin: 0 auto;
-    padding: 22px 20px 28px;
+    max-width: 420px !important;
+    margin: 0 auto !important;
+    padding: 18px 16px 22px !important;
   }
-  /* セクション見出し（小さく洗練・Mail Check 風） */
+  /* セクション見出し（しっかり見える・大きく・洗練） */
   #mode-day-schedule.active > #sub-arrival::before {
     content: 'STAFF IN';
     display: block;
-    padding: 18px 28px 8px;
+    padding: 24px 28px 14px;
     text-align: center;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.4em;
-    color: #76766f;
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: 0.32em;
+    color: #f0f0ec;
     text-transform: uppercase;
   }
   #mode-day-schedule.active > #sub-stage-schedule::before {
     content: 'DAY SCHEDULE';
     display: block;
-    padding: 18px 28px 8px;
+    padding: 24px 28px 14px;
     text-align: center;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.4em;
-    color: #76766f;
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: 0.32em;
+    color: #f0f0ec;
     text-transform: uppercase;
   }
   .day-schedule-header {
