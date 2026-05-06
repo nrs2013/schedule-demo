@@ -105,12 +105,12 @@
   }
   .pc-brand-strip {
     background: #14130f;
-    color: rgba(232,154,74,0.72);
-    font-size: 10px;
-    font-weight: 800;
-    letter-spacing: 0.42em;
+    color: #76766f;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
     text-align: center;
-    padding: 7px 0 6px;
+    padding: 8px 0 7px;
     border-bottom: 1px solid #2c2a27;
     text-transform: uppercase;
     font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
@@ -663,11 +663,10 @@
     left: 0; right: 0;
     bottom: -1px; height: 2px;
   }
-  /* 子なし親タブ（INFO/SET LIST/SHOW）：active時は枠で完結（子タブ帯と接続しない） */
+  /* no-children のタブも下線アクセントを表示（D11以降は全タブが no-children） */
   .parent-tab.no-children.active {
-    border-bottom-color: rgba(232,154,74,0.4);
+    border-bottom-color: rgba(216,184,120,0.04);
   }
-  .parent-tab.no-children.active::after { display: none; }
   /* CDS グループ：紫系 */
   .parent-tab.cds { border-color: transparent; color: #6a6a64; }
   .parent-tab.cds.active {
