@@ -1070,23 +1070,28 @@
     gap: 14px;
   }
 
-  /* DAY SCHEDULE: 入り時間（左）と STAGE SCHEDULE（右）を横並び表示・全体中央寄せ */
+  /* DAY SCHEDULE: 左 STAFF IN（狭め）／ 右 DAY SCHEDULE（広め）、全体中央寄せ */
   #mode-day-schedule.active {
     display: flex !important;
-    gap: 16px !important;
+    gap: 24px !important;
     align-items: flex-start !important;
-    max-width: 1180px !important;
+    justify-content: center !important;
+    max-width: 1100px !important;
     margin: 0 auto !important;
   }
-  #mode-day-schedule.active > #sub-arrival,
+  #mode-day-schedule.active > #sub-arrival {
+    display: block;
+    flex: 0 0 400px;
+    min-width: 0;
+  }
   #mode-day-schedule.active > #sub-stage-schedule {
     display: block;
-    flex: 1;
+    flex: 0 0 620px;
     min-width: 0;
   }
   #mode-day-schedule.active .day-schedule-wrap {
-    max-width: 580px !important;
-    margin: 0 auto !important;
+    max-width: none !important;
+    margin: 0 !important;
     padding: 18px 16px 22px !important;
   }
   /* DAY SCHEDULE 内：「＋追加」ボタンをカードと同じ横幅に */
@@ -1100,28 +1105,32 @@
     text-align: center;
     padding: 10px 14px;
   }
-  /* セクション見出し（しっかり見える・大きく・洗練） */
+  /* セクション見出し（エディトリアル風・斜体ミックスケース） */
   #mode-day-schedule.active > #sub-arrival::before {
-    content: 'STAFF IN';
+    content: 'Staff In';
     display: block;
-    padding: 24px 28px 14px;
+    padding: 22px 28px 12px;
     text-align: center;
+    font-family: 'Hiragino Mincho ProN', 'Noto Serif JP', Georgia, 'Times New Roman', serif;
     font-size: 26px;
-    font-weight: 800;
-    letter-spacing: 0.32em;
-    color: #f0f0ec;
-    text-transform: uppercase;
+    font-weight: 400;
+    font-style: italic;
+    letter-spacing: 0.02em;
+    color: #e8e8e2;
+    text-transform: none;
   }
   #mode-day-schedule.active > #sub-stage-schedule::before {
-    content: 'DAY SCHEDULE';
+    content: 'Day Schedule';
     display: block;
-    padding: 24px 28px 14px;
+    padding: 22px 28px 12px;
     text-align: center;
+    font-family: 'Hiragino Mincho ProN', 'Noto Serif JP', Georgia, 'Times New Roman', serif;
     font-size: 26px;
-    font-weight: 800;
-    letter-spacing: 0.32em;
-    color: #f0f0ec;
-    text-transform: uppercase;
+    font-weight: 400;
+    font-style: italic;
+    letter-spacing: 0.02em;
+    color: #e8e8e2;
+    text-transform: none;
   }
   .day-schedule-header {
     display: flex;
