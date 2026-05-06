@@ -2818,9 +2818,10 @@
     <!-- ── 新タブ構造（A案）親タブ＋動的 children-bar ───────── -->
     <div class="tab-bar">
       <div class="tab-bar-row">
-        <button class="parent-tab active" data-parent="schedule">CALENDAR</button>
+        <button class="parent-tab no-children active" data-parent="schedule">CALENDAR</button>
         <button class="parent-tab" data-parent="day-schedule">DAY SCHEDULE</button>
         <button class="parent-tab" data-parent="rehearsal">REHEARSAL</button>
+        <button class="parent-tab no-children" data-parent="hotel">HOTEL</button>
         <button class="parent-tab no-children" data-parent="info">INFO</button>
       </div>
       <div class="children-bar" id="children-bar"></div>
@@ -4383,10 +4384,7 @@ function show(id) {
 
   const tabConfig = {
     childrenOf: {
-      schedule: [
-        { id: 'calendar',       label: 'CALENDAR' },
-        { id: 'hotel',          label: 'HOTEL' }
-      ],
+      // 'schedule': CALENDAR のみ（HOTEL は独立タブへ移動）→ 子タブなし
       // 'day-schedule': 子タブ撤廃 → 親タブ直下で両方並列表示
       rehearsal: [
         { id: 'rehearsal-main', label: '全体リハーサル' },
@@ -4403,12 +4401,14 @@ function show(id) {
     },
     contentForParent: {
       info: 'mode-info',
-      'day-schedule': 'mode-day-schedule'
+      'day-schedule': 'mode-day-schedule',
+      schedule: 'mode-schedule', // CALENDAR タブ：mode-schedule + sub-calendar
+      hotel: 'mode-schedule'     // HOTEL タブ：mode-schedule + sub-hotel
     }
   };
   const tabState = {
     activeParent: 'schedule',
-    activeChildBy: { schedule: 'calendar', 'day-schedule': 'arrival', rehearsal: 'rehearsal-main' }
+    activeChildBy: { 'day-schedule': 'arrival', rehearsal: 'rehearsal-main' }
   };
 
   function showParent(parent){
@@ -4487,6 +4487,18 @@ function show(id) {
       renderInfoHistory();
       updateInfoAuthUI();
       infoRendered = true;
+    }
+    if (parent === 'schedule') {
+      // CALENDAR タブ
+      const subC = document.getElementById('sub-calendar');
+      if (subC) subC.classList.add('active');
+      if (!calRendered) { renderLegend(); renderMonth(); renderDetail(); calRendered = true; }
+    }
+    if (parent === 'hotel') {
+      // HOTEL タブ（独立化）
+      const subH = document.getElementById('sub-hotel');
+      if (subH) subH.classList.add('active');
+      if (!hotelRendered) { renderHotels(); hotelRendered = true; }
     }
     if (parent === 'day-schedule') {
       // DAY SCHEDULE: 入り時間 と STAGE SCHEDULE を両方表示
