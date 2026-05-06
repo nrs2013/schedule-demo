@@ -1163,7 +1163,7 @@
     box-sizing: border-box;
     background: #14130f;
     border: 1px solid #2c2a27;
-    color: #f0a85a;
+    color: #e6c870;
     font-family: 'JetBrains Mono', 'Noto Sans JP', monospace;
     font-size: 22px;
     font-weight: 700;
@@ -1171,20 +1171,20 @@
     border-radius: 5px;
     font-variant-numeric: tabular-nums;
     letter-spacing: 0.04em;
-    text-shadow: 0 0 12px rgba(232,154,74,0.22);
+    text-shadow: 0 0 12px rgba(230,200,112,0.22);
     text-align: center;
     transition: border-color 0.12s, background 0.12s;
     color-scheme: dark; /* ネイティブ time ピッカーをダーク化 */
   }
-  /* end も start と同じ橙色で統一 */
+  /* end も start と同じ黄色で統一 */
   .day-event-time.end {
-    color: #f0a85a;
-    text-shadow: 0 0 12px rgba(232,154,74,0.22);
+    color: #e6c870;
+    text-shadow: 0 0 12px rgba(230,200,112,0.22);
   }
   .day-event-time:focus {
     outline: none;
-    border-color: rgba(232,154,74,0.55);
-    background: rgba(232,154,74,0.05);
+    border-color: rgba(230,200,112,0.55);
+    background: rgba(230,200,112,0.05);
   }
   .day-event-tilde {
     text-align: center;
@@ -1511,12 +1511,12 @@
   .arrival-card > * { min-width: 0; }
   .arrival-card:hover { border-color: #5a5a53; }
   /* arrival-time を day-event-time と同じ見た目に */
-  .arrival-time {
+  .arrival-card .arrival-time {
     width: 100%;
     box-sizing: border-box;
     background: #14130f;
     border: 1px solid #2c2a27;
-    color: #f0a85a;
+    color: #e6c870;
     font-family: 'JetBrains Mono', 'Noto Sans JP', monospace;
     font-size: 22px;
     font-weight: 700;
@@ -1524,11 +1524,13 @@
     border-radius: 5px;
     font-variant-numeric: tabular-nums;
     letter-spacing: 0.04em;
-    text-shadow: 0 0 12px rgba(232,154,74,0.22);
+    text-shadow: 0 0 12px rgba(230,200,112,0.22);
     text-align: center;
     transition: border-color 0.12s, background 0.12s;
     color-scheme: dark; /* ネイティブ time ピッカーをダーク化 */
   }
+  .arrival-card .arrival-time:hover { border-color: #5a5a53; }
+  .arrival-card .arrival-time:focus { outline: none; border-color: rgba(230,200,112,0.55); }
   .arrival-time:hover { border-color: #5a5a53; }
   .arrival-time:focus { outline: none; border-color: rgba(232,154,74,0.55); }
   /* arrival-section-name を day-event-label と同じ見た目に */
