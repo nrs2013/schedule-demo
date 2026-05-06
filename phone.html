@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260506.1000">
+<meta name="build-version" content="20260506.1100">
 <title>SCHEDULE STUDIO</title>
 <!-- R57 LIFF: LINE Front-end Framework SDK（LINE 内で開いたときに認識させる） -->
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
@@ -1262,18 +1262,23 @@
     gap: 6px;
     padding: 10px 10px;
   }
-  .sde-time {
-    width: 60px;
+  .sde-time,
+  select.sde-time {
+    width: 78px;
+    box-sizing: border-box;
     background: #1a1a1a;
     border: 1px solid #3a3a3a;
     border-radius: 6px;
-    color: #e89a4a;
+    color: #e8e8e2;
     font-size: 14px;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
     text-align: center;
-    padding: 6px 0;
+    padding: 6px 4px;
     font-family: inherit;
+    color-scheme: dark;
+    cursor: pointer;
+    appearance: menulist;
   }
   .sde-time.end { color: #b0b0b0; }
   .sde-tilde { color: #8a8a8a; font-size: 13px; }
@@ -3270,6 +3275,21 @@ function reloadDayEventsPhone() {
   dailyEventsPhone = loadJSON(LS_KEY_DAY_EVENTS, {});
 }
 
+// R79: 5分刻み時刻プルダウンの option HTML を生成（00:00 〜 23:55）
+function timeOptionsHtmlPhone(selected) {
+  let html = '<option value="">--:--</option>';
+  for (let h = 0; h < 24; h++) {
+    for (let m = 0; m < 60; m += 5) {
+      const hh = String(h).padStart(2, '0');
+      const mm = String(m).padStart(2, '0');
+      const v = hh + ':' + mm;
+      const sel = (v === selected) ? ' selected' : '';
+      html += '<option value="' + v + '"' + sel + '>' + v + '</option>';
+    }
+  }
+  return html;
+}
+
 function renderScheduleDayListPhone() {
   const host = document.getElementById('schedule-day-list-host');
   if (!host) return;
@@ -3309,9 +3329,9 @@ function renderScheduleDayListPhone() {
     if (isEditable) {
       // 編集モード：3つの入力欄＋削除ボタン
       html += '<div class="schedule-day-row edit" data-day-id="' + ev.id + '">' +
-        '<input type="text" class="sde-time" data-field="startTime" value="' + escHtmlPhone(start) + '" placeholder="09:00" inputmode="numeric" maxlength="5">' +
+        '<select class="sde-time" data-field="startTime">' + timeOptionsHtmlPhone(start) + '</select>' +
         '<span class="sde-tilde">〜</span>' +
-        '<input type="text" class="sde-time end" data-field="endTime" value="' + escHtmlPhone(end) + '" placeholder="—" inputmode="numeric" maxlength="5">' +
+        '<select class="sde-time end" data-field="endTime">' + timeOptionsHtmlPhone(end) + '</select>' +
         '<input type="text" class="sde-label" data-field="label" value="' + escHtmlPhone(label) + '" placeholder="項目名">' +
         '<button class="sde-del" data-action="del-day-ev" title="削除">×</button>' +
         '</div>';
