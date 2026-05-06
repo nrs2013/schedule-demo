@@ -1070,11 +1070,13 @@
     gap: 14px;
   }
 
-  /* DAY SCHEDULE: 入り時間（左）と STAGE SCHEDULE（右）を横並び表示 */
+  /* DAY SCHEDULE: 入り時間（左）と STAGE SCHEDULE（右）を横並び表示・全体中央寄せ */
   #mode-day-schedule.active {
     display: flex;
     gap: 16px;
     align-items: flex-start;
+    max-width: 880px;
+    margin: 0 auto;
   }
   #mode-day-schedule.active > #sub-arrival,
   #mode-day-schedule.active > #sub-stage-schedule {
@@ -1083,7 +1085,8 @@
     min-width: 0;
   }
   #mode-day-schedule.active .day-schedule-wrap {
-    max-width: none;
+    max-width: 480px;
+    margin: 0 auto;
     padding: 22px 20px 28px;
   }
   /* セクション見出し（小さく洗練・Mail Check 風） */
@@ -1239,7 +1242,7 @@
     color: #e8e8e2;
     font-family: 'JetBrains Mono', 'Noto Sans JP', monospace;
     font-size: 17px;
-    font-weight: 700;
+    font-weight: 400;
     padding: 4px 8px;
     border-radius: 5px;
     font-variant-numeric: tabular-nums;
@@ -1592,7 +1595,7 @@
     color: #e8e8e2;
     font-family: 'JetBrains Mono', 'Noto Sans JP', monospace;
     font-size: 17px;
-    font-weight: 700;
+    font-weight: 400;
     padding: 4px 8px;
     border-radius: 5px;
     font-variant-numeric: tabular-nums;
