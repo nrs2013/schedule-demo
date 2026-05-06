@@ -1155,19 +1155,23 @@
     gap: 10px;
     align-items: center;
     transition: border-color 0.12s, background 0.12s;
+    max-width: 760px;
   }
+  .day-event-card > * { min-width: 0; }
   .day-event-card:hover { border-color: #5a5a53; }
   .day-event-time {
+    width: 100%;
+    box-sizing: border-box;
     background: #14130f;
     border: 1px solid #2c2a27;
     color: #f0a85a;
     font-family: 'JetBrains Mono', 'Noto Sans JP', monospace;
-    font-size: 22px;
+    font-size: 18px;
     font-weight: 700;
-    padding: 6px 10px;
+    padding: 6px 8px;
     border-radius: 5px;
     font-variant-numeric: tabular-nums;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.02em;
     text-shadow: 0 0 12px rgba(232,154,74,0.22);
     text-align: center;
     transition: border-color 0.12s, background 0.12s;
