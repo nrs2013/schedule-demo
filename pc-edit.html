@@ -651,16 +651,15 @@
     transition: background 0.18s, left 0.18s, right 0.18s;
   }
   .parent-tab:hover { color: #d8d8d4; background: rgba(255,255,255,0.02); }
-  .parent-tab:hover::after { background: rgba(232,154,74,0.4); left: 26px; right: 26px; }
+  .parent-tab:hover::after { background: rgba(216,184,120,0.3); left: 26px; right: 26px; }
   .parent-tab.active {
-    background: linear-gradient(180deg, rgba(232,154,74,0.16) 0%, rgba(232,154,74,0.08) 100%);
-    color: #f0a85a;
-    border-color: rgba(232,154,74,0.4);
-    border-bottom-color: rgba(232,154,74,0.08);
-    text-shadow: 0 0 18px rgba(232,154,74,0.4);
+    background: rgba(255,255,255,0.04);
+    color: #f0f0ec;
+    border-color: rgba(216,184,120,0.25);
+    border-bottom-color: rgba(216,184,120,0.04);
   }
   .parent-tab.active::after {
-    background: linear-gradient(90deg, transparent, #e89a4a 30%, #e89a4a 70%, transparent);
+    background: #d4a878;
     left: 0; right: 0;
     bottom: -1px; height: 2px;
   }
@@ -711,9 +710,9 @@
   }
   .rh-mode-btn:hover { color: #e8e8e2; border-color: #5a5a53; }
   .rh-mode-btn.active {
-    background: rgba(232,154,74,0.18);
-    border-color: #e89a4a;
-    color: #f0a85a;
+    background: rgba(255,255,255,0.06);
+    border-color: rgba(216,184,120,0.5);
+    color: #f0f0ec;
   }
   /* tab-bar 内のLINEボタンは廃止（タブ整理で削除） */
   /* 子タブ帯：A案モック準拠（margin-top -1px で親タブに重ねる／左右マージン無し→tab-bar padding を活用） */
@@ -2861,7 +2860,7 @@
           <span class="pc-rh-mode-label">REHEARSAL</span>
           <div class="rh-mode-toggle">
             <button class="rh-mode-btn" data-rh-mode="tekuriha" onclick="window.__showRehearsalSubMode('tekuriha')">テクリハ</button>
-            <button class="rh-mode-btn active" data-rh-mode="rehearsal-main" onclick="window.__showRehearsalSubMode('rehearsal-main')">全体リハーサル</button>
+            <button class="rh-mode-btn" data-rh-mode="rehearsal-main" onclick="window.__showRehearsalSubMode('rehearsal-main')">全体リハーサル</button>
           </div>
         </div>
       </div>
@@ -2937,7 +2936,6 @@
       <div class="pc-rh-header">
         <div class="pc-rh-title-block">
           <div class="pc-rh-title">
-            <span class="pc-rh-mode-label">REHEARSAL</span>
             <div class="rh-mode-toggle">
               <button class="rh-mode-btn active" data-rh-mode="tekuriha" onclick="window.__showRehearsalSubMode('tekuriha')">テクリハ</button>
               <button class="rh-mode-btn" data-rh-mode="rehearsal-main" onclick="window.__showRehearsalSubMode('rehearsal-main')">全体リハーサル</button>
