@@ -798,7 +798,11 @@
 
   /* ── モード別コンテンツ切替（第1階層） ───────── */
   .mode-content { display: none; }
-  .mode-content.active { display: block; animation: pc-mode-fade 0.18s ease-out; }
+  .mode-content.active { display: block; animation: pc-mode-fade 0.18s ease-out; padding-top: 18px; }
+  /* DAY SCHEDULE は flex なので個別に padding-top を維持 */
+  #mode-day-schedule.active { padding-top: 0 !important; }
+  #mode-day-schedule.active > #sub-arrival,
+  #mode-day-schedule.active > #sub-stage-schedule { padding-top: 18px; }
   @keyframes pc-mode-fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; } }
 
   /* ── 第2階層：SCHEDULE 内のサブタブ（CALENDAR / HOTEL / 入り時間） ───────── */
@@ -4034,6 +4038,10 @@ function show(id) {
         }
         renderMonth();
         renderDetail();
+        // D16: マスター日付バーも連動して更新（DAY◯／会場名／日付）
+        if (typeof changeMasterDate === 'function') {
+          changeMasterDate(newDate);
+        }
       });
     });
     monthEl.querySelectorAll('[data-nav]').forEach(function(b){
