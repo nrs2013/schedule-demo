@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260506.1300">
+<meta name="build-version" content="20260506.1400">
 <title>SCHEDULE STUDIO</title>
 <!-- R57 LIFF: LINE Front-end Framework SDK（LINE 内で開いたときに認識させる） -->
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
@@ -597,7 +597,7 @@
     color: #e89a4a;
     font-size: 16px;
     font-weight: 700;
-    font-family: 'Noto Sans JP', -apple-system, sans-serif;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
     padding: 6px 10px;
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
@@ -3416,7 +3416,7 @@ document.addEventListener('click', function(e){
         if (x && typeof x.id === 'number' && x.id >= maxId) maxId = x.id + 1;
       });
     });
-    dailyEventsPhone[iso].push({ id: maxId, startTime: '', endTime: '', label: '' });
+    dailyEventsPhone[iso].push({ id: maxId, startTime: '09:00', endTime: '', label: '' });
     saveJSON(LS_KEY_DAY_EVENTS, dailyEventsPhone);
     renderScheduleDayListPhone();
   } else if (action === 'del-day-ev') {
