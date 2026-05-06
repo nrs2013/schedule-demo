@@ -1069,6 +1069,42 @@
     flex-direction: column;
     gap: 14px;
   }
+
+  /* DAY SCHEDULE: 入り時間（左）と STAGE SCHEDULE（右）を横並び表示 */
+  #mode-day-schedule.active {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+  }
+  #mode-day-schedule.active > #sub-arrival,
+  #mode-day-schedule.active > #sub-stage-schedule {
+    display: block;
+    flex: 1;
+    min-width: 0;
+  }
+  #mode-day-schedule.active .day-schedule-wrap {
+    max-width: none;
+    padding: 22px 20px 28px;
+  }
+  /* セクション見出し（区切り） */
+  #mode-day-schedule.active > #sub-arrival::before {
+    content: '入り時間';
+    display: block;
+    padding: 14px 28px 0;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    color: #a8a8a0;
+  }
+  #mode-day-schedule.active > #sub-stage-schedule::before {
+    content: 'STAGE SCHEDULE';
+    display: block;
+    padding: 14px 28px 0;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    color: #a8a8a0;
+  }
   .day-schedule-header {
     display: flex;
     align-items: baseline;
@@ -4261,10 +4297,7 @@ function show(id) {
         { id: 'calendar',       label: 'CALENDAR' },
         { id: 'hotel',          label: 'HOTEL' }
       ],
-      'day-schedule': [
-        { id: 'arrival',        label: '入り時間' },
-        { id: 'stage-schedule', label: 'STAGE SCHEDULE' }
-      ],
+      // 'day-schedule': 子タブ撤廃 → 親タブ直下で両方並列表示
       rehearsal: [
         { id: 'rehearsal-main', label: '全体リハーサル' },
         { id: 'tekuriha',       label: 'テクリハ' }
@@ -4279,7 +4312,8 @@ function show(id) {
       'rehearsal-main': { mode: 'mode-rehearsal',    sub: null }
     },
     contentForParent: {
-      info: 'mode-info'
+      info: 'mode-info',
+      'day-schedule': 'mode-day-schedule'
     }
   };
   const tabState = {
@@ -4365,6 +4399,12 @@ function show(id) {
       infoRendered = true;
     }
     if (parent === 'day-schedule') {
+      // DAY SCHEDULE: 入り時間 と STAGE SCHEDULE を両方表示
+      const subA = document.getElementById('sub-arrival');
+      const subS = document.getElementById('sub-stage-schedule');
+      if (subA) subA.classList.add('active');
+      if (subS) subS.classList.add('active');
+      renderArrivals();
       renderDaySchedule();
     }
   }
