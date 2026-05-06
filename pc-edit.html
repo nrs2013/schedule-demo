@@ -689,25 +689,6 @@
     align-self: center;
   }
   .parent-tabs-spacer { flex: 1; }
-  .phone-preview-btn {
-    background: rgba(232,154,74,0.12);
-    border: 1px solid rgba(232,154,74,0.5);
-    color: #f0a85a;
-    border-radius: 6px;
-    padding: 8px 14px;
-    font-family: 'Noto Sans JP', -apple-system, sans-serif;
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    cursor: pointer;
-    align-self: center;
-    margin-left: 8px;
-    transition: background 0.12s, border-color 0.12s;
-  }
-  .phone-preview-btn:hover {
-    background: rgba(232,154,74,0.22);
-    border-color: #f0a85a;
-  }
   /* tab-bar 内のLINEボタンは廃止（タブ整理で削除） */
   /* 子タブ帯：A案モック準拠（margin-top -1px で親タブに重ねる／左右マージン無し→tab-bar padding を活用） */
   .children-bar {
@@ -2816,21 +2797,9 @@
         <button class="parent-tab" data-parent="day-schedule">DAY SCHEDULE</button>
         <button class="parent-tab" data-parent="rehearsal">REHEARSAL</button>
         <button class="parent-tab no-children" data-parent="info">INFO</button>
-        <div style="flex:1"></div>
-        <button class="phone-preview-btn" onclick="openPhonePreview()" title="スマホ表示を別ウィンドウで開く">📱 スマホで確認</button>
       </div>
       <div class="children-bar" id="children-bar"></div>
     </div><!-- /tab-bar -->
-    <script>
-      function openPhonePreview() {
-        const w = window.open(
-          'https://nrs2013.github.io/schedule-studio/phone.html',
-          'phonePreview',
-          'width=400,height=820,resizable=yes,scrollbars=yes'
-        );
-        if (w) w.focus();
-      }
-    </script>
 
     <!-- ── mode-content: REHEARSAL（既存内容） ───────── -->
     <div class="mode-content" id="mode-rehearsal">
