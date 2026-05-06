@@ -1912,7 +1912,6 @@
     border-color: #e89a4a;
     color: #f0a85a;
   }
-  .pc-detail-venue-select,
   .pc-detail-event-type,
   .pc-detail-event-add-type {
     background: #1f1e1b;
@@ -1924,25 +1923,24 @@
     font-size: 11px;
     cursor: pointer;
   }
-  .pc-detail-venue-select:focus,
   .pc-detail-event-type:focus {
     outline: none;
     border-color: rgba(232,154,74,0.55);
   }
-  .pc-detail-add-venue-btn {
-    background: transparent;
-    color: #a8a8a0;
-    border: 1px solid #5a5a53;
-    padding: 3px 8px;
-    font-size: 10px;
+  .pc-detail-venue-input {
+    background: #1f1e1b;
+    color: #d8d8d4;
+    border: 1px solid #2c2a27;
     border-radius: 4px;
-    cursor: pointer;
+    padding: 4px 6px;
     font-family: inherit;
-    transition: border-color 0.12s, color 0.12s;
+    font-size: 11px;
+    width: 220px;
+    max-width: 100%;
   }
-  .pc-detail-add-venue-btn:hover {
-    border-color: #e89a4a;
-    color: #f0a85a;
+  .pc-detail-venue-input:focus {
+    outline: none;
+    border-color: rgba(232,154,74,0.55);
   }
   .pc-detail-events-edit {
     display: flex;
@@ -3957,23 +3955,15 @@ function show(id) {
   function renderDetailEditBody(d, evs, dateKey, venue) {
     let html = '';
 
-    // 会場
+    // 会場（自由入力＋過去会場のサジェスト）
     html += '<div class="pc-detail-section">';
     html += '<div class="pc-detail-section-label">会場</div>';
-    html += '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">';
-    html += '<select class="pc-detail-venue-select" data-field="venue">';
-    html += '<option value="">— 未設定 —</option>';
+    html += '<input type="text" class="pc-detail-venue-input" data-field="venue" list="pc-detail-venue-list" value="' + escH(venue || '') + '" placeholder="会場名（例：幕張メッセ）">';
+    html += '<datalist id="pc-detail-venue-list">';
     Object.keys(showTimes).forEach(function(v){
-      const sel = (v === venue) ? ' selected' : '';
-      html += '<option value="' + escH(v) + '"' + sel + '>' + escH(v) + '</option>';
+      html += '<option value="' + escH(v) + '"></option>';
     });
-    if (venue && !showTimes[venue]) {
-      // showTimes に登録されてない会場名を保持
-      html += '<option value="' + escH(venue) + '" selected>' + escH(venue) + '</option>';
-    }
-    html += '</select>';
-    html += '<button class="pc-detail-add-venue-btn" data-action="add-venue">+ 会場</button>';
-    html += '</div>';
+    html += '</datalist>';
     html += '</div>';
 
     // EVENTS
@@ -4073,37 +4063,20 @@ function show(id) {
       });
     });
 
-    // 会場変更
-    const venueSelect = detailEl.querySelector('[data-field="venue"]');
-    if (venueSelect) {
-      venueSelect.addEventListener('change', function(){
-        const newVenue = venueSelect.value;
+    // 会場変更（自由入力／datalist 候補からの選択も拾う）
+    const venueInput = detailEl.querySelector('[data-field="venue"]');
+    if (venueInput) {
+      venueInput.addEventListener('change', function(){
+        const newVenue = venueInput.value.trim();
+        // 新規会場名なら showTimes に DOOR/SHOW のデフォルト時刻で登録
+        if (newVenue && !showTimes[newVenue]) {
+          showTimes[newVenue] = { door: '17:30', show: '18:30' };
+          saveShowTimes();
+        }
         // 同日のイベントの venue を更新
         let updated = false;
         calEvents.forEach(function(e){
           if (e.date === dateKey) { e.venue = newVenue; updated = true; }
-        });
-        if (updated) saveCalEvents();
-        renderDetail();
-        renderMonth();
-      });
-    }
-
-    // 会場追加
-    const addVenueBtn = detailEl.querySelector('[data-action="add-venue"]');
-    if (addVenueBtn) {
-      addVenueBtn.addEventListener('click', function(){
-        const newVenue = prompt('新しい会場名を入力してください（例：幕張メッセ）');
-        if (!newVenue || !newVenue.trim()) return;
-        const v = newVenue.trim();
-        if (!showTimes[v]) {
-          showTimes[v] = { door: '17:30', show: '18:30' };
-          saveShowTimes();
-        }
-        // 同日のイベントが既にあれば venue を更新
-        let updated = false;
-        calEvents.forEach(function(e){
-          if (e.date === dateKey) { e.venue = v; updated = true; }
         });
         if (updated) saveCalEvents();
         renderDetail();
