@@ -1086,25 +1086,25 @@
     max-width: none;
     padding: 22px 20px 28px;
   }
-  /* セクション見出し（中央寄せ・大きめ） */
+  /* セクション見出し（中央寄せ・大・枠なし） */
   #mode-day-schedule.active > #sub-arrival::before {
     content: 'STAFF IN';
     display: block;
-    padding: 18px 28px 4px;
+    padding: 22px 28px 12px;
     text-align: center;
-    font-size: 22px;
+    font-size: 32px;
     font-weight: 800;
-    letter-spacing: 0.25em;
+    letter-spacing: 0.32em;
     color: #e8e8e2;
   }
   #mode-day-schedule.active > #sub-stage-schedule::before {
     content: 'DAY SCHEDULE';
     display: block;
-    padding: 18px 28px 4px;
+    padding: 22px 28px 12px;
     text-align: center;
-    font-size: 22px;
+    font-size: 32px;
     font-weight: 800;
-    letter-spacing: 0.25em;
+    letter-spacing: 0.32em;
     color: #e8e8e2;
   }
   .day-schedule-header {
@@ -1189,13 +1189,45 @@
     border-radius: 6px;
     padding: 12px 16px;
     display: grid;
-    grid-template-columns: 145px 18px 145px 1fr 28px;
+    grid-template-columns: auto 18px auto 1fr 28px;
     gap: 12px;
     align-items: center;
     transition: border-color 0.12s, background 0.12s;
   }
   .day-event-card > * { min-width: 0; }
   .day-event-card:hover { border-color: #5a5a53; }
+  /* 時／分を分けたプルダウン（time-pair） */
+  .time-pair {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .time-pair select.time-hour,
+  .time-pair select.time-min {
+    box-sizing: border-box;
+    background: #14130f;
+    border: 1px solid #2c2a27;
+    color: #e8e8e2;
+    font-family: 'JetBrains Mono', 'Noto Sans JP', monospace;
+    font-size: 22px;
+    font-weight: 700;
+    padding: 6px 4px 6px 8px;
+    border-radius: 5px;
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+    transition: border-color 0.12s, background 0.12s;
+    color-scheme: dark;
+    cursor: pointer;
+    appearance: menulist;
+  }
+  .time-pair select.time-hour { width: 70px; }
+  .time-pair select.time-min { width: 70px; }
+  .time-pair .time-colon {
+    color: #5a5a54;
+    font-size: 22px;
+    font-weight: 700;
+    user-select: none;
+  }
   .day-event-time,
   select.day-event-time {
     width: 100%;
@@ -1214,7 +1246,7 @@
     transition: border-color 0.12s, background 0.12s;
     color-scheme: dark;
     cursor: pointer;
-    appearance: menulist; /* プルダウンの三角を表示 */
+    appearance: menulist;
   }
   /* end も start と同じオフホワイトで統一 */
   .day-event-time.end {
@@ -1541,7 +1573,7 @@
     border-radius: 6px;
     padding: 12px 16px;
     display: grid;
-    grid-template-columns: 145px 1fr 28px;
+    grid-template-columns: auto 1fr 28px;
     gap: 12px;
     align-items: center;
     transition: border-color 0.12s, background 0.12s;
@@ -1654,12 +1686,10 @@
     width: 18px; height: 12px; border-radius: 3px;
     border: 1px solid transparent;
   }
-  .pc-cal-legend-pill.setup-onsite { background: rgba(232,154,74,0.32); border-color: rgba(232,154,74,0.5); }
-  .pc-cal-legend-pill.setup { background: rgba(232,200,80,0.32);  border-color: rgba(232,200,80,0.5); }
-  .pc-cal-legend-pill.tek   { background: rgba(170,210,90,0.32);  border-color: rgba(170,210,90,0.5); }
-  .pc-cal-legend-pill.rh    { background: rgba(126,194,122,0.30); border-color: rgba(126,194,122,0.4); }
-  .pc-cal-legend-pill.show  { background: rgba(106,150,220,0.32); border-color: rgba(106,150,220,0.55); }
-  .pc-cal-legend-pill.teardown { background: rgba(170,130,200,0.32); border-color: rgba(170,130,200,0.55); }
+  .pc-cal-legend-pill.show  { background: rgba(224,122,95,0.30);  border-color: rgba(224,122,95,0.5); }
+  .pc-cal-legend-pill.rh    { background: rgba(126,194,122,0.22); border-color: rgba(126,194,122,0.4); }
+  .pc-cal-legend-pill.tek   { background: rgba(106,150,184,0.32); border-color: rgba(106,150,184,0.5); }
+  .pc-cal-legend-pill.setup { background: rgba(184,149,88,0.32);  border-color: rgba(184,149,88,0.5); }
   .pc-cal-legend-pill.stay  { background: rgba(168,168,160,0.10); }
   .pc-cal-legend-label { color: #a8a8a0; letter-spacing: 0.05em; }
 
@@ -1770,12 +1800,10 @@
     line-height: 1.2;
     border: 1px solid transparent;
   }
-  .pc-cal-pill.setup-onsite { background: rgba(232,154,74,0.32); color: #f0a85a; border-color: rgba(232,154,74,0.5); }
-  .pc-cal-pill.setup { background: rgba(232,200,80,0.32); color: #f0d878; border-color: rgba(232,200,80,0.5); }
-  .pc-cal-pill.tek   { background: rgba(170,210,90,0.32); color: #cae0a0; border-color: rgba(170,210,90,0.5); }
-  .pc-cal-pill.rh    { background: rgba(126,194,122,0.30); color: #b8d9b0; border-color: rgba(126,194,122,0.4); }
-  .pc-cal-pill.show  { background: rgba(106,150,220,0.32); color: #a8c8f0; border-color: rgba(106,150,220,0.55); font-weight: 800; }
-  .pc-cal-pill.teardown { background: rgba(170,130,200,0.32); color: #d8b8e8; border-color: rgba(170,130,200,0.55); }
+  .pc-cal-pill.show  { background: rgba(224,122,95,0.30);  color: #f5a89c; border-color: rgba(224,122,95,0.5); font-weight: 800; }
+  .pc-cal-pill.rh    { background: rgba(126,194,122,0.22); color: #b8d9b0; border-color: rgba(126,194,122,0.4); }
+  .pc-cal-pill.tek   { background: rgba(106,150,184,0.32); color: #a8d4e8; border-color: rgba(106,150,184,0.5); }
+  .pc-cal-pill.setup { background: rgba(184,149,88,0.32);  color: #e8c890; border-color: rgba(184,149,88,0.5); }
   .pc-cal-pill.stay  { background: rgba(168,168,160,0.10); color: #787878; font-weight: 500; }
   /* R54: 連続イベントを横バー化（同会場・同種別で繋がってる感を出す） */
   /* 隣のセルとの隙間を margin で詰めて視覚的に1本の帯に見せる */
@@ -2874,7 +2902,6 @@
       <div class="day-schedule-wrap">
         <div class="hotel-toolbar">
           <button class="toolbar-btn primary" data-action="add-arrival">＋ セクションを追加</button>
-          <span class="toolbar-hint">時刻順で自動ソート ／ PCで編集 → スマホで閲覧</span>
         </div>
         <div class="arrival-list-wrap" id="arrival-list-wrap"></div>
       </div>
@@ -2884,7 +2911,6 @@
       <div class="day-schedule-wrap">
         <div class="hotel-toolbar">
           <button class="toolbar-btn primary" data-action="add-day-event">＋ タイム項目を追加</button>
-          <span class="toolbar-hint">時刻順で自動ソート ／ PCで編集 → スマホで閲覧</span>
         </div>
         <div class="day-event-list" id="day-event-list"></div>
       </div>
@@ -4034,7 +4060,7 @@ function show(id) {
       evs.forEach(function(e, i){
         html += '<div class="pc-detail-event-row" data-index="' + i + '">';
         html += '<select class="pc-detail-event-type" data-field="type">';
-        [['setup-onsite','現地仕込み'], ['setup','仕込み'], ['tek','テクリハ'], ['rh','リハ'], ['show','本番'], ['teardown','バラシ'], ['stay','移動/休']].forEach(function(p){
+        [['setup','仕込み'], ['tek','テクリハ'], ['rh','リハ'], ['show','本番'], ['stay','移動/休']].forEach(function(p){
           const sel = (p[0] === e.type) ? ' selected' : '';
           html += '<option value="' + p[0] + '"' + sel + '>' + p[1] + '</option>';
         });
@@ -4047,7 +4073,7 @@ function show(id) {
     // 追加フォーム
     html += '<div class="pc-detail-event-add">';
     html += '<select class="pc-detail-event-add-type">';
-    [['setup-onsite','現地仕込み'], ['setup','仕込み'], ['tek','テクリハ'], ['rh','リハ'], ['show','本番'], ['teardown','バラシ'], ['stay','移動/休']].forEach(function(p){
+    [['rh','リハ'], ['tek','テクリハ'], ['show','本番'], ['setup','仕込み'], ['stay','移動/休']].forEach(function(p){
       html += '<option value="' + p[0] + '">' + p[1] + '</option>';
     });
     html += '</select>';
@@ -4319,12 +4345,10 @@ function show(id) {
     const el = document.getElementById('pc-cal-legend');
     if (!el) return;
     el.innerHTML = ''
-      + '<div class="pc-cal-legend-item"><span class="pc-cal-legend-pill setup-onsite"></span><span class="pc-cal-legend-label">現地仕込み</span></div>'
-      + '<div class="pc-cal-legend-item"><span class="pc-cal-legend-pill setup"></span><span class="pc-cal-legend-label">仕込み</span></div>'
-      + '<div class="pc-cal-legend-item"><span class="pc-cal-legend-pill tek"></span><span class="pc-cal-legend-label">テクリハ</span></div>'
-      + '<div class="pc-cal-legend-item"><span class="pc-cal-legend-pill rh"></span><span class="pc-cal-legend-label">リハ</span></div>'
       + '<div class="pc-cal-legend-item"><span class="pc-cal-legend-pill show"></span><span class="pc-cal-legend-label">本番</span></div>'
-      + '<div class="pc-cal-legend-item"><span class="pc-cal-legend-pill teardown"></span><span class="pc-cal-legend-label">バラシ</span></div>'
+      + '<div class="pc-cal-legend-item"><span class="pc-cal-legend-pill rh"></span><span class="pc-cal-legend-label">リハ</span></div>'
+      + '<div class="pc-cal-legend-item"><span class="pc-cal-legend-pill tek"></span><span class="pc-cal-legend-label">テクリハ</span></div>'
+      + '<div class="pc-cal-legend-item"><span class="pc-cal-legend-pill setup"></span><span class="pc-cal-legend-label">仕込み</span></div>'
       + '<div class="pc-cal-legend-item"><span class="pc-cal-legend-pill stay"></span><span class="pc-cal-legend-label">移動 / 滞在</span></div>'
       + '<div class="pc-cal-legend-item" style="margin-left:auto"><span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:rgba(232,154,74,0.85);margin-right:6px;vertical-align:middle"></span><span class="pc-cal-legend-label">今日</span></div>';
   }
@@ -4498,27 +4522,42 @@ function show(id) {
     return dailyEvents[k];
   }
 
-  // R79: 5分刻み時刻プルダウンの option HTML を生成（00:00 〜 23:55）
-  function timeOptionsHtml(selected) {
-    let html = '<option value="">--:--</option>';
+  // R79: 時／分を別々のプルダウンに（時0〜23、分0/5/.../55）
+  function timeHourOptions(selected) {
+    let html = '<option value="">--</option>';
     for (let h = 0; h < 24; h++) {
-      for (let m = 0; m < 60; m += 5) {
-        const hh = String(h).padStart(2, '0');
-        const mm = String(m).padStart(2, '0');
-        const v = hh + ':' + mm;
-        const sel = (v === selected) ? ' selected' : '';
-        html += '<option value="' + v + '"' + sel + '>' + v + '</option>';
-      }
+      const hh = String(h).padStart(2, '0');
+      const sel = (hh === selected) ? ' selected' : '';
+      html += '<option value="' + hh + '"' + sel + '>' + hh + '</option>';
     }
     return html;
+  }
+  function timeMinOptions(selected) {
+    let html = '<option value="">--</option>';
+    for (let m = 0; m < 60; m += 5) {
+      const mm = String(m).padStart(2, '0');
+      const sel = (mm === selected) ? ' selected' : '';
+      html += '<option value="' + mm + '"' + sel + '>' + mm + '</option>';
+    }
+    return html;
+  }
+  function timePairHtml(value, fieldName) {
+    const parts = (value || '').split(':');
+    const h = parts[0] || '';
+    const m = parts[1] || '';
+    return '<span class="time-pair" data-field="' + fieldName + '">' +
+      '<select class="time-hour" data-time-part="hour">' + timeHourOptions(h) + '</select>' +
+      '<span class="time-colon">:</span>' +
+      '<select class="time-min" data-time-part="min">' + timeMinOptions(m) + '</select>' +
+      '</span>';
   }
 
   function dayEventCardHtml(ev){
     return ''
       + '<div class="day-event-card" data-day-event="' + ev.id + '">'
-      +   '<select class="day-event-time" data-field="startTime">' + timeOptionsHtml(ev.startTime) + '</select>'
+      +   timePairHtml(ev.startTime, 'startTime')
       +   '<span class="day-event-tilde">〜</span>'
-      +   '<select class="day-event-time end" data-field="endTime">' + timeOptionsHtml(ev.endTime || '') + '</select>'
+      +   timePairHtml(ev.endTime || '', 'endTime')
       +   '<input type="text" class="day-event-label" value="' + escH(ev.label) + '" data-field="label" placeholder="項目名（例：音響チェック）">'
       +   '<button class="row-del" data-action="del-day-event" title="削除">×</button>'
       + '</div>';
@@ -4542,6 +4581,19 @@ function show(id) {
     const events = getDayEvents(masterDateState.current);
     const ev = events.find(function(x){ return x.id === id; });
     if (!ev) return;
+    // 時／分を分けたプルダウンの場合：time-pair から HH:MM を組み立て
+    const pair = e.target.closest && e.target.closest('.time-pair');
+    if (pair) {
+      const field = pair.getAttribute('data-field');
+      if (!field) return;
+      const h = pair.querySelector('.time-hour').value;
+      const m = pair.querySelector('.time-min').value;
+      ev[field] = (h && m) ? (h + ':' + m) : '';
+      saveDayEvents();
+      if (field === 'startTime') renderDaySchedule();
+      return;
+    }
+    // それ以外（label など）は従来通り
     const field = e.target.getAttribute('data-field');
     if (!field) return;
     ev[field] = e.target.value;
@@ -4770,7 +4822,7 @@ function show(id) {
   function arrivalCardHtml(a){
     return ''
       + '<div class="arrival-card" data-arrival="' + a.id + '">'
-      +   '<select class="arrival-time" data-field="time">' + timeOptionsHtml(a.time) + '</select>'
+      +   timePairHtml(a.time, 'time')
       +   '<input type="text" class="arrival-section-name" value="' + escH(a.section) + '" data-field="section" placeholder="セクション名（例：PA）">'
       +   '<button class="row-del" data-action="del-arrival" title="削除">×</button>'
       + '</div>';
@@ -5209,11 +5261,22 @@ function show(id) {
     if (!card) return;
     const a = findArrival(card.getAttribute('data-arrival'));
     if (!a) return;
+    // 時／分を分けたプルダウンの場合：time-pair から HH:MM を組み立て
+    const pair = el.closest && el.closest('.time-pair');
+    if (pair) {
+      const field = pair.getAttribute('data-field');
+      if (!field) return;
+      const h = pair.querySelector('.time-hour').value;
+      const m = pair.querySelector('.time-min').value;
+      a[field] = (h && m) ? (h + ':' + m) : '';
+      saveArrivals();
+      if (field === 'time') renderArrivals();
+      return;
+    }
     const field = el.getAttribute('data-field');
     if (field) {
       a[field] = el.value;
-      saveArrivals(); // R61 M3
-      // 時刻変更時はソートが変わるので再描画
+      saveArrivals();
       if (field === 'time') renderArrivals();
     }
   });
