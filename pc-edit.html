@@ -1089,6 +1089,17 @@
     margin: 0 auto !important;
     padding: 18px 16px 22px !important;
   }
+  /* DAY SCHEDULE 内：「＋追加」ボタンをカードと同じ横幅に */
+  #mode-day-schedule.active .hotel-toolbar {
+    display: block;
+    padding: 0 16px 12px !important;
+  }
+  #mode-day-schedule.active .hotel-toolbar .toolbar-btn.primary {
+    display: block;
+    width: 100%;
+    text-align: center;
+    padding: 10px 14px;
+  }
   /* セクション見出し（しっかり見える・大きく・洗練） */
   #mode-day-schedule.active > #sub-arrival::before {
     content: 'STAFF IN';
@@ -1283,6 +1294,8 @@
   }
   .day-event-label:hover { border-color: #2c2a27; background: #14130f; }
   .day-event-label:focus { outline: none; border-color: rgba(232,154,74,0.55); background: #14130f; }
+  .day-event-label::placeholder,
+  .arrival-section-name::placeholder { color: #5a5a54; opacity: 1; }
   .day-event-del {
     background: transparent;
     border: none;
