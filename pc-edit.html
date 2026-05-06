@@ -1140,10 +1140,10 @@
     letter-spacing: 0.2em;
   }
   .day-event-list {
+    padding: 0 16px 24px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    margin-bottom: 14px;
+    gap: 6px;
   }
   .day-event-card {
     background: #1c1b19;
@@ -1151,7 +1151,7 @@
     border-radius: 6px;
     padding: 10px 14px;
     display: grid;
-    grid-template-columns: 120px 18px 120px 1fr 32px;
+    grid-template-columns: 120px 18px 120px 1fr 28px;
     gap: 10px;
     align-items: center;
     transition: border-color 0.12s, background 0.12s;
@@ -2828,8 +2828,11 @@
       <!-- 子: STAGE SCHEDULE（右） -->
       <div class="sub-content" id="sub-stage-schedule">
       <div class="day-schedule-wrap">
+        <div class="hotel-toolbar">
+          <button class="toolbar-btn primary" data-action="add-day-event">＋ タイム項目を追加</button>
+          <span class="toolbar-hint">時刻順で自動ソート ／ PCで編集 → スマホで閲覧</span>
+        </div>
         <div class="day-event-list" id="day-event-list"></div>
-        <button class="day-add-btn" data-action="add-day-event">＋ タイム項目を追加</button>
       </div>
       </div><!-- /sub-stage-schedule -->
     </div>
@@ -4442,7 +4445,7 @@ function show(id) {
       +   '<span class="day-event-tilde">〜</span>'
       +   '<input type="time" class="day-event-time end" value="' + escH(ev.endTime || '') + '" data-field="endTime">'
       +   '<input type="text" class="day-event-label" value="' + escH(ev.label) + '" data-field="label" placeholder="項目名（例：音響チェック）">'
-      +   '<button class="day-event-del" data-action="del-day-event" title="削除">×</button>'
+      +   '<button class="row-del" data-action="del-day-event" title="削除">×</button>'
       + '</div>';
   }
 
