@@ -2932,23 +2932,7 @@
 
     </div>
 
-    <!-- ── mode-content: テクリハ ───────── -->
-    <div class="mode-content" id="mode-tekuriha">
-      <div class="pc-rh-header">
-        <div class="pc-rh-title-block">
-          <div class="pc-rh-title">
-            <div class="rh-mode-toggle">
-              <button class="rh-mode-btn active" data-rh-mode="tekuriha" onclick="window.__showRehearsalSubMode('tekuriha')">テクリハ</button>
-              <button class="rh-mode-btn" data-rh-mode="rehearsal-main" onclick="window.__showRehearsalSubMode('rehearsal-main')">全体リハーサル</button>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="mode-placeholder">
-        <div class="mode-placeholder-title">テクリハ</div>
-        <div class="mode-placeholder-desc">仕込み・テクニカルリハーサルの段取り画面（実装予定）</div>
-      </div>
-    </div>
+    <!-- mode-tekuriha は削除：全体リハーサル と同じ mode-rehearsal を共有 -->
 
     <!-- ── mode-content: DAY SCHEDULE（子: 入り時間 / STAGE SCHEDULE） ───────── -->
     <div class="mode-content" id="mode-day-schedule">
@@ -4540,31 +4524,25 @@ function show(id) {
       renderDaySchedule();
     }
     if (parent === 'rehearsal') {
-      // REHEARSAL：直近のサブモード（tekuriha or rehearsal-main）を活性化
+      // REHEARSAL：テクリハ／全体リハーサル両方とも同じ mode-rehearsal を使う
       const sub = tabState.activeChildBy.rehearsal || 'tekuriha';
       document.querySelectorAll('.mode-content').forEach(function(c){ c.classList.remove('active'); });
-      if (sub === 'tekuriha') {
-        document.getElementById('mode-tekuriha').classList.add('active');
-      } else {
-        document.getElementById('mode-rehearsal').classList.add('active');
-        if (typeof window.__rehearsalRender === 'function') window.__rehearsalRender();
-      }
+      document.getElementById('mode-rehearsal').classList.add('active');
+      document.body.classList.toggle('rh-mode-tekuriha', sub === 'tekuriha');
+      if (typeof window.__rehearsalRender === 'function') window.__rehearsalRender();
       // インライン切替ボタンの active 状態を更新
       document.querySelectorAll('.rh-mode-btn').forEach(function(b){
         b.classList.toggle('active', b.getAttribute('data-rh-mode') === sub);
       });
     }
   }
-  // REHEARSAL 内 テクリハ／全体リハーサル 切替ボタン
+  // REHEARSAL 内 テクリハ／全体リハーサル 切替ボタン（両方とも mode-rehearsal を共有）
   window.__showRehearsalSubMode = function(mode) {
     tabState.activeChildBy.rehearsal = mode;
     document.querySelectorAll('.mode-content').forEach(function(c){ c.classList.remove('active'); });
-    if (mode === 'tekuriha') {
-      document.getElementById('mode-tekuriha').classList.add('active');
-    } else {
-      document.getElementById('mode-rehearsal').classList.add('active');
-      if (typeof window.__rehearsalRender === 'function') window.__rehearsalRender();
-    }
+    document.getElementById('mode-rehearsal').classList.add('active');
+    document.body.classList.toggle('rh-mode-tekuriha', mode === 'tekuriha');
+    if (typeof window.__rehearsalRender === 'function') window.__rehearsalRender();
     document.querySelectorAll('.rh-mode-btn').forEach(function(b){
       b.classList.toggle('active', b.getAttribute('data-rh-mode') === mode);
     });
