@@ -1171,6 +1171,7 @@
     text-shadow: 0 0 12px rgba(232,154,74,0.22);
     text-align: center;
     transition: border-color 0.12s, background 0.12s;
+    color-scheme: dark; /* ネイティブ time ピッカーをダーク化 */
   }
   .day-event-time.end {
     color: #c8a070;
@@ -1520,6 +1521,7 @@
     text-shadow: 0 0 12px rgba(232,154,74,0.22);
     text-align: center;
     transition: border-color 0.12s, background 0.12s;
+    color-scheme: dark; /* ネイティブ time ピッカーをダーク化 */
   }
   .arrival-time:hover { border-color: #5a5a53; }
   .arrival-time:focus { outline: none; border-color: rgba(232,154,74,0.55); }
@@ -2819,9 +2821,6 @@
       <div class="sub-content active" id="sub-arrival">
         <div class="hotel-toolbar">
           <button class="toolbar-btn primary" data-action="add-arrival">＋ セクションを追加</button>
-          <button class="toolbar-btn" data-action="import-arrival-excel">📊 Excel から取込</button>
-          <button class="toolbar-btn" data-action="download-arrival-template">📥 テンプレートDL</button>
-          <input type="file" class="hotel-file-input" id="arrival-file-input" accept=".xlsx,.xls">
           <span class="toolbar-hint">時刻順で自動ソート ／ PCで編集 → スマホで閲覧</span>
         </div>
         <div class="arrival-list-wrap" id="arrival-list-wrap"></div>
@@ -4450,9 +4449,9 @@ function show(id) {
   function dayEventCardHtml(ev){
     return ''
       + '<div class="day-event-card" data-day-event="' + ev.id + '">'
-      +   '<input type="text" class="day-event-time" value="' + escH(ev.startTime) + '" data-field="startTime" placeholder="10:00" inputmode="numeric" maxlength="5">'
+      +   '<input type="time" class="day-event-time" value="' + escH(ev.startTime) + '" data-field="startTime">'
       +   '<span class="day-event-tilde">〜</span>'
-      +   '<input type="text" class="day-event-time end" value="' + escH(ev.endTime || '') + '" data-field="endTime" placeholder="—" inputmode="numeric" maxlength="5">'
+      +   '<input type="time" class="day-event-time end" value="' + escH(ev.endTime || '') + '" data-field="endTime">'
       +   '<input type="text" class="day-event-label" value="' + escH(ev.label) + '" data-field="label" placeholder="項目名（例：音響チェック）">'
       +   '<button class="day-event-del" data-action="del-day-event" title="削除">×</button>'
       + '</div>';
