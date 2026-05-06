@@ -1105,16 +1105,15 @@
     text-align: center;
     padding: 10px 14px;
   }
-  /* セクション見出し（エディトリアル風・斜体ミックスケース） */
+  /* セクション見出し（ゴシック・ミックスケース・控えめ） */
   #mode-day-schedule.active > #sub-arrival::before {
     content: 'Staff In';
     display: block;
     padding: 22px 28px 12px;
     text-align: center;
-    font-family: 'Hiragino Mincho ProN', 'Noto Serif JP', Georgia, 'Times New Roman', serif;
-    font-size: 26px;
-    font-weight: 400;
-    font-style: italic;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+    font-size: 24px;
+    font-weight: 500;
     letter-spacing: 0.02em;
     color: #e8e8e2;
     text-transform: none;
@@ -1124,10 +1123,9 @@
     display: block;
     padding: 22px 28px 12px;
     text-align: center;
-    font-family: 'Hiragino Mincho ProN', 'Noto Serif JP', Georgia, 'Times New Roman', serif;
-    font-size: 26px;
-    font-weight: 400;
-    font-style: italic;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+    font-size: 24px;
+    font-weight: 500;
     letter-spacing: 0.02em;
     color: #e8e8e2;
     text-transform: none;
@@ -1214,7 +1212,7 @@
     border-radius: 6px;
     padding: 8px 14px;
     display: grid;
-    grid-template-columns: 130px 16px 130px 1fr 26px;
+    grid-template-columns: 105px 14px 105px 1fr 26px;
     gap: 10px;
     align-items: center;
     transition: border-color 0.12s, background 0.12s;
@@ -1600,7 +1598,7 @@
     border-radius: 6px;
     padding: 8px 14px;
     display: grid;
-    grid-template-columns: 130px 1fr 26px;
+    grid-template-columns: 105px 1fr 26px;
     gap: 10px;
     align-items: center;
     transition: border-color 0.12s, background 0.12s;
@@ -2820,7 +2818,7 @@
     <!-- ── 新タブ構造（A案）親タブ＋動的 children-bar ───────── -->
     <div class="tab-bar">
       <div class="tab-bar-row">
-        <button class="parent-tab active" data-parent="schedule">SCHEDULE</button>
+        <button class="parent-tab active" data-parent="schedule">CALENDAR</button>
         <button class="parent-tab" data-parent="day-schedule">DAY SCHEDULE</button>
         <button class="parent-tab" data-parent="rehearsal">REHEARSAL</button>
         <button class="parent-tab no-children" data-parent="info">INFO</button>
