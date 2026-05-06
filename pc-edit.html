@@ -689,6 +689,32 @@
     align-self: center;
   }
   .parent-tabs-spacer { flex: 1; }
+
+  /* REHEARSAL 内：テクリハ／全体リハーサル 切替ボタン */
+  .rh-mode-toggle {
+    display: inline-flex;
+    gap: 6px;
+    margin-left: 16px;
+  }
+  .rh-mode-btn {
+    background: #14130f;
+    border: 1px solid #2c2a27;
+    color: #a8a8a0;
+    border-radius: 6px;
+    padding: 8px 18px;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: background 0.12s, border-color 0.12s, color 0.12s;
+  }
+  .rh-mode-btn:hover { color: #e8e8e2; border-color: #5a5a53; }
+  .rh-mode-btn.active {
+    background: rgba(232,154,74,0.18);
+    border-color: #e89a4a;
+    color: #f0a85a;
+  }
   /* tab-bar 内のLINEボタンは廃止（タブ整理で削除） */
   /* 子タブ帯：A案モック準拠（margin-top -1px で親タブに重ねる／左右マージン無し→tab-bar padding を活用） */
   .children-bar {
@@ -2833,10 +2859,11 @@
       <div class="pc-rh-title-block">
         <div class="pc-rh-title">
           <span class="pc-rh-mode-label">REHEARSAL</span>
-          <span class="pc-rh-rendered-date" id="pc-rh-rendered-date" title="今この一覧が示している日付">— / —</span>
-          <span class="pc-rh-debug" id="pc-rh-debug" title="R45 診断: 現在の日付キー + 各曲の rhNo 一覧">debug: —</span>
+          <div class="rh-mode-toggle">
+            <button class="rh-mode-btn" data-rh-mode="tekuriha" onclick="window.__showRehearsalSubMode('tekuriha')">テクリハ</button>
+            <button class="rh-mode-btn active" data-rh-mode="rehearsal-main" onclick="window.__showRehearsalSubMode('rehearsal-main')">全体リハーサル</button>
+          </div>
         </div>
-        <div class="pc-rh-hint">曲・MC・アンコール の追加から、リハ番号・タグ・メモまで全部ここで編集／日付ごとに別管理</div>
       </div>
       <div class="pc-rh-actions">
         <button id="pc-btn-set" class="pc-btn primary">セトリ順</button>
@@ -2910,9 +2937,12 @@
       <div class="pc-rh-header">
         <div class="pc-rh-title-block">
           <div class="pc-rh-title">
-            <span class="pc-rh-mode-label">TEKURIHA</span>
+            <span class="pc-rh-mode-label">REHEARSAL</span>
+            <div class="rh-mode-toggle">
+              <button class="rh-mode-btn active" data-rh-mode="tekuriha" onclick="window.__showRehearsalSubMode('tekuriha')">テクリハ</button>
+              <button class="rh-mode-btn" data-rh-mode="rehearsal-main" onclick="window.__showRehearsalSubMode('rehearsal-main')">全体リハーサル</button>
+            </div>
           </div>
-          <div class="pc-rh-hint">テクニカルリハーサル — B1〜B4 ブロック単位で進行管理</div>
         </div>
       </div>
       <div class="mode-placeholder">
@@ -4384,12 +4414,8 @@ function show(id) {
 
   const tabConfig = {
     childrenOf: {
-      // 'schedule': CALENDAR のみ（HOTEL は独立タブへ移動）→ 子タブなし
-      // 'day-schedule': 子タブ撤廃 → 親タブ直下で両方並列表示
-      rehearsal: [
-        { id: 'rehearsal-main', label: '全体リハーサル' },
-        { id: 'tekuriha',       label: 'テクリハ' }
-      ]
+      // すべての親タブで子タブシステムを廃止（REHEARSAL も含む）
+      // REHEARSAL 内でテクリハ／全体リハーサルはインラインボタンで切替
     },
     contentForChild: {
       'calendar':       { mode: 'mode-schedule',     sub: 'sub-calendar' },
@@ -4402,13 +4428,14 @@ function show(id) {
     contentForParent: {
       info: 'mode-info',
       'day-schedule': 'mode-day-schedule',
-      schedule: 'mode-schedule', // CALENDAR タブ：mode-schedule + sub-calendar
-      hotel: 'mode-schedule'     // HOTEL タブ：mode-schedule + sub-hotel
+      schedule: 'mode-schedule',
+      hotel: 'mode-schedule',
+      rehearsal: 'mode-rehearsal' // REHEARSAL：デフォルトでテクリハに切替（下で扱う）
     }
   };
   const tabState = {
     activeParent: 'schedule',
-    activeChildBy: { 'day-schedule': 'arrival', rehearsal: 'rehearsal-main' }
+    activeChildBy: { 'day-schedule': 'arrival', rehearsal: 'tekuriha' }
   };
 
   function showParent(parent){
@@ -4509,7 +4536,36 @@ function show(id) {
       renderArrivals();
       renderDaySchedule();
     }
+    if (parent === 'rehearsal') {
+      // REHEARSAL：直近のサブモード（tekuriha or rehearsal-main）を活性化
+      const sub = tabState.activeChildBy.rehearsal || 'tekuriha';
+      document.querySelectorAll('.mode-content').forEach(function(c){ c.classList.remove('active'); });
+      if (sub === 'tekuriha') {
+        document.getElementById('mode-tekuriha').classList.add('active');
+      } else {
+        document.getElementById('mode-rehearsal').classList.add('active');
+        if (typeof window.__rehearsalRender === 'function') window.__rehearsalRender();
+      }
+      // インライン切替ボタンの active 状態を更新
+      document.querySelectorAll('.rh-mode-btn').forEach(function(b){
+        b.classList.toggle('active', b.getAttribute('data-rh-mode') === sub);
+      });
+    }
   }
+  // REHEARSAL 内 テクリハ／全体リハーサル 切替ボタン
+  window.__showRehearsalSubMode = function(mode) {
+    tabState.activeChildBy.rehearsal = mode;
+    document.querySelectorAll('.mode-content').forEach(function(c){ c.classList.remove('active'); });
+    if (mode === 'tekuriha') {
+      document.getElementById('mode-tekuriha').classList.add('active');
+    } else {
+      document.getElementById('mode-rehearsal').classList.add('active');
+      if (typeof window.__rehearsalRender === 'function') window.__rehearsalRender();
+    }
+    document.querySelectorAll('.rh-mode-btn').forEach(function(b){
+      b.classList.toggle('active', b.getAttribute('data-rh-mode') === mode);
+    });
+  };
 
   document.querySelectorAll('.parent-tab').forEach(function(b){
     b.addEventListener('click', function(){
