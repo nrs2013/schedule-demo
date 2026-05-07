@@ -2007,30 +2007,68 @@
   /* D45b: 右端ドラッグハンドル（会場帯を伸縮）*/
   .pc-cal-venue-band-resize-handle {
     position: absolute;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    width: 8px;
+    right: -2px;
+    top: -1px;
+    bottom: -1px;
+    width: 12px;
     cursor: ew-resize;
     background: transparent;
     z-index: 3;
+    border-radius: 0 3px 3px 0;
+    transition: background 0.12s;
+  }
+  .pc-cal-venue-band-resize-handle::after {
+    content: '';
+    position: absolute;
+    right: 2px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 2px;
+    height: 8px;
+    background: rgba(216,184,120,0.5);
+    border-radius: 1px;
+    opacity: 0;
+    transition: opacity 0.12s;
   }
   .pc-cal-venue-band-resize-handle:hover {
-    background: rgba(216,184,120,0.55);
+    background: rgba(216,184,120,0.35);
   }
-  /* D48: 左端ハンドル（startDate 変更） */
+  .pc-cal-venue-band-resize-handle:hover::after {
+    opacity: 1;
+    background: #f0f0ec;
+  }
+  /* D48/D50: 左端ハンドル（startDate 変更） */
   .pc-cal-venue-band-resize-handle-left {
     position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 8px;
+    left: -2px;
+    top: -1px;
+    bottom: -1px;
+    width: 12px;
     cursor: ew-resize;
     background: transparent;
     z-index: 3;
+    border-radius: 3px 0 0 3px;
+    transition: background 0.12s;
+  }
+  .pc-cal-venue-band-resize-handle-left::after {
+    content: '';
+    position: absolute;
+    left: 2px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 2px;
+    height: 8px;
+    background: rgba(216,184,120,0.5);
+    border-radius: 1px;
+    opacity: 0;
+    transition: opacity 0.12s;
   }
   .pc-cal-venue-band-resize-handle-left:hover {
-    background: rgba(216,184,120,0.55);
+    background: rgba(216,184,120,0.35);
+  }
+  .pc-cal-venue-band-resize-handle-left:hover::after {
+    opacity: 1;
+    background: #f0f0ec;
   }
   /* D49: 会場帯の中央（移動可能領域）は move カーソル、ピルも grab */
   .pc-cal-venue-band {
@@ -2045,10 +2083,10 @@
   .pc-cal-drag-ghost {
     position: fixed;
     pointer-events: none;
-    opacity: 0.85;
+    opacity: 0.92;
     z-index: 10000;
-    transform: translate(-50%, -50%);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    transform: translate(-50%, -50%) scale(1.05);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.7), 0 0 0 1px rgba(216,184,120,0.7);
   }
   .pc-cal-drag-ghost.pc-cal-venue-band {
     margin: 0 !important;
