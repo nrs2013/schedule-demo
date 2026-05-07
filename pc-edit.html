@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260507.131555">
+<meta name="build-version" content="20260507.131938">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -2552,9 +2552,24 @@
     border: 1px solid #2c2a27;
     border-radius: 8px;
     padding: 18px;
-    height: fit-content;
+    /* D79: メモ欄を下まで広げるため flex column 化＆viewport いっぱいに */
+    height: calc(100vh - 220px);
     position: sticky;
     top: 12px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  /* D79: メモセクションは詳細パネルの残り空間を埋める */
+  .pc-detail-memo-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 0 !important;
+  }
+  .pc-detail-memo-section .pc-detail-memo-edit {
+    flex: 1;
+    resize: none;
   }
   .pc-detail-date {
     font-size: 24px;
@@ -3555,7 +3570,7 @@
 
       <!-- 子: CALENDAR -->
       <div class="sub-content active" id="sub-calendar">
-        <div class="pc-cal-legend" id="pc-cal-legend"></div>
+        <!-- D80: 凡例バー撤去（EVENTSパレットに同じ色付きブロックが常時表示されてるため冗長） -->
         <div class="pc-cal-grid">
           <div id="pc-cal-month"></div>
           <!-- D34b/D41: イベントパレット + 公演名（VENUES）ブロック -->
@@ -5244,9 +5259,9 @@ function show(id) {
       html += '</div>';
     }
 
-    // MEMO
+    // MEMO（D79: パネル下端まで自動で広がる）
     const userMemo = calMemos[dateKey] || '';
-    html += '<div class="pc-detail-section">';
+    html += '<div class="pc-detail-section pc-detail-memo-section">';
     html += '<div class="pc-detail-section-label">MEMO</div>';
     html += '<textarea class="pc-detail-memo-edit" data-field="memo" placeholder="自由メモ">' + escH(userMemo) + '</textarea>';
     html += '</div>';
@@ -5445,18 +5460,8 @@ function show(id) {
     }
   }
 
-  function renderLegend(){
-    const el = document.getElementById('pc-cal-legend');
-    if (!el) return;
-    el.innerHTML = ''
-      + '<div class="pc-cal-legend-item"><span class="pc-cal-legend-pill show"></span><span class="pc-cal-legend-label">本番</span></div>'
-      + '<div class="pc-cal-legend-item"><span class="pc-cal-legend-pill rh"></span><span class="pc-cal-legend-label">リハ</span></div>'
-      + '<div class="pc-cal-legend-item"><span class="pc-cal-legend-pill tek"></span><span class="pc-cal-legend-label">テクリハ</span></div>'
-      + '<div class="pc-cal-legend-item"><span class="pc-cal-legend-pill setup"></span><span class="pc-cal-legend-label">仕込み</span></div>'
-      + '<div class="pc-cal-legend-item"><span class="pc-cal-legend-pill genchi"></span><span class="pc-cal-legend-label">現地仕込み</span></div>'
-      + '<div class="pc-cal-legend-item"><span class="pc-cal-legend-pill stay"></span><span class="pc-cal-legend-label">移動 / 滞在</span></div>'
-      + '<div class="pc-cal-legend-item" style="margin-left:auto"><span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:rgba(232,154,74,0.85);margin-right:6px;vertical-align:middle"></span><span class="pc-cal-legend-label">今日</span></div>';
-  }
+  // D80: 凡例バー撤去のため renderLegend は no-op に（呼び出し元はそのまま安全動作）
+  function renderLegend(){ /* no-op: legend bar removed in D80 */ }
 
   // ── 新タブ構造（A案）：parent-tab → children-bar → mode-content/sub-content ──
   let calRendered = false, hotelRendered = false, arrivalRendered = false, infoRendered = false;
