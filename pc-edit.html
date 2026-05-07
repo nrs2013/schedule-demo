@@ -2163,15 +2163,16 @@
     border: 1px solid #2c2a27;
     border-top: none;
   }
+  /* D46: overflow: hidden 撤去（会場帯がセル境界をまたいで連結する） */
   .pc-cal-cell {
     background: #1a1918;
     padding: 6px;
     min-height: 96px;
-    overflow: hidden;
     display: flex;
     flex-direction: column;
     cursor: pointer;
     transition: background 0.12s;
+    position: relative;
   }
   .pc-cal-cell:hover { background: #221f1c; }
   .pc-cal-cell.outside { background: #141312; }
