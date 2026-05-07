@@ -3217,9 +3217,12 @@
           <div id="pc-cal-month"></div>
           <!-- D34b/D41: イベントパレット + 公演名（VENUES）ブロック -->
           <aside class="cal-events-palette" id="cal-events-palette">
-            <div class="cal-events-palette-title">EVENTS</div>
-            <div class="cal-events-palette-list">
-              <div class="cal-event-block setup" draggable="true" data-type="setup" data-default-label="仕込み">仕込み</div>
+            <div class="cal-events-palette-title">📍 公演名（VENUES）</div>
+            <div class="cal-venues-input-row">
+              <input type="text" id="venue-name-input" placeholder="例：横浜アリーナ">
+              <button type="button" id="venue-name-add-btn">追加</button>
+            </div>
+            <div class="cal-events-palette-list" id="cal-venues-list"></div>
               <div class="cal-event-block tek"   draggable="true" data-type="tek"   data-default-label="テクリハ">テクリハ</div>
               <div class="cal-event-block rh"    draggable="true" data-type="rh"    data-default-label="リハ">リハ</div>
               <div class="cal-event-block show"  draggable="true" data-type="show"  data-default-label="本番">本番</div>
@@ -3227,12 +3230,9 @@
               <div class="cal-event-block off"   draggable="true" data-type="stay"  data-default-label="休">OFF / 休</div>
             </div>
             <hr class="cal-events-palette-divider">
-            <div class="cal-events-palette-title">📍 公演名（VENUES）</div>
-            <div class="cal-venues-input-row">
-              <input type="text" id="venue-name-input" placeholder="例：横浜アリーナ">
-              <button type="button" id="venue-name-add-btn">追加</button>
-            </div>
-            <div class="cal-events-palette-list" id="cal-venues-list"></div>
+            <div class="cal-events-palette-title">EVENTS</div>
+            <div class="cal-events-palette-list">
+              <div class="cal-event-block setup" draggable="true" data-type="setup" data-default-label="仕込み">仕込み</div>
           </aside>
           <div class="pc-cal-detail" id="pc-cal-detail"></div>
         </div>
