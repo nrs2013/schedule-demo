@@ -1800,10 +1800,10 @@
   .pc-cal-legend-pill.stay  { background: rgba(168,168,160,0.10); }
   .pc-cal-legend-label { color: #a8a8a0; letter-spacing: 0.05em; }
 
-  /* D34: パレット用に3列に拡張（月グリッド ｜ 詳細パネル ｜ パレット） */
+  /* D34b: パレットを月グリッドと詳細パネルの間に配置（月 ｜ パレット ｜ 詳細） */
   .pc-cal-grid {
     display: grid;
-    grid-template-columns: minmax(640px, 1.6fr) minmax(240px, 1fr) 130px;
+    grid-template-columns: minmax(640px, 1.6fr) 130px minmax(240px, 1fr);
     gap: 14px;
     padding: 0 16px 16px;
   }
@@ -3107,8 +3107,7 @@
         <div class="pc-cal-legend" id="pc-cal-legend"></div>
         <div class="pc-cal-grid">
           <div id="pc-cal-month"></div>
-          <div class="pc-cal-detail" id="pc-cal-detail"></div>
-          <!-- D34: イベントパレット（D&D で日付セルにドロップ） -->
+          <!-- D34b: イベントパレット（カレンダーと詳細パネルの間） -->
           <aside class="cal-events-palette" id="cal-events-palette">
             <div class="cal-events-palette-title">EVENTS</div>
             <div class="cal-events-palette-list">
@@ -3121,6 +3120,7 @@
               <button class="cal-event-block-add" id="cal-event-block-add" type="button">＋ ブロック追加</button>
             </div>
           </aside>
+          <div class="pc-cal-detail" id="pc-cal-detail"></div>
         </div>
       </div>
 
