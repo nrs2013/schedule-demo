@@ -1977,7 +1977,7 @@
     cursor: pointer;
     height: 16px;
     line-height: 14px;
-    transition: background 0.12s, border-color 0.12s;
+    transition: background 0.12s, border-color 0.12s, transform 0.15s ease-out;
     position: relative;
     z-index: 1;
   }
@@ -2061,6 +2061,14 @@
     outline: 2px dashed rgba(216,184,120,0.85);
     outline-offset: -3px;
     background: #221d18 !important;
+  }
+  /* D50: resize 中の preview range（伸びてる感のアニメ） */
+  .pc-cal-cell.resize-preview {
+    background: rgba(216,184,120,0.12) !important;
+    transition: background 0.15s ease-out;
+  }
+  .pc-cal-cell.resize-preview .pc-cal-venue-band {
+    transition: width 0.15s ease-out;
   }
   /* D47/D48: ドラッグ中の見た目 */
   .pc-cal-pill.dragging,
@@ -6592,20 +6600,47 @@ function show(id) {
   });
   document.body.addEventListener('mousemove', function(e) {
     if (!resizeGroupId) return;
-    const cell = e.target.closest('.pc-cal-cell');
+    const elem = document.elementFromPoint(e.clientX, e.clientY);
+    const cell = elem && elem.closest ? elem.closest('.pc-cal-cell') : null;
     if (!cell || cell.classList.contains('outside')) return;
     const dk = cell.getAttribute('data-date');
     if (!dk) return;
     if (dk !== lastResizeDk) {
-      document.querySelectorAll('.pc-cal-cell.resize-target').forEach(function(c){ c.classList.remove('resize-target'); });
-      cell.classList.add('resize-target');
       lastResizeDk = dk;
+      // D50: preview range をハイライト（startDate〜現在 / 現在〜endDate を視覚化）
+      document.querySelectorAll('.pc-cal-cell.resize-target, .pc-cal-cell.resize-preview').forEach(function(c){
+        c.classList.remove('resize-target');
+        c.classList.remove('resize-preview');
+      });
+      cell.classList.add('resize-target');
+      const group = window.__calApi && window.__calApi.getVenueGroupByDateKey(resizeStartDk);
+      if (group) {
+        let rangeStart, rangeEnd;
+        if (resizeMode === 'right') {
+          // startDate 〜 dk を preview
+          rangeStart = group.startDate;
+          rangeEnd = (dk > group.startDate) ? dk : group.startDate;
+        } else {
+          // dk 〜 endDate を preview
+          rangeStart = (dk < group.endDate) ? dk : group.endDate;
+          rangeEnd = group.endDate;
+        }
+        document.querySelectorAll('.pc-cal-cell').forEach(function(c){
+          const cdk = c.getAttribute('data-date');
+          if (cdk && !c.classList.contains('outside') && cdk >= rangeStart && cdk <= rangeEnd) {
+            c.classList.add('resize-preview');
+          }
+        });
+      }
     }
   });
   document.body.addEventListener('mouseup', function(e) {
     if (!resizeGroupId) return;
     document.body.style.cursor = '';
-    document.querySelectorAll('.pc-cal-cell.resize-target').forEach(function(c){ c.classList.remove('resize-target'); });
+    document.querySelectorAll('.pc-cal-cell.resize-target, .pc-cal-cell.resize-preview').forEach(function(c){
+      c.classList.remove('resize-target');
+      c.classList.remove('resize-preview');
+    });
     if (lastResizeDk && lastResizeDk !== resizeStartDk && window.__calApi) {
       const group = window.__calApi.getVenueGroupByDateKey(resizeStartDk);
       if (group) {
