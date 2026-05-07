@@ -2032,9 +2032,30 @@
   .pc-cal-venue-band-resize-handle-left:hover {
     background: rgba(216,184,120,0.55);
   }
-  /* D48: 会場帯の中央（移動可能領域）でカーソルを move に */
-  .pc-cal-venue-band[draggable="true"] {
-    cursor: move;
+  /* D49: 会場帯の中央（移動可能領域）は move カーソル、ピルも grab */
+  .pc-cal-venue-band {
+    cursor: grab;
+  }
+  .pc-cal-venue-band:active { cursor: grabbing; }
+  .pc-cal-pill {
+    cursor: grab;
+  }
+  .pc-cal-pill:active { cursor: grabbing; }
+  /* D49: ドラッグ中の ghost 要素 */
+  .pc-cal-drag-ghost {
+    position: fixed;
+    pointer-events: none;
+    opacity: 0.85;
+    z-index: 10000;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  }
+  .pc-cal-drag-ghost.pc-cal-venue-band {
+    margin: 0 !important;
+    padding: 1px 8px !important;
+    border-radius: 4px !important;
+    border-left: 1px solid rgba(216,184,120,0.45) !important;
+    border-right: 1px solid rgba(216,184,120,0.45) !important;
   }
   .pc-cal-cell.resize-target {
     outline: 2px dashed rgba(216,184,120,0.85);
@@ -4616,7 +4637,7 @@ function show(id) {
             labelText += ' ' + e.startTime;
           }
         }
-        return '<span class="pc-cal-pill ' + e.type + positionCls + '" draggable="true" data-event-index="' + (calEvents.indexOf(e)) + '">' + escH(labelText) + '</span>';
+        return '<span class="pc-cal-pill ' + e.type + positionCls + '" data-event-index="' + (calEvents.indexOf(e)) + '">' + escH(labelText) + '</span>';
       }).join('');
       // D39: 会場帯（venue band）描画
       let venueBandHtml = '';
@@ -4640,7 +4661,7 @@ function show(id) {
           const showLeftHandle = (bandPosCls === '' || bandPosCls === ' bar-start');
           const rightHandleHtml = showRightHandle ? '<span class="pc-cal-venue-band-resize-handle" draggable="false"></span>' : '';
           const leftHandleHtml = showLeftHandle ? '<span class="pc-cal-venue-band-resize-handle-left" draggable="false"></span>' : '';
-          venueBandHtml = '<div class="pc-cal-venue-band' + bandPosCls + '" draggable="true" data-venue-group-id="' + venueGroup.id + '" data-source-date="' + dkCur + '" title="' + escH(venueGroup.venue) + '">' + leftHandleHtml + escH(bandLabel) + rightHandleHtml + '</div>';
+          venueBandHtml = '<div class="pc-cal-venue-band' + bandPosCls + '" data-venue-group-id="' + venueGroup.id + '" data-source-date="' + dkCur + '" title="' + escH(venueGroup.venue) + '">' + leftHandleHtml + escH(bandLabel) + rightHandleHtml + '</div>';
         }
       }
       html += '<div class="pc-cal-cell ' + cls.join(' ') + '" data-date="' + fmtDateKey(d) + '">';
@@ -6261,42 +6282,7 @@ function show(id) {
     if (!payload) return;
     const dk = cell.getAttribute('data-date');
     if (!dk) return;
-    // D48: 会場帯（venue band）全体のドラッグ移動
-    if (payload.kind === 'move-venue' && payload.groupId && payload.sourceDate && window.__calApi) {
-      const group = window.__calApi.getVenueGroupByDateKey(payload.sourceDate);
-      if (!group) return;
-      // sourceDate からのオフセット（日数）
-      const sd = payload.sourceDate.split('-').map(Number);
-      const td = dk.split('-').map(Number);
-      const sourceD = new Date(sd[0], sd[1]-1, sd[2]);
-      const targetD = new Date(td[0], td[1]-1, td[2]);
-      const offsetDays = Math.round((targetD - sourceD) / 86400000);
-      if (offsetDays === 0) return;
-      // 新 startDate / endDate を計算
-      function shift(dkStr, days) {
-        const p = dkStr.split('-').map(Number);
-        const d = new Date(p[0], p[1]-1, p[2]);
-        d.setDate(d.getDate() + days);
-        return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
-      }
-      const newStart = shift(group.startDate, offsetDays);
-      const newEnd = shift(group.endDate, offsetDays);
-      window.__calApi.updateVenueGroup(payload.groupId, { startDate: newStart, endDate: newEnd });
-      return;
-    }
-    // D47: 既存イベント移動
-    if (payload.kind === 'move-event' && typeof payload.eventIndex === 'number' && window.__calApi) {
-      // calEvents 全配列から index 取得（IIFE スコープ越えのため API 経由）
-      const allEvs = window.__calApi.listAllEvents ? window.__calApi.listAllEvents() : null;
-      if (allEvs && allEvs[payload.eventIndex]) {
-        const oldEv = allEvs[payload.eventIndex];
-        if (oldEv.date !== dk) {
-          const newEv = Object.assign({}, oldEv, { date: dk });
-          window.__calApi.updateEvent(oldEv, newEv);
-        }
-      }
-      return;
-    }
+    // D49: move-venue / move-event は自前ドラッグ（mousedown/up）で処理するためここでは扱わない
     // D41/D43: 公演名ブロックがドロップされたら指定日数分の venueGroup を作成
     if (payload.kind === 'venue' && payload.venueName) {
       const days = Math.max(1, parseInt(payload.venueDays, 10) || 1);
@@ -6457,44 +6443,129 @@ function show(id) {
 
   renderVenueDefList();
 
-  // D47/D48: ピル と会場帯のドラッグ移動
-  document.body.addEventListener('dragstart', function(e) {
-    // D48: 会場帯（venue band）のドラッグ移動
-    const band = e.target.closest && e.target.closest('.pc-cal-venue-band');
-    if (band) {
-      // resize handle 上から始まった場合は移動 D&D を発動しない
-      if (e.target.classList && (e.target.classList.contains('pc-cal-venue-band-resize-handle') || e.target.classList.contains('pc-cal-venue-band-resize-handle-left'))) {
-        e.preventDefault();
-        return;
-      }
-      const groupId = band.getAttribute('data-venue-group-id');
-      const sourceDate = band.getAttribute('data-source-date');
-      if (!groupId || !sourceDate) { e.preventDefault(); return; }
-      band.classList.add('dragging');
-      e.dataTransfer.effectAllowed = 'move';
-      e.dataTransfer.setData('text/plain', JSON.stringify({
-        kind: 'move-venue',
-        groupId: groupId,
-        sourceDate: sourceDate
-      }));
-      return;
-    }
-    // D47: イベントピル
-    const pill = e.target.closest && e.target.closest('.pc-cal-pill');
-    if (!pill) return;
-    const cell = pill.closest('.pc-cal-cell');
-    if (!cell) return;
-    const idx = parseInt(pill.getAttribute('data-event-index'), 10);
-    if (isNaN(idx)) return;
-    pill.classList.add('dragging');
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', JSON.stringify({
-      kind: 'move-event',
-      eventIndex: idx
-    }));
-  });
-  document.body.addEventListener('dragend', function(e) {
+  // D49: 自前ドラッグ実装（band/pill の移動）— HTML5 D&D ではなく mousedown/mousemove/mouseup で
+  let manualDragMode = null; // 'move-venue' | 'move-pill'
+  let manualDragGroupId = null;
+  let manualDragSourceDate = null;
+  let manualDragEventIndex = null;
+  let manualDragGhost = null;
+  let manualDragMoved = false;
+  function clearManualDragState() {
+    document.querySelectorAll('.pc-cal-cell.drag-over').forEach(function(c){ c.classList.remove('drag-over'); });
     document.querySelectorAll('.dragging').forEach(function(el){ el.classList.remove('dragging'); });
+    if (manualDragGhost) { manualDragGhost.remove(); manualDragGhost = null; }
+    document.body.style.cursor = '';
+    manualDragMode = null;
+    manualDragGroupId = null;
+    manualDragSourceDate = null;
+    manualDragEventIndex = null;
+    manualDragMoved = false;
+  }
+  document.body.addEventListener('mousedown', function(e) {
+    if (e.button !== 0) return;
+    // resize handle / パレット要素 / モーダル / 入力欄 はスキップ
+    if (e.target.closest && (
+      e.target.closest('.pc-cal-venue-band-resize-handle') ||
+      e.target.closest('.pc-cal-venue-band-resize-handle-left') ||
+      e.target.closest('.cal-events-palette') ||
+      e.target.closest('.event-detail-modal-bg') ||
+      e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' ||
+      e.target.tagName === 'SELECT' || e.target.tagName === 'BUTTON'
+    )) return;
+    const band = e.target.closest && e.target.closest('.pc-cal-venue-band');
+    const pill = e.target.closest && e.target.closest('.pc-cal-pill');
+    if (band) {
+      manualDragMode = 'move-venue';
+      manualDragGroupId = band.getAttribute('data-venue-group-id');
+      manualDragSourceDate = band.getAttribute('data-source-date');
+      manualDragMoved = false;
+      band.classList.add('dragging');
+    } else if (pill) {
+      const idx = parseInt(pill.getAttribute('data-event-index'), 10);
+      if (isNaN(idx)) return;
+      manualDragMode = 'move-pill';
+      manualDragEventIndex = idx;
+      manualDragMoved = false;
+      pill.classList.add('dragging');
+    }
+  });
+  document.addEventListener('mousemove', function(e) {
+    if (!manualDragMode) return;
+    // 数 px 動いて初めて ghost 表示
+    if (!manualDragMoved) {
+      const tgt = manualDragMode === 'move-venue' ? document.querySelector('.pc-cal-venue-band.dragging') : document.querySelector('.pc-cal-pill.dragging');
+      if (!tgt) return;
+      manualDragGhost = tgt.cloneNode(true);
+      manualDragGhost.classList.add('pc-cal-drag-ghost');
+      manualDragGhost.classList.remove('dragging');
+      manualDragGhost.style.left = e.clientX + 'px';
+      manualDragGhost.style.top = e.clientY + 'px';
+      // 内部の handle は消す（ghost 用）
+      manualDragGhost.querySelectorAll('.pc-cal-venue-band-resize-handle, .pc-cal-venue-band-resize-handle-left').forEach(function(h){ h.remove(); });
+      document.body.appendChild(manualDragGhost);
+      manualDragMoved = true;
+      document.body.style.cursor = 'grabbing';
+    }
+    if (manualDragGhost) {
+      manualDragGhost.style.left = e.clientX + 'px';
+      manualDragGhost.style.top = e.clientY + 'px';
+    }
+    // ハイライト
+    const elem = document.elementFromPoint(e.clientX, e.clientY);
+    const cell = elem && elem.closest ? elem.closest('.pc-cal-cell') : null;
+    document.querySelectorAll('.pc-cal-cell.drag-over').forEach(function(c){ c.classList.remove('drag-over'); });
+    if (cell && !cell.classList.contains('outside')) cell.classList.add('drag-over');
+  });
+  document.addEventListener('mouseup', function(e) {
+    if (!manualDragMode) return;
+    const wasMoved = manualDragMoved;
+    const mode = manualDragMode;
+    const grpId = manualDragGroupId;
+    const srcDate = manualDragSourceDate;
+    const evIdx = manualDragEventIndex;
+    // ターゲットセル特定（ghost が pointer-events:none なので elementFromPoint で正しく取れる）
+    const elem = document.elementFromPoint(e.clientX, e.clientY);
+    const cell = elem && elem.closest ? elem.closest('.pc-cal-cell') : null;
+    const targetDk = cell && !cell.classList.contains('outside') ? cell.getAttribute('data-date') : null;
+    clearManualDragState();
+    if (!wasMoved || !targetDk || !window.__calApi) return;
+    if (mode === 'move-venue' && grpId && srcDate && targetDk !== srcDate) {
+      const group = window.__calApi.getVenueGroupByDateKey(srcDate);
+      if (group) {
+        function shift(dkStr, days) {
+          const p = dkStr.split('-').map(Number);
+          const d = new Date(p[0], p[1]-1, p[2]);
+          d.setDate(d.getDate() + days);
+          return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+        }
+        const sd = srcDate.split('-').map(Number);
+        const td = targetDk.split('-').map(Number);
+        const offsetDays = Math.round((new Date(td[0], td[1]-1, td[2]) - new Date(sd[0], sd[1]-1, sd[2])) / 86400000);
+        if (offsetDays !== 0) {
+          window.__calApi.updateVenueGroup(grpId, {
+            startDate: shift(group.startDate, offsetDays),
+            endDate: shift(group.endDate, offsetDays)
+          });
+        }
+      }
+    } else if (mode === 'move-pill' && typeof evIdx === 'number') {
+      const allEvs = window.__calApi.listAllEvents ? window.__calApi.listAllEvents() : null;
+      if (allEvs && allEvs[evIdx]) {
+        const oldEv = allEvs[evIdx];
+        if (oldEv.date !== targetDk) {
+          const newEv = Object.assign({}, oldEv, { date: targetDk });
+          window.__calApi.updateEvent(oldEv, newEv);
+        }
+      }
+    }
+  });
+  // ESC でドラッグキャンセル
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && manualDragMode) clearManualDragState();
+  });
+
+  // 既存の HTML5 D&D（パレット → カレンダー）はそのまま動かす
+  document.body.addEventListener('dragend', function(e) {
     document.querySelectorAll('.pc-cal-cell.drag-over').forEach(function(c){ c.classList.remove('drag-over'); });
   });
 
