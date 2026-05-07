@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260507.105835">
+<meta name="build-version" content="20260507.112332">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -6719,8 +6719,11 @@ function show(id) {
     } else if (pill) {
       const idx = parseInt(pill.getAttribute('data-event-index'), 10);
       if (isNaN(idx)) return;
+      // D68: 掴んだセルの日付を sourceDate として記録（連結バーの中央を掴んでも先頭にならないように）
+      const pillCell = pill.closest('.pc-cal-cell');
       dnd.mode = 'move-pill';
       dnd.eventIndex = idx;
+      dnd.sourceDate = pillCell ? pillCell.getAttribute('data-date') : null;
       dnd.startX = e.clientX; dnd.startY = e.clientY;
       pill.classList.add('dragging');
       e.preventDefault();
@@ -6911,22 +6914,29 @@ function show(id) {
         }
       }
     } else if (mode === 'move-pill' && typeof evIdx === 'number') {
-      // D65: 連結ピル移動時は endDate も同じオフセットで shift（期間維持）
+      // D68: 掴んだセル(srcDate) → 離したセル(targetDk) の offset で oldEv.date / endDate を両方 shift
+      // → 連結バーの中央を掴んでもバーは伸びず、掴んだ位置の関係を保ったまま平行移動する
       const allEvs = window.__calApi.listAllEvents();
       if (allEvs && allEvs[evIdx]) {
         const oldEv = allEvs[evIdx];
-        if (oldEv.date !== targetDk) {
-          const newEv = Object.assign({}, oldEv, { date: targetDk });
-          if (oldEv.endDate && oldEv.endDate !== oldEv.date) {
-            const sd = oldEv.date.split('-').map(Number);
-            const td = targetDk.split('-').map(Number);
-            const offsetDays = Math.round((new Date(td[0], td[1]-1, td[2]) - new Date(sd[0], sd[1]-1, sd[2])) / 86400000);
-            const ed = oldEv.endDate.split('-').map(Number);
-            const newEndD = new Date(ed[0], ed[1]-1, ed[2]);
-            newEndD.setDate(newEndD.getDate() + offsetDays);
-            newEv.endDate = newEndD.getFullYear() + '-' + String(newEndD.getMonth()+1).padStart(2,'0') + '-' + String(newEndD.getDate()).padStart(2,'0');
+        const grabSrcDate = srcDate || oldEv.date;
+        if (grabSrcDate !== targetDk) {
+          function shiftDk(dkStr, days) {
+            const p = dkStr.split('-').map(Number);
+            const d = new Date(p[0], p[1]-1, p[2]);
+            d.setDate(d.getDate() + days);
+            return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
           }
-          window.__calApi.updateEvent(oldEv, newEv);
+          const sd = grabSrcDate.split('-').map(Number);
+          const td = targetDk.split('-').map(Number);
+          const offsetDays = Math.round((new Date(td[0], td[1]-1, td[2]) - new Date(sd[0], sd[1]-1, sd[2])) / 86400000);
+          if (offsetDays !== 0) {
+            const newEv = Object.assign({}, oldEv, { date: shiftDk(oldEv.date, offsetDays) });
+            if (oldEv.endDate && oldEv.endDate !== oldEv.date) {
+              newEv.endDate = shiftDk(oldEv.endDate, offsetDays);
+            }
+            window.__calApi.updateEvent(oldEv, newEv);
+          }
         }
       }
     }
