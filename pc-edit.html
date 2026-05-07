@@ -4585,11 +4585,16 @@ function show(id) {
 
     // D34d: EVENTS セクション（既存編集 + 追加フォーム）は右パレットの D&D + モーダルに代替されたため撤去
 
-    // SHOW（時間編集 - 会場の showTimes を直接編集）
-    if (venue && showTimes[venue]) {
-      const tk = showTimes[venue];
+    // D40: SHOW（DOOR/SHOW 時間編集）は本番日（type=show のイベントがある日）のみ表示
+    const hasShowEvent = evs.some(function(e){ return e.type === 'show'; });
+    // venue は venueGroups（会場帯）優先、なければ既存の同日 venue
+    const vg = (typeof getVenueGroupByDateKey === 'function') ? getVenueGroupByDateKey(dateKey) : null;
+    const showVenue = vg ? vg.venue : venue;
+    if (hasShowEvent && showVenue) {
+      if (!showTimes[showVenue]) showTimes[showVenue] = { door: '17:30', show: '18:30' };
+      const tk = showTimes[showVenue];
       html += '<div class="pc-detail-section">';
-      html += '<div class="pc-detail-section-label">SHOW（' + escH(venue) + '）</div>';
+      html += '<div class="pc-detail-section-label">SHOW（' + escH(showVenue) + '）</div>';
       html += '<div class="pc-detail-time-row"><span class="pc-detail-time-label">DOOR OPEN</span>';
       html += '<input type="time" class="pc-detail-time-input" value="' + escH(tk.door) + '" data-field="door">';
       html += '</div>';
@@ -4717,11 +4722,12 @@ function show(id) {
 
     // D34d: 既存イベント編集 / 削除 / 追加ハンドラは右パレットの D&D + モーダルに代替されたため撤去
 
-    // SHOW 時間編集
+    // D40: SHOW 時間編集（venue は venueGroups 優先）
     detailEl.querySelectorAll('.pc-detail-time-input').forEach(function(inp){
       inp.addEventListener('change', function(){
+        const vg = (typeof getVenueGroupByDateKey === 'function') ? getVenueGroupByDateKey(dateKey) : null;
         const evsForDate = getEvents(d);
-        const venue = evsForDate.length > 0 ? evsForDate[0].venue : '';
+        const venue = vg ? vg.venue : (evsForDate.length > 0 ? evsForDate[0].venue : '');
         if (!venue) return;
         if (!showTimes[venue]) showTimes[venue] = { door: '17:30', show: '18:30' };
         const field = inp.getAttribute('data-field');
