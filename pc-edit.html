@@ -552,23 +552,21 @@
     font-weight: 500;
   }
   .pc-row {
-    /* R50 Phase A2: 左に細いアクセント縦線でカード感を出す（Mail-Check の case-card 風） */
+    /* D29: R50 Phase A2 の左琥珀縦線アクセントを撤去、border は全周 1px solid #2c2a27 で統一 */
     display: grid;
     grid-template-columns: 28px 50px minmax(160px, 0.8fr) 60px 50px 432px minmax(260px, 2fr) 26px;
     gap: 8px;
     padding: 6px 14px;
     background: #1f1e1b;
     border: 1px solid #2c2a27;
-    border-left: 3px solid rgba(232,154,74,0.35);
     border-radius: 6px;
     margin: 3px 8px;
     align-items: center;
     transition: border-color 0.12s, background 0.12s;
   }
-  /* R50 Phase A2: hover で左アクセントが濃くなる */
+  /* D29: hover は枠全体を少し明るく（左アクセント色変化は撤去） */
   .pc-row:hover {
     border-color: #5a5a53;
-    border-left-color: rgba(232,154,74,0.7);
   }
   .pc-row.current {
     background: #221d18;
