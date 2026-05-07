@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260507.113149">
+<meta name="build-version" content="20260507.114005">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -1816,8 +1816,9 @@
   .pc-cal-legend-pill.show  { background: rgba(224,122,95,0.30);  border-color: rgba(224,122,95,0.5); }
   .pc-cal-legend-pill.rh    { background: rgba(126,194,122,0.22); border-color: rgba(126,194,122,0.4); }
   .pc-cal-legend-pill.tek   { background: rgba(106,150,184,0.32); border-color: rgba(106,150,184,0.5); }
-  .pc-cal-legend-pill.setup { background: rgba(184,149,88,0.32);  border-color: rgba(184,149,88,0.5); }
-  .pc-cal-legend-pill.stay  { background: rgba(168,168,160,0.10); }
+  .pc-cal-legend-pill.setup  { background: rgba(184,149,88,0.32);  border-color: rgba(184,149,88,0.5); }
+  .pc-cal-legend-pill.genchi { background: rgba(207,116,67,0.32);  border-color: rgba(207,116,67,0.5); }
+  .pc-cal-legend-pill.stay   { background: rgba(168,168,160,0.10); }
   .pc-cal-legend-label { color: #a8a8a0; letter-spacing: 0.05em; }
 
   /* D34c: 2列レイアウトに戻し、右側を「パレット → 詳細」の縦並びに（同じ箱トーンで馴染ませる） */
@@ -1868,8 +1869,10 @@
   }
   .cal-event-block:active { cursor: grabbing; transform: scale(0.96); }
   .cal-event-block.dragging { opacity: 0.4; }
-  .cal-event-block.setup { background: rgba(184,149,88,0.22);  color: #e8c890; border-color: rgba(184,149,88,0.5); }
-  .cal-event-block.tek   { background: rgba(106,150,184,0.32); color: #a8d4e8; border-color: rgba(106,150,184,0.55); }
+  .cal-event-block.setup  { background: rgba(184,149,88,0.22);  color: #e8c890; border-color: rgba(184,149,88,0.5); }
+  /* D70: 現地仕込み — 仕込みより少し赤寄りの琥珀（会場入り後の仕込みであることを区別） */
+  .cal-event-block.genchi { background: rgba(207,116,67,0.28);  color: #f0b88a; border-color: rgba(207,116,67,0.55); }
+  .cal-event-block.tek    { background: rgba(106,150,184,0.32); color: #a8d4e8; border-color: rgba(106,150,184,0.55); }
   .cal-event-block.rh    { background: rgba(126,194,122,0.22); color: #b8d9b0; border-color: rgba(126,194,122,0.5); }
   .cal-event-block.show  { background: rgba(232,154,74,0.22);  color: #f0a85a; border-color: rgba(232,154,74,0.6); }
   .cal-event-block.stay  { background: rgba(106,150,184,0.20); color: #a8d4e8; border-color: rgba(106,150,184,0.5); }
@@ -2425,7 +2428,9 @@
   .pc-cal-pill.show  { background: rgba(224,122,95,0.30);  color: #f5a89c; border-color: rgba(224,122,95,0.5); font-weight: 600; }
   .pc-cal-pill.rh    { background: rgba(126,194,122,0.22); color: #b8d9b0; border-color: rgba(126,194,122,0.4); }
   .pc-cal-pill.tek   { background: rgba(106,150,184,0.32); color: #a8d4e8; border-color: rgba(106,150,184,0.5); }
-  .pc-cal-pill.setup { background: rgba(184,149,88,0.32);  color: #e8c890; border-color: rgba(184,149,88,0.5); }
+  .pc-cal-pill.setup  { background: rgba(184,149,88,0.32);  color: #e8c890; border-color: rgba(184,149,88,0.5); }
+  /* D70: 現地仕込み — 仕込み(amber)とテクリハ(blue)の中間を意識した copper トーン */
+  .pc-cal-pill.genchi { background: rgba(207,116,67,0.32);   color: #f0b88a; border-color: rgba(207,116,67,0.55); }
   /* D64: stay 系（移動/休）の bar-mid/end が薄すぎる問題を修正 — 連結時に途切れて見えないように */
   .pc-cal-pill.stay  { background: rgba(168,168,160,0.22); color: #b8b8b0; font-weight: 500; border-color: rgba(168,168,160,0.4); }
   /* R54: 連続イベントを横バー化（同会場・同種別で繋がってる感を出す） */
@@ -3474,21 +3479,22 @@
           <aside class="cal-events-palette" id="cal-events-palette">
             <div class="cal-events-palette-title">Venues</div>
             <div class="cal-venues-input-row">
+              <!-- D70: 日数入力撤去（追加した会場ブロックを掴んでカレンダーで伸ばす運用に） -->
               <input type="text" id="venue-name-input" placeholder="例：横浜アリーナ">
-              <input type="number" id="venue-days-input" min="1" max="30" value="1" title="日数">
-              <span class="days-suffix">日</span>
               <button type="button" id="venue-name-add-btn">追加</button>
             </div>
             <div class="cal-events-palette-list" id="cal-venues-list"></div>
             <hr class="cal-events-palette-divider">
             <div class="cal-events-palette-title">EVENTS</div>
             <div class="cal-events-palette-list">
-              <div class="cal-event-block setup" draggable="true" data-type="setup" data-default-label="仕込み">仕込み</div>
-              <div class="cal-event-block tek"   draggable="true" data-type="tek"   data-default-label="テクリハ">テクリハ</div>
-              <div class="cal-event-block rh"    draggable="true" data-type="rh"    data-default-label="リハ">リハ</div>
-              <div class="cal-event-block show"  draggable="true" data-type="show"  data-default-label="本番">本番</div>
-              <div class="cal-event-block stay"  draggable="true" data-type="stay"  data-default-label="移動">移動</div>
-              <div class="cal-event-block off"   draggable="true" data-type="stay"  data-default-label="休">OFF / 休</div>
+              <div class="cal-event-block setup"  draggable="true" data-type="setup"  data-default-label="仕込み">仕込み</div>
+              <!-- D70: 現地仕込み（会場入り後の現地での仕込み）を新規追加 -->
+              <div class="cal-event-block genchi" draggable="true" data-type="genchi" data-default-label="現地仕込み">現地仕込み</div>
+              <div class="cal-event-block tek"    draggable="true" data-type="tek"    data-default-label="テクリハ">テクリハ</div>
+              <div class="cal-event-block rh"     draggable="true" data-type="rh"     data-default-label="リハ">リハ</div>
+              <div class="cal-event-block show"   draggable="true" data-type="show"   data-default-label="本番">本番</div>
+              <div class="cal-event-block stay"   draggable="true" data-type="stay"   data-default-label="移動">移動</div>
+              <div class="cal-event-block off"    draggable="true" data-type="stay"   data-default-label="休">OFF / 休</div>
             </div>
           </aside>
           <div class="pc-cal-detail" id="pc-cal-detail"></div>
@@ -4950,12 +4956,9 @@ function show(id) {
     const dateKey = fmtDateKey(d);
     const venue = evs.length > 0 ? evs[0].venue : '';
 
-    // ヘッダー：日付＋エクスポート/インポート/保存ボタン
+    // ヘッダー：D70 重複日付（pc-detail-date / pc-detail-dow）撤去（マスター日付バーが上に出てるため）
     let html = '<div class="pc-detail-header">';
-    html += '<div>';
-    html += '<div class="pc-detail-date">' + (d.getMonth()+1) + '/' + d.getDate() + ' (' + dow + ')</div>';
-    html += '<div class="pc-detail-dow">' + d.getFullYear() + '年' + (d.getMonth()+1) + '月' + d.getDate() + '日</div>';
-    html += '</div>';
+    html += '<div></div>'; // spacer for flex justify-content
     html += '<div class="pc-detail-header-actions">';
     html += '<button class="pc-detail-share-btn" data-action="share-sync" title="📲 同期URLをLINEで共有（スタッフのスマホに反映）">📲</button>';
     html += '<button class="pc-detail-export-btn" data-action="export-cal" title="JSONエクスポート">⤓</button>';
@@ -4980,39 +4983,25 @@ function show(id) {
     const group = getEventGroupForDate(d);
     const groupVenue = group ? group.venue : venue;
 
-    html += '<div class="pc-detail-section">';
+    // D70: 会場プルダウン+「+会場」ボタン撤去（venue band ドラッグで指定するため）
     if (group) {
+      html += '<div class="pc-detail-section">';
       const sm = (group.startDate.getMonth()+1) + '/' + group.startDate.getDate();
       const em = (group.endDate.getMonth()+1) + '/' + group.endDate.getDate();
       const days = Math.round((group.endDate - group.startDate) / 86400000) + 1;
       const span = (sm === em) ? sm : (sm + '〜' + em);
-      html += '<div class="pc-detail-section-label">🎯 公演グループ <span style="font-weight:400;letter-spacing:0.05em;text-transform:none;color:#76766f;margin-left:6px;">' + span + '（' + days + '日 / ' + group.events.length + 'イベント）</span></div>';
+      const venueLabel = groupVenue ? ('・' + groupVenue) : '';
+      html += '<div class="pc-detail-section-label">🎯 公演グループ <span style="font-weight:400;letter-spacing:0.05em;text-transform:none;color:#76766f;margin-left:6px;">' + span + '（' + days + '日 / ' + group.events.length + 'イベント）' + escH(venueLabel) + '</span></div>';
       // D37: グループ名入力欄
       html += '<div style="margin-bottom:8px;">';
       html += '<input type="text" class="pc-detail-group-name" data-field="group-name" placeholder="公演名（例：横浜アリーナ DAY1〜2公演）" value="' + escH(group.groupName || '') + '" style="width:100%;background:#14130f;border:1px solid #2c2a27;color:#e8e8e2;font-family:inherit;font-size:14px;padding:6px 10px;border-radius:5px;box-sizing:border-box;">';
       html += '</div>';
-    } else {
-      html += '<div class="pc-detail-section-label">会場</div>';
+      html += '</div>';
+    } else if (evs.length === 0) {
+      html += '<div class="pc-detail-section">';
+      html += '<div style="color:#76766f;font-size:11px;line-height:1.6;">この日にはまだイベントがありません。<br>右パレットから「仕込み・本番」などをドラッグしてください。<br>会場名は VENUES から会場帯をドラッグで貼ると自動で紐づきます。</div>';
+      html += '</div>';
     }
-    html += '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">';
-    html += '<select class="pc-detail-venue-select" data-field="venue">';
-    html += '<option value="">— 未設定 —</option>';
-    Object.keys(showTimes).forEach(function(v){
-      const sel = (v === groupVenue) ? ' selected' : '';
-      html += '<option value="' + escH(v) + '"' + sel + '>' + escH(v) + '</option>';
-    });
-    if (groupVenue && !showTimes[groupVenue]) {
-      html += '<option value="' + escH(groupVenue) + '" selected>' + escH(groupVenue) + '</option>';
-    }
-    html += '</select>';
-    html += '<button class="pc-detail-add-venue-btn" data-action="add-venue">+ 会場</button>';
-    html += '</div>';
-    if (!group && evs.length === 0) {
-      html += '<div style="color:#76766f;font-size:11px;margin-top:8px;line-height:1.5;">この日にはまだイベントがありません。<br>右パレットから「仕込み・本番」などをドラッグしてください。</div>';
-    } else if (!group) {
-      html += '<div style="color:#76766f;font-size:11px;margin-top:8px;line-height:1.5;">この日は「移動 / 休」のみです。<br>会場対象（仕込み・テクリハ・リハ・本番）を貼るとグループ化されます。</div>';
-    }
-    html += '</div>';
 
     // D34d: EVENTS セクション（既存編集 + 追加フォーム）は右パレットの D&D + モーダルに代替されたため撤去
 
@@ -5244,6 +5233,7 @@ function show(id) {
       + '<div class="pc-cal-legend-item"><span class="pc-cal-legend-pill rh"></span><span class="pc-cal-legend-label">リハ</span></div>'
       + '<div class="pc-cal-legend-item"><span class="pc-cal-legend-pill tek"></span><span class="pc-cal-legend-label">テクリハ</span></div>'
       + '<div class="pc-cal-legend-item"><span class="pc-cal-legend-pill setup"></span><span class="pc-cal-legend-label">仕込み</span></div>'
+      + '<div class="pc-cal-legend-item"><span class="pc-cal-legend-pill genchi"></span><span class="pc-cal-legend-label">現地仕込み</span></div>'
       + '<div class="pc-cal-legend-item"><span class="pc-cal-legend-pill stay"></span><span class="pc-cal-legend-label">移動 / 滞在</span></div>'
       + '<div class="pc-cal-legend-item" style="margin-left:auto"><span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:rgba(232,154,74,0.85);margin-right:6px;vertical-align:middle"></span><span class="pc-cal-legend-label">今日</span></div>';
   }
@@ -5547,11 +5537,12 @@ function show(id) {
     });
 
     let dayLabel = null;
-    // 優先順: 本番 → 仕込み → リハ/テクリハ → stay（移動/休）
-    const showEv  = evs.find(function(e){ return e.type === 'show'; });
-    const setupEv = evs.find(function(e){ return e.type === 'setup'; });
-    const rhEv    = evs.find(function(e){ return e.type === 'rh' || e.type === 'tek'; });
-    const stayEv  = evs.find(function(e){ return e.type === 'stay'; });
+    // 優先順: 本番 → 現地仕込み → 仕込み → リハ/テクリハ → stay（移動/休）
+    const showEv   = evs.find(function(e){ return e.type === 'show'; });
+    const genchiEv = evs.find(function(e){ return e.type === 'genchi'; });
+    const setupEv  = evs.find(function(e){ return e.type === 'setup'; });
+    const rhEv     = evs.find(function(e){ return e.type === 'rh' || e.type === 'tek'; });
+    const stayEv   = evs.find(function(e){ return e.type === 'stay'; });
 
     if (showEv) {
       // DAY n: 同じ show event 内での 1-indexed の日数
@@ -5568,6 +5559,8 @@ function show(id) {
         if (lastEnd === null || ed > lastEnd) lastEnd = ed;
       });
       dayLabel = (lastEnd && dateKey === lastEnd) ? '千秋楽' : ('DAY ' + dayN);
+    } else if (genchiEv) {
+      dayLabel = '現地仕込み';
     } else if (setupEv) {
       dayLabel = '仕込み';
     } else if (rhEv) {
