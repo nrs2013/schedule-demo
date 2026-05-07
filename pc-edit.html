@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260507.101013">
+<meta name="build-version" content="20260507.101320">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -2389,10 +2389,14 @@
     background: rgba(232,154,74,0.85);
     color: #1a1a16;
   }
-  /* D58: overflow: hidden 撤去 — pill が隣セルまで食い込んで連結バー化 */
+  /* D58/D59: pill が隣セルまで食い込んで連結バー化（flex→block で負 margin 有効化）*/
   .pc-cal-events {
-    display: flex; flex-direction: column; gap: 2px;
-    width: 100%; flex-grow: 1;
+    display: block;
+    width: 100%;
+    flex-grow: 1;
+  }
+  .pc-cal-events .pc-cal-pill + .pc-cal-pill {
+    margin-top: 2px;
   }
   .pc-cal-pill {
     font-family: 'JetBrains Mono', 'Noto Sans JP', monospace;
