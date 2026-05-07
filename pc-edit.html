@@ -1980,6 +1980,19 @@
     border-left: 0;
     margin-left: -1px;
   }
+  /* D45: ハイライト選択（クリックで選択 / Delete で削除） */
+  .pc-cal-pill.selected {
+    outline: 2px solid #d8b878;
+    outline-offset: -1px;
+    filter: brightness(1.2);
+    box-shadow: 0 0 0 1px rgba(216,184,120,0.6);
+  }
+  .pc-cal-venue-band.selected {
+    outline: 2px solid #d8b878;
+    outline-offset: -1px;
+    filter: brightness(1.25);
+    box-shadow: 0 0 0 1px rgba(216,184,120,0.7);
+  }
   /* D34: 詳細モーダル */
   .event-detail-modal-bg {
     position: fixed; inset: 0;
@@ -3217,6 +3230,13 @@
           <div id="pc-cal-month"></div>
           <!-- D34b/D41: イベントパレット + 公演名（VENUES）ブロック -->
           <aside class="cal-events-palette" id="cal-events-palette">
+            <div class="cal-events-palette-title">📍 公演名（VENUES）</div>
+            <div class="cal-venues-input-row">
+              <input type="text" id="venue-name-input" placeholder="例：横浜アリーナ">
+              <button type="button" id="venue-name-add-btn">追加</button>
+            </div>
+            <div class="cal-events-palette-list" id="cal-venues-list"></div>
+            <hr class="cal-events-palette-divider">
             <div class="cal-events-palette-title">EVENTS</div>
             <div class="cal-events-palette-list">
               <div class="cal-event-block setup" draggable="true" data-type="setup" data-default-label="仕込み">仕込み</div>
@@ -3226,13 +3246,6 @@
               <div class="cal-event-block stay"  draggable="true" data-type="stay"  data-default-label="移動">移動</div>
               <div class="cal-event-block off"   draggable="true" data-type="stay"  data-default-label="休">OFF / 休</div>
             </div>
-            <hr class="cal-events-palette-divider">
-            <div class="cal-events-palette-title">📍 公演名（VENUES）</div>
-            <div class="cal-venues-input-row">
-              <input type="text" id="venue-name-input" placeholder="例：横浜アリーナ">
-              <button type="button" id="venue-name-add-btn">追加</button>
-            </div>
-            <div class="cal-events-palette-list" id="cal-venues-list"></div>
           </aside>
           <div class="pc-cal-detail" id="pc-cal-detail"></div>
         </div>
@@ -6322,8 +6335,50 @@ function show(id) {
 
   renderVenueDefList();
 
-  // D39: 既存の会場帯クリック → 編集 / 削除メニュー（簡易プロンプト）
+  // D45: クリックで選択ハイライト（pill / venue-band 両方）/ Delete で削除
   document.body.addEventListener('click', function(e) {
+    const pill = e.target.closest('.pc-cal-pill');
+    const band = e.target.closest('.pc-cal-venue-band');
+    if (pill || band) {
+      e.stopPropagation();
+      document.querySelectorAll('.pc-cal-pill.selected, .pc-cal-venue-band.selected').forEach(function(el){ el.classList.remove('selected'); });
+      if (pill) pill.classList.add('selected');
+      if (band) band.classList.add('selected');
+      return;
+    }
+    if (e.target.closest('.cal-events-palette') || e.target.closest('.event-detail-modal-bg')) return;
+    document.querySelectorAll('.pc-cal-pill.selected, .pc-cal-venue-band.selected').forEach(function(el){ el.classList.remove('selected'); });
+  });
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key !== 'Delete' && e.key !== 'Backspace') return;
+    const ae = document.activeElement;
+    if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.tagName === 'SELECT' || ae.isContentEditable)) return;
+    const selBand = document.querySelector('.pc-cal-venue-band.selected');
+    const selPill = document.querySelector('.pc-cal-pill.selected');
+    if (!selBand && !selPill) return;
+    e.preventDefault();
+    if (selBand) {
+      const groupId = selBand.getAttribute('data-venue-group-id');
+      if (groupId && window.__calApi) window.__calApi.deleteVenueGroup(groupId);
+      return;
+    }
+    if (selPill) {
+      const cell = selPill.closest('.pc-cal-cell');
+      if (!cell) return;
+      const dk = cell.getAttribute('data-date');
+      if (!dk || !window.__calApi) return;
+      const evs = window.__calApi.getEventsByDateKey(dk);
+      if (evs.length === 0) return;
+      const wrap = selPill.parentElement;
+      const idx = wrap ? Array.from(wrap.children).indexOf(selPill) : 0;
+      const ev = evs[Math.min(idx, evs.length - 1)];
+      window.__calApi.deleteEvent(ev);
+    }
+  });
+
+  // D45: 会場帯ダブルクリック → venue 名 prompt 編集（D39 代替）
+  document.body.addEventListener('dblclick', function(e) {
     const band = e.target.closest('.pc-cal-venue-band');
     if (!band) return;
     e.stopPropagation();
@@ -6334,25 +6389,15 @@ function show(id) {
     if (!groupId || !dk || !window.__calApi) return;
     const group = window.__calApi.getVenueGroupByDateKey(dk);
     if (!group) return;
-    const action = prompt(
-      '会場帯の操作（' + group.venue + '）\n\n' +
-      '・会場名を変更：新しい会場名を入力\n' +
-      '・削除：「delete」と入力\n' +
-      '・キャンセル：空のまま OK',
-      group.venue
-    );
-    if (action === null) return;
-    const a = action.trim();
-    if (a === 'delete' || a === 'DELETE') {
-      if (confirm('この会場帯を削除しますか？\n（' + group.startDate + '〜' + group.endDate + ' / ' + group.venue + '）')) {
-        window.__calApi.deleteVenueGroup(groupId);
-      }
-    } else if (a && a !== group.venue) {
-      window.__calApi.updateVenueGroup(groupId, { venue: a });
+    const newName = prompt('会場名を変更', group.venue);
+    if (newName === null) return;
+    const v = newName.trim();
+    if (v && v !== group.venue) {
+      window.__calApi.updateVenueGroup(groupId, { venue: v });
     }
   });
 
-  console.log('[D34/D39] CALENDAR D&D + モーダル + 会場帯ドラッグ init OK');
+  console.log('[D34/D45] CALENDAR D&D + モーダル + 会場帯ドラッグ + 選択削除 init OK');
 })();
 </script>
 </body>
