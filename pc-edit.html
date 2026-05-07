@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260507.095653">
+<meta name="build-version" content="20260507.095854">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -16,7 +16,7 @@
     const res = await fetch(location.pathname + '?cb=' + Date.now(), { cache: 'no-store' });
     if (!res.ok) return;
     const html = await res.text();
-    const m = html.match(/<meta name="build-version" content="20260507.095653"]+)"/);
+    const m = html.match(/<meta name="build-version" content="([^"]+)"/);
     const remote = m && m[1];
     const local = document.querySelector('meta[name="build-version"]').content;
     if (remote && remote !== local) {
@@ -2105,6 +2105,46 @@
   .pc-cal-venue-band:active { cursor: grabbing; }
   .pc-cal-pill {
     cursor: grab;
+  }
+
+  /* D54: pill 連結バー（venue band と同じ要領） */
+  .pc-cal-pill { position: relative; }
+  .pc-cal-pill.bar-start {
+    border-radius: 3px 0 0 3px;
+    border-right: 0;
+    margin-right: -7px;
+    padding-right: 5px;
+  }
+  .pc-cal-pill.bar-mid {
+    border-radius: 0;
+    border-left: 0;
+    border-right: 0;
+    margin-left: -7px;
+    margin-right: -7px;
+    padding-left: 5px;
+    padding-right: 5px;
+  }
+  .pc-cal-pill.bar-end {
+    border-radius: 0 3px 3px 0;
+    border-left: 0;
+    margin-left: -7px;
+    padding-left: 5px;
+  }
+  /* D54: pill の右端 resize handle */
+  .pc-cal-pill-resize-handle {
+    position: absolute;
+    right: -2px;
+    top: -1px;
+    bottom: -1px;
+    width: 10px;
+    cursor: ew-resize;
+    background: transparent;
+    z-index: 3;
+    border-radius: 0 3px 3px 0;
+    transition: background 0.12s;
+  }
+  .pc-cal-pill-resize-handle:hover {
+    background: rgba(216,184,120,0.35);
   }
   .pc-cal-pill:active { cursor: grabbing; }
   /* D49: ドラッグ中の ghost 要素 */
@@ -4470,20 +4510,27 @@ function show(id) {
   function isToday(d){ return fmtDateKey(d) === fmtDateKey(TODAY); }
   function isSameDay(a,b){ return fmtDateKey(a) === fmtDateKey(b); }
   function getEvents(d){
+    // D54: event は date(=startDate)〜endDate(任意, なければ date) の範囲で表示
     const k = fmtDateKey(d);
-    return calEvents.filter(function(e){ return e.date === k; });
+    return calEvents.filter(function(e){
+      const start = e.date;
+      const end = e.endDate || e.date;
+      return k >= start && k <= end;
+    });
   }
-  // R54: 同じ会場・同じ種別のイベントが前後の日にあるか判定（横バー連結のため）
+  // D54: 同一 event 内の連続性（startDate〜endDate の途中の日かどうか）
   function isContinuousEvent(d, ev){
-    if (!ev || !ev.type) return { hasPrev:false, hasNext:false };
+    if (!ev) return { hasPrev:false, hasNext:false };
+    const start = ev.date;
+    const end = ev.endDate || ev.date;
     const prevD = new Date(d); prevD.setDate(d.getDate() - 1);
     const nextD = new Date(d); nextD.setDate(d.getDate() + 1);
-    const prevEvs = getEvents(prevD);
-    const nextEvs = getEvents(nextD);
-    const same = function(e2){
-      return e2.type === ev.type && (e2.venue || '') === (ev.venue || '');
+    const prevK = fmtDateKey(prevD);
+    const nextK = fmtDateKey(nextD);
+    return {
+      hasPrev: prevK >= start && prevK <= end,
+      hasNext: nextK >= start && nextK <= end
     };
-    return { hasPrev: prevEvs.some(same), hasNext: nextEvs.some(same) };
   }
   function buildMonth(year, month){
     const first = new Date(year, month, 1);
@@ -4711,7 +4758,9 @@ function show(id) {
             labelText += ' ' + e.startTime;
           }
         }
-        return '<span class="pc-cal-pill ' + e.type + positionCls + '" data-event-index="' + (calEvents.indexOf(e)) + '">' + escH(labelText) + '</span>';
+        const showPillHandle = (positionCls === '' || positionCls === ' bar-end');
+        const pillHandleHtml = showPillHandle ? '<span class="pc-cal-pill-resize-handle" draggable="false"></span>' : '';
+        return '<span class="pc-cal-pill ' + e.type + positionCls + '" data-event-index="' + (calEvents.indexOf(e)) + '">' + escH(labelText) + pillHandleHtml + '</span>';
       }).join('');
       // D39: 会場帯（venue band）描画
       let venueBandHtml = '';
@@ -6537,9 +6586,22 @@ function show(id) {
 
     const rightHandle = e.target.closest && e.target.closest('.pc-cal-venue-band-resize-handle:not(.pc-cal-venue-band-resize-handle-left)');
     const leftHandle = e.target.closest && e.target.closest('.pc-cal-venue-band-resize-handle-left');
+    const pillHandle = e.target.closest && e.target.closest('.pc-cal-pill-resize-handle');
     const band = e.target.closest && e.target.closest('.pc-cal-venue-band');
     const pill = e.target.closest && e.target.closest('.pc-cal-pill');
 
+    if (pillHandle && pill) {
+      const idx = parseInt(pill.getAttribute('data-event-index'), 10);
+      if (!isNaN(idx)) {
+        dnd.mode = 'resize-event-right';
+        dnd.eventIndex = idx;
+        dnd.startX = e.clientX; dnd.startY = e.clientY;
+        document.body.style.cursor = 'ew-resize';
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      return;
+    }
     if ((rightHandle || leftHandle) && band) {
       dnd.mode = leftHandle ? 'resize-left' : 'resize-right';
       dnd.groupId = band.getAttribute('data-venue-group-id');
@@ -6604,6 +6666,36 @@ function show(id) {
     });
     if (dnd.mode === 'move-band' || dnd.mode === 'move-pill') {
       cell.classList.add('drag-over');
+    } else if (dnd.mode === 'resize-event-right') {
+      // D54: イベントピル右端ドラッグで endDate 更新（リアルタイム）
+      const allEvs = window.__calApi.listAllEvents();
+      const ev = allEvs && allEvs[dnd.eventIndex];
+      if (ev) {
+        const start = ev.date;
+        const newEnd = (dk > start) ? dk : start;
+        const oldEnd = ev.endDate || ev.date;
+        if (newEnd !== oldEnd) {
+          const newEv = Object.assign({}, ev, { endDate: newEnd });
+          if (newEnd === ev.date) delete newEv.endDate;
+          window.__calApi.updateEvent(ev, newEv);
+        }
+        // ハイライト
+        requestAnimationFrame(function(){
+          document.querySelectorAll('.pc-cal-cell.drag-over, .pc-cal-cell.resize-target, .pc-cal-cell.resize-preview').forEach(function(el){
+            el.classList.remove('drag-over');
+            el.classList.remove('resize-target');
+            el.classList.remove('resize-preview');
+          });
+          const t = document.querySelector('.pc-cal-cell[data-date="' + dk + '"]');
+          if (t) t.classList.add('resize-target');
+          document.querySelectorAll('.pc-cal-cell').forEach(function(c){
+            const cdk = c.getAttribute('data-date');
+            if (cdk && !c.classList.contains('outside') && cdk >= start && cdk <= newEnd) {
+              c.classList.add('resize-preview');
+            }
+          });
+        });
+      }
     } else if (dnd.mode === 'resize-right' || dnd.mode === 'resize-left') {
       const group = window.__calApi && window.__calApi.getVenueGroupByDateKey(dnd.sourceDate);
       if (group) {
