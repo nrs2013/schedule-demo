@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260507.100452">
+<meta name="build-version" content="20260507.100830">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -2107,8 +2107,19 @@
     cursor: grab;
   }
 
-  /* D54: pill 連結バー（venue band と同じ要領） */
-  .pc-cal-pill { position: relative; }
+  /* D54/D57: pill 連結バー（venue band と同じ要領）— block 化 + bar-mid/end でも幅確保 */
+  .pc-cal-pill {
+    position: relative;
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 16px;
+  }
+  .pc-cal-pill.bar-mid::before,
+  .pc-cal-pill.bar-end::before {
+    content: '\00A0';
+    visibility: hidden;
+  }
   .pc-cal-pill.bar-start {
     border-radius: 3px 0 0 3px;
     border-right: 0;
