@@ -3,8 +3,28 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="build-version" content="20260507.095307">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
+<script>
+// D52: 自動更新検知—Cmd+Shift+R 不要にする。サーバの最新版が違ったら即強制リロード
+(async function checkForUpdate() {
+  try {
+    const res = await fetch(location.pathname + '?cb=' + Date.now(), { cache: 'no-store' });
+    if (!res.ok) return;
+    const html = await res.text();
+    const m = html.match(/<meta name="build-version" content="([^"]+)"/);
+    const remote = m && m[1];
+    const local = document.querySelector('meta[name="build-version"]').content;
+    if (remote && remote !== local) {
+      window.location.replace(location.pathname + '?v=' + Date.now());
+    }
+  } catch (e) { /* オフライン等は無視 */ }
+})();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@300;400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
