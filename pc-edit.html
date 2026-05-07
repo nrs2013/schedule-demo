@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260507.115845">
+<meta name="build-version" content="20260507.120250">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -2371,6 +2371,10 @@
     border: 1px solid #2c2a27;
     border-top: none;
   }
+  /* D75: 偶数月／奇数月で背景をうっすら差別化 — 月の境目を視認しやすく */
+  .pc-cal-cell.month-even { background: #1d1c1a; }
+  .pc-cal-cell.month-odd  { background: #161514; }
+  /* outside / today / selected は上記より優先（既存ルール） */
   /* D73: 月初セルに「X月」のミニラベル（左上、控えめな琥珀） */
   .pc-cal-cell.is-month-start {
     border-left: 2px solid rgba(216,184,120,0.55);
@@ -4962,8 +4966,9 @@ function show(id) {
     const prevScroll = monthEl.scrollTop;
     const wasInitialRender = !monthEl._d71Initialized;
 
-    // アンカー（中心月）
-    const anchor = calState.selected || TODAY;
+    // D75: アンカーは TODAY 固定。click のたびに anchor が変わると range も ±1ヶ月ずれて
+    // scrollTop の pixel 位置が別の月を指すようになり、「月が勝手に動く」現象が起きるため。
+    const anchor = TODAY;
     const baseY = anchor.getFullYear();
     const baseM = anchor.getMonth();
 
@@ -5026,6 +5031,8 @@ function show(id) {
       const colStart = (dayIdx === 0) ? ' style="grid-column-start: ' + (((d.getDay()+6)%7)+1) + '"' : '';
 
       const cls = ['pc-cal-cell'];
+      // D75: 偶数月／奇数月で背景を分ける
+      cls.push((d.getMonth() % 2 === 0) ? 'month-even' : 'month-odd');
       if (isMonthStart) cls.push('is-month-start');
       if (isToday(d)) cls.push('today');
       if (calState.selected && isSameDay(d, calState.selected)) cls.push('selected');
