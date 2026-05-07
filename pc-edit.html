@@ -1811,8 +1811,7 @@
   .pc-cal-grid > #pc-cal-month { grid-column: 1; grid-row: 1 / 3; }
   .pc-cal-grid > .cal-events-palette { grid-column: 2; grid-row: 1; }
   .pc-cal-grid > .pc-cal-detail { grid-column: 2; grid-row: 2; }
-  /* D34c: イベントパレットを詳細パネルと同じトーンに（深茶・ボーダー・角丸 8px で馴染ませる）
-     D35: プリセットセクション追加 */
+  /* D34c: イベントパレットを詳細パネルと同じトーンに（深茶・ボーダー・角丸 8px で馴染ませる） */
   .cal-events-palette {
     background: #1c1b19;
     border: 1px solid #2c2a27;
@@ -1832,50 +1831,6 @@
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
-  }
-  .cal-events-palette-divider {
-    border: none;
-    border-top: 1px solid #2c2a27;
-    margin: 14px 0 10px;
-  }
-  /* D35: プリセットブロック（複数イベント一括貼り） */
-  .cal-event-preset {
-    flex-basis: 100%;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 10px;
-    background: rgba(216,184,120,0.06);
-    border: 1px solid rgba(216,184,120,0.30);
-    border-radius: 5px;
-    cursor: grab;
-    user-select: none;
-    transition: transform 0.1s, opacity 0.12s, background 0.12s;
-  }
-  .cal-event-preset:hover { background: rgba(216,184,120,0.12); border-color: rgba(216,184,120,0.55); }
-  .cal-event-preset:active { cursor: grabbing; transform: scale(0.98); }
-  .cal-event-preset.dragging { opacity: 0.4; }
-  .cal-event-preset .preset-icon {
-    font-size: 13px;
-    color: #d8b878;
-    flex-shrink: 0;
-  }
-  .cal-event-preset .preset-text {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    line-height: 1.25;
-  }
-  .cal-event-preset .preset-name {
-    font-size: 12px;
-    font-weight: 500;
-    color: #e8e8e2;
-    letter-spacing: 0.02em;
-  }
-  .cal-event-preset .preset-sub {
-    font-size: 10px;
-    color: #76766f;
-    letter-spacing: 0.04em;
   }
   .cal-event-block {
     display: flex;
@@ -3154,7 +3109,7 @@
         <div class="pc-cal-legend" id="pc-cal-legend"></div>
         <div class="pc-cal-grid">
           <div id="pc-cal-month"></div>
-          <!-- D34b/D35: イベントパレット（D&D + 会場プリセット） -->
+          <!-- D34b: イベントパレット（カレンダーと詳細パネルの間） -->
           <aside class="cal-events-palette" id="cal-events-palette">
             <div class="cal-events-palette-title">EVENTS</div>
             <div class="cal-events-palette-list">
@@ -3166,9 +3121,6 @@
               <div class="cal-event-block off"   draggable="true" data-type="stay"  data-default-label="休">OFF / 休</div>
               <button class="cal-event-block-add" id="cal-event-block-add" type="button">＋ ブロック追加</button>
             </div>
-            <hr class="cal-events-palette-divider">
-            <div class="cal-events-palette-title">📍 PRESETS</div>
-            <div class="cal-events-palette-list" id="cal-events-presets-list"></div>
           </aside>
           <div class="pc-cal-detail" id="pc-cal-detail"></div>
         </div>
@@ -4263,19 +4215,12 @@ function show(id) {
   let calState = { selected: TODAY, year: TODAY.getFullYear(), month: TODAY.getMonth() };
 
   // D34: D&D 用に外部から calEvents を操作する API を window に公開
-  // D35: プリセット一括追加用に pushEvents 追加
   window.__calApi = {
     getEventsByDateKey: function(dateKey) {
       return calEvents.filter(function(e){ return e.date === dateKey; });
     },
     pushEvent: function(ev) {
       calEvents.push(ev);
-      saveCalEvents();
-      renderMonth();
-      renderDetail();
-    },
-    pushEvents: function(evs) {
-      evs.forEach(function(ev){ calEvents.push(ev); });
       saveCalEvents();
       renderMonth();
       renderDetail();
@@ -5823,7 +5768,7 @@ function show(id) {
   </div>
 </div>
 
-<!-- D34: CALENDAR ドラッグ&ドロップ + 詳細モーダル制御 / D35: 会場プリセット -->
+<!-- D34: CALENDAR ドラッグ&ドロップ + 詳細モーダル制御 -->
 <script>
 (function() {
   const palette = document.getElementById('cal-events-palette');
@@ -5833,128 +5778,9 @@ function show(id) {
   let editingCtx = null; // { ev, dateKey, isNew }
   const DOW = ['日','月','火','水','木','金','土'];
 
-  // D35: 会場プリセット定義（dayOffset = 開始日からの日数差）
-  const LS_KEY_PRESETS = 'schedule-studio:venuePresets:v1';
-  const DEFAULT_PRESETS = [
-    {
-      id: 'p-yokohama-day12',
-      name: '横浜アリーナ',
-      sub: '仕込み + DAY1〜2',
-      venue: '横浜アリーナ',
-      events: [
-        { dayOffset: 0, type: 'setup', label: '仕込み' },
-        { dayOffset: 1, type: 'tek',   label: 'テクリハ' },
-        { dayOffset: 1, type: 'rh',    label: 'リハ' },
-        { dayOffset: 1, type: 'show',  label: 'DAY1' },
-        { dayOffset: 2, type: 'rh',    label: 'リハ' },
-        { dayOffset: 2, type: 'show',  label: 'DAY2' }
-      ]
-    },
-    {
-      id: 'p-tokyo-day12',
-      name: '東京ドーム',
-      sub: '仕込み + DAY1〜2',
-      venue: '東京ドーム',
-      events: [
-        { dayOffset: 0, type: 'setup', label: '仕込み' },
-        { dayOffset: 1, type: 'tek',   label: 'テクリハ' },
-        { dayOffset: 1, type: 'rh',    label: 'リハ' },
-        { dayOffset: 1, type: 'show',  label: 'DAY1' },
-        { dayOffset: 2, type: 'rh',    label: 'リハ' },
-        { dayOffset: 2, type: 'show',  label: 'DAY2' }
-      ]
-    },
-    {
-      id: 'p-kyocera-day12',
-      name: '京セラドーム',
-      sub: '仕込み + DAY1〜2',
-      venue: '京セラドーム',
-      events: [
-        { dayOffset: 0, type: 'setup', label: '仕込み' },
-        { dayOffset: 1, type: 'rh',    label: 'リハ' },
-        { dayOffset: 1, type: 'show',  label: 'DAY1' },
-        { dayOffset: 2, type: 'show',  label: 'DAY2' }
-      ]
-    },
-    {
-      id: 'p-paypay-day12',
-      name: 'PayPayドーム',
-      sub: '仕込み + DAY1〜2',
-      venue: 'PayPayドーム',
-      events: [
-        { dayOffset: 0, type: 'setup', label: '仕込み' },
-        { dayOffset: 1, type: 'rh',    label: 'リハ' },
-        { dayOffset: 1, type: 'show',  label: 'DAY1' },
-        { dayOffset: 2, type: 'show',  label: '千秋楽' }
-      ]
-    }
-  ];
-  let venuePresets = (function(){
-    try {
-      const v = localStorage.getItem(LS_KEY_PRESETS);
-      if (v === null) return JSON.parse(JSON.stringify(DEFAULT_PRESETS));
-      return JSON.parse(v);
-    } catch(e) { return JSON.parse(JSON.stringify(DEFAULT_PRESETS)); }
-  })();
-  function savePresets() {
-    try { localStorage.setItem(LS_KEY_PRESETS, JSON.stringify(venuePresets)); } catch(e){}
-  }
-
   function parseDateKey(dk) {
     const p = dk.split('-').map(Number);
     return new Date(p[0], p[1]-1, p[2]);
-  }
-  function fmtDateKey(d){
-    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
-  }
-
-  function renderPresets() {
-    const list = document.getElementById('cal-events-presets-list');
-    if (!list) return;
-    list.innerHTML = venuePresets.map(function(p){
-      return ''
-        + '<div class="cal-event-preset" draggable="true" data-preset-id="' + p.id + '">'
-        +   '<span class="preset-icon">📍</span>'
-        +   '<div class="preset-text">'
-        +     '<span class="preset-name">' + (p.name || '') + '</span>'
-        +     '<span class="preset-sub">' + (p.sub || '') + '</span>'
-        +   '</div>'
-        + '</div>';
-    }).join('');
-    list.querySelectorAll('.cal-event-preset[draggable="true"]').forEach(function(b){
-      b.addEventListener('dragstart', function(e){
-        b.classList.add('dragging');
-        e.dataTransfer.effectAllowed = 'copy';
-        e.dataTransfer.setData('text/plain', JSON.stringify({
-          kind: 'preset',
-          presetId: b.getAttribute('data-preset-id')
-        }));
-      });
-      b.addEventListener('dragend', function(){
-        b.classList.remove('dragging');
-        document.querySelectorAll('.pc-cal-cell.drag-over').forEach(function(c){ c.classList.remove('drag-over'); });
-      });
-    });
-  }
-
-  function applyPreset(presetId, startDateKey) {
-    const preset = venuePresets.find(function(p){ return p.id === presetId; });
-    if (!preset) return;
-    const startD = parseDateKey(startDateKey);
-    const summary = preset.events.map(function(e){
-      const d = new Date(startD);
-      d.setDate(d.getDate() + e.dayOffset);
-      return '・' + (d.getMonth()+1) + '/' + d.getDate() + '  ' + e.label;
-    }).join('\n');
-    if (!confirm('「' + preset.venue + '」プリセットを以下の通り一括追加しますか？\n\n' + summary + '\n\n（venue: ' + preset.venue + '）')) return;
-    const evs = preset.events.map(function(e){
-      const d = new Date(startD);
-      d.setDate(d.getDate() + e.dayOffset);
-      return { date: fmtDateKey(d), type: e.type, label: e.label, venue: preset.venue };
-    });
-    if (window.__calApi && window.__calApi.pushEvents) {
-      window.__calApi.pushEvents(evs);
-    }
   }
 
   function openModal(ctx) {
@@ -6016,16 +5842,9 @@ function show(id) {
     try {
       payload = JSON.parse(e.dataTransfer.getData('text/plain'));
     } catch (err) { return; }
-    if (!payload) return;
+    if (!payload || !payload.type) return;
     const dk = cell.getAttribute('data-date');
     if (!dk) return;
-    // D35: プリセット一括追加
-    if (payload.kind === 'preset' && payload.presetId) {
-      applyPreset(payload.presetId, dk);
-      return;
-    }
-    // 通常の単発イベント
-    if (!payload.type) return;
     const newEv = { date: dk, type: payload.type, label: payload.defaultLabel, venue: '' };
     openModal({ ev: newEv, dateKey: dk, isNew: true });
   });
@@ -6094,41 +5913,15 @@ function show(id) {
     if (e.key === 'Escape' && modalBg.classList.contains('open')) closeModal();
   });
 
-  // D35: ＋プリセット追加（簡易プロンプト形式）
+  // ＋ブロック追加（Phase C で実装予定）
   const addBtn = document.getElementById('cal-event-block-add');
   if (addBtn) {
-    addBtn.textContent = '＋ プリセット追加';
     addBtn.addEventListener('click', function() {
-      const name = prompt('プリセット名（例：横浜アリーナ）');
-      if (!name || !name.trim()) return;
-      const venue = prompt('会場名（カレンダーに反映される会場）', name.trim());
-      if (venue === null) return;
-      const sub = prompt('サブタイトル（例：仕込み + DAY1〜2）', '仕込み + DAY1〜2') || '';
-      const evsCount = parseInt(prompt('日数（例：3 = 仕込み1日 + 本番2日）', '3'), 10);
-      if (!evsCount || evsCount < 1) return;
-      // 簡易テンプレ：1日目 仕込み、2日目以降 本番（DAY1〜DAYn-1）
-      const events = [{ dayOffset: 0, type: 'setup', label: '仕込み' }];
-      for (let i = 1; i < evsCount; i++) {
-        events.push({ dayOffset: i, type: 'show', label: 'DAY' + i });
-      }
-      const newPreset = {
-        id: 'p-' + Date.now(),
-        name: name.trim(),
-        sub: sub.trim() || (evsCount + ' 日間'),
-        venue: venue.trim() || name.trim(),
-        events: events
-      };
-      venuePresets.push(newPreset);
-      savePresets();
-      renderPresets();
-      alert('プリセット「' + newPreset.name + '」を追加しました。\n\n細かい中身（テクリハ追加など）は今後の改修で編集 UI を追加予定です。');
+      alert('ブロック追加機能は Phase C で実装予定です（既存6種類でしばらくお試しください）');
     });
   }
 
-  // D35: 起動時にプリセット描画
-  renderPresets();
-
-  console.log('[D34/D35] CALENDAR D&D + モーダル + 会場プリセット init OK');
+  console.log('[D34] CALENDAR D&D + モーダル init OK');
 })();
 </script>
 </body>
