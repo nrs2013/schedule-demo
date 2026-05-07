@@ -6168,10 +6168,18 @@ function show(id) {
     try {
       payload = JSON.parse(e.dataTransfer.getData('text/plain'));
     } catch (err) { return; }
-    if (!payload || !payload.type) return;
+    if (!payload) return;
     const dk = cell.getAttribute('data-date');
     if (!dk) return;
-    // D38: 即追加（モーダル無し）。venue は隣接日から自動継承
+    // D41: 公演名ブロックがドロップされたら 1日分の venueGroup を作成
+    if (payload.kind === 'venue' && payload.venueName) {
+      if (window.__calApi && window.__calApi.addVenueGroup) {
+        window.__calApi.addVenueGroup(dk, dk, payload.venueName);
+      }
+      return;
+    }
+    // D38: 通常イベントの即追加（モーダル無し）。venue は隣接日から自動継承
+    if (!payload.type) return;
     const inheritedVenue = (window.__calApi && window.__calApi.inheritVenueForDateKey)
       ? window.__calApi.inheritVenueForDateKey(dk) : '';
     const newEv = { date: dk, type: payload.type, label: payload.defaultLabel, venue: inheritedVenue };
