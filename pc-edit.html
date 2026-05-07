@@ -1800,12 +1800,163 @@
   .pc-cal-legend-pill.stay  { background: rgba(168,168,160,0.10); }
   .pc-cal-legend-label { color: #a8a8a0; letter-spacing: 0.05em; }
 
+  /* D34: パレット用に3列に拡張（月グリッド ｜ 詳細パネル ｜ パレット） */
   .pc-cal-grid {
     display: grid;
-    grid-template-columns: minmax(640px, 1.6fr) minmax(280px, 1fr);
-    gap: 16px;
+    grid-template-columns: minmax(640px, 1.6fr) minmax(240px, 1fr) 130px;
+    gap: 14px;
     padding: 0 16px 16px;
   }
+  /* D34: イベントパレット（右端） */
+  .cal-events-palette {
+    background: #14130f;
+    border: 1px solid #2c2a27;
+    border-radius: 6px;
+    padding: 10px 8px;
+    height: fit-content;
+    position: sticky;
+    top: 16px;
+  }
+  .cal-events-palette-title {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    color: #76766f;
+    text-transform: uppercase;
+    text-align: center;
+    margin-bottom: 8px;
+  }
+  .cal-events-palette-list {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .cal-event-block {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px 8px;
+    border-radius: 5px;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    cursor: grab;
+    user-select: none;
+    transition: transform 0.1s, opacity 0.12s;
+    border: 1px solid transparent;
+  }
+  .cal-event-block:active { cursor: grabbing; transform: scale(0.96); }
+  .cal-event-block.dragging { opacity: 0.4; }
+  .cal-event-block.setup { background: rgba(184,149,88,0.22);  color: #e8c890; border-color: rgba(184,149,88,0.5); }
+  .cal-event-block.tek   { background: rgba(106,150,184,0.32); color: #a8d4e8; border-color: rgba(106,150,184,0.55); }
+  .cal-event-block.rh    { background: rgba(126,194,122,0.22); color: #b8d9b0; border-color: rgba(126,194,122,0.5); }
+  .cal-event-block.show  { background: rgba(232,154,74,0.22);  color: #f0a85a; border-color: rgba(232,154,74,0.6); }
+  .cal-event-block.stay  { background: rgba(106,150,184,0.20); color: #a8d4e8; border-color: rgba(106,150,184,0.5); }
+  .cal-event-block.off   { background: rgba(120,120,113,0.15); color: #a8a8a0; border-color: #2c2a27; }
+  .cal-event-block-add {
+    background: transparent;
+    border: 1px dashed rgba(216,184,120,0.4);
+    color: #f0f0ec;
+    padding: 4px 8px;
+    border-radius: 5px;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    margin-top: 4px;
+    font-family: inherit;
+  }
+  .cal-event-block-add:hover { background: rgba(216,184,120,0.08); border-color: rgba(216,184,120,0.7); }
+  /* D34: ドロップ可能セル の hover 効果 */
+  .pc-cal-cell.drag-over {
+    outline: 2px dashed rgba(216,184,120,0.7);
+    outline-offset: -3px;
+    background: #221d18 !important;
+  }
+  /* D34: 詳細モーダル */
+  .event-detail-modal-bg {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    backdrop-filter: blur(2px);
+  }
+  .event-detail-modal-bg.open { display: flex; }
+  .event-detail-modal {
+    width: 380px;
+    max-width: 92vw;
+    background: #1c1b19;
+    border: 1px solid rgba(216,184,120,0.35);
+    border-radius: 8px;
+    padding: 16px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+  }
+  .event-detail-modal-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .event-detail-modal-head .head-left {
+    display: flex; align-items: center; gap: 8px;
+  }
+  .event-detail-modal-head .type-pill {
+    padding: 2px 8px; border-radius: 4px; font-size: 11px; border: 1px solid transparent;
+  }
+  .event-detail-modal-head .type-pill.setup { background: rgba(184,149,88,0.22);  color: #e8c890; border-color: rgba(184,149,88,0.5); }
+  .event-detail-modal-head .type-pill.tek   { background: rgba(106,150,184,0.32); color: #a8d4e8; border-color: rgba(106,150,184,0.55); }
+  .event-detail-modal-head .type-pill.rh    { background: rgba(126,194,122,0.22); color: #b8d9b0; border-color: rgba(126,194,122,0.5); }
+  .event-detail-modal-head .type-pill.show  { background: rgba(232,154,74,0.22);  color: #f0a85a; border-color: rgba(232,154,74,0.6); }
+  .event-detail-modal-head .type-pill.stay  { background: rgba(106,150,184,0.20); color: #a8d4e8; border-color: rgba(106,150,184,0.5); }
+  .event-detail-modal-head .type-pill.off   { background: rgba(120,120,113,0.15); color: #a8a8a0; border-color: #2c2a27; }
+  .event-detail-modal-head .head-date { font-size: 13px; color: #a8a8a0; }
+  .event-detail-modal-head .modal-close {
+    background: transparent; border: none; color: #76766f; font-size: 18px; cursor: pointer;
+  }
+  .event-detail-modal-grid {
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: 8px 14px;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+  .event-detail-modal-grid label {
+    font-size: 11px; letter-spacing: 0.14em; color: #76766f; text-transform: uppercase;
+  }
+  .event-detail-modal-grid input,
+  .event-detail-modal-grid textarea {
+    background: #14130f; border: 1px solid #2c2a27; color: #e8e8e2;
+    font-size: 14px; padding: 5px 10px; border-radius: 5px;
+    font-family: inherit; box-sizing: border-box; width: 100%;
+  }
+  .event-detail-modal-grid textarea { resize: none; }
+  .event-detail-modal-grid input:focus,
+  .event-detail-modal-grid textarea:focus { outline: none; border-color: rgba(216,184,120,0.55); }
+  .event-detail-modal-grid .time-row {
+    display: flex; align-items: center; gap: 6px;
+  }
+  .event-detail-modal-grid .time-row input {
+    width: 70px; text-align: center;
+    font-family: 'JetBrains Mono', 'Noto Sans JP', monospace;
+  }
+  .event-detail-modal-foot {
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .event-detail-modal-foot .btn {
+    padding: 6px 14px; border-radius: 5px; font-size: 12px; cursor: pointer;
+    background: transparent; font-family: inherit;
+  }
+  .event-detail-modal-foot .btn.del { border: 1px solid #5a3434; color: #d08888; }
+  .event-detail-modal-foot .btn.del:hover { background: rgba(208,136,136,0.10); }
+  .event-detail-modal-foot .btn.cancel { border: 1px solid #2c2a27; color: #a8a8a0; }
+  .event-detail-modal-foot .btn.cancel:hover { background: rgba(255,255,255,0.04); }
+  .event-detail-modal-foot .btn.save {
+    background: rgba(216,184,120,0.10);
+    border: 1px solid rgba(216,184,120,0.55);
+    color: #f0f0ec; font-weight: 500; padding: 6px 18px;
+  }
+  .event-detail-modal-foot .btn.save:hover { background: rgba(216,184,120,0.18); border-color: rgba(216,184,120,0.85); }
+  .event-detail-modal-foot .btn-group { display: flex; gap: 8px; }
   /* D31: 月ナビボタンを両端配置 → 月タイトル真横に配置（「‹ 2026年5月 ›」と並ぶ） */
   .pc-cal-month-header {
     display: flex; align-items: center; justify-content: center;
@@ -2957,6 +3108,19 @@
         <div class="pc-cal-grid">
           <div id="pc-cal-month"></div>
           <div class="pc-cal-detail" id="pc-cal-detail"></div>
+          <!-- D34: イベントパレット（D&D で日付セルにドロップ） -->
+          <aside class="cal-events-palette" id="cal-events-palette">
+            <div class="cal-events-palette-title">EVENTS</div>
+            <div class="cal-events-palette-list">
+              <div class="cal-event-block setup" draggable="true" data-type="setup" data-default-label="仕込み">仕込み</div>
+              <div class="cal-event-block tek"   draggable="true" data-type="tek"   data-default-label="テクリハ">テクリハ</div>
+              <div class="cal-event-block rh"    draggable="true" data-type="rh"    data-default-label="リハ">リハ</div>
+              <div class="cal-event-block show"  draggable="true" data-type="show"  data-default-label="本番">本番</div>
+              <div class="cal-event-block stay"  draggable="true" data-type="stay"  data-default-label="移動">移動</div>
+              <div class="cal-event-block off"   draggable="true" data-type="stay"  data-default-label="休">OFF / 休</div>
+              <button class="cal-event-block-add" id="cal-event-block-add" type="button">＋ ブロック追加</button>
+            </div>
+          </aside>
         </div>
       </div>
 
@@ -4047,6 +4211,37 @@ function show(id) {
   }
 
   let calState = { selected: TODAY, year: TODAY.getFullYear(), month: TODAY.getMonth() };
+
+  // D34: D&D 用に外部から calEvents を操作する API を window に公開
+  window.__calApi = {
+    getEventsByDateKey: function(dateKey) {
+      return calEvents.filter(function(e){ return e.date === dateKey; });
+    },
+    pushEvent: function(ev) {
+      calEvents.push(ev);
+      saveCalEvents();
+      renderMonth();
+      renderDetail();
+    },
+    updateEvent: function(oldRef, newEv) {
+      const idx = calEvents.indexOf(oldRef);
+      if (idx >= 0) {
+        calEvents[idx] = newEv;
+        saveCalEvents();
+        renderMonth();
+        renderDetail();
+      }
+    },
+    deleteEvent: function(ref) {
+      const idx = calEvents.indexOf(ref);
+      if (idx >= 0) {
+        calEvents.splice(idx, 1);
+        saveCalEvents();
+        renderMonth();
+        renderDetail();
+      }
+    }
+  };
 
   function renderMonth(){
     const monthEl = document.getElementById('pc-cal-month');
@@ -5636,6 +5831,197 @@ function show(id) {
     .catch(function(err){
       console.warn('[LIFF] init failed:', err);
     });
+})();
+</script>
+
+<!-- D34: イベント詳細モーダル -->
+<div class="event-detail-modal-bg" id="event-detail-modal-bg">
+  <div class="event-detail-modal" id="event-detail-modal">
+    <div class="event-detail-modal-head">
+      <div class="head-left">
+        <span class="type-pill" id="modal-type-pill"></span>
+        <span class="head-date" id="modal-head-date"></span>
+      </div>
+      <button class="modal-close" data-action="close" type="button">×</button>
+    </div>
+    <div class="event-detail-modal-grid">
+      <label>タイトル</label>
+      <input id="modal-title" placeholder="例: DAY1, テクリハ">
+      <label>会場</label>
+      <input id="modal-venue" placeholder="例: 横浜アリーナ">
+      <label>時間</label>
+      <div class="time-row">
+        <input id="modal-start" placeholder="14:00">
+        <span style="color:#76766f;">〜</span>
+        <input id="modal-end" placeholder="21:30">
+      </div>
+      <label>メモ</label>
+      <textarea id="modal-memo" rows="2" placeholder="自由メモ"></textarea>
+    </div>
+    <div class="event-detail-modal-foot">
+      <button class="btn del" data-action="delete" id="modal-btn-del" type="button">削除</button>
+      <div class="btn-group">
+        <button class="btn cancel" data-action="cancel" type="button">キャンセル</button>
+        <button class="btn save" data-action="save" type="button">保存</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- D34: CALENDAR ドラッグ&ドロップ + 詳細モーダル制御 -->
+<script>
+(function() {
+  const palette = document.getElementById('cal-events-palette');
+  const modalBg = document.getElementById('event-detail-modal-bg');
+  if (!palette || !modalBg) return;
+
+  let editingCtx = null; // { ev, dateKey, isNew }
+  const DOW = ['日','月','火','水','木','金','土'];
+
+  function parseDateKey(dk) {
+    const p = dk.split('-').map(Number);
+    return new Date(p[0], p[1]-1, p[2]);
+  }
+
+  function openModal(ctx) {
+    editingCtx = ctx;
+    const ev = ctx.ev;
+    const pill = document.getElementById('modal-type-pill');
+    pill.className = 'type-pill ' + (ev.type || '');
+    pill.textContent = ev.label || '';
+    const d = parseDateKey(ctx.dateKey);
+    document.getElementById('modal-head-date').textContent =
+      (d.getMonth()+1) + '/' + d.getDate() + ' (' + DOW[d.getDay()] + ')';
+    document.getElementById('modal-title').value = ev.label || '';
+    document.getElementById('modal-venue').value = ev.venue || '';
+    document.getElementById('modal-start').value = ev.startTime || '';
+    document.getElementById('modal-end').value   = ev.endTime || '';
+    document.getElementById('modal-memo').value  = ev.memo || '';
+    document.getElementById('modal-btn-del').style.display = ctx.isNew ? 'none' : 'inline-block';
+    modalBg.classList.add('open');
+    setTimeout(function(){ document.getElementById('modal-title').focus(); }, 50);
+  }
+  function closeModal() {
+    modalBg.classList.remove('open');
+    editingCtx = null;
+  }
+
+  // パレットのドラッグ
+  palette.querySelectorAll('.cal-event-block[draggable="true"]').forEach(function(b) {
+    b.addEventListener('dragstart', function(e) {
+      b.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'copy';
+      e.dataTransfer.setData('text/plain', JSON.stringify({
+        type: b.getAttribute('data-type'),
+        defaultLabel: b.getAttribute('data-default-label')
+      }));
+    });
+    b.addEventListener('dragend', function() {
+      b.classList.remove('dragging');
+      document.querySelectorAll('.pc-cal-cell.drag-over').forEach(function(c){ c.classList.remove('drag-over'); });
+    });
+  });
+
+  // セル drop ハンドラ（event delegation）
+  document.body.addEventListener('dragover', function(e) {
+    const cell = e.target.closest('.pc-cal-cell');
+    if (!cell || cell.classList.contains('outside')) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+    if (!cell.classList.contains('drag-over')) {
+      document.querySelectorAll('.pc-cal-cell.drag-over').forEach(function(c){ c.classList.remove('drag-over'); });
+      cell.classList.add('drag-over');
+    }
+  });
+  document.body.addEventListener('drop', function(e) {
+    const cell = e.target.closest('.pc-cal-cell');
+    if (!cell || cell.classList.contains('outside')) return;
+    e.preventDefault();
+    cell.classList.remove('drag-over');
+    let payload;
+    try {
+      payload = JSON.parse(e.dataTransfer.getData('text/plain'));
+    } catch (err) { return; }
+    if (!payload || !payload.type) return;
+    const dk = cell.getAttribute('data-date');
+    if (!dk) return;
+    const newEv = { date: dk, type: payload.type, label: payload.defaultLabel, venue: '' };
+    openModal({ ev: newEv, dateKey: dk, isNew: true });
+  });
+
+  // 既存帯クリック → 編集モーダル
+  document.body.addEventListener('click', function(e) {
+    const pill = e.target.closest('.pc-cal-pill');
+    if (!pill) return;
+    const cell = pill.closest('.pc-cal-cell');
+    if (!cell) return;
+    const dk = cell.getAttribute('data-date');
+    if (!dk || !window.__calApi) return;
+    const evs = window.__calApi.getEventsByDateKey(dk);
+    if (evs.length === 0) return;
+    // 同じ表示位置のイベントを取得
+    const wrap = pill.parentElement;
+    const idx = wrap ? Array.from(wrap.children).indexOf(pill) : 0;
+    const ev = evs[Math.min(idx, evs.length - 1)];
+    e.stopPropagation();
+    openModal({ ev: ev, dateKey: dk, isNew: false });
+  });
+
+  // モーダル操作
+  modalBg.addEventListener('click', function(e) {
+    if (e.target === modalBg) { closeModal(); return; }
+    const action = e.target.getAttribute('data-action');
+    if (!action) return;
+    if (action === 'close' || action === 'cancel') { closeModal(); return; }
+    if (action === 'save') {
+      if (!editingCtx || !window.__calApi) { closeModal(); return; }
+      const ev = editingCtx.ev;
+      const updated = {
+        date: ev.date,
+        type: ev.type,
+        label: (document.getElementById('modal-title').value || ev.label || '').trim(),
+        venue: (document.getElementById('modal-venue').value || '').trim()
+      };
+      const st = (document.getElementById('modal-start').value || '').trim();
+      const en = (document.getElementById('modal-end').value || '').trim();
+      const mm = (document.getElementById('modal-memo').value || '').trim();
+      if (st) updated.startTime = st;
+      if (en) updated.endTime = en;
+      if (mm) updated.memo = mm;
+      if (!updated.label) {
+        alert('タイトルを入力してください。');
+        return;
+      }
+      if (editingCtx.isNew) {
+        window.__calApi.pushEvent(updated);
+      } else {
+        window.__calApi.updateEvent(ev, updated);
+      }
+      closeModal();
+      return;
+    }
+    if (action === 'delete') {
+      if (!editingCtx || editingCtx.isNew || !window.__calApi) { closeModal(); return; }
+      if (!confirm('このイベントを削除しますか？')) return;
+      window.__calApi.deleteEvent(editingCtx.ev);
+      closeModal();
+    }
+  });
+
+  // ESC でモーダル閉じる
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && modalBg.classList.contains('open')) closeModal();
+  });
+
+  // ＋ブロック追加（Phase C で実装予定）
+  const addBtn = document.getElementById('cal-event-block-add');
+  if (addBtn) {
+    addBtn.addEventListener('click', function() {
+      alert('ブロック追加機能は Phase C で実装予定です（既存6種類でしばらくお試しください）');
+    });
+  }
+
+  console.log('[D34] CALENDAR D&D + モーダル init OK');
 })();
 </script>
 </body>
