@@ -1873,7 +1873,7 @@
     gap: 6px;
     margin-bottom: 8px;
   }
-  .cal-venues-input-row input {
+  .cal-venues-input-row input[type="text"] {
     flex: 1;
     background: #14130f;
     border: 1px solid #2c2a27;
@@ -1884,6 +1884,22 @@
     font-family: inherit;
     box-sizing: border-box;
     min-width: 0;
+  }
+  .cal-venues-input-row input[type="number"] {
+    width: 38px;
+    background: #14130f;
+    border: 1px solid #2c2a27;
+    color: #e8e8e2;
+    font-size: 12px;
+    padding: 4px 4px;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', 'Noto Sans JP', monospace;
+    text-align: center;
+    box-sizing: border-box;
+  }
+  .cal-venues-input-row .days-suffix {
+    font-size: 10px;
+    color: #76766f;
   }
   .cal-venues-input-row input:focus {
     outline: none;
@@ -1958,9 +1974,29 @@
     overflow: hidden;
     text-overflow: ellipsis;
     cursor: pointer;
+    position: relative;
     height: 16px;
     line-height: 14px;
     transition: background 0.12s, border-color 0.12s;
+  }
+  /* D45b: 右端ドラッグハンドル（会場帯を伸縮） */
+  .pc-cal-venue-band-resize-handle {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 8px;
+    cursor: ew-resize;
+    background: transparent;
+    z-index: 2;
+  }
+  .pc-cal-venue-band-resize-handle:hover {
+    background: rgba(216,184,120,0.5);
+  }
+  .pc-cal-cell.resize-target {
+    outline: 2px dashed rgba(216,184,120,0.85);
+    outline-offset: -3px;
+    background: #221d18 !important;
   }
   .pc-cal-venue-band:hover { background: rgba(216,184,120,0.30); border-color: rgba(216,184,120,0.7); }
   .pc-cal-venue-band.bar-start {
@@ -3230,9 +3266,11 @@
           <div id="pc-cal-month"></div>
           <!-- D34b/D41: イベントパレット + 公演名（VENUES）ブロック -->
           <aside class="cal-events-palette" id="cal-events-palette">
-            <div class="cal-events-palette-title">📍 公演名（VENUES）</div>
+            <div class="cal-events-palette-title">Venues</div>
             <div class="cal-venues-input-row">
               <input type="text" id="venue-name-input" placeholder="例：横浜アリーナ">
+              <input type="number" id="venue-days-input" min="1" max="30" value="1" title="日数">
+              <span class="days-suffix">日</span>
               <button type="button" id="venue-name-add-btn">追加</button>
             </div>
             <div class="cal-events-palette-list" id="cal-venues-list"></div>
@@ -4451,10 +4489,10 @@ function show(id) {
     },
     // D41: 公演名定義リストの操作
     listVenueDefinitions: function() { return venueDefinitions.slice(); },
-    addVenueDefinition: function(name) {
-      // D42: 同名重複は弾く
+    addVenueDefinition: function(name, days) {
+      // D42: 同名重複は弾く / D43: days プロパティ
       if (venueDefinitions.some(function(v){ return v.name === name; })) return null;
-      const v = { id: 'vd-' + Date.now(), name: name };
+      const v = { id: 'vd-' + Date.now(), name: name, days: Math.max(1, parseInt(days, 10) || 1) };
       venueDefinitions.push(v);
       saveVenueDefinitions();
       return v;
@@ -4567,7 +4605,10 @@ function show(id) {
                           : samePrev ? ' bar-end'
                           : '';
           const bandLabel = samePrev ? '' : ('📍 ' + venueGroup.venue);
-          venueBandHtml = '<div class="pc-cal-venue-band' + bandPosCls + '" data-venue-group-id="' + venueGroup.id + '" title="' + escH(venueGroup.venue) + '">' + escH(bandLabel) + '</div>';
+          // D45b: 右端（bar-end / 単独）にだけ resize handle を出す
+          const showHandle = (bandPosCls === '' || bandPosCls === ' bar-end');
+          const handleHtml = showHandle ? '<span class="pc-cal-venue-band-resize-handle"></span>' : '';
+          venueBandHtml = '<div class="pc-cal-venue-band' + bandPosCls + '" data-venue-group-id="' + venueGroup.id + '" title="' + escH(venueGroup.venue) + '">' + escH(bandLabel) + handleHtml + '</div>';
         }
       }
       html += '<div class="pc-cal-cell ' + cls.join(' ') + '" data-date="' + fmtDateKey(d) + '">';
@@ -6186,10 +6227,16 @@ function show(id) {
     if (!payload) return;
     const dk = cell.getAttribute('data-date');
     if (!dk) return;
-    // D41: 公演名ブロックがドロップされたら 1日分の venueGroup を作成
+    // D41/D43: 公演名ブロックがドロップされたら指定日数分の venueGroup を作成
     if (payload.kind === 'venue' && payload.venueName) {
+      const days = Math.max(1, parseInt(payload.venueDays, 10) || 1);
+      const parts = dk.split('-').map(Number);
+      const startD = new Date(parts[0], parts[1]-1, parts[2]);
+      const endD = new Date(startD);
+      endD.setDate(endD.getDate() + (days - 1));
+      const endDk = endD.getFullYear() + '-' + String(endD.getMonth()+1).padStart(2,'0') + '-' + String(endD.getDate()).padStart(2,'0');
       if (window.__calApi && window.__calApi.addVenueGroup) {
-        window.__calApi.addVenueGroup(dk, dk, payload.venueName);
+        window.__calApi.addVenueGroup(dk, endDk, payload.venueName);
       }
       return;
     }
@@ -6282,10 +6329,11 @@ function show(id) {
     if (!list || !window.__calApi) return;
     const defs = window.__calApi.listVenueDefinitions();
     list.innerHTML = defs.map(function(v){
+      const dayLabel = (v.days && v.days > 1) ? ' <span style="color:#76766f;font-size:10px;">(' + v.days + '日)</span>' : '';
       return ''
-        + '<div class="cal-event-venue" draggable="true" data-venue-id="' + v.id + '" data-venue-name="' + (v.name || '').replace(/"/g, '&quot;') + '">'
+        + '<div class="cal-event-venue" draggable="true" data-venue-id="' + v.id + '" data-venue-name="' + (v.name || '').replace(/"/g, '&quot;') + '" data-venue-days="' + (v.days || 1) + '">'
         +   '<span style="flex-shrink:0;">📍</span>'
-        +   '<span class="venue-name">' + (v.name || '').replace(/</g, '&lt;') + '</span>'
+        +   '<span class="venue-name">' + (v.name || '').replace(/</g, '&lt;') + dayLabel + '</span>'
         +   '<button class="venue-del" type="button" data-venue-del-id="' + v.id + '" title="削除">×</button>'
         + '</div>';
     }).join('');
@@ -6295,7 +6343,8 @@ function show(id) {
         e.dataTransfer.effectAllowed = 'copy';
         e.dataTransfer.setData('text/plain', JSON.stringify({
           kind: 'venue',
-          venueName: b.getAttribute('data-venue-name')
+          venueName: b.getAttribute('data-venue-name'),
+          venueDays: parseInt(b.getAttribute('data-venue-days'), 10) || 1
         }));
       });
       b.addEventListener('dragend', function(){
@@ -6316,12 +6365,15 @@ function show(id) {
   // 公演名 入力 → 追加ボタン
   const venueInput = document.getElementById('venue-name-input');
   const venueAddBtn = document.getElementById('venue-name-add-btn');
+  const venueDaysInput = document.getElementById('venue-days-input');
   function commitVenueAdd() {
     if (!venueInput || !window.__calApi) return;
     const name = (venueInput.value || '').trim();
     if (!name) return;
-    window.__calApi.addVenueDefinition(name);
+    const days = venueDaysInput ? Math.max(1, parseInt(venueDaysInput.value, 10) || 1) : 1;
+    window.__calApi.addVenueDefinition(name, days);
     venueInput.value = '';
+    if (venueDaysInput) venueDaysInput.value = '1';
     renderVenueDefList();
   }
   if (venueAddBtn) venueAddBtn.addEventListener('click', commitVenueAdd);
@@ -6334,6 +6386,49 @@ function show(id) {
   }
 
   renderVenueDefList();
+
+  // D45b: 右端ハンドルドラッグで会場帯の endDate を伸縮
+  let resizeGroupId = null;
+  let resizeStartDk = null;
+  let lastResizeDk = null;
+  document.body.addEventListener('mousedown', function(e) {
+    const handle = e.target.closest('.pc-cal-venue-band-resize-handle');
+    if (!handle) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const band = handle.closest('.pc-cal-venue-band');
+    const cell = band ? band.closest('.pc-cal-cell') : null;
+    if (!band || !cell) return;
+    resizeGroupId = band.getAttribute('data-venue-group-id');
+    resizeStartDk = cell.getAttribute('data-date');
+    lastResizeDk = resizeStartDk;
+    document.body.style.cursor = 'ew-resize';
+  });
+  document.body.addEventListener('mousemove', function(e) {
+    if (!resizeGroupId) return;
+    const cell = e.target.closest('.pc-cal-cell');
+    if (!cell || cell.classList.contains('outside')) return;
+    const dk = cell.getAttribute('data-date');
+    if (!dk) return;
+    if (dk !== lastResizeDk) {
+      document.querySelectorAll('.pc-cal-cell.resize-target').forEach(function(c){ c.classList.remove('resize-target'); });
+      cell.classList.add('resize-target');
+      lastResizeDk = dk;
+    }
+  });
+  document.body.addEventListener('mouseup', function(e) {
+    if (!resizeGroupId) return;
+    document.body.style.cursor = '';
+    document.querySelectorAll('.pc-cal-cell.resize-target').forEach(function(c){ c.classList.remove('resize-target'); });
+    if (lastResizeDk && lastResizeDk !== resizeStartDk && window.__calApi) {
+      const group = window.__calApi.getVenueGroupByDateKey(resizeStartDk);
+      if (group) {
+        const newEnd = lastResizeDk > group.startDate ? lastResizeDk : group.startDate;
+        window.__calApi.updateVenueGroup(resizeGroupId, { endDate: newEnd });
+      }
+    }
+    resizeGroupId = null; resizeStartDk = null; lastResizeDk = null;
+  });
 
   // D45: クリックで選択ハイライト（pill / venue-band 両方）/ Delete で削除
   document.body.addEventListener('click', function(e) {
