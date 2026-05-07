@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect x="3" y="3" width="58" height="58" rx="12" ry="12"
+        fill="#1c1b19" stroke="#d8b878" stroke-opacity="0.55" stroke-width="2.5"/>
+  <text x="32" y="34" font-family="'Noto Sans JP', 'Hiragino Sans', sans-serif"
+        font-weight="600" font-size="42" fill="#d8b878"
+        text-anchor="middle" dominant-baseline="central">S</text>
+</svg>
