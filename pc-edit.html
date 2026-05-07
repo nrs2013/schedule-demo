@@ -4214,6 +4214,54 @@ function show(id) {
 
   let calState = { selected: TODAY, year: TODAY.getFullYear(), month: TODAY.getMonth() };
 
+  // D36: 公演グループ自動判定
+  // 連続した非-stay イベント（仕込み/テクリハ/リハ/本番）を1つのグループとして扱う
+  function getEventGroupForDate(d) {
+    const dk = fmtDateKey(d);
+    const dayEvs = calEvents.filter(function(e){ return e.date === dk && e.type !== 'stay'; });
+    if (dayEvs.length === 0) return null;
+
+    // 起点日から前に向かって、非-stay イベントが連続する範囲を取得
+    let groupStart = new Date(d);
+    while (true) {
+      const prev = new Date(groupStart);
+      prev.setDate(prev.getDate() - 1);
+      const prevDk = fmtDateKey(prev);
+      const has = calEvents.some(function(e){ return e.date === prevDk && e.type !== 'stay'; });
+      if (!has) break;
+      groupStart = prev;
+    }
+    // 起点日から後に向かって伸ばす
+    let groupEnd = new Date(d);
+    while (true) {
+      const nxt = new Date(groupEnd);
+      nxt.setDate(nxt.getDate() + 1);
+      const nxtDk = fmtDateKey(nxt);
+      const has = calEvents.some(function(e){ return e.date === nxtDk && e.type !== 'stay'; });
+      if (!has) break;
+      groupEnd = nxt;
+    }
+    // 範囲内の非-stay イベントを集める
+    const events = calEvents.filter(function(e){
+      if (e.type === 'stay') return false;
+      const ed = new Date(e.date.split('-').map(Number)[0],
+                           e.date.split('-').map(Number)[1] - 1,
+                           e.date.split('-').map(Number)[2]);
+      return ed >= groupStart && ed <= groupEnd;
+    });
+    // venue 代表値（最初の有効な venue）
+    let venue = '';
+    for (let i = 0; i < events.length; i++) {
+      if (events[i].venue) { venue = events[i].venue; break; }
+    }
+    return {
+      events: events,
+      startDate: groupStart,
+      endDate: groupEnd,
+      venue: venue
+    };
+  }
+
   // D34: D&D 用に外部から calEvents を操作する API を window に公開
   window.__calApi = {
     getEventsByDateKey: function(dateKey) {
@@ -4355,26 +4403,42 @@ function show(id) {
   }
 
   // R51 B1: 編集モードの本体UI生成
+  // D36: 「会場」セクションを「公演グループ」セクションに拡張（連続イベントをまとめて会場一括編集）
   function renderDetailEditBody(d, evs, dateKey, venue) {
     let html = '';
 
-    // 会場
+    // D36: 公演グループ取得
+    const group = getEventGroupForDate(d);
+    const groupVenue = group ? group.venue : venue;
+
     html += '<div class="pc-detail-section">';
-    html += '<div class="pc-detail-section-label">会場</div>';
+    if (group) {
+      const sm = (group.startDate.getMonth()+1) + '/' + group.startDate.getDate();
+      const em = (group.endDate.getMonth()+1) + '/' + group.endDate.getDate();
+      const days = Math.round((group.endDate - group.startDate) / 86400000) + 1;
+      const span = (sm === em) ? sm : (sm + '〜' + em);
+      html += '<div class="pc-detail-section-label">🎯 公演グループ <span style="font-weight:400;letter-spacing:0.05em;text-transform:none;color:#76766f;margin-left:6px;">' + span + '（' + days + '日 / ' + group.events.length + 'イベント）</span></div>';
+    } else {
+      html += '<div class="pc-detail-section-label">会場</div>';
+    }
     html += '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">';
     html += '<select class="pc-detail-venue-select" data-field="venue">';
     html += '<option value="">— 未設定 —</option>';
     Object.keys(showTimes).forEach(function(v){
-      const sel = (v === venue) ? ' selected' : '';
+      const sel = (v === groupVenue) ? ' selected' : '';
       html += '<option value="' + escH(v) + '"' + sel + '>' + escH(v) + '</option>';
     });
-    if (venue && !showTimes[venue]) {
-      // showTimes に登録されてない会場名を保持
-      html += '<option value="' + escH(venue) + '" selected>' + escH(venue) + '</option>';
+    if (groupVenue && !showTimes[groupVenue]) {
+      html += '<option value="' + escH(groupVenue) + '" selected>' + escH(groupVenue) + '</option>';
     }
     html += '</select>';
     html += '<button class="pc-detail-add-venue-btn" data-action="add-venue">+ 会場</button>';
     html += '</div>';
+    if (!group && evs.length === 0) {
+      html += '<div style="color:#76766f;font-size:11px;margin-top:8px;line-height:1.5;">この日にはまだイベントがありません。<br>右パレットから「仕込み・本番」などをドラッグしてください。</div>';
+    } else if (!group) {
+      html += '<div style="color:#76766f;font-size:11px;margin-top:8px;line-height:1.5;">この日は「移動 / 休」のみです。<br>会場対象（仕込み・テクリハ・リハ・本番）を貼るとグループ化されます。</div>';
+    }
     html += '</div>';
 
     // D34d: EVENTS セクション（既存編集 + 追加フォーム）は右パレットの D&D + モーダルに代替されたため撤去
@@ -4444,23 +4508,29 @@ function show(id) {
       });
     });
 
-    // 会場変更
+    // D36: 会場変更（公演グループ全体に一括反映）
     const venueSelect = detailEl.querySelector('[data-field="venue"]');
     if (venueSelect) {
       venueSelect.addEventListener('change', function(){
         const newVenue = venueSelect.value;
-        // 同日のイベントの venue を更新
+        const group = getEventGroupForDate(d);
         let updated = false;
-        calEvents.forEach(function(e){
-          if (e.date === dateKey) { e.venue = newVenue; updated = true; }
-        });
+        if (group && group.events.length > 0) {
+          // グループ内の全イベントを更新
+          group.events.forEach(function(e){ e.venue = newVenue; updated = true; });
+        } else {
+          // フォールバック：同日の全イベント
+          calEvents.forEach(function(e){
+            if (e.date === dateKey) { e.venue = newVenue; updated = true; }
+          });
+        }
         if (updated) saveCalEvents();
         renderDetail();
         renderMonth();
       });
     }
 
-    // 会場追加
+    // D36: 会場追加（公演グループ全体に一括反映）
     const addVenueBtn = detailEl.querySelector('[data-action="add-venue"]');
     if (addVenueBtn) {
       addVenueBtn.addEventListener('click', function(){
@@ -4471,11 +4541,15 @@ function show(id) {
           showTimes[v] = { door: '17:30', show: '18:30' };
           saveShowTimes();
         }
-        // 同日のイベントが既にあれば venue を更新
+        const group = getEventGroupForDate(d);
         let updated = false;
-        calEvents.forEach(function(e){
-          if (e.date === dateKey) { e.venue = v; updated = true; }
-        });
+        if (group && group.events.length > 0) {
+          group.events.forEach(function(e){ e.venue = v; updated = true; });
+        } else {
+          calEvents.forEach(function(e){
+            if (e.date === dateKey) { e.venue = v; updated = true; }
+          });
+        }
         if (updated) saveCalEvents();
         renderDetail();
         renderMonth();
