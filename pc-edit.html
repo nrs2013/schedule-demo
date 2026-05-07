@@ -4439,6 +4439,8 @@ function show(id) {
     // D41: 公演名定義リストの操作
     listVenueDefinitions: function() { return venueDefinitions.slice(); },
     addVenueDefinition: function(name) {
+      // D42: 同名重複は弾く
+      if (venueDefinitions.some(function(v){ return v.name === name; })) return null;
       const v = { id: 'vd-' + Date.now(), name: name };
       venueDefinitions.push(v);
       saveVenueDefinitions();
@@ -6311,7 +6313,9 @@ function show(id) {
   }
   if (venueAddBtn) venueAddBtn.addEventListener('click', commitVenueAdd);
   if (venueInput) {
+    // D42: IME 確定 Enter で commit が二重発火する問題を防止
     venueInput.addEventListener('keydown', function(e){
+      if (e.isComposing || e.keyCode === 229) return;
       if (e.key === 'Enter') { e.preventDefault(); commitVenueAdd(); }
     });
   }
