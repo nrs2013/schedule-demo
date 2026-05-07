@@ -1960,7 +1960,8 @@
     outline-offset: -3px;
     background: #221d18 !important;
   }
-  /* D39: 会場帯（vague band）— セル上部に貫通バーで表示 */
+  /* D39/D46: 会場帯（venue band）— セル上部に貫通バーで表示
+     D46: セル padding(6px) + grid gap(1px) を打ち消し、隣セルまで連結 */
   .pc-cal-venue-band {
     background: rgba(216,184,120,0.18);
     border: 1px solid rgba(216,184,120,0.45);
@@ -1974,48 +1975,37 @@
     overflow: hidden;
     text-overflow: ellipsis;
     cursor: pointer;
-    position: relative;
     height: 16px;
     line-height: 14px;
     transition: background 0.12s, border-color 0.12s;
-  }
-  /* D45b: 右端ドラッグハンドル（会場帯を伸縮） */
-  .pc-cal-venue-band-resize-handle {
-    position: absolute;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    width: 8px;
-    cursor: ew-resize;
-    background: transparent;
-    z-index: 2;
-  }
-  .pc-cal-venue-band-resize-handle:hover {
-    background: rgba(216,184,120,0.5);
-  }
-  .pc-cal-cell.resize-target {
-    outline: 2px dashed rgba(216,184,120,0.85);
-    outline-offset: -3px;
-    background: #221d18 !important;
+    position: relative;
+    z-index: 1;
   }
   .pc-cal-venue-band:hover { background: rgba(216,184,120,0.30); border-color: rgba(216,184,120,0.7); }
+  /* D46: 連続日では cell padding (6px) + gap (1px) = 7px を margin で打ち消し */
   .pc-cal-venue-band.bar-start {
     border-radius: 3px 0 0 3px;
     border-right: 0;
-    margin-right: -1px;
+    margin-right: -7px;
+    padding-right: 5px;
   }
   .pc-cal-venue-band.bar-mid {
     border-radius: 0;
     border-left: 0;
     border-right: 0;
-    margin-left: -1px;
-    margin-right: -1px;
+    margin-left: -7px;
+    margin-right: -7px;
+    padding-left: 5px;
+    padding-right: 5px;
   }
   .pc-cal-venue-band.bar-end {
     border-radius: 0 3px 3px 0;
     border-left: 0;
-    margin-left: -1px;
+    margin-left: -7px;
+    padding-left: 5px;
   }
+  /* D47: イベントピル ドラッグ中 */
+  .pc-cal-pill.dragging { opacity: 0.4; }
   /* D45: ハイライト選択（クリックで選択 / Delete で削除） */
   .pc-cal-pill.selected {
     outline: 2px solid #d8b878;
@@ -4505,6 +4495,7 @@ function show(id) {
     getEventsByDateKey: function(dateKey) {
       return calEvents.filter(function(e){ return e.date === dateKey; });
     },
+    listAllEvents: function() { return calEvents; },
     inheritVenueForDateKey: function(dk) {
       // 同日 → 前日 → 翌日の順で、最初に見つかった非-stay イベントの venue を継承
       const todayEvs = calEvents.filter(function(e){ return e.date === dk && e.type !== 'stay' && e.venue; });
@@ -4587,7 +4578,7 @@ function show(id) {
             labelText += ' ' + e.startTime;
           }
         }
-        return '<span class="pc-cal-pill ' + e.type + positionCls + '">' + escH(labelText) + '</span>';
+        return '<span class="pc-cal-pill ' + e.type + positionCls + '" draggable="true" data-event-index="' + (calEvents.indexOf(e)) + '">' + escH(labelText) + '</span>';
       }).join('');
       // D39: 会場帯（venue band）描画
       let venueBandHtml = '';
@@ -6228,6 +6219,19 @@ function show(id) {
     if (!payload) return;
     const dk = cell.getAttribute('data-date');
     if (!dk) return;
+    // D47: 既存イベント移動
+    if (payload.kind === 'move-event' && typeof payload.eventIndex === 'number' && window.__calApi) {
+      // calEvents 全配列から index 取得（IIFE スコープ越えのため API 経由）
+      const allEvs = window.__calApi.listAllEvents ? window.__calApi.listAllEvents() : null;
+      if (allEvs && allEvs[payload.eventIndex]) {
+        const oldEv = allEvs[payload.eventIndex];
+        if (oldEv.date !== dk) {
+          const newEv = Object.assign({}, oldEv, { date: dk });
+          window.__calApi.updateEvent(oldEv, newEv);
+        }
+      }
+      return;
+    }
     // D41/D43: 公演名ブロックがドロップされたら指定日数分の venueGroup を作成
     if (payload.kind === 'venue' && payload.venueName) {
       const days = Math.max(1, parseInt(payload.venueDays, 10) || 1);
@@ -6387,6 +6391,27 @@ function show(id) {
   }
 
   renderVenueDefList();
+
+  // D47: イベントピルのドラッグ移動（別の日付セルへ移動）
+  document.body.addEventListener('dragstart', function(e) {
+    const pill = e.target.closest && e.target.closest('.pc-cal-pill');
+    if (!pill) return;
+    const cell = pill.closest('.pc-cal-cell');
+    if (!cell) return;
+    const idx = parseInt(pill.getAttribute('data-event-index'), 10);
+    if (isNaN(idx)) return;
+    pill.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', JSON.stringify({
+      kind: 'move-event',
+      eventIndex: idx
+    }));
+  });
+  document.body.addEventListener('dragend', function(e) {
+    const pill = e.target.closest && e.target.closest('.pc-cal-pill');
+    if (pill) pill.classList.remove('dragging');
+    document.querySelectorAll('.pc-cal-cell.drag-over').forEach(function(c){ c.classList.remove('drag-over'); });
+  });
 
   // D45b: 右端ハンドルドラッグで会場帯の endDate を伸縮
   let resizeGroupId = null;
