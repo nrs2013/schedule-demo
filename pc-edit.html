@@ -2004,6 +2004,25 @@
     margin-left: -7px;
     padding-left: 5px;
   }
+  /* D45b: 右端ドラッグハンドル（会場帯を伸縮）*/
+  .pc-cal-venue-band-resize-handle {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 8px;
+    cursor: ew-resize;
+    background: transparent;
+    z-index: 3;
+  }
+  .pc-cal-venue-band-resize-handle:hover {
+    background: rgba(216,184,120,0.55);
+  }
+  .pc-cal-cell.resize-target {
+    outline: 2px dashed rgba(216,184,120,0.85);
+    outline-offset: -3px;
+    background: #221d18 !important;
+  }
   /* D47: イベントピル ドラッグ中 */
   .pc-cal-pill.dragging { opacity: 0.4; }
   /* D45: ハイライト選択（クリックで選択 / Delete で削除） */
@@ -4614,7 +4633,9 @@ function show(id) {
     monthEl.innerHTML = html;
 
     monthEl.querySelectorAll('.pc-cal-cell').forEach(function(el){
-      el.addEventListener('click', function(){
+      el.addEventListener('click', function(e){
+        // D47b: pill / venue-band クリックは選択用なので日付選択は発火させない
+        if (e && e.target && e.target.closest && (e.target.closest('.pc-cal-pill') || e.target.closest('.pc-cal-venue-band'))) return;
         const dk = el.getAttribute('data-date');
         if (!dk) return;
         const parts = dk.split('-').map(Number);
