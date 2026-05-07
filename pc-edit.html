@@ -4215,6 +4215,7 @@ function show(id) {
   let calState = { selected: TODAY, year: TODAY.getFullYear(), month: TODAY.getMonth() };
 
   // D36: 公演グループ自動判定
+  // D37: グループ名（groupName）も合わせて取得
   // 連続した非-stay イベント（仕込み/テクリハ/リハ/本番）を1つのグループとして扱う
   function getEventGroupForDate(d) {
     const dk = fmtDateKey(d);
@@ -4254,18 +4255,39 @@ function show(id) {
     for (let i = 0; i < events.length; i++) {
       if (events[i].venue) { venue = events[i].venue; break; }
     }
+    // D37: groupName 代表値（最初の有効な groupName）
+    let groupName = '';
+    for (let i = 0; i < events.length; i++) {
+      if (events[i].groupName) { groupName = events[i].groupName; break; }
+    }
     return {
       events: events,
       startDate: groupStart,
       endDate: groupEnd,
-      venue: venue
+      venue: venue,
+      groupName: groupName
     };
   }
 
   // D34: D&D 用に外部から calEvents を操作する API を window に公開
+  // D38: 隣接日からの venue 継承用に inheritVenueForDateKey 追加
   window.__calApi = {
     getEventsByDateKey: function(dateKey) {
       return calEvents.filter(function(e){ return e.date === dateKey; });
+    },
+    inheritVenueForDateKey: function(dk) {
+      // 同日 → 前日 → 翌日の順で、最初に見つかった非-stay イベントの venue を継承
+      const todayEvs = calEvents.filter(function(e){ return e.date === dk && e.type !== 'stay' && e.venue; });
+      if (todayEvs.length > 0) return todayEvs[0].venue;
+      const parts = dk.split('-').map(Number);
+      const today = new Date(parts[0], parts[1]-1, parts[2]);
+      for (let dir of [-1, 1]) {
+        const d = new Date(today); d.setDate(d.getDate() + dir);
+        const dk2 = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+        const evs = calEvents.filter(function(e){ return e.date === dk2 && e.type !== 'stay' && e.venue; });
+        if (evs.length > 0) return evs[0].venue;
+      }
+      return '';
     },
     pushEvent: function(ev) {
       calEvents.push(ev);
@@ -4327,8 +4349,14 @@ function show(id) {
                           : cont.hasNext ? ' bar-start'
                           : cont.hasPrev ? ' bar-end'
                           : '';
-        // 連続グループの最初の日にだけラベル表示（macOS 風）
-        const labelText = cont.hasPrev ? '' : e.label;
+        // D37: ラベル + 時間（startTime があれば併記）。連続バーの中央/末尾は空
+        let labelText = '';
+        if (!cont.hasPrev) {
+          labelText = e.label || '';
+          if (e.startTime) {
+            labelText += ' ' + e.startTime;
+          }
+        }
         return '<span class="pc-cal-pill ' + e.type + positionCls + '">' + escH(labelText) + '</span>';
       }).join('');
       html += '<div class="pc-cal-cell ' + cls.join(' ') + '" data-date="' + fmtDateKey(d) + '">';
@@ -4418,6 +4446,10 @@ function show(id) {
       const days = Math.round((group.endDate - group.startDate) / 86400000) + 1;
       const span = (sm === em) ? sm : (sm + '〜' + em);
       html += '<div class="pc-detail-section-label">🎯 公演グループ <span style="font-weight:400;letter-spacing:0.05em;text-transform:none;color:#76766f;margin-left:6px;">' + span + '（' + days + '日 / ' + group.events.length + 'イベント）</span></div>';
+      // D37: グループ名入力欄
+      html += '<div style="margin-bottom:8px;">';
+      html += '<input type="text" class="pc-detail-group-name" data-field="group-name" placeholder="公演名（例：横浜アリーナ DAY1〜2公演）" value="' + escH(group.groupName || '') + '" style="width:100%;background:#14130f;border:1px solid #2c2a27;color:#e8e8e2;font-family:inherit;font-size:14px;padding:6px 10px;border-radius:5px;box-sizing:border-box;">';
+      html += '</div>';
     } else {
       html += '<div class="pc-detail-section-label">会場</div>';
     }
@@ -4507,6 +4539,23 @@ function show(id) {
         }
       });
     });
+
+    // D37: グループ名入力 → グループ全体に一括反映
+    const groupNameInp = detailEl.querySelector('[data-field="group-name"]');
+    if (groupNameInp) {
+      groupNameInp.addEventListener('blur', function(){
+        const newName = (groupNameInp.value || '').trim();
+        const group = getEventGroupForDate(d);
+        if (group && group.events.length > 0) {
+          group.events.forEach(function(e){
+            if (newName) e.groupName = newName;
+            else delete e.groupName;
+          });
+          saveCalEvents();
+          renderMonth();
+        }
+      });
+    }
 
     // D36: 会場変更（公演グループ全体に一括反映）
     const venueSelect = detailEl.querySelector('[data-field="venue"]');
@@ -5919,12 +5968,17 @@ function show(id) {
     if (!payload || !payload.type) return;
     const dk = cell.getAttribute('data-date');
     if (!dk) return;
-    const newEv = { date: dk, type: payload.type, label: payload.defaultLabel, venue: '' };
-    openModal({ ev: newEv, dateKey: dk, isNew: true });
+    // D38: 即追加（モーダル無し）。venue は隣接日から自動継承
+    const inheritedVenue = (window.__calApi && window.__calApi.inheritVenueForDateKey)
+      ? window.__calApi.inheritVenueForDateKey(dk) : '';
+    const newEv = { date: dk, type: payload.type, label: payload.defaultLabel, venue: inheritedVenue };
+    if (window.__calApi && window.__calApi.pushEvent) {
+      window.__calApi.pushEvent(newEv);
+    }
   });
 
-  // 既存帯クリック → 編集モーダル
-  document.body.addEventListener('click', function(e) {
+  // D38: 既存帯はダブルクリックで編集モーダル（シングルクリックは日付選択のみ）
+  document.body.addEventListener('dblclick', function(e) {
     const pill = e.target.closest('.pc-cal-pill');
     if (!pill) return;
     const cell = pill.closest('.pc-cal-cell');
@@ -5938,6 +5992,7 @@ function show(id) {
     const idx = wrap ? Array.from(wrap.children).indexOf(pill) : 0;
     const ev = evs[Math.min(idx, evs.length - 1)];
     e.stopPropagation();
+    e.preventDefault();
     openModal({ ev: ev, dateKey: dk, isNew: false });
   });
 
