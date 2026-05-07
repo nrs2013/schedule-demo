@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260507.141005">
+<meta name="build-version" content="20260507.233448">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -163,14 +163,15 @@
   .master-date-bar {
     background: #14130f;
     border-bottom: 1px solid #2c2a27;
-    padding: 18px 28px;
+    padding: 14px 28px;
     position: relative;
   }
   .master-bar-row1 {
-    display: grid;
-    grid-template-columns: 1.1fr auto 1.4fr;
+    /* D88: ボイドティッカー — 1行 flex、空気で要素を分ける */
+    display: flex;
     align-items: center;
-    gap: 24px;
+    gap: 28px;
+    flex-wrap: nowrap;
   }
   /* 左：TOUR 情報 */
   .master-tour-info {
@@ -246,7 +247,8 @@
   }
   .master-date-main {
     font-family: 'JetBrains Mono', 'Noto Sans JP', monospace;
-    font-size: 30px;
+    /* D88: ボイドティッカー — 30 → 24px に圧縮（1行に収めるため） */
+    font-size: 24px;
     font-weight: 300;
     color: #f0e0c8;
     font-variant-numeric: tabular-nums;
@@ -266,9 +268,11 @@
   }
   /* 下段：DAY/会場 チップ */
   .master-meta-row {
+    /* D88: ボイドティッカー — チップ群を右端に押し出し */
     display: flex;
     gap: 6px;
     align-items: center;
+    margin-left: auto;
   }
   .master-chip {
     display: inline-flex;
@@ -1939,10 +1943,10 @@
   /* D39/D46: 会場帯（venue band）— セル上部に貫通バーで表示
      D46: セル padding(6px) + grid gap(1px) を打ち消し、隣セルまで連結 */
   .pc-cal-venue-band {
-    /* D86: いったんニュートラルな warm gold に戻す（黒抜きは廃止、別案検討中） */
-    background: rgba(120,100,72,0.32);
-    border: 1px solid rgba(216,184,120,0.55);
-    color: #d8b878;
+    /* D87: Charcoal — 黒バックに溶ける濃グレー（pill を主役にする） */
+    background: rgba(64,60,55,0.85);
+    border: 1px solid rgba(120,108,90,0.65);
+    color: #d8c8a8;
     font-size: 9px;
     font-weight: 500;
     letter-spacing: 0.04em;
@@ -1960,7 +1964,7 @@
     position: relative;
     z-index: 1;
   }
-  .pc-cal-venue-band:hover { background: rgba(120,100,72,0.50); border-color: rgba(216,184,120,0.85); color: #f0d4a8; }
+  .pc-cal-venue-band:hover { background: rgba(80,75,68,0.95); border-color: rgba(140,128,108,0.85); color: #f0e4c8; }
   /* D86: 同じ週に venue band がある時、band の無いセルにも空 placeholder を入れて
      events の縦位置を揃える（venue band 行ぶんの隙間を確保） */
   .pc-cal-venue-band.is-empty {
@@ -3454,29 +3458,20 @@
       <span class="ss-logo-text">SCHEDULE STUDIO</span>
     </div>
 
-    <!-- D82: A案 エディトリアル雑誌マスト式 — 左にツアー名、縦線で区切り、右に日付＋メタチップ -->
+    <!-- D88: C-2 ボイドティッカー — 1行構造、TOURラベルと縦線区切り撤去、空気で要素を分ける -->
     <div class="master-date-bar">
       <div class="master-bar-row1">
-        <!-- 左: TOUR ラベル + ツアー名 -->
-        <div class="master-tour-info">
-          <div class="master-tour-label">TOUR</div>
-          <div class="master-concert-title" contenteditable="true" spellcheck="false">櫻坂46 5th Anniversary Live</div>
+        <div class="master-concert-title" contenteditable="true" spellcheck="false">櫻坂46 5th Anniversary Live</div>
+        <div class="master-date-row">
+          <button class="master-date-nav" data-date-nav="prev" title="前日">‹</button>
+          <span class="master-date-main" id="master-date-main" title="クリックで日付を選択">2026.04.29</span>
+          <span class="master-date-dow" id="master-date-dow">(水)</span>
+          <button class="master-date-nav" data-date-nav="next" title="翌日">›</button>
+          <input type="date" class="master-date-input" id="master-date-input" value="2026-04-29">
         </div>
-        <!-- 中: 縦線で区切り -->
-        <span class="master-bar-divider"></span>
-        <!-- 右: 日付 + チップ -->
-        <div class="master-date-block">
-          <div class="master-date-row">
-            <button class="master-date-nav" data-date-nav="prev" title="前日">‹</button>
-            <span class="master-date-main" id="master-date-main" title="クリックで日付を選択">2026.04.29</span>
-            <span class="master-date-dow" id="master-date-dow">(水)</span>
-            <button class="master-date-nav" data-date-nav="next" title="翌日">›</button>
-            <input type="date" class="master-date-input" id="master-date-input" value="2026-04-29">
-          </div>
-          <div class="master-meta-row">
-            <span class="master-chip master-chip-day" id="master-date-day">DAY 1</span>
-            <span class="master-chip master-chip-venue" id="master-date-venue">横浜アリーナ</span>
-          </div>
+        <div class="master-meta-row">
+          <span class="master-chip master-chip-day" id="master-date-day">DAY 1</span>
+          <span class="master-chip master-chip-venue" id="master-date-venue">横浜アリーナ</span>
         </div>
       </div>
     </div>
