@@ -982,7 +982,8 @@
   /* Googleマップリンク（住所からURLエンコードで自動生成）
      D25: hotel-info-grid に組み込んで URL 入力ボックスと同サイズに統一
      D26: ボーダーを他のinputと同じグレー(#2c2a27)に揃え、文字だけ青系でマップ感残す
-     D27: 文字を一段小さく(13px)＋letter-spacing広めでスタイリッシュに */
+     D27: 文字を一段小さく(13px)＋letter-spacing広めでスタイリッシュに
+     D28: もう一段小さく(11px)＋letter-spacing 0.10em でさらにスタイリッシュ */
   .hotel-map-link {
     display: flex;
     align-items: center;
@@ -994,9 +995,9 @@
     padding: 4px 10px;
     border-radius: 5px;
     font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
-    font-size: 13px;
+    font-size: 11px;
     font-weight: 500;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.10em;
     text-decoration: none;
     transition: background 0.12s, border-color 0.12s, color 0.12s;
     box-sizing: border-box;
