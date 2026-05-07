@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260507.114517">
+<meta name="build-version" content="20260507.115341">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -1821,10 +1821,10 @@
   .pc-cal-legend-pill.stay   { background: rgba(168,168,160,0.10); }
   .pc-cal-legend-label { color: #a8a8a0; letter-spacing: 0.05em; }
 
-  /* D34c: 2列レイアウトに戻し、右側を「パレット → 詳細」の縦並びに（同じ箱トーンで馴染ませる） */
+  /* D73: カレンダー本体を広げ、右パネルを少し詰める */
   .pc-cal-grid {
     display: grid;
-    grid-template-columns: minmax(640px, 1.6fr) minmax(280px, 1fr);
+    grid-template-columns: minmax(720px, 2fr) minmax(240px, 0.85fr);
     grid-template-rows: auto 1fr;
     gap: 14px;
     padding: 0 16px 16px;
@@ -2354,20 +2354,45 @@
     transition: color 0.12s, border-color 0.12s, background 0.12s;
   }
   .pc-cal-jump-btn:hover { color: #e89a4a; border-color: rgba(232,154,74,0.55); background: rgba(232,154,74,0.06); }
-  /* D71: 各月セクションの見出し（年月） */
-  .pc-cal-month-section {
-    margin-bottom: 22px;
-  }
+  /* D71: 各月セクションの見出し（年月） — D73で旧構造のフォールバック用に残置 */
+  .pc-cal-month-section { margin-bottom: 22px; }
   .pc-cal-month-section-title {
-    font-size: 14px;
-    font-weight: 600;
-    color: #d8b878;
-    letter-spacing: 0.08em;
-    padding: 14px 4px 8px;
-    margin: 0;
+    font-size: 14px; font-weight: 600; color: #d8b878;
+    letter-spacing: 0.08em; padding: 14px 4px 8px; margin: 0;
     font-variant-numeric: tabular-nums;
   }
   .pc-cal-month-section-title.is-current { color: #e89a4a; }
+  /* D73: 連続グリッド（25ヶ月ぶんの全日を 7 列で流す） */
+  .pc-cal-continuous-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1px;
+    background: #2c2a27;
+    border: 1px solid #2c2a27;
+    border-top: none;
+  }
+  /* D73: 月初セルに「X月」のミニラベル（左上、控えめな琥珀） */
+  .pc-cal-cell.is-month-start {
+    border-left: 2px solid rgba(216,184,120,0.55);
+  }
+  .pc-cal-month-tag {
+    position: absolute;
+    top: 3px;
+    left: 4px;
+    font-size: 9px;
+    font-weight: 700;
+    color: #e89a4a;
+    letter-spacing: 0.04em;
+    line-height: 1;
+    pointer-events: none;
+    z-index: 2;
+  }
+  /* 月初の最初の出現時は年も表示 */
+  .pc-cal-month-tag.with-year {
+    font-size: 8px;
+    color: #d8b878;
+    letter-spacing: 0.06em;
+  }
   /* D71: 旧 .pc-cal-month-header / .pc-cal-nav は撤去（スクロールで全月見えるため不要） */
   .pc-cal-dow-row {
     display: grid;
@@ -4820,7 +4845,7 @@ function show(id) {
     }
   };
 
-  // D71: 1ヶ月分のセクションHTMLを返すヘルパー（lane計算は月内クローズドで実施）
+  // D73: monthSectionHtml は連続グリッド方式に置き換えたため未使用
   function monthSectionHtml(year, month) {
     const cells = buildMonth(year, month);
     // 月単位の lane 割当（D67 と同等）
@@ -4927,21 +4952,54 @@ function show(id) {
     return html;
   }
 
-  // D71: カレンダー本体は「24ヶ月の縦スタック + スティッキー曜日行」
+  // D73: 連続グリッド方式 — 25ヶ月ぶんの全日を 1 つの 7 列グリッドに流す。
+  // 月境界に full-width header が挟まらず、シームレスに繋がる。
+  // 月が変わるセル（その月の1日）に「X月」ミニラベルを左上に表示（年が変わる時だけ年付き）。
   function renderMonth(){
     const monthEl = document.getElementById('pc-cal-month');
     if (!monthEl) return;
 
-    // スクロール位置を保存（再描画後に復元するため）
     const prevScroll = monthEl.scrollTop;
     const wasInitialRender = !monthEl._d71Initialized;
 
-    // アンカー（中央月）：選択中の日付の月、なければ TODAY
+    // アンカー（中心月）
     const anchor = calState.selected || TODAY;
     const baseY = anchor.getFullYear();
     const baseM = anchor.getMonth();
 
-    // 前12ヶ月 〜 後12ヶ月（計25ヶ月）
+    // 範囲: 前12ヶ月の1日 〜 後12ヶ月の末日
+    const startD = new Date(baseY, baseM - 12, 1);
+    const endD   = new Date(baseY, baseM + 13, 0); // baseM+13 月の 0日 = +12月の末日
+    const rangeStartKey = fmtDateKey(startD);
+    const rangeEndKey   = fmtDateKey(endD);
+
+    // グローバル lane 計算（範囲内のイベントすべて）
+    const rangeEvts = calEvents.filter(function(e){
+      const start = e.date;
+      const end = e.endDate || e.date;
+      return end >= rangeStartKey && start <= rangeEndKey;
+    }).slice().sort(function(a, b){
+      if (a.date !== b.date) return a.date < b.date ? -1 : 1;
+      const ea = a.endDate || a.date;
+      const eb = b.endDate || b.date;
+      if (ea !== eb) return ea > eb ? -1 : 1;
+      return calEvents.indexOf(a) - calEvents.indexOf(b);
+    });
+    const eventLane = new Map();
+    const laneEnds = [];
+    rangeEvts.forEach(function(e){
+      const start = e.date;
+      const end = e.endDate || e.date;
+      let assigned = -1;
+      for (let i = 0; i < laneEnds.length; i++) {
+        if (laneEnds[i] < start) { assigned = i; break; }
+      }
+      if (assigned === -1) { assigned = laneEnds.length; laneEnds.push(end); }
+      else { laneEnds[assigned] = end; }
+      eventLane.set(e, assigned);
+    });
+
+    // HTML 組立
     let html = '';
     // 「今月へ」ジャンプボタン
     html += '<div class="pc-cal-jump-bar">';
@@ -4954,25 +5012,112 @@ function show(id) {
       html += '<div class="pc-cal-dow ' + cls + '">' + l + '</div>';
     });
     html += '</div>';
-    // 月セクションを縦に積む
-    for (let i = -12; i <= 12; i++) {
-      const m = baseM + i;
-      const y = baseY + Math.floor(m / 12);
-      const mm = ((m % 12) + 12) % 12;
-      html += monthSectionHtml(y, mm);
+    // 連続グリッド本体
+    html += '<div class="pc-cal-continuous-grid">';
+    let prevYear = null;
+    let dayIdx = 0;
+    const cur = new Date(startD);
+    while (cur <= endD) {
+      const d = new Date(cur);
+      const dk = fmtDateKey(d);
+      const isMonthStart = (d.getDate() === 1);
+      const isYearChange = (prevYear === null) || (d.getFullYear() !== prevYear);
+      // 最初のセルだけ grid-column-start で曜日合わせ
+      const colStart = (dayIdx === 0) ? ' style="grid-column-start: ' + (((d.getDay()+6)%7)+1) + '"' : '';
+
+      const cls = ['pc-cal-cell'];
+      if (isMonthStart) cls.push('is-month-start');
+      if (isToday(d)) cls.push('today');
+      if (calState.selected && isSameDay(d, calState.selected)) cls.push('selected');
+
+      // 月ラベル
+      let monthTagHtml = '';
+      if (isMonthStart) {
+        if (isYearChange) {
+          monthTagHtml = '<span class="pc-cal-month-tag with-year">' + d.getFullYear() + '/' + (d.getMonth()+1) + '月</span>';
+        } else {
+          monthTagHtml = '<span class="pc-cal-month-tag">' + (d.getMonth()+1) + '月</span>';
+        }
+      }
+
+      // pill 描画（lane でソート、最大3 lane）
+      const evs = getEvents(d);
+      const cellEvs = evs.slice().sort(function(a, b){
+        return (eventLane.get(a) || 0) - (eventLane.get(b) || 0);
+      });
+      const maxLaneInCell = cellEvs.length > 0
+        ? Math.max.apply(null, cellEvs.map(function(e){ return eventLane.get(e) || 0; }))
+        : -1;
+      const visibleMaxLane = Math.min(maxLaneInCell, 2);
+      const slots = [];
+      for (let lane = 0; lane <= visibleMaxLane; lane++) {
+        const matched = cellEvs.find(function(e){ return (eventLane.get(e) || 0) === lane; });
+        slots.push(matched ? { type: 'pill', event: matched } : { type: 'spacer' });
+      }
+      const eventsHtml = slots.map(function(slot){
+        if (slot.type === 'spacer') return '<div class="pc-cal-pill-spacer"></div>';
+        const e = slot.event;
+        const cont = isContinuousEvent(d, e);
+        const positionCls = (cont.hasPrev && cont.hasNext) ? ' bar-mid'
+                          : cont.hasNext ? ' bar-start'
+                          : cont.hasPrev ? ' bar-end'
+                          : '';
+        let labelText = '';
+        if (!cont.hasPrev) {
+          labelText = e.label || '';
+          if (e.startTime) labelText += ' ' + e.startTime;
+        }
+        const showPillHandle = (positionCls === '' || positionCls === ' bar-end');
+        const pillHandleHtml = showPillHandle ? '<span class="pc-cal-pill-resize-handle" draggable="false"></span>' : '';
+        return '<span class="pc-cal-pill ' + e.type + positionCls + '" data-event-index="' + (calEvents.indexOf(e)) + '">' + escH(labelText) + pillHandleHtml + '</span>';
+      }).join('');
+
+      // 会場帯
+      let venueBandHtml = '';
+      const venueGroup = getVenueGroupByDateKey(dk);
+      if (venueGroup) {
+        const dprev = new Date(d); dprev.setDate(d.getDate() - 1);
+        const dnext = new Date(d); dnext.setDate(d.getDate() + 1);
+        const prevG = getVenueGroupByDateKey(fmtDateKey(dprev));
+        const nextG = getVenueGroupByDateKey(fmtDateKey(dnext));
+        const samePrev = prevG && prevG.id === venueGroup.id;
+        const sameNext = nextG && nextG.id === venueGroup.id;
+        const bandPosCls = (samePrev && sameNext) ? ' bar-mid'
+                        : sameNext ? ' bar-start'
+                        : samePrev ? ' bar-end'
+                        : '';
+        const bandLabel = samePrev ? '' : ('📍 ' + venueGroup.venue);
+        const showRightHandle = (bandPosCls === '' || bandPosCls === ' bar-end');
+        const showLeftHandle = (bandPosCls === '' || bandPosCls === ' bar-start');
+        const rightHandleHtml = showRightHandle ? '<span class="pc-cal-venue-band-resize-handle" draggable="false"></span>' : '';
+        const leftHandleHtml = showLeftHandle ? '<span class="pc-cal-venue-band-resize-handle-left" draggable="false"></span>' : '';
+        venueBandHtml = '<div class="pc-cal-venue-band' + bandPosCls + '" data-venue-group-id="' + venueGroup.id + '" data-source-date="' + dk + '" title="' + escH(venueGroup.venue) + '">' + leftHandleHtml + escH(bandLabel) + rightHandleHtml + '</div>';
+      }
+
+      // 月初の data-month-key を付与（今月へジャンプ用）
+      const monthKeyAttr = isMonthStart ? ' data-month-key="' + d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '"' : '';
+      html += '<div class="' + cls.join(' ') + '" data-date="' + dk + '"' + monthKeyAttr + colStart + '>';
+      html += monthTagHtml;
+      html += '<div class="pc-cal-day-num ' + dowClass(d) + '">' + d.getDate() + '</div>';
+      html += venueBandHtml;
+      html += '<div class="pc-cal-events">' + eventsHtml + '</div>';
+      html += '</div>';
+
+      prevYear = d.getFullYear();
+      dayIdx++;
+      cur.setDate(cur.getDate() + 1);
     }
+    html += '</div>';
 
     monthEl.innerHTML = html;
 
-    // スクロール位置の処理
+    // スクロール位置
     if (wasInitialRender) {
-      // 初回：今月のセクションへスクロール
       const currentKey = TODAY.getFullYear() + '-' + String(TODAY.getMonth()+1).padStart(2,'0');
       const target = monthEl.querySelector('[data-month-key="' + currentKey + '"]');
       if (target) target.scrollIntoView({ behavior: 'auto', block: 'start' });
       monthEl._d71Initialized = true;
     } else {
-      // 再描画：直前のスクロール位置を維持
       monthEl.scrollTop = prevScroll;
     }
 
@@ -4985,7 +5130,6 @@ function show(id) {
         const parts = dk.split('-').map(Number);
         const newDate = new Date(parts[0], parts[1]-1, parts[2]);
         calState.selected = newDate;
-        // D71: 月またぎでもアンカーは保持（スクロールで全月見えるため）
         renderMonth();
         renderDetail();
         if (typeof changeMasterDate === 'function') changeMasterDate(newDate);
