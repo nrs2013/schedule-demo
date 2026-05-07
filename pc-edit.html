@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260507.112332">
+<meta name="build-version" content="20260507.113149">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -2367,7 +2367,7 @@
   }
   .pc-cal-cell:hover { background: #221f1c; }
   .pc-cal-cell.outside { background: #141312; }
-  .pc-cal-cell.in-tour { background: rgba(232,154,74,0.04); }
+  /* D69: ツアー期間ハイライト撤去 — フラット化（カレンダー D&D を真の入力源にしたため） */
   .pc-cal-cell.today   { background: rgba(232,154,74,0.08); }
   .pc-cal-cell.selected { box-shadow: inset 0 0 0 2px #e89a4a; }
   .pc-cal-day-num {
@@ -4442,8 +4442,7 @@ function show(id) {
 <script>
 (function(){
   const TODAY      = new Date(2026, 4, 1);
-  const TOUR_START = new Date(2026, 3, 28);
-  const TOUR_END   = new Date(2026, 4, 17);
+  // D69: TOUR_START/END は撤去。ツアー期間の概念は廃止し、カレンダー D&D が真の入力源。
 
   // R51 B1: カレンダーデータの初期値（localStorage に何も無いときのデフォルト）
   const DEFAULT_CAL_EVENTS = [
@@ -4548,7 +4547,7 @@ function show(id) {
   function fmtDateKey(d){
     return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
   }
-  function isInTour(d){ return d >= TOUR_START && d <= TOUR_END; }
+  // D69: isInTour 撤去
   function isToday(d){ return fmtDateKey(d) === fmtDateKey(TODAY); }
   function isSameDay(a,b){ return fmtDateKey(a) === fmtDateKey(b); }
   function getEvents(d){
@@ -4684,6 +4683,8 @@ function show(id) {
       saveVenueGroups();
       renderMonth();
       renderDetail();
+      // D69: マスター日付バーも追従
+      if (typeof window.__refreshMasterDateBar === 'function') window.__refreshMasterDateBar();
     },
     updateVenueGroup: function(id, props) {
       const g = venueGroups.find(function(x){ return x.id === id; });
@@ -4700,6 +4701,8 @@ function show(id) {
         saveVenueGroups();
         renderMonth();
         renderDetail();
+        // D69: マスター日付バーも追従
+        if (typeof window.__refreshMasterDateBar === 'function') window.__refreshMasterDateBar();
       }
     },
     deleteVenueGroup: function(id) {
@@ -4707,6 +4710,8 @@ function show(id) {
       saveVenueGroups();
       renderMonth();
       renderDetail();
+      // D69: マスター日付バーも追従
+      if (typeof window.__refreshMasterDateBar === 'function') window.__refreshMasterDateBar();
     },
     // D41: 公演名定義リストの操作
     listVenueDefinitions: function() { return venueDefinitions.slice(); },
@@ -4745,6 +4750,8 @@ function show(id) {
       saveCalEvents();
       renderMonth();
       renderDetail();
+      // D69: マスター日付バーも追従
+      if (typeof window.__refreshMasterDateBar === 'function') window.__refreshMasterDateBar();
     },
     updateEvent: function(oldRef, newEv) {
       const idx = calEvents.indexOf(oldRef);
@@ -4753,6 +4760,8 @@ function show(id) {
         saveCalEvents();
         renderMonth();
         renderDetail();
+        // D69: マスター日付バーも追従
+        if (typeof window.__refreshMasterDateBar === 'function') window.__refreshMasterDateBar();
       }
     },
     deleteEvent: function(ref) {
@@ -4762,6 +4771,8 @@ function show(id) {
         saveCalEvents();
         renderMonth();
         renderDetail();
+        // D69: マスター日付バーも追従
+        if (typeof window.__refreshMasterDateBar === 'function') window.__refreshMasterDateBar();
       }
     }
   };
@@ -4822,7 +4833,7 @@ function show(id) {
       const cls = [];
       if (c.outside) cls.push('outside');
       else if (isToday(d)) cls.push('today');
-      else if (isInTour(d)) cls.push('in-tour');
+      // D69: isInTour 撤去（フラット化）
       if (calState.selected && isSameDay(d, calState.selected)) cls.push('selected');
       const evs = c.outside ? [] : getEvents(d);
       // D67: lane でソートし、空 lane は spacer で埋めて縦位置を揃える（最大3 lane = lane 0〜2）
@@ -5522,29 +5533,64 @@ function show(id) {
   };
   // 別 IIFE（曲データ管理）から参照できるよう window にエクスポート
   window.__masterDateState = masterDateState;
-  // ツアーの日付 → 会場・Day 番号マッピング
-  const tourSchedule = {
-    '2026-04-28': { day: '仕込み',  venue: '横浜アリーナ' },
-    '2026-04-29': { day: 'DAY 1',  venue: '横浜アリーナ' },
-    '2026-04-30': { day: 'DAY 2',  venue: '横浜アリーナ' },
-    '2026-05-01': { day: '移動',    venue: '→ 東京' },
-    '2026-05-02': { day: '仕込み',  venue: '東京ドーム' },
-    '2026-05-03': { day: 'DAY 1',  venue: '東京ドーム' },
-    '2026-05-04': { day: 'DAY 2',  venue: '東京ドーム' },
-    '2026-05-05': { day: '移動',    venue: '→ 大阪' },
-    '2026-05-06': { day: '休',      venue: '大阪滞在' },
-    '2026-05-07': { day: '休',      venue: '大阪滞在' },
-    '2026-05-08': { day: '仕込み',  venue: '京セラドーム' },
-    '2026-05-09': { day: 'DAY 1',  venue: '京セラドーム' },
-    '2026-05-10': { day: 'DAY 2',  venue: '京セラドーム' },
-    '2026-05-11': { day: '移動',    venue: '→ 福岡' },
-    '2026-05-12': { day: '休',      venue: '福岡滞在' },
-    '2026-05-13': { day: '休',      venue: '福岡滞在' },
-    '2026-05-14': { day: '休',      venue: '福岡滞在' },
-    '2026-05-15': { day: '仕込み',  venue: 'PayPayドーム' },
-    '2026-05-16': { day: 'DAY 1',  venue: 'PayPayドーム' },
-    '2026-05-17': { day: '千秋楽',  venue: 'PayPayドーム' }
-  };
+  // D69: 静的 tourSchedule は廃止。日付ラベル（DAY n / 仕込み / 千秋楽 / 移動 / 休 等）と
+  // 会場名は CALENDAR タブの D&D 結果（calEvents + venueGroups）から動的に算出する。
+  function getTourInfo(dateKey) {
+    const calApi = window.__calApi;
+    if (!calApi) return { day: null, venue: null };
+    const all = calApi.listAllEvents ? calApi.listAllEvents() : [];
+    // この日付を覆う event を全部集める（endDate 範囲を考慮）
+    const evs = all.filter(function(e){
+      const start = e.date;
+      const end = e.endDate || e.date;
+      return dateKey >= start && dateKey <= end;
+    });
+
+    let dayLabel = null;
+    // 優先順: 本番 → 仕込み → リハ/テクリハ → stay（移動/休）
+    const showEv  = evs.find(function(e){ return e.type === 'show'; });
+    const setupEv = evs.find(function(e){ return e.type === 'setup'; });
+    const rhEv    = evs.find(function(e){ return e.type === 'rh' || e.type === 'tek'; });
+    const stayEv  = evs.find(function(e){ return e.type === 'stay'; });
+
+    if (showEv) {
+      // DAY n: 同じ show event 内での 1-indexed の日数
+      const sp = showEv.date.split('-').map(Number);
+      const cp = dateKey.split('-').map(Number);
+      const sd = new Date(sp[0], sp[1]-1, sp[2]);
+      const cd = new Date(cp[0], cp[1]-1, cp[2]);
+      const dayN = Math.round((cd - sd) / 86400000) + 1;
+      // 千秋楽: 全本番イベントの中で最終日
+      const allShows = all.filter(function(e){ return e.type === 'show'; });
+      let lastEnd = null;
+      allShows.forEach(function(e){
+        const ed = e.endDate || e.date;
+        if (lastEnd === null || ed > lastEnd) lastEnd = ed;
+      });
+      dayLabel = (lastEnd && dateKey === lastEnd) ? '千秋楽' : ('DAY ' + dayN);
+    } else if (setupEv) {
+      dayLabel = '仕込み';
+    } else if (rhEv) {
+      dayLabel = (rhEv.type === 'tek') ? 'テクリハ' : 'リハ';
+    } else if (stayEv) {
+      // stay は label を尊重（移動 / 休 / 大阪滞在 etc.）
+      dayLabel = stayEv.label || '休';
+    }
+
+    // 会場: venueGroup（会場帯）優先、なければ event.venue
+    let venue = null;
+    if (calApi.getVenueGroupByDateKey) {
+      const grp = calApi.getVenueGroupByDateKey(dateKey);
+      if (grp) venue = grp.venue;
+    }
+    if (!venue) {
+      for (let i = 0; i < evs.length; i++) {
+        if (evs[i].venue) { venue = evs[i].venue; break; }
+      }
+    }
+
+    return { day: dayLabel || null, venue: venue || null };
+  }
   const DOW_ARR_M = ['日','月','火','水','木','金','土'];
 
   function fmtMasterDate(d){
@@ -5560,7 +5606,8 @@ function show(id) {
     const dateMain = fmtMasterDate(d);
     const dow = '(' + DOW_ARR_M[d.getDay()] + ')';
     const key = fmtMasterKey(d);
-    const tour = tourSchedule[key];
+    // D69: マスター日付バーは CALENDAR タブの D&D 結果から動的に取得
+    const tour = getTourInfo(key);
 
     const elMain  = document.getElementById('master-date-main');
     const elDow   = document.getElementById('master-date-dow');
@@ -5569,8 +5616,8 @@ function show(id) {
     const elInp   = document.getElementById('master-date-input');
     if (elMain)  elMain.textContent  = dateMain;
     if (elDow)   elDow.textContent   = dow;
-    if (elDay)   elDay.textContent   = tour ? tour.day : '—';
-    if (elVenue) elVenue.textContent = tour ? tour.venue : '—';
+    if (elDay)   elDay.textContent   = tour.day || '—';
+    if (elVenue) elVenue.textContent = tour.venue || '—';
     if (elInp)   elInp.value         = key;
 
     // 各タブの日付ヘッダー（pc-rh-title 内）を一括更新
@@ -5609,6 +5656,9 @@ function show(id) {
       }
     }
   }
+
+  // D69: 別 IIFE（CALENDAR の calApi）からマスター日付バーを再描画できるようグローバル公開
+  window.__refreshMasterDateBar = syncAllDateDisplays;
 
   function changeMasterDate(d){
     if (window.__diag) window.__diag.change++;
