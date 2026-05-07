@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260507.102835">
+<meta name="build-version" content="20260507.103204">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -2418,7 +2418,8 @@
   .pc-cal-pill.rh    { background: rgba(126,194,122,0.22); color: #b8d9b0; border-color: rgba(126,194,122,0.4); }
   .pc-cal-pill.tek   { background: rgba(106,150,184,0.32); color: #a8d4e8; border-color: rgba(106,150,184,0.5); }
   .pc-cal-pill.setup { background: rgba(184,149,88,0.32);  color: #e8c890; border-color: rgba(184,149,88,0.5); }
-  .pc-cal-pill.stay  { background: rgba(168,168,160,0.10); color: #787878; font-weight: 500; }
+  /* D64: stay 系（移動/休）の bar-mid/end が薄すぎる問題を修正 — 連結時に途切れて見えないように */
+  .pc-cal-pill.stay  { background: rgba(168,168,160,0.22); color: #b8b8b0; font-weight: 500; border-color: rgba(168,168,160,0.4); }
   /* R54: 連続イベントを横バー化（同会場・同種別で繋がってる感を出す） */
   /* 隣のセルとの隙間を margin で詰めて視覚的に1本の帯に見せる */
   .pc-cal-pill.bar-start {
