@@ -6489,93 +6489,141 @@ function show(id) {
 
   renderVenueDefList();
 
-  // D49: 自前ドラッグ実装（band/pill の移動）— HTML5 D&D ではなく mousedown/mousemove/mouseup で
-  let manualDragMode = null; // 'move-venue' | 'move-pill'
-  let manualDragGroupId = null;
-  let manualDragSourceDate = null;
-  let manualDragEventIndex = null;
-  let manualDragGhost = null;
-  let manualDragMoved = false;
-  function clearManualDragState() {
-    document.querySelectorAll('.pc-cal-cell.drag-over').forEach(function(c){ c.classList.remove('drag-over'); });
-    document.querySelectorAll('.dragging').forEach(function(el){ el.classList.remove('dragging'); });
-    if (manualDragGhost) { manualDragGhost.remove(); manualDragGhost = null; }
+  // D51: 統合 D&D 実装（resize-right / resize-left / move-band / move-pill）
+  let dnd = { mode: null, groupId: null, sourceDate: null, eventIndex: null, startX: 0, startY: 0, ghost: null, lastDk: null, moved: false };
+  function clearDnd() {
+    document.querySelectorAll('.pc-cal-cell.drag-over, .pc-cal-cell.resize-target, .pc-cal-cell.resize-preview').forEach(function(el){ el.classList.remove('drag-over'); el.classList.remove('resize-target'); el.classList.remove('resize-preview'); });
+    document.querySelectorAll('.pc-cal-venue-band.dragging, .pc-cal-pill.dragging').forEach(function(el){ el.classList.remove('dragging'); });
+    if (dnd.ghost) { dnd.ghost.remove(); dnd.ghost = null; }
     document.body.style.cursor = '';
-    manualDragMode = null;
-    manualDragGroupId = null;
-    manualDragSourceDate = null;
-    manualDragEventIndex = null;
-    manualDragMoved = false;
+    dnd = { mode: null, groupId: null, sourceDate: null, eventIndex: null, startX: 0, startY: 0, ghost: null, lastDk: null, moved: false };
   }
-  document.body.addEventListener('mousedown', function(e) {
+  document.addEventListener('mousedown', function(e) {
     if (e.button !== 0) return;
-    // resize handle / パレット要素 / モーダル / 入力欄 はスキップ
     if (e.target.closest && (
-      e.target.closest('.pc-cal-venue-band-resize-handle') ||
-      e.target.closest('.pc-cal-venue-band-resize-handle-left') ||
       e.target.closest('.cal-events-palette') ||
       e.target.closest('.event-detail-modal-bg') ||
       e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' ||
       e.target.tagName === 'SELECT' || e.target.tagName === 'BUTTON'
     )) return;
+
+    const rightHandle = e.target.closest && e.target.closest('.pc-cal-venue-band-resize-handle:not(.pc-cal-venue-band-resize-handle-left)');
+    const leftHandle = e.target.closest && e.target.closest('.pc-cal-venue-band-resize-handle-left');
     const band = e.target.closest && e.target.closest('.pc-cal-venue-band');
     const pill = e.target.closest && e.target.closest('.pc-cal-pill');
-    if (band) {
-      manualDragMode = 'move-venue';
-      manualDragGroupId = band.getAttribute('data-venue-group-id');
-      manualDragSourceDate = band.getAttribute('data-source-date');
-      manualDragMoved = false;
+
+    if ((rightHandle || leftHandle) && band) {
+      dnd.mode = leftHandle ? 'resize-left' : 'resize-right';
+      dnd.groupId = band.getAttribute('data-venue-group-id');
+      dnd.sourceDate = band.getAttribute('data-source-date');
+      dnd.startX = e.clientX; dnd.startY = e.clientY;
+      document.body.style.cursor = 'ew-resize';
+      e.preventDefault();
+      e.stopPropagation();
+    } else if (band) {
+      dnd.mode = 'move-band';
+      dnd.groupId = band.getAttribute('data-venue-group-id');
+      dnd.sourceDate = band.getAttribute('data-source-date');
+      dnd.startX = e.clientX; dnd.startY = e.clientY;
       band.classList.add('dragging');
+      e.preventDefault();
     } else if (pill) {
       const idx = parseInt(pill.getAttribute('data-event-index'), 10);
       if (isNaN(idx)) return;
-      manualDragMode = 'move-pill';
-      manualDragEventIndex = idx;
-      manualDragMoved = false;
+      dnd.mode = 'move-pill';
+      dnd.eventIndex = idx;
+      dnd.startX = e.clientX; dnd.startY = e.clientY;
       pill.classList.add('dragging');
+      e.preventDefault();
     }
   });
+
   document.addEventListener('mousemove', function(e) {
-    if (!manualDragMode) return;
-    // 数 px 動いて初めて ghost 表示
-    if (!manualDragMoved) {
-      const tgt = manualDragMode === 'move-venue' ? document.querySelector('.pc-cal-venue-band.dragging') : document.querySelector('.pc-cal-pill.dragging');
-      if (!tgt) return;
-      manualDragGhost = tgt.cloneNode(true);
-      manualDragGhost.classList.add('pc-cal-drag-ghost');
-      manualDragGhost.classList.remove('dragging');
-      manualDragGhost.style.left = e.clientX + 'px';
-      manualDragGhost.style.top = e.clientY + 'px';
-      // 内部の handle は消す（ghost 用）
-      manualDragGhost.querySelectorAll('.pc-cal-venue-band-resize-handle, .pc-cal-venue-band-resize-handle-left').forEach(function(h){ h.remove(); });
-      document.body.appendChild(manualDragGhost);
-      manualDragMoved = true;
-      document.body.style.cursor = 'grabbing';
+    if (!dnd.mode) return;
+    if (!dnd.moved) {
+      const dx = e.clientX - dnd.startX;
+      const dy = e.clientY - dnd.startY;
+      if (Math.abs(dx) < 3 && Math.abs(dy) < 3) return;
+      dnd.moved = true;
+      // move 系：ghost 作成
+      if (dnd.mode === 'move-band' || dnd.mode === 'move-pill') {
+        const tgt = dnd.mode === 'move-band' ? document.querySelector('.pc-cal-venue-band.dragging') : document.querySelector('.pc-cal-pill.dragging');
+        if (tgt) {
+          dnd.ghost = tgt.cloneNode(true);
+          dnd.ghost.classList.add('pc-cal-drag-ghost');
+          dnd.ghost.classList.remove('dragging');
+          dnd.ghost.querySelectorAll('.pc-cal-venue-band-resize-handle, .pc-cal-venue-band-resize-handle-left').forEach(function(h){ h.remove(); });
+          document.body.appendChild(dnd.ghost);
+          document.body.style.cursor = 'grabbing';
+        }
+      }
     }
-    if (manualDragGhost) {
-      manualDragGhost.style.left = e.clientX + 'px';
-      manualDragGhost.style.top = e.clientY + 'px';
+    if (dnd.ghost) {
+      dnd.ghost.style.left = e.clientX + 'px';
+      dnd.ghost.style.top = e.clientY + 'px';
     }
-    // ハイライト
     const elem = document.elementFromPoint(e.clientX, e.clientY);
     const cell = elem && elem.closest ? elem.closest('.pc-cal-cell') : null;
-    document.querySelectorAll('.pc-cal-cell.drag-over').forEach(function(c){ c.classList.remove('drag-over'); });
-    if (cell && !cell.classList.contains('outside')) cell.classList.add('drag-over');
+    if (!cell || cell.classList.contains('outside')) return;
+    const dk = cell.getAttribute('data-date');
+    if (!dk || dk === dnd.lastDk) return;
+    dnd.lastDk = dk;
+    // ハイライト一括クリア
+    document.querySelectorAll('.pc-cal-cell.drag-over, .pc-cal-cell.resize-target, .pc-cal-cell.resize-preview').forEach(function(el){
+      el.classList.remove('drag-over');
+      el.classList.remove('resize-target');
+      el.classList.remove('resize-preview');
+    });
+    if (dnd.mode === 'move-band' || dnd.mode === 'move-pill') {
+      cell.classList.add('drag-over');
+    } else if (dnd.mode === 'resize-right' || dnd.mode === 'resize-left') {
+      cell.classList.add('resize-target');
+      const group = window.__calApi && window.__calApi.getVenueGroupByDateKey(dnd.sourceDate);
+      if (group) {
+        let rangeStart, rangeEnd;
+        if (dnd.mode === 'resize-right') {
+          rangeStart = group.startDate;
+          rangeEnd = (dk > group.startDate) ? dk : group.startDate;
+        } else {
+          rangeStart = (dk < group.endDate) ? dk : group.endDate;
+          rangeEnd = group.endDate;
+        }
+        document.querySelectorAll('.pc-cal-cell').forEach(function(c){
+          const cdk = c.getAttribute('data-date');
+          if (cdk && !c.classList.contains('outside') && cdk >= rangeStart && cdk <= rangeEnd) {
+            c.classList.add('resize-preview');
+          }
+        });
+      }
+    }
   });
+
   document.addEventListener('mouseup', function(e) {
-    if (!manualDragMode) return;
-    const wasMoved = manualDragMoved;
-    const mode = manualDragMode;
-    const grpId = manualDragGroupId;
-    const srcDate = manualDragSourceDate;
-    const evIdx = manualDragEventIndex;
-    // ターゲットセル特定（ghost が pointer-events:none なので elementFromPoint で正しく取れる）
+    if (!dnd.mode) return;
+    const mode = dnd.mode;
+    const grpId = dnd.groupId;
+    const srcDate = dnd.sourceDate;
+    const evIdx = dnd.eventIndex;
+    const wasMoved = dnd.moved;
+    let targetDk = null;
     const elem = document.elementFromPoint(e.clientX, e.clientY);
     const cell = elem && elem.closest ? elem.closest('.pc-cal-cell') : null;
-    const targetDk = cell && !cell.classList.contains('outside') ? cell.getAttribute('data-date') : null;
-    clearManualDragState();
+    if (cell && !cell.classList.contains('outside')) targetDk = cell.getAttribute('data-date');
+    clearDnd();
     if (!wasMoved || !targetDk || !window.__calApi) return;
-    if (mode === 'move-venue' && grpId && srcDate && targetDk !== srcDate) {
+    if (mode === 'resize-right' && grpId && srcDate) {
+      const group = window.__calApi.getVenueGroupByDateKey(srcDate);
+      if (group) {
+        const newEnd = targetDk > group.startDate ? targetDk : group.startDate;
+        if (newEnd !== group.endDate) window.__calApi.updateVenueGroup(grpId, { endDate: newEnd });
+      }
+    } else if (mode === 'resize-left' && grpId && srcDate) {
+      const group = window.__calApi.getVenueGroupByDateKey(srcDate);
+      if (group) {
+        const newStart = targetDk < group.endDate ? targetDk : group.endDate;
+        if (newStart !== group.startDate) window.__calApi.updateVenueGroup(grpId, { startDate: newStart });
+      }
+    } else if (mode === 'move-band' && grpId && srcDate && targetDk !== srcDate) {
       const group = window.__calApi.getVenueGroupByDateKey(srcDate);
       if (group) {
         function shift(dkStr, days) {
@@ -6595,7 +6643,7 @@ function show(id) {
         }
       }
     } else if (mode === 'move-pill' && typeof evIdx === 'number') {
-      const allEvs = window.__calApi.listAllEvents ? window.__calApi.listAllEvents() : null;
+      const allEvs = window.__calApi.listAllEvents();
       if (allEvs && allEvs[evIdx]) {
         const oldEv = allEvs[evIdx];
         if (oldEv.date !== targetDk) {
@@ -6605,159 +6653,17 @@ function show(id) {
       }
     }
   });
-  // ESC でドラッグキャンセル
+
   document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape' && manualDragMode) clearManualDragState();
+    if (e.key === 'Escape' && dnd.mode) { clearDnd(); }
   });
 
-  // 既存の HTML5 D&D（パレット → カレンダー）はそのまま動かす
+  // パレット → カレンダー の HTML5 D&D は残す（既存）
   document.body.addEventListener('dragend', function(e) {
     document.querySelectorAll('.pc-cal-cell.drag-over').forEach(function(c){ c.classList.remove('drag-over'); });
   });
 
-  // D45b: 右端ハンドルドラッグで会場帯の endDate を伸縮
-  let resizeGroupId = null;
-  let resizeStartDk = null;
-  let lastResizeDk = null;
-  let resizeMode = 'right'; // 'right' or 'left'
-  document.body.addEventListener('mousedown', function(e) {
-    const rightHandle = e.target.closest('.pc-cal-venue-band-resize-handle');
-    const leftHandle = e.target.closest('.pc-cal-venue-band-resize-handle-left');
-    const handle = rightHandle || leftHandle;
-    if (!handle) return;
-    e.preventDefault();
-    e.stopPropagation();
-    const band = handle.closest('.pc-cal-venue-band');
-    const cell = band ? band.closest('.pc-cal-cell') : null;
-    if (!band || !cell) return;
-    resizeMode = leftHandle ? 'left' : 'right';
-    resizeGroupId = band.getAttribute('data-venue-group-id');
-    resizeStartDk = cell.getAttribute('data-date');
-    lastResizeDk = resizeStartDk;
-    document.body.style.cursor = 'ew-resize';
-  });
-  document.body.addEventListener('mousemove', function(e) {
-    if (!resizeGroupId) return;
-    const elem = document.elementFromPoint(e.clientX, e.clientY);
-    const cell = elem && elem.closest ? elem.closest('.pc-cal-cell') : null;
-    if (!cell || cell.classList.contains('outside')) return;
-    const dk = cell.getAttribute('data-date');
-    if (!dk) return;
-    if (dk !== lastResizeDk) {
-      lastResizeDk = dk;
-      // D50: preview range をハイライト（startDate〜現在 / 現在〜endDate を視覚化）
-      document.querySelectorAll('.pc-cal-cell.resize-target, .pc-cal-cell.resize-preview').forEach(function(c){
-        c.classList.remove('resize-target');
-        c.classList.remove('resize-preview');
-      });
-      cell.classList.add('resize-target');
-      const group = window.__calApi && window.__calApi.getVenueGroupByDateKey(resizeStartDk);
-      if (group) {
-        let rangeStart, rangeEnd;
-        if (resizeMode === 'right') {
-          // startDate 〜 dk を preview
-          rangeStart = group.startDate;
-          rangeEnd = (dk > group.startDate) ? dk : group.startDate;
-        } else {
-          // dk 〜 endDate を preview
-          rangeStart = (dk < group.endDate) ? dk : group.endDate;
-          rangeEnd = group.endDate;
-        }
-        document.querySelectorAll('.pc-cal-cell').forEach(function(c){
-          const cdk = c.getAttribute('data-date');
-          if (cdk && !c.classList.contains('outside') && cdk >= rangeStart && cdk <= rangeEnd) {
-            c.classList.add('resize-preview');
-          }
-        });
-      }
-    }
-  });
-  document.body.addEventListener('mouseup', function(e) {
-    if (!resizeGroupId) return;
-    document.body.style.cursor = '';
-    document.querySelectorAll('.pc-cal-cell.resize-target, .pc-cal-cell.resize-preview').forEach(function(c){
-      c.classList.remove('resize-target');
-      c.classList.remove('resize-preview');
-    });
-    if (lastResizeDk && lastResizeDk !== resizeStartDk && window.__calApi) {
-      const group = window.__calApi.getVenueGroupByDateKey(resizeStartDk);
-      if (group) {
-        if (resizeMode === 'right') {
-          const newEnd = lastResizeDk > group.startDate ? lastResizeDk : group.startDate;
-          window.__calApi.updateVenueGroup(resizeGroupId, { endDate: newEnd });
-        } else {
-          // left: startDate を更新（endDate より前）
-          const newStart = lastResizeDk < group.endDate ? lastResizeDk : group.endDate;
-          window.__calApi.updateVenueGroup(resizeGroupId, { startDate: newStart });
-        }
-      }
-    }
-    resizeGroupId = null; resizeStartDk = null; lastResizeDk = null;
-  });
-
-  // D45: クリックで選択ハイライト（pill / venue-band 両方）/ Delete で削除
-  document.body.addEventListener('click', function(e) {
-    const pill = e.target.closest('.pc-cal-pill');
-    const band = e.target.closest('.pc-cal-venue-band');
-    if (pill || band) {
-      e.stopPropagation();
-      document.querySelectorAll('.pc-cal-pill.selected, .pc-cal-venue-band.selected').forEach(function(el){ el.classList.remove('selected'); });
-      if (pill) pill.classList.add('selected');
-      if (band) band.classList.add('selected');
-      return;
-    }
-    if (e.target.closest('.cal-events-palette') || e.target.closest('.event-detail-modal-bg')) return;
-    document.querySelectorAll('.pc-cal-pill.selected, .pc-cal-venue-band.selected').forEach(function(el){ el.classList.remove('selected'); });
-  });
-
-  document.addEventListener('keydown', function(e) {
-    if (e.key !== 'Delete' && e.key !== 'Backspace') return;
-    const ae = document.activeElement;
-    if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.tagName === 'SELECT' || ae.isContentEditable)) return;
-    const selBand = document.querySelector('.pc-cal-venue-band.selected');
-    const selPill = document.querySelector('.pc-cal-pill.selected');
-    if (!selBand && !selPill) return;
-    e.preventDefault();
-    if (selBand) {
-      const groupId = selBand.getAttribute('data-venue-group-id');
-      if (groupId && window.__calApi) window.__calApi.deleteVenueGroup(groupId);
-      return;
-    }
-    if (selPill) {
-      const cell = selPill.closest('.pc-cal-cell');
-      if (!cell) return;
-      const dk = cell.getAttribute('data-date');
-      if (!dk || !window.__calApi) return;
-      const evs = window.__calApi.getEventsByDateKey(dk);
-      if (evs.length === 0) return;
-      const wrap = selPill.parentElement;
-      const idx = wrap ? Array.from(wrap.children).indexOf(selPill) : 0;
-      const ev = evs[Math.min(idx, evs.length - 1)];
-      window.__calApi.deleteEvent(ev);
-    }
-  });
-
-  // D45: 会場帯ダブルクリック → venue 名 prompt 編集（D39 代替）
-  document.body.addEventListener('dblclick', function(e) {
-    const band = e.target.closest('.pc-cal-venue-band');
-    if (!band) return;
-    e.stopPropagation();
-    e.preventDefault();
-    const groupId = band.getAttribute('data-venue-group-id');
-    const cell = band.closest('.pc-cal-cell');
-    const dk = cell ? cell.getAttribute('data-date') : null;
-    if (!groupId || !dk || !window.__calApi) return;
-    const group = window.__calApi.getVenueGroupByDateKey(dk);
-    if (!group) return;
-    const newName = prompt('会場名を変更', group.venue);
-    if (newName === null) return;
-    const v = newName.trim();
-    if (v && v !== group.venue) {
-      window.__calApi.updateVenueGroup(groupId, { venue: v });
-    }
-  });
-
-  console.log('[D34/D45] CALENDAR D&D + モーダル + 会場帯ドラッグ + 選択削除 init OK');
+  console.log('[D34/D51] CALENDAR D&D + モーダル + 会場帯ドラッグ + 選択削除 init OK');
 })();
 </script>
 </body>
