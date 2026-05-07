@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260507.101614">
+<meta name="build-version" content="20260507.102449">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -2002,13 +2002,13 @@
     z-index: 1;
   }
   .pc-cal-venue-band:hover { background: rgba(216,184,120,0.30); border-color: rgba(216,184,120,0.7); }
-  /* D53: 帯の伸縮アニメーション感 */
+  /* D61: 派手な scaleX アニメは「ピヨーン」感が出るので opacity だけに */
   @keyframes bandFadeIn {
-    from { opacity: 0.5; transform: scaleX(0.95); transform-origin: left; }
-    to { opacity: 1; transform: scaleX(1); }
+    from { opacity: 0; }
+    to { opacity: 1; }
   }
   .pc-cal-venue-band {
-    animation: bandFadeIn 0.12s ease-out;
+    animation: bandFadeIn 0.10s ease-out;
   }
   /* D46: 連続日では cell padding (6px) + gap (1px) = 7px を margin で打ち消し */
   .pc-cal-venue-band.bar-start {
@@ -2179,10 +2179,11 @@
   .pc-cal-drag-ghost {
     position: fixed;
     pointer-events: none;
-    opacity: 0.92;
+    opacity: 0.85;
     z-index: 10000;
-    transform: translate(-50%, -50%) scale(1.05);
-    box-shadow: 0 6px 20px rgba(0,0,0,0.7), 0 0 0 1px rgba(216,184,120,0.7);
+    max-width: 120px;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.6), 0 0 0 1px rgba(216,184,120,0.5);
   }
   .pc-cal-drag-ghost.pc-cal-venue-band {
     margin: 0 !important;
@@ -2198,7 +2199,7 @@
   }
   /* D50: resize 中の preview range（伸びてる感のアニメ） */
   .pc-cal-cell.resize-preview {
-    background: rgba(216,184,120,0.12) !important;
+    background: rgba(216,184,120,0.06) !important;
     transition: background 0.15s ease-out;
   }
   .pc-cal-cell.resize-preview .pc-cal-venue-band {
