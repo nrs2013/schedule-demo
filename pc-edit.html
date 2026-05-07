@@ -4377,37 +4377,7 @@ function show(id) {
     html += '</div>';
     html += '</div>';
 
-    // EVENTS
-    html += '<div class="pc-detail-section">';
-    html += '<div class="pc-detail-section-label">EVENTS</div>';
-    html += '<div class="pc-detail-events-edit">';
-    if (evs.length === 0) {
-      html += '<div style="color:#5a5a54;font-size:11px;padding:4px 0;">— イベント未登録 —</div>';
-    } else {
-      evs.forEach(function(e, i){
-        html += '<div class="pc-detail-event-row" data-index="' + i + '">';
-        html += '<select class="pc-detail-event-type" data-field="type">';
-        [['setup','仕込み'], ['tek','テクリハ'], ['rh','リハ'], ['show','本番'], ['stay','移動/休']].forEach(function(p){
-          const sel = (p[0] === e.type) ? ' selected' : '';
-          html += '<option value="' + p[0] + '"' + sel + '>' + p[1] + '</option>';
-        });
-        html += '</select>';
-        html += '<input type="text" class="pc-detail-event-label" value="' + escH(e.label) + '" data-field="label" placeholder="ラベル">';
-        html += '<button class="pc-detail-event-del" data-action="delete-event" data-index="' + i + '" title="削除">×</button>';
-        html += '</div>';
-      });
-    }
-    // 追加フォーム
-    html += '<div class="pc-detail-event-add">';
-    html += '<select class="pc-detail-event-add-type">';
-    [['rh','リハ'], ['tek','テクリハ'], ['show','本番'], ['setup','仕込み'], ['stay','移動/休']].forEach(function(p){
-      html += '<option value="' + p[0] + '">' + p[1] + '</option>';
-    });
-    html += '</select>';
-    html += '<input type="text" class="pc-detail-event-add-label" placeholder="ラベル（例：Day1）">';
-    html += '<button class="pc-detail-event-add-btn" data-action="add-event">+追加</button>';
-    html += '</div>';
-    html += '</div></div>';
+    // D34d: EVENTS セクション（既存編集 + 追加フォーム）は右パレットの D&D + モーダルに代替されたため撤去
 
     // SHOW（時間編集 - 会場の showTimes を直接編集）
     if (venue && showTimes[venue]) {
@@ -4512,79 +4482,7 @@ function show(id) {
       });
     }
 
-    // 既存イベント編集（type / label）
-    detailEl.querySelectorAll('.pc-detail-event-row').forEach(function(row){
-      const i = +row.getAttribute('data-index');
-      const evsForDate = getEvents(d);
-      const targetEv = evsForDate[i];
-      if (!targetEv) return;
-      const indexInAll = calEvents.indexOf(targetEv);
-
-      const typeSel = row.querySelector('[data-field="type"]');
-      if (typeSel && indexInAll >= 0) {
-        typeSel.addEventListener('change', function(){
-          calEvents[indexInAll].type = typeSel.value;
-          saveCalEvents();
-          renderMonth();
-        });
-      }
-
-      const labelInp = row.querySelector('[data-field="label"]');
-      if (labelInp && indexInAll >= 0) {
-        // R52: ラベルを空にしたら、そのイベントを自動削除（カレンダーから消す）
-        labelInp.addEventListener('blur', function(){
-          const newLabel = (labelInp.value || '').trim();
-          if (newLabel === '') {
-            calEvents.splice(indexInAll, 1);
-            saveCalEvents();
-            renderDetail();
-            renderMonth();
-          } else {
-            calEvents[indexInAll].label = newLabel;
-            saveCalEvents();
-            renderMonth();
-          }
-        });
-      }
-    });
-
-    // イベント削除
-    detailEl.querySelectorAll('[data-action="delete-event"]').forEach(function(btn){
-      btn.addEventListener('click', function(){
-        const i = +btn.getAttribute('data-index');
-        const evsForDate = getEvents(d);
-        const targetEv = evsForDate[i];
-        if (!targetEv) return;
-        const indexInAll = calEvents.indexOf(targetEv);
-        if (indexInAll < 0) return;
-        calEvents.splice(indexInAll, 1);
-        saveCalEvents();
-        renderDetail();
-        renderMonth();
-      });
-    });
-
-    // イベント追加
-    const addEventBtn = detailEl.querySelector('[data-action="add-event"]');
-    if (addEventBtn) {
-      addEventBtn.addEventListener('click', function(){
-        const typeSel = detailEl.querySelector('.pc-detail-event-add-type');
-        const labelInp = detailEl.querySelector('.pc-detail-event-add-label');
-        const type = typeSel.value;
-        const label = (labelInp.value || '').trim();
-        if (!label) {
-          alert('ラベルを入力してください（例：Day1, テクリハ）');
-          return;
-        }
-        // 同日の既存イベントから venue を継承
-        const evsForDate = getEvents(d);
-        const venue = evsForDate.length > 0 ? evsForDate[0].venue : '';
-        calEvents.push({ date: dateKey, type: type, label: label, venue: venue });
-        saveCalEvents();
-        renderDetail();
-        renderMonth();
-      });
-    }
+    // D34d: 既存イベント編集 / 削除 / 追加ハンドラは右パレットの D&D + モーダルに代替されたため撤去
 
     // SHOW 時間編集
     detailEl.querySelectorAll('.pc-detail-time-input').forEach(function(inp){
