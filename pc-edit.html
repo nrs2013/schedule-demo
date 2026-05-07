@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260507.104143">
+<meta name="build-version" content="20260507.105237">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -6677,11 +6677,10 @@ function show(id) {
       const dy = e.clientY - dnd.startY;
       if (Math.abs(dx) < 3 && Math.abs(dy) < 3) return;
       dnd.moved = true;
-      // D63: move 系：連結バーは全期間分の長さで ghost を作る
+      // D66: 「掴んだ位置のまま」ドラッグ — Google Calendar 風
       if (dnd.mode === 'move-band' || dnd.mode === 'move-pill') {
         const tgt = dnd.mode === 'move-band' ? document.querySelector('.pc-cal-venue-band.dragging') : document.querySelector('.pc-cal-pill.dragging');
         if (tgt) {
-          // 同じグループ/イベントの全セグメントを集めて合計幅を計算
           let segs;
           if (dnd.mode === 'move-band') {
             segs = document.querySelectorAll('.pc-cal-venue-band[data-venue-group-id="' + dnd.groupId + '"]');
@@ -6691,12 +6690,15 @@ function show(id) {
           const rects = Array.from(segs).map(function(s){ return s.getBoundingClientRect(); });
           const minLeft = Math.min.apply(null, rects.map(function(r){ return r.left; }));
           const maxRight = Math.max.apply(null, rects.map(function(r){ return r.right; }));
+          const barTop = rects[0].top;
           const tr = tgt.getBoundingClientRect();
           const totalWidth = maxRight - minLeft;
+          // mouseDown 時のマウス位置がバー全体内のどこを掴んだか（offset）を記録
+          dnd.ghostOffsetX = dnd.startX - minLeft;
+          dnd.ghostOffsetY = dnd.startY - barTop;
           dnd.ghost = tgt.cloneNode(true);
           dnd.ghost.classList.add('pc-cal-drag-ghost');
           dnd.ghost.classList.remove('dragging');
-          // 連結時のクラスは外して単独表示に
           dnd.ghost.classList.remove('bar-start', 'bar-mid', 'bar-end');
           dnd.ghost.querySelectorAll('.pc-cal-venue-band-resize-handle, .pc-cal-venue-band-resize-handle-left, .pc-cal-pill-resize-handle').forEach(function(h){ h.remove(); });
           dnd.ghost.style.width = totalWidth + 'px';
@@ -6708,14 +6710,16 @@ function show(id) {
           dnd.ghost.style.borderLeft = '1px solid';
           dnd.ghost.style.borderRight = '1px solid';
           dnd.ghost.style.padding = '1px 5px';
+          dnd.ghost.style.transform = 'none';  // translate(-50%) を打ち消し
           document.body.appendChild(dnd.ghost);
           document.body.style.cursor = 'grabbing';
         }
       }
     }
     if (dnd.ghost) {
-      dnd.ghost.style.left = e.clientX + 'px';
-      dnd.ghost.style.top = e.clientY + 'px';
+      // D66: 「掴んだ位置」を保つように offset を引いて left/top を計算
+      dnd.ghost.style.left = (e.clientX - (dnd.ghostOffsetX || 0)) + 'px';
+      dnd.ghost.style.top = (e.clientY - (dnd.ghostOffsetY || 0)) + 'px';
     }
     const elem = document.elementFromPoint(e.clientX, e.clientY);
     const cell = elem && elem.closest ? elem.closest('.pc-cal-cell') : null;
