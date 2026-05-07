@@ -980,7 +980,8 @@
   .hotel-info-grid input:focus { outline: none; border-color: rgba(216,184,120,0.55); }
 
   /* Googleマップリンク（住所からURLエンコードで自動生成）
-     D25: hotel-info-grid に組み込んで URL 入力ボックスと同サイズに統一 */
+     D25: hotel-info-grid に組み込んで URL 入力ボックスと同サイズに統一
+     D26: ボーダーを他のinputと同じグレー(#2c2a27)に揃え、文字だけ青系でマップ感残す */
   .hotel-map-link {
     display: flex;
     align-items: center;
@@ -988,7 +989,7 @@
     gap: 6px;
     background: #14130f;
     color: #a8d4e8;
-    border: 1px solid rgba(106,150,184,0.45);
+    border: 1px solid #2c2a27;
     padding: 4px 10px;
     border-radius: 5px;
     font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
@@ -1000,7 +1001,7 @@
     box-sizing: border-box;
     width: 100%;
   }
-  .hotel-map-link:hover { background: rgba(106,150,184,0.12); border-color: rgba(106,150,184,0.7); color: #c8e0f0; }
+  .hotel-map-link:hover { background: #1c1b19; border-color: rgba(106,150,184,0.55); color: #c8e0f0; }
   .hotel-map-link.disabled {
     opacity: 0.35;
     pointer-events: none;
