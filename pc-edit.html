@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260507.100244">
+<meta name="build-version" content="20260507.100452">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -4662,6 +4662,14 @@ function show(id) {
       const g = venueGroups.find(function(x){ return x.id === id; });
       if (g) {
         Object.keys(props).forEach(function(k){ g[k] = props[k]; });
+        // D56: startDate/endDate 変更時、重複する他のグループを自動 merge（削除）
+        if ('startDate' in props || 'endDate' in props) {
+          venueGroups = venueGroups.filter(function(other){
+            if (other.id === g.id) return true;
+            // 範囲が重なってたら削除
+            return !(other.startDate <= g.endDate && other.endDate >= g.startDate);
+          });
+        }
         saveVenueGroups();
         renderMonth();
         renderDetail();
