@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260507.140350">
+<meta name="build-version" content="20260507.141005">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -1939,12 +1939,12 @@
   /* D39/D46: 会場帯（venue band）— セル上部に貫通バーで表示
      D46: セル padding(6px) + grid gap(1px) を打ち消し、隣セルまで連結 */
   .pc-cal-venue-band {
-    /* D85: 黒抜きスタイル（A案）— ベタ黒 + 金文字 + 細い金枠でネームプレート感 */
-    background: #050505;
-    border: 1px solid rgba(216,184,120,0.6);
+    /* D86: いったんニュートラルな warm gold に戻す（黒抜きは廃止、別案検討中） */
+    background: rgba(120,100,72,0.32);
+    border: 1px solid rgba(216,184,120,0.55);
     color: #d8b878;
     font-size: 9px;
-    font-weight: 600;
+    font-weight: 500;
     letter-spacing: 0.04em;
     padding: 1px 5px;
     border-radius: 3px;
@@ -1960,7 +1960,17 @@
     position: relative;
     z-index: 1;
   }
-  .pc-cal-venue-band:hover { background: #0c0c0c; border-color: rgba(216,184,120,0.85); color: #f0d4a8; }
+  .pc-cal-venue-band:hover { background: rgba(120,100,72,0.50); border-color: rgba(216,184,120,0.85); color: #f0d4a8; }
+  /* D86: 同じ週に venue band がある時、band の無いセルにも空 placeholder を入れて
+     events の縦位置を揃える（venue band 行ぶんの隙間を確保） */
+  .pc-cal-venue-band.is-empty {
+    visibility: hidden;
+    background: transparent;
+    border-color: transparent;
+    pointer-events: none;
+    cursor: default;
+    animation: none;
+  }
   /* D61: 派手な scaleX アニメは「ピヨーン」感が出るので opacity だけに */
   @keyframes bandFadeIn {
     from { opacity: 0; }
@@ -5021,6 +5031,23 @@ function show(id) {
       html += '<div class="pc-cal-dow ' + cls + '">' + l + '</div>';
     });
     html += '</div>';
+    // D86: 週単位で venue band の有無を集計（band を持つ週は他のセルにも空 placeholder を入れて行揃え）
+    const weeksWithBand = new Set();
+    function mondayKeyOf(d) {
+      const dow = (d.getDay() + 6) % 7;
+      const m = new Date(d);
+      m.setDate(m.getDate() - dow);
+      return fmtDateKey(m);
+    }
+    {
+      const probe = new Date(startD);
+      while (probe <= endD) {
+        if (getVenueGroupByDateKey(fmtDateKey(probe))) {
+          weeksWithBand.add(mondayKeyOf(probe));
+        }
+        probe.setDate(probe.getDate() + 1);
+      }
+    }
     // 連続グリッド本体（左レール + 7 列）
     html += '<div class="pc-cal-continuous-grid">';
     let prevRailMonth = null;
@@ -5117,6 +5144,9 @@ function show(id) {
         const rightHandleHtml = showRightHandle ? '<span class="pc-cal-venue-band-resize-handle" draggable="false"></span>' : '';
         const leftHandleHtml = showLeftHandle ? '<span class="pc-cal-venue-band-resize-handle-left" draggable="false"></span>' : '';
         venueBandHtml = '<div class="pc-cal-venue-band' + bandPosCls + '" data-venue-group-id="' + venueGroup.id + '" data-source-date="' + dk + '" title="' + escH(venueGroup.venue) + '">' + leftHandleHtml + escH(bandLabel) + rightHandleHtml + '</div>';
+      } else if (weeksWithBand.has(mondayKeyOf(d))) {
+        // D86: この週に他のセルが band を持つ → 空 placeholder で events を下へ揃える
+        venueBandHtml = '<div class="pc-cal-venue-band is-empty" aria-hidden="true"></div>';
       }
 
       // 月初の data-month-key を付与（今月へジャンプ用）
