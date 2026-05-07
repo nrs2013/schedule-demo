@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260507.105237">
+<meta name="build-version" content="20260507.105835">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -2397,8 +2397,16 @@
     width: 100%;
     flex-grow: 1;
   }
-  .pc-cal-events .pc-cal-pill + .pc-cal-pill {
+  /* D67: spacer 含めたすべての子要素間に間隔（重なった日も縦位置を揃えるため） */
+  .pc-cal-events > * + * {
     margin-top: 2px;
+  }
+  /* D67: 空レーンを埋めるスペーサー（pill と同じ高さで縦位置維持） */
+  .pc-cal-pill-spacer {
+    display: block;
+    width: 100%;
+    height: 16px;
+    pointer-events: none;
   }
   .pc-cal-pill {
     font-family: 'JetBrains Mono', 'Noto Sans JP', monospace;
@@ -4777,6 +4785,38 @@ function show(id) {
     html += '</div>';
 
     html += '<div class="pc-cal-month-grid">';
+    // D67: 表示月内のイベントに対して "lane"（縦位置）を割り振る
+    // 重なってるイベントは別 lane に置き、月内で同じイベントは常に同じ lane に揃える
+    const monthStartKey = fmtDateKey(cells[0].date);
+    const monthEndKey = fmtDateKey(cells[cells.length - 1].date);
+    const monthEvts = calEvents.filter(function(e){
+      const start = e.date;
+      const end = e.endDate || e.date;
+      return end >= monthStartKey && start <= monthEndKey;
+    }).slice().sort(function(a, b){
+      if (a.date !== b.date) return a.date < b.date ? -1 : 1;
+      const ea = a.endDate || a.date;
+      const eb = b.endDate || b.date;
+      if (ea !== eb) return ea > eb ? -1 : 1; // 長いイベントを先に配置
+      return calEvents.indexOf(a) - calEvents.indexOf(b);
+    });
+    const eventLane = new Map();
+    const laneEnds = []; // laneEnds[i] = lane i の最後の埋まってる日付
+    monthEvts.forEach(function(e){
+      const start = e.date;
+      const end = e.endDate || e.date;
+      let assigned = -1;
+      for (let i = 0; i < laneEnds.length; i++) {
+        if (laneEnds[i] < start) { assigned = i; break; }
+      }
+      if (assigned === -1) {
+        assigned = laneEnds.length;
+        laneEnds.push(end);
+      } else {
+        laneEnds[assigned] = end;
+      }
+      eventLane.set(e, assigned);
+    });
     cells.forEach(function(c){
       const d = c.date;
       const cls = [];
@@ -4785,7 +4825,24 @@ function show(id) {
       else if (isInTour(d)) cls.push('in-tour');
       if (calState.selected && isSameDay(d, calState.selected)) cls.push('selected');
       const evs = c.outside ? [] : getEvents(d);
-      const eventsHtml = evs.slice(0, 3).map(function(e){
+      // D67: lane でソートし、空 lane は spacer で埋めて縦位置を揃える（最大3 lane = lane 0〜2）
+      const cellEvs = evs.slice().sort(function(a, b){
+        return (eventLane.get(a) || 0) - (eventLane.get(b) || 0);
+      });
+      const maxLaneInCell = cellEvs.length > 0
+        ? Math.max.apply(null, cellEvs.map(function(e){ return eventLane.get(e) || 0; }))
+        : -1;
+      const visibleMaxLane = Math.min(maxLaneInCell, 2); // 最大3レーンまで表示
+      const slots = [];
+      for (let lane = 0; lane <= visibleMaxLane; lane++) {
+        const matched = cellEvs.find(function(e){ return (eventLane.get(e) || 0) === lane; });
+        slots.push(matched ? { type: 'pill', event: matched } : { type: 'spacer' });
+      }
+      const eventsHtml = slots.map(function(slot){
+        if (slot.type === 'spacer') {
+          return '<div class="pc-cal-pill-spacer"></div>';
+        }
+        const e = slot.event;
         // R54: 同じ会場・同じ種別が前後の日にあれば横バー化
         const cont = isContinuousEvent(d, e);
         const positionCls = (cont.hasPrev && cont.hasNext) ? ' bar-mid'
