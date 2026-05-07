@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260507.135913">
+<meta name="build-version" content="20260507.140350">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -1939,12 +1939,13 @@
   /* D39/D46: 会場帯（venue band）— セル上部に貫通バーで表示
      D46: セル padding(6px) + grid gap(1px) を打ち消し、隣セルまで連結 */
   .pc-cal-venue-band {
-    /* D84: ステージ照明フィルター式 — Gold（会場帯のシンボル色）。彩度をビビッドに */
-    background: rgba(216,184,120,0.42);
-    border: 1px solid rgba(216,184,120,0.85);
-    color: #f5e8c8;
+    /* D85: 黒抜きスタイル（A案）— ベタ黒 + 金文字 + 細い金枠でネームプレート感 */
+    background: #050505;
+    border: 1px solid rgba(216,184,120,0.6);
+    color: #d8b878;
     font-size: 9px;
-    font-weight: 500;
+    font-weight: 600;
+    letter-spacing: 0.04em;
     padding: 1px 5px;
     border-radius: 3px;
     /* D78: 会場帯と下の現地仕込み/仕込み等のピルの間隔を 2px → 7px に広げる */
@@ -1959,7 +1960,7 @@
     position: relative;
     z-index: 1;
   }
-  .pc-cal-venue-band:hover { background: rgba(216,184,120,0.55); border-color: rgba(216,184,120,1); }
+  .pc-cal-venue-band:hover { background: #0c0c0c; border-color: rgba(216,184,120,0.85); color: #f0d4a8; }
   /* D61: 派手な scaleX アニメは「ピヨーン」感が出るので opacity だけに */
   @keyframes bandFadeIn {
     from { opacity: 0; }
