@@ -979,27 +979,28 @@
   }
   .hotel-info-grid input:focus { outline: none; border-color: rgba(216,184,120,0.55); }
 
-  /* Googleマップリンク（住所からURLエンコードで自動生成） */
-  .hotel-map-link-wrap {
-    padding: 0 14px 8px;
-  }
+  /* Googleマップリンク（住所からURLエンコードで自動生成）
+     D25: hotel-info-grid に組み込んで URL 入力ボックスと同サイズに統一 */
   .hotel-map-link {
-    display: inline-flex;
+    display: flex;
     align-items: center;
+    justify-content: center;
     gap: 6px;
-    background: rgba(106,150,184,0.12);
+    background: #14130f;
     color: #a8d4e8;
     border: 1px solid rgba(106,150,184,0.45);
-    padding: 6px 12px;
-    border-radius: 4px;
-    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 5px;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+    font-size: 15px;
     font-weight: 500;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.04em;
     text-decoration: none;
     transition: background 0.12s, border-color 0.12s, color 0.12s;
-    font-family: inherit;
+    box-sizing: border-box;
+    width: 100%;
   }
-  .hotel-map-link:hover { background: rgba(106,150,184,0.20); border-color: rgba(106,150,184,0.85); color: #c8e0f0; }
+  .hotel-map-link:hover { background: rgba(106,150,184,0.12); border-color: rgba(106,150,184,0.7); color: #c8e0f0; }
   .hotel-map-link.disabled {
     opacity: 0.35;
     pointer-events: none;
@@ -5158,9 +5159,7 @@ function show(id) {
       +     '<div class="info-label">住所</div><input value="' + escH(h.address) + '" data-field="address">'
       +     '<div class="info-label">電話</div><input value="' + escH(h.tel) + '" data-field="tel">'
       +     '<div class="info-label">URL</div><input value="' + escH(h.url) + '" data-field="url">'
-      +   '</div>'
-      +   '<div class="hotel-map-link-wrap">'
-      +     '<a class="hotel-map-link' + mapClass + '" href="' + mapHref + '" target="_blank" rel="noopener" title="' + (h.address ? 'Googleマップで住所を開く' : '住所が未入力です') + '">📍 Google マップで開く</a>'
+      +     '<div class="info-label">マップ</div><a class="hotel-map-link' + mapClass + '" href="' + mapHref + '" target="_blank" rel="noopener" title="' + (h.address ? 'Googleマップで住所を開く' : '住所が未入力です') + '">📍 Google マップで開く</a>'
       +   '</div>'
       +   '<div class="hotel-section">'
       +     '<div class="hotel-section-head">🚕 タクシー配車 <span class="hotel-section-count">' + h.taxis.length + ' 件</span></div>'
