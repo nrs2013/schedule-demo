@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260507.125904">
+<meta name="build-version" content="20260507.131555">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -1993,7 +1993,8 @@
     font-weight: 500;
     padding: 1px 5px;
     border-radius: 3px;
-    margin: 3px 0 2px;
+    /* D78: 会場帯と下の現地仕込み/仕込み等のピルの間隔を 2px → 7px に広げる */
+    margin: 3px 0 7px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -2442,7 +2443,8 @@
   .pc-cal-cell {
     background: #1a1918;
     padding: 6px;
-    min-height: 96px;
+    /* D78: セル縦幅を 96px → 120px に拡張（情報を読みやすく＆余白を確保） */
+    min-height: 120px;
     display: flex;
     flex-direction: column;
     cursor: pointer;
