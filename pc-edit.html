@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260507.125304">
+<meta name="build-version" content="20260507.125904">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -2375,24 +2375,32 @@
   .pc-cal-cell.month-even { background: #1d1c1a; }
   .pc-cal-cell.month-odd  { background: #161514; }
   /* outside / today / selected は上記より優先（既存ルール） */
-  /* D76: 左レールセル — 月初週だけ「X月」を縦書きで表示。それ以外の週は空 */
+  /* D77: 左レールセル — 月初週だけ月の「数字」を大きく upright で表示。「月」字は省略 */
   .pc-cal-month-rail {
     background: #1a1918;
     color: #76766f;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     padding: 6px 0;
-    font-size: 11px;
-    letter-spacing: 0.18em;
     line-height: 1;
-    /* 縦書き — 日本語は upright・Latin は回転 */
-    writing-mode: vertical-rl;
-    text-orientation: mixed;
+  }
+  .pc-cal-month-rail .rail-year {
+    font-size: 9px;
+    font-weight: 400;
+    color: rgba(216,184,120,0.45);
+    letter-spacing: 0.06em;
+    margin-bottom: 3px;
+  }
+  .pc-cal-month-rail .rail-num {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
   }
   .pc-cal-month-rail.is-labeled {
     color: #d8b878;
-    font-weight: 600;
     background: #1c1b19;
     border-right: 1px solid rgba(216,184,120,0.30);
     /* 今見てる月のラベルを左上にスティッキー固定（次の月のラベルに押し出されるまで残る） */
@@ -2401,6 +2409,7 @@
     z-index: 5;
   }
   .pc-cal-month-rail.is-current { color: #e89a4a; }
+  .pc-cal-month-rail.is-current .rail-num { color: #e89a4a; }
   /* D76: 月初セルの左琥珀ボーダーは廃止（左レールが月の境目を視認させるため） */
   /* D71: 旧 .pc-cal-month-header / .pc-cal-nav は撤去（スクロールで全月見えるため不要） */
   /* D76: DOW 行も左レール分のスペーサーを含めた 8 列に */
@@ -5042,7 +5051,7 @@ function show(id) {
       const isMonthStart = (d.getDate() === 1);
       const dowIdx = (d.getDay() + 6) % 7; // 0=Mon
 
-      // D76: 行頭（月曜＝dowIdx 0）になったタイミングで左レールセルを発行
+      // D77: 行頭（月曜＝dowIdx 0）になったタイミングで左レールセルを発行（数字だけ大きく upright）
       if (dowIdx === 0 || dayIdx === 0) {
         const monthOfRow = d.getMonth();
         const yearOfRow  = d.getFullYear();
@@ -5050,11 +5059,15 @@ function show(id) {
         const railCls = ['pc-cal-month-rail'];
         if (showLabel) railCls.push('is-labeled');
         if (yearOfRow === TODAY.getFullYear() && monthOfRow === TODAY.getMonth()) railCls.push('is-current');
-        const railLabel = showLabel
-          ? ((prevRailYear !== yearOfRow ? yearOfRow + '　' : '') + (monthOfRow + 1) + '月')
-          : '';
+        let railLabelHtml = '';
+        if (showLabel) {
+          if (prevRailYear !== yearOfRow) {
+            railLabelHtml += '<span class="rail-year">' + yearOfRow + '</span>';
+          }
+          railLabelHtml += '<span class="rail-num">' + (monthOfRow + 1) + '</span>';
+        }
         const railMonthKeyAttr = showLabel ? ' data-month-key="' + yearOfRow + '-' + String(monthOfRow+1).padStart(2,'0') + '"' : '';
-        html += '<div class="' + railCls.join(' ') + '"' + railMonthKeyAttr + '>' + escH(railLabel) + '</div>';
+        html += '<div class="' + railCls.join(' ') + '"' + railMonthKeyAttr + '>' + railLabelHtml + '</div>';
         if (showLabel) {
           prevRailMonth = monthOfRow;
           prevRailYear  = yearOfRow;
