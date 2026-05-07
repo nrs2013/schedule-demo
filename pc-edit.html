@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260507.102532">
+<meta name="build-version" content="20260507.102835">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -6676,21 +6676,37 @@ function show(id) {
       const dy = e.clientY - dnd.startY;
       if (Math.abs(dx) < 3 && Math.abs(dy) < 3) return;
       dnd.moved = true;
-      // D62: move 系：ghost を掴んだ瞬間のサイズのまま固定
+      // D63: move 系：連結バーは全期間分の長さで ghost を作る
       if (dnd.mode === 'move-band' || dnd.mode === 'move-pill') {
         const tgt = dnd.mode === 'move-band' ? document.querySelector('.pc-cal-venue-band.dragging') : document.querySelector('.pc-cal-pill.dragging');
         if (tgt) {
+          // 同じグループ/イベントの全セグメントを集めて合計幅を計算
+          let segs;
+          if (dnd.mode === 'move-band') {
+            segs = document.querySelectorAll('.pc-cal-venue-band[data-venue-group-id="' + dnd.groupId + '"]');
+          } else {
+            segs = document.querySelectorAll('.pc-cal-pill[data-event-index="' + dnd.eventIndex + '"]');
+          }
+          const rects = Array.from(segs).map(function(s){ return s.getBoundingClientRect(); });
+          const minLeft = Math.min.apply(null, rects.map(function(r){ return r.left; }));
+          const maxRight = Math.max.apply(null, rects.map(function(r){ return r.right; }));
           const tr = tgt.getBoundingClientRect();
+          const totalWidth = maxRight - minLeft;
           dnd.ghost = tgt.cloneNode(true);
           dnd.ghost.classList.add('pc-cal-drag-ghost');
           dnd.ghost.classList.remove('dragging');
+          // 連結時のクラスは外して単独表示に
+          dnd.ghost.classList.remove('bar-start', 'bar-mid', 'bar-end');
           dnd.ghost.querySelectorAll('.pc-cal-venue-band-resize-handle, .pc-cal-venue-band-resize-handle-left, .pc-cal-pill-resize-handle').forEach(function(h){ h.remove(); });
-          // 元のサイズを絶対値で固定（max-width / calc 系を打ち消す）
-          dnd.ghost.style.width = tr.width + 'px';
+          dnd.ghost.style.width = totalWidth + 'px';
           dnd.ghost.style.height = tr.height + 'px';
           dnd.ghost.style.maxWidth = 'none';
           dnd.ghost.style.minWidth = '0';
           dnd.ghost.style.margin = '0';
+          dnd.ghost.style.borderRadius = '4px';
+          dnd.ghost.style.borderLeft = '1px solid';
+          dnd.ghost.style.borderRight = '1px solid';
+          dnd.ghost.style.padding = '1px 5px';
           document.body.appendChild(dnd.ghost);
           document.body.style.cursor = 'grabbing';
         }
