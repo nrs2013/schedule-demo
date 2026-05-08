@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260508.053000">
+<meta name="build-version" content="20260508.054500">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -3639,14 +3639,12 @@
       <div class="pc-rh-actions">
         <button id="pc-btn-set" class="pc-btn primary">セトリ順</button>
         <button id="pc-btn-rh"  class="pc-btn">リハ順</button>
-        <select id="pc-add-song-type" class="pc-add-type-select">
-          <option value="song">曲</option>
-          <option value="mc">MC</option>
-          <option value="encore">アンコール</option>
-          <option value="event">VCR/イベント</option>
-          <option value="end">END</option>
-        </select>
-        <button id="pc-btn-add-song" class="pc-btn primary">＋ 追加</button>
+        <!-- D114: プルダウン撤去 → 種別ごとの専用ボタンに分割 -->
+        <button class="pc-btn pc-add-row" data-add-type="song">＋ 曲</button>
+        <button class="pc-btn pc-add-row" data-add-type="mc">＋ MC</button>
+        <button class="pc-btn pc-add-row" data-add-type="encore">＋ EN</button>
+        <button class="pc-btn pc-add-row" data-add-type="event">＋ VCR</button>
+        <button class="pc-btn pc-add-row" data-add-type="end">＋ END</button>
       </div>
     </div>
 
@@ -4598,12 +4596,10 @@ function show(id) {
   btnSet.addEventListener('click', function(){ state.viewMode='set'; render(); });
   btnRh.addEventListener('click',  function(){ state.viewMode='rh';  render(); });
 
-  // ＋ 追加：種類セレクトに応じて曲・MC・アンコール・VCR・END を追加
-  const btnAddSong = document.getElementById('pc-btn-add-song');
-  const addTypeSel = document.getElementById('pc-add-song-type');
-  if (btnAddSong && addTypeSel) {
-    btnAddSong.addEventListener('click', function(){
-      const type = addTypeSel.value;
+  // D114: ＋ 追加 を 5 つの専用ボタンに分割（プルダウン撤去）
+  document.querySelectorAll('.pc-add-row[data-add-type]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      const type = btn.getAttribute('data-add-type');
       const maxOrder = songs.reduce(function(m, s){ return Math.max(m, s.orderIndex || 0); }, 0);
       const newSong = {
         id: Date.now(), // 簡易ユニークID
@@ -4618,7 +4614,7 @@ function show(id) {
       songs.push(newSong);
       render();
     });
-  }
+  });
 
   // マスター日付バーから呼ばれる：日付変更時にリハ計画を再レンダー
   window.__rehearsalRender = render;
