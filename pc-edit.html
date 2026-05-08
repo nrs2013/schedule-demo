@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260508.033000">
+<meta name="build-version" content="20260508.034500">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -4675,6 +4675,8 @@ function show(id) {
     } catch (e) {
       console.warn('[SCHEDULE STUDIO] localStorage 保存失敗:', key, e);
     }
+    // D107: save = 何か変更された → undo 履歴を更新（pushUndo は IIFE #2 末尾で expose されるので、それ以降に呼ばれた時のみ動作）
+    if (typeof window.__pushUndo === 'function') window.__pushUndo();
   }
 
   // R51 B1: 起動時に localStorage から復元、なければ DEFAULT を使う
@@ -6737,6 +6739,84 @@ function show(id) {
     window.__iife2SyncError = (e && e.message) || String(e); // D101 debug
     console.error('[D101] syncAllDateDisplays error:', e);
   }
+
+  // D107: Undo 機能（Cmd+Z）— save が走る度に snapshot を履歴に積む
+  function __snapshot() {
+    return JSON.stringify({
+      calEvents: calEvents,
+      venueGroups: venueGroups,
+      venueDefinitions: venueDefinitions,
+      hotels: hotels,
+      arrivalSectionsByDate: arrivalSectionsByDate,
+      dailyEvents: dailyEvents,
+      calMemos: calMemos,
+      showTimes: showTimes
+    });
+  }
+  const __undoStack = [];
+  const __MAX_UNDO = 50;
+  let __prevSnapshot = __snapshot();
+  window.__pushUndo = function() {
+    // 現状（mutation 後）と直前 snapshot が同じならスキップ（無意味な履歴）
+    const cur = __snapshot();
+    if (cur === __prevSnapshot) return;
+    __undoStack.push(__prevSnapshot);
+    if (__undoStack.length > __MAX_UNDO) __undoStack.shift();
+    __prevSnapshot = cur;
+  };
+  function __applySnapshot(json) {
+    try {
+      const data = JSON.parse(json);
+      if (Array.isArray(data.calEvents)) calEvents = data.calEvents;
+      if (Array.isArray(data.venueGroups)) venueGroups = data.venueGroups;
+      if (Array.isArray(data.venueDefinitions)) venueDefinitions = data.venueDefinitions;
+      if (Array.isArray(data.hotels)) { hotels = data.hotels; window.hotels = hotels; }
+      if (data.arrivalSectionsByDate) {
+        Object.keys(arrivalSectionsByDate).forEach(function(k){ delete arrivalSectionsByDate[k]; });
+        Object.assign(arrivalSectionsByDate, data.arrivalSectionsByDate);
+      }
+      if (data.dailyEvents) {
+        Object.keys(dailyEvents).forEach(function(k){ delete dailyEvents[k]; });
+        Object.assign(dailyEvents, data.dailyEvents);
+      }
+      if (data.calMemos) {
+        Object.keys(calMemos).forEach(function(k){ delete calMemos[k]; });
+        Object.assign(calMemos, data.calMemos);
+      }
+      if (data.showTimes) {
+        Object.keys(showTimes).forEach(function(k){ delete showTimes[k]; });
+        Object.assign(showTimes, data.showTimes);
+      }
+      // localStorage 同期
+      localStorage.setItem(LS_KEY_EVENTS, JSON.stringify(calEvents));
+      localStorage.setItem(LS_KEY_VENUE_GROUPS, JSON.stringify(venueGroups));
+      localStorage.setItem(LS_KEY_VENUE_DEFS, JSON.stringify(venueDefinitions));
+      localStorage.setItem(LS_KEY_HOTELS, JSON.stringify(hotels));
+      localStorage.setItem(LS_KEY_ARRIVALS, JSON.stringify(arrivalSectionsByDate));
+      localStorage.setItem(LS_KEY_DAY_EVENTS, JSON.stringify(dailyEvents));
+      localStorage.setItem(LS_KEY_MEMOS, JSON.stringify(calMemos));
+      localStorage.setItem(LS_KEY_SHOW_TIMES, JSON.stringify(showTimes));
+      // 全描画
+      if (typeof renderMonth === 'function') renderMonth();
+      if (typeof renderDetail === 'function') renderDetail();
+      if (typeof renderHotels === 'function') renderHotels();
+      if (typeof renderArrivals === 'function') renderArrivals();
+      if (typeof renderDaySchedule === 'function') renderDaySchedule();
+      if (typeof renderVenueDefList === 'function') renderVenueDefList();
+      if (typeof syncAllDateDisplays === 'function') syncAllDateDisplays();
+      if (typeof window.__rehearsalRender === 'function') window.__rehearsalRender();
+    } catch (e) {
+      console.error('[D107] applySnapshot error:', e);
+    }
+  }
+  window.__undo = function() {
+    if (__undoStack.length === 0) return false;
+    const prev = __undoStack.pop();
+    __applySnapshot(prev);
+    __prevSnapshot = __snapshot();
+    return true;
+  };
+
   window.__iife2Completed = true; // D101 debug
 })();
 </script>
@@ -7364,6 +7444,16 @@ function show(id) {
 
   document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape' && dnd.mode) { clearDnd(); }
+    // D107: Cmd+Z (Mac) / Ctrl+Z (Win) で undo
+    if ((e.metaKey || e.ctrlKey) && e.key === 'z' && !e.shiftKey) {
+      const tag = (e.target && e.target.tagName) || '';
+      // 入力中はブラウザ標準の undo に任せる
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+      if (e.target && e.target.isContentEditable) return;
+      if (window.__undo && window.__undo()) {
+        e.preventDefault();
+      }
+    }
     // D95: Delete / Backspace で選択中の pill / venue band を削除
     if (e.key === 'Delete' || e.key === 'Backspace') {
       const tag = (e.target && e.target.tagName) || '';
