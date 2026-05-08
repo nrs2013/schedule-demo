@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260508.024000">
+<meta name="build-version" content="20260508.025500">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -943,14 +943,14 @@
     border-bottom: 1px solid #2c2a27;
     background: #1f1e1b;
   }
-  /* D33: weight を 500 → 400 に下げて細めに（フォント・サイズは維持） */
+  /* D33: weight を 500 → 400 に下げて細めに。D103: font-size 20 → 16 に縮小 */
   .hotel-name-input {
     flex: 1;
     background: transparent;
     border: 1px solid transparent;
     color: #e8e8e2;
     font-family: inherit;
-    font-size: 20px;
+    font-size: 16px;
     font-weight: 400;
     padding: 2px 10px;
     border-radius: 4px;
@@ -967,8 +967,9 @@
     padding: 10px 14px;
     align-items: center;
   }
+  /* D103: ラベル 12 → 11、入力 15 → 13 に縮小 */
   .hotel-info-grid .info-label {
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 500;
     letter-spacing: 0.14em;
     color: #76766f;
@@ -979,7 +980,7 @@
     border: 1px solid #2c2a27;
     color: #e8e8e2;
     font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
-    font-size: 15px;
+    font-size: 13px;
     padding: 4px 10px;
     border-radius: 5px;
     transition: border-color 0.12s;
@@ -3636,25 +3637,13 @@
       <!-- 子: HOTEL -->
       <div class="sub-content" id="sub-hotel">
         <div class="hotel-toolbar">
-          <!-- D101: 詳細 debug（IIFE 進行フラグも表示） -->
-          <button class="toolbar-btn primary" data-action="add-hotel" onclick="
-            var dbg = document.getElementById('hotel-debug');
-            var s = (window.__iife2Started?'S':'-') + (window.__iife2BeforeHotel?'H':'-') + (window.__iife2AfterHotelDef?'A':'-') + (window.__iife2BeforeSync?'B':'-') + (window.__iife2SyncOk?'Y':'-') + (window.__iife2Completed?'C':'-');
-            var err = window.__iife2SyncError ? ' / SYNC_ERR=' + window.__iife2SyncError : '';
-            var fnType = typeof window.__addHotelManually;
-            var hLen0 = (window.hotels && window.hotels.length !== undefined) ? window.hotels.length : 'N/A';
-            if (window.__addHotelManually) { try { window.__addHotelManually(); } catch(err2) { if (dbg) dbg.textContent = 'ERROR: ' + err2.message + ' / iife=' + s + err; return; } }
-            var hLen1 = (window.hotels && window.hotels.length !== undefined) ? window.hotels.length : 'N/A';
-            var w = document.getElementById('hotel-list-wrap');
-            var ch = w ? w.children.length : 'no wrap';
-            if (dbg) dbg.textContent = '✓ ' + new Date().toLocaleTimeString() + ' / iife=' + s + err + ' / fn=' + fnType + ' / hotels: ' + hLen0 + '→' + hLen1 + ' / DOM=' + ch;
-          ">＋ HOTEL を手入力で追加</button>
+          <!-- D103: debug 撤去、シンプルな onclick だけ残す -->
+          <button class="toolbar-btn primary" data-action="add-hotel" onclick="if(window.__addHotelManually)window.__addHotelManually()">＋ HOTEL を手入力で追加</button>
           <button class="toolbar-btn" data-action="import-excel">📊 Excel から取込</button>
           <button class="toolbar-btn" data-action="download-template">📥 テンプレートDL</button>
           <input type="file" class="hotel-file-input" id="hotel-file-input" accept=".xlsx,.xls">
           <span class="toolbar-hint">PCでは横に列を増やす ／ スマホは縦スクロールで閲覧</span>
         </div>
-        <div id="hotel-debug" style="font-size:11px; color:#e89a4a; padding:4px 16px 8px; font-family:'JetBrains Mono', monospace;"></div>
         <div class="hotel-list-wrap" id="hotel-list-wrap"></div>
       </div>
 
@@ -6207,86 +6196,18 @@ function show(id) {
   // R62 M4: hotels を localStorage に永続化（phone.html と共有）
   window.__iife2BeforeHotel = true; // D101 debug
   const LS_KEY_HOTELS = 'schedule-studio:hotels:v1';
-  const DEFAULT_HOTELS = [
-    {
-      id:1, venue:'横浜アリーナ',
-      name:'横浜ロイヤルパークホテル',
-      address:'神奈川県横浜市西区みなとみらい2-2-1-3',
-      tel:'045-221-1111',
-      url:'https://www.yrph.com',
-      taxis:[
-        {id:1, time:'07:00', section:'PA',     count:3},
-        {id:2, time:'07:30', section:'照明',   count:2},
-        {id:3, time:'08:00', section:'演出',   count:1}
-      ],
-      members:[
-        {id:1, section:'演出', name:'のむ'},
-        {id:2, section:'制作', name:'田中'},
-        {id:3, section:'舞監', name:'佐藤'},
-        {id:4, section:'PA',   name:'山田'},
-        {id:5, section:'照明', name:'鈴木'}
-      ]
-    },
-    {
-      id:2, venue:'東京ドーム',
-      name:'メトロポリタン丸の内',
-      address:'東京都千代田区丸の内1-7-12',
-      tel:'03-3211-2233',
-      url:'https://www.metropolitan-marunouchi.jp',
-      taxis:[
-        {id:1, time:'06:30', section:'PA',     count:4},
-        {id:2, time:'07:00', section:'照明',   count:3},
-        {id:3, time:'07:30', section:'映像',   count:2}
-      ],
-      members:[
-        {id:1, section:'演出', name:'のむ'},
-        {id:2, section:'制作', name:'田中'},
-        {id:3, section:'舞監', name:'佐藤'},
-        {id:4, section:'PA',   name:'山田'},
-        {id:5, section:'照明', name:'鈴木'},
-        {id:6, section:'映像', name:'高橋'},
-        {id:7, section:'VJ',   name:'伊藤'}
-      ]
-    },
-    {
-      id:3, venue:'京セラドーム',
-      name:'スイスホテル南海大阪',
-      address:'大阪府大阪市中央区難波5-1-60',
-      tel:'06-6646-1111',
-      url:'https://www.swissotel.com/nankai-osaka',
-      taxis:[
-        {id:1, time:'07:00', section:'PA',     count:3},
-        {id:2, time:'07:30', section:'照明',   count:2}
-      ],
-      members:[
-        {id:1, section:'演出', name:'のむ'},
-        {id:2, section:'制作', name:'田中'},
-        {id:3, section:'PA',   name:'山田'}
-      ]
-    },
-    {
-      id:4, venue:'PayPayドーム',
-      name:'グランドハイアット福岡',
-      address:'福岡県福岡市博多区住吉1-2-82',
-      tel:'092-282-1234',
-      url:'https://www.hyatt.com',
-      taxis:[
-        {id:1, time:'06:00', section:'PA',     count:4},
-        {id:2, time:'06:30', section:'照明',   count:3},
-        {id:3, time:'07:00', section:'映像',   count:2},
-        {id:4, time:'07:30', section:'演出',   count:1}
-      ],
-      members:[
-        {id:1, section:'演出', name:'のむ'},
-        {id:2, section:'制作', name:'田中'},
-        {id:3, section:'舞監', name:'佐藤'},
-        {id:4, section:'PA',   name:'山田'}
-      ]
-    }
-  ];
+  // D103: デモホテル撤去（空状態 + 手入力で追加するワークフロー）
+  const DEFAULT_HOTELS = [];
   let hotels = loadJSON(LS_KEY_HOTELS, JSON.parse(JSON.stringify(DEFAULT_HOTELS)));
   // D100: localStorage が壊れて配列じゃないケースをフォールバック
   if (!Array.isArray(hotels)) hotels = JSON.parse(JSON.stringify(DEFAULT_HOTELS));
+  // D103: マイグレーション — 過去のデモホテル（id 1-4）を 1 度だけ掃除
+  const D103_MIGRATION_KEY = 'schedule-studio:migration:d103';
+  if (!localStorage.getItem(D103_MIGRATION_KEY)) {
+    hotels = hotels.filter(function(h){ return !(h && typeof h.id === 'number' && h.id >= 1 && h.id <= 4); });
+    saveJSON(LS_KEY_HOTELS, hotels);
+    localStorage.setItem(D103_MIGRATION_KEY, '1');
+  }
   function saveHotels() { saveJSON(LS_KEY_HOTELS, hotels); window.hotels = hotels; }
   // D100: window から hotels を確認できるよう expose（debug用）
   window.hotels = hotels;
