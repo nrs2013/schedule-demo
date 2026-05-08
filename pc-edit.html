@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260508.080000">
+<meta name="build-version" content="20260508.083000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -88,6 +88,88 @@
   }
   .lock-form { display: none; flex-direction: column; gap: 10px; }
   .lock-form.active { display: flex; }
+  /* D119: 複数コンサート対応 — モード切替 + カード一覧 */
+  .lock-mode { display: none; flex-direction: column; gap: 10px; }
+  .lock-mode.active { display: flex; }
+  .concert-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 10px 0 4px;
+    width: 100%;
+    max-height: 320px;
+    overflow-y: auto;
+  }
+  .concert-card {
+    background: #1d1b19;
+    border: 1px solid #2c2a27;
+    border-radius: 6px;
+    padding: 11px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: background 0.12s, border-color 0.12s;
+    text-align: left;
+  }
+  .concert-card:hover {
+    background: #221d18;
+    border-color: rgba(232,154,74,0.55);
+  }
+  .concert-card-icon {
+    font-size: 16px;
+    color: #e89a4a;
+    flex-shrink: 0;
+  }
+  .concert-card-title {
+    flex: 1;
+    font-size: 13px;
+    color: #e8e8e2;
+    line-height: 1.4;
+    word-break: break-word;
+  }
+  .concert-card-delete {
+    background: transparent;
+    border: none;
+    color: #5a5a54;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 2px 6px;
+    flex-shrink: 0;
+    border-radius: 4px;
+    line-height: 1;
+  }
+  .concert-card-delete:hover { color: #e07a5f; background: rgba(224,122,95,0.10); }
+  .lock-btn-secondary {
+    background: transparent;
+    border: 1px dashed #3a3835;
+    color: #a8a8a0;
+    padding: 11px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.10em;
+    cursor: pointer;
+    font-family: inherit;
+    margin-top: 4px;
+    transition: background 0.12s, border-color 0.12s, color 0.12s;
+  }
+  .lock-btn-secondary:hover {
+    border-color: rgba(232,154,74,0.55);
+    color: #e89a4a;
+    background: rgba(232,154,74,0.04);
+  }
+  .lock-back-link {
+    background: transparent;
+    border: none;
+    color: #76766f;
+    font-size: 11px;
+    cursor: pointer;
+    font-family: inherit;
+    padding: 6px;
+    margin-top: 4px;
+  }
+  .lock-back-link:hover { color: #d8b89c; }
   .lock-tour-display {
     font-size: 13px;
     color: #d8b878;
@@ -3746,32 +3828,42 @@
 
 
 <!-- ════════ PC編集画面 ════════ -->
-<!-- D118 Phase B / D118c: 起動時ロック画面（スマホ版 PASS 画面と統一デザイン） -->
+<!-- D119 Phase A1: 複数コンサート対応 — 起動画面（一覧 / 追加 / ログイン） -->
 <div class="screen lock-screen-tour" id="screen-tour-lock">
   <div class="lock-card">
     <div class="lock-brand">SCHEDULE STUDIO</div>
-    <!-- 初回設定モード -->
-    <div class="lock-form lock-init-form" id="lock-init-form">
-      <div class="lock-icon">🔧</div>
-      <div class="lock-mode-label">初回設定</div>
-      <div class="lock-form-sub">このツアーのパスワードを<br>決めてください</div>
-      <input type="text" class="lock-input" placeholder="ツアー名" id="lock-init-title" autocomplete="off">
-      <input type="password" class="lock-input" placeholder="CONCERT パスワード" id="lock-init-concert" autocomplete="new-password">
-      <input type="password" class="lock-input" placeholder="ARTIST パスワード" id="lock-init-artist" autocomplete="new-password">
-      <input type="password" class="lock-input" placeholder="編集パスワード" id="lock-init-edit" autocomplete="new-password">
-      <button class="lock-btn" id="lock-init-btn">設定して入る</button>
+
+    <!-- コンサート一覧モード -->
+    <div class="lock-mode" id="lock-list-mode">
+      <div class="lock-icon">🎼</div>
+      <div class="lock-mode-label">CONCERT を選択</div>
+      <div class="concert-cards" id="concert-cards"></div>
+      <button class="lock-btn-secondary" id="concert-add-btn" type="button">＋ 新しいコンサートを追加</button>
     </div>
+
+    <!-- 新規追加モード -->
+    <div class="lock-mode" id="lock-add-mode">
+      <div class="lock-icon">🔧</div>
+      <div class="lock-mode-label">新しいコンサート</div>
+      <div class="lock-form-sub">名前と 3 つのパスワードを決めてください</div>
+      <input type="text" class="lock-input" placeholder="コンサート名" id="lock-add-title" autocomplete="off">
+      <input type="password" class="lock-input" placeholder="CONCERT パスワード" id="lock-add-concert" autocomplete="new-password">
+      <input type="password" class="lock-input" placeholder="ARTIST パスワード" id="lock-add-artist" autocomplete="new-password">
+      <input type="password" class="lock-input" placeholder="編集パスワード" id="lock-add-edit" autocomplete="new-password">
+      <button class="lock-btn" id="lock-add-btn" type="button">追加して入る</button>
+      <button class="lock-back-link" id="lock-add-back" type="button">← 一覧に戻る</button>
+    </div>
+
     <!-- ログインモード -->
-    <div class="lock-form lock-login-form" id="lock-login-form">
+    <div class="lock-mode" id="lock-login-mode">
       <div class="lock-icon">🔒</div>
       <div class="lock-mode-label">PC 編集版</div>
-      <div class="lock-tour-display" id="lock-login-tour-title"></div>
+      <div class="lock-tour-display" id="lock-login-concert-title"></div>
       <div class="lock-form-sub">CONCERT パスワードを入力してください</div>
-      <input type="password" class="lock-input" placeholder="••••" id="lock-login-concert" autocomplete="current-password">
-      <button class="lock-btn" id="lock-login-btn">認証する</button>
+      <input type="password" class="lock-input" placeholder="••••" id="lock-login-pass" autocomplete="current-password">
+      <button class="lock-btn" id="lock-login-btn" type="button">認証する</button>
       <div class="lock-error" id="lock-login-error"></div>
-      <!-- D118e: パスワード忘れた → リセット（Console 不要） -->
-      <button class="lock-reset-link" id="lock-reset-link" type="button">パスワードを忘れた／設定し直す</button>
+      <button class="lock-back-link" id="lock-login-back" type="button">← 一覧に戻る</button>
     </div>
   </div>
 </div>
@@ -7922,105 +8014,186 @@ function show(id) {
 })();
 </script>
 
-<!-- D118 Phase B: 起動時認証フロー -->
+<!-- D119 Phase A1: 複数コンサート対応の起動フロー -->
 <script>
-(function bootstrapAuth(){
-  const LS_PWS = 'schedule-studio:tour:passwords';
-  const LS_TOUR_TITLE = 'schedule-studio:tour:title';
+(function bootstrapConcerts(){
+  const LS_CONCERTS = 'schedule-studio:concerts:v1';
+  const LS_ACTIVE = 'schedule-studio:active-concert-id';
+  const LS_OLD_PWS = 'schedule-studio:tour:passwords';
+  const LS_OLD_TITLE = 'schedule-studio:tour:title';
 
   const lockEl = document.getElementById('screen-tour-lock');
   const pcEl = document.getElementById('screen-pc');
   if (!lockEl || !pcEl) return;
 
-  const initForm = document.getElementById('lock-init-form');
-  const loginForm = document.getElementById('lock-login-form');
-  // D118d: D118c で HTML から id="lock-mode-label" を撤去。textContent 動的変更は不要（HTML に静的記述）
+  // ── データロード（旧データから自動移行） ───────────
+  let concerts = null;
+  try { concerts = JSON.parse(localStorage.getItem(LS_CONCERTS) || 'null'); } catch (e) {}
+  if (!Array.isArray(concerts)) {
+    const oldPws = localStorage.getItem(LS_OLD_PWS);
+    const oldTitle = localStorage.getItem(LS_OLD_TITLE);
+    if (oldPws && oldTitle) {
+      try {
+        const pws = JSON.parse(oldPws);
+        concerts = [{
+          id: 'concert-' + Date.now(),
+          title: oldTitle,
+          passwords: pws,
+          createdAt: new Date().toISOString()
+        }];
+      } catch (e) { concerts = []; }
+    } else {
+      concerts = [];
+    }
+    localStorage.setItem(LS_CONCERTS, JSON.stringify(concerts));
+  }
+  function saveConcerts(){ localStorage.setItem(LS_CONCERTS, JSON.stringify(concerts)); }
 
-  let passwords = null;
-  try {
-    const stored = localStorage.getItem(LS_PWS);
-    if (stored) passwords = JSON.parse(stored);
-  } catch (e) {}
-
-  // D118b: 認証フラグをメモリ変数のみで保持 → リロード = 必ず再ログイン
-  // （sessionStorage はリロードで消えないので不採用）
-  // 起動時は常にロック画面表示（パスワード設定済みでも認証は要求）
+  // ── モード要素 ───────────
+  const modeList  = document.getElementById('lock-list-mode');
+  const modeAdd   = document.getElementById('lock-add-mode');
+  const modeLogin = document.getElementById('lock-login-mode');
+  function showMode(modeEl){
+    [modeList, modeAdd, modeLogin].forEach(function(m){ if (m) m.classList.remove('active'); });
+    if (modeEl) modeEl.classList.add('active');
+  }
 
   // ロック画面に切替
   lockEl.classList.add('active');
   pcEl.classList.remove('active');
 
-  function gotoApp(title) {
-    if (title) {
-      const titleEl = document.querySelector('.master-concert-title');
-      if (titleEl) titleEl.textContent = title;
-    }
+  // ── ヘルパー ───────────
+  function escH(s){ return String(s).replace(/[&<>"']/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; }); }
+
+  function renderList(){
+    const cardsEl = document.getElementById('concert-cards');
+    cardsEl.innerHTML = concerts.map(function(c){
+      return '<div class="concert-card" data-concert-id="' + c.id + '">' +
+        '<span class="concert-card-icon">🎼</span>' +
+        '<span class="concert-card-title">' + escH(c.title) + '</span>' +
+        '<button class="concert-card-delete" data-action="del" data-concert-id="' + c.id + '" title="削除">×</button>' +
+      '</div>';
+    }).join('');
+    cardsEl.querySelectorAll('.concert-card').forEach(function(card){
+      card.addEventListener('click', function(e){
+        const delBtn = e.target.closest('[data-action="del"]');
+        if (delBtn) {
+          const id = delBtn.getAttribute('data-concert-id');
+          const c = concerts.find(function(x){ return x.id === id; });
+          if (c && confirm('「' + c.title + '」を一覧から削除しますか？\n\n※ パスワード情報のみ削除されます。\n※ カレンダー・ホテル等のデータは残ります。')) {
+            concerts = concerts.filter(function(x){ return x.id !== id; });
+            saveConcerts();
+            if (concerts.length === 0) {
+              showMode(modeAdd);
+              setTimeout(function(){ document.getElementById('lock-add-title').focus(); }, 100);
+            } else {
+              renderList();
+            }
+          }
+          e.stopPropagation();
+          return;
+        }
+        const id = card.getAttribute('data-concert-id');
+        const c = concerts.find(function(x){ return x.id === id; });
+        if (c) startLogin(c);
+      });
+    });
+  }
+
+  function gotoApp(concert){
+    const titleEl = document.querySelector('.master-concert-title');
+    if (titleEl) titleEl.textContent = concert.title;
+    localStorage.setItem(LS_ACTIVE, concert.id);
     lockEl.classList.remove('active');
     pcEl.classList.add('active');
   }
 
-  if (!passwords) {
-    // 初回設定モード
-    initForm.classList.add('active');
-    const initBtn = document.getElementById('lock-init-btn');
-    function tryInit(){
-      const title = (document.getElementById('lock-init-title').value || '').trim();
-      const concert = document.getElementById('lock-init-concert').value;
-      const artist = document.getElementById('lock-init-artist').value;
-      const edit = document.getElementById('lock-init-edit').value;
-      if (!title) { alert('ツアー名を入力してください'); return; }
-      if (!concert || !artist || !edit) { alert('3 つのパスワードを全部入力してください'); return; }
-      try {
-        localStorage.setItem(LS_PWS, JSON.stringify({concert: concert, artist: artist, edit: edit}));
-        localStorage.setItem(LS_TOUR_TITLE, title);
-      } catch (e) {
-        alert('保存に失敗しました：' + e.message);
-        return;
-      }
-      gotoApp(title);
-    }
-    initBtn.addEventListener('click', tryInit);
-    setTimeout(function(){ document.getElementById('lock-init-title').focus(); }, 100);
-  } else {
-    // ログインモード
-    loginForm.classList.add('active');
-    const title = localStorage.getItem(LS_TOUR_TITLE) || '（ツアー名未設定）';
-    document.getElementById('lock-login-tour-title').textContent = title;
-    const passInput = document.getElementById('lock-login-concert');
-    const errorEl = document.getElementById('lock-login-error');
+  function startLogin(concert){
+    document.getElementById('lock-login-concert-title').textContent = concert.title;
+    document.getElementById('lock-login-error').textContent = '';
+    const passInp = document.getElementById('lock-login-pass');
+    passInp.value = '';
+    showMode(modeLogin);
+    setTimeout(function(){ passInp.focus(); }, 100);
     function tryLogin(){
-      const input = passInput.value;
-      if (input === passwords.concert) {
-        gotoApp(title);
+      if (passInp.value === concert.passwords.concert) {
+        gotoApp(concert);
       } else {
-        errorEl.textContent = 'パスワードが違います';
-        passInput.value = '';
-        passInput.focus();
+        document.getElementById('lock-login-error').textContent = 'パスワードが違います';
+        passInp.value = '';
+        passInp.focus();
       }
     }
-    document.getElementById('lock-login-btn').addEventListener('click', tryLogin);
-    passInput.addEventListener('keydown', function(e){ if (e.key === 'Enter') tryLogin(); });
-    setTimeout(function(){ passInput.focus(); }, 100);
-    // D118e: 「パスワードを忘れた」→ パスワードのみリセットして初期設定モードへ（Console 不要）
-    const resetBtn = document.getElementById('lock-reset-link');
-    if (resetBtn) {
-      resetBtn.addEventListener('click', function(){
-        if (confirm('パスワードを設定し直します。\n\n※ パスワードのみリセットされます。\n※ カレンダー・ホテル等のデータはそのまま残ります。\n\n続けますか？')) {
-          localStorage.removeItem(LS_PWS);
-          // ツアー名は残す（ユーザーが入れ直すか、自動的にプリフィル可能だがシンプルに残置）
-          location.reload();
-        }
-      });
-    }
+    document.getElementById('lock-login-btn').onclick = tryLogin;
+    passInp.onkeydown = function(e){ if (e.key === 'Enter') tryLogin(); };
+    document.getElementById('lock-login-back').onclick = function(){
+      showMode(modeList);
+      renderList();
+    };
   }
 
-  // master-concert-title が編集されたら localStorage に保存（永続化）
+  function startAdd(){
+    showMode(modeAdd);
+    document.getElementById('lock-add-title').value = '';
+    document.getElementById('lock-add-concert').value = '';
+    document.getElementById('lock-add-artist').value = '';
+    document.getElementById('lock-add-edit').value = '';
+    setTimeout(function(){ document.getElementById('lock-add-title').focus(); }, 100);
+  }
+
+  function tryAdd(){
+    const title = (document.getElementById('lock-add-title').value || '').trim();
+    const concert = document.getElementById('lock-add-concert').value;
+    const artist = document.getElementById('lock-add-artist').value;
+    const edit = document.getElementById('lock-add-edit').value;
+    if (!title) { alert('コンサート名を入力してください'); return; }
+    if (!concert || !artist || !edit) { alert('3 つのパスワードを全部入力してください'); return; }
+    const newC = {
+      id: 'concert-' + Date.now(),
+      title: title,
+      passwords: { concert: concert, artist: artist, edit: edit },
+      createdAt: new Date().toISOString()
+    };
+    concerts.push(newC);
+    saveConcerts();
+    gotoApp(newC);
+  }
+
+  // ── ボタン handlers ───────────
+  document.getElementById('concert-add-btn').onclick = startAdd;
+  document.getElementById('lock-add-btn').onclick = tryAdd;
+  document.getElementById('lock-add-back').onclick = function(){
+    if (concerts.length === 0) {
+      alert('まだコンサートが 1 つもありません。追加してください。');
+      return;
+    }
+    showMode(modeList);
+    renderList();
+  };
+
+  // ── 起動：concerts が 0 個 → 追加モード、1+ 個 → 一覧モード ───────────
+  if (concerts.length === 0) {
+    showMode(modeAdd);
+    setTimeout(function(){ document.getElementById('lock-add-title').focus(); }, 100);
+  } else {
+    showMode(modeList);
+    renderList();
+  }
+
+  // master-concert-title 編集 → 該当コンサートの title を更新
   setTimeout(function(){
     const titleEl = document.querySelector('.master-concert-title');
     if (titleEl) {
       titleEl.addEventListener('blur', function(){
         const t = (titleEl.textContent || '').trim();
-        if (t) localStorage.setItem(LS_TOUR_TITLE, t);
+        if (!t) return;
+        const activeId = localStorage.getItem(LS_ACTIVE);
+        if (!activeId) return;
+        const c = concerts.find(function(x){ return x.id === activeId; });
+        if (c && c.title !== t) {
+          c.title = t;
+          saveConcerts();
+        }
       });
     }
   }, 300);
