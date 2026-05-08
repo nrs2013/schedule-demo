@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260508.084500">
+<meta name="build-version" content="20260508.090000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -3868,7 +3868,8 @@
   </div>
 </div>
 
-<div class="screen active" id="screen-pc">
+<!-- D120 Phase A2: 起動時は active なし。bootstrapAuth が認証スキップ判定後に付与 -->
+<div class="screen" id="screen-pc">
   <div class="pc-frame">
     <div class="pc-brand-strip">
       <span class="ss-logo-square">S</span>
@@ -3892,8 +3893,8 @@
           <span class="master-chip master-chip-day" id="master-date-day">DAY 1</span>
           <!-- D112: Undo ボタン（Cmd+Z のバックアップ） -->
           <button class="master-undo-btn" title="元に戻す (Cmd+Z)" onclick="if(window.__undo)window.__undo()">↶</button>
-          <!-- D118: ログアウト（D118b: リロードで再認証なのでログアウト = 単純リロード） -->
-          <button class="master-logout-btn" title="ログアウト（再ログインへ）" onclick="if(confirm('ログアウトしますか？')){location.reload();}">🔓</button>
+          <!-- D120: ログアウト = sessionStorage の認証フラグを全消去 → コンサート選択画面へ -->
+          <button class="master-logout-btn" title="コンサート選択に戻る" onclick="if(confirm('コンサート選択画面に戻りますか？')){Object.keys(sessionStorage).forEach(function(k){if(k.indexOf('schedule-studio:authed-')===0)sessionStorage.removeItem(k);});location.reload();}">🔓</button>
         </div>
       </div>
     </div>
@@ -5089,9 +5090,32 @@ function show(id) {
   };
 
   // R51 B1: localStorage 読み書きヘルパー
-  const LS_KEY_EVENTS = 'schedule-studio:calEvents:v1';
-  const LS_KEY_SHOW_TIMES = 'schedule-studio:showTimes:v1';
-  const LS_KEY_MEMOS = 'schedule-studio:calMemos:v1';
+  // D120 Phase A2: コンサート別データ分離 — LS_KEY を active concert ID で名前空間化
+  const __activeConcertId = localStorage.getItem('schedule-studio:active-concert-id') || 'default';
+  const __LS_PREFIX = 'schedule-studio:concert-' + __activeConcertId + ':';
+  // 旧キー（単一ツアー時代）→ 新キー（concert-default 名前空間）へ 1 度だけ migration
+  (function migrateToConcertNamespace(){
+    const MIG_KEY = 'schedule-studio:migration:concert-namespace:v1';
+    if (localStorage.getItem(MIG_KEY)) return;
+    const oldNewMap = [
+      ['schedule-studio:calEvents:v1',           'schedule-studio:concert-default:calEvents:v1'],
+      ['schedule-studio:showTimes:v1',           'schedule-studio:concert-default:showTimes:v1'],
+      ['schedule-studio:calMemos:v1',            'schedule-studio:concert-default:calMemos:v1'],
+      ['schedule-studio:venueGroups:v1',         'schedule-studio:concert-default:venueGroups:v1'],
+      ['schedule-studio:venueDefinitions:v1',    'schedule-studio:concert-default:venueDefinitions:v1'],
+      ['schedule-studio:hotels:v1',              'schedule-studio:concert-default:hotels:v1'],
+      ['schedule-studio:arrivalSectionsByDate:v1', 'schedule-studio:concert-default:arrivalSectionsByDate:v1'],
+      ['schedule-studio:dayEvents:v1',           'schedule-studio:concert-default:dayEvents:v1']
+    ];
+    oldNewMap.forEach(function(pair){
+      const v = localStorage.getItem(pair[0]);
+      if (v && !localStorage.getItem(pair[1])) localStorage.setItem(pair[1], v);
+    });
+    localStorage.setItem(MIG_KEY, '1');
+  })();
+  const LS_KEY_EVENTS = __LS_PREFIX + 'calEvents:v1';
+  const LS_KEY_SHOW_TIMES = __LS_PREFIX + 'showTimes:v1';
+  const LS_KEY_MEMOS = __LS_PREFIX + 'calMemos:v1';
 
   function loadJSON(key, defaultVal) {
     try {
@@ -5119,7 +5143,7 @@ function show(id) {
   let showTimes = loadJSON(LS_KEY_SHOW_TIMES, JSON.parse(JSON.stringify(DEFAULT_SHOW_TIMES)));
   let calMemos  = loadJSON(LS_KEY_MEMOS, {});
   // D39: 会場グループ（venue band の元データ）
-  const LS_KEY_VENUE_GROUPS = 'schedule-studio:venueGroups:v1';
+  const LS_KEY_VENUE_GROUPS = __LS_PREFIX + 'venueGroups:v1';
   let venueGroups = loadJSON(LS_KEY_VENUE_GROUPS, []);
   function saveVenueGroups() { saveJSON(LS_KEY_VENUE_GROUPS, venueGroups); }
   function getVenueGroupByDateKey(dk) {
@@ -5127,7 +5151,7 @@ function show(id) {
   }
 
   // D41: 公演名定義リスト（パレットに表示するブロック）
-  const LS_KEY_VENUE_DEFS = 'schedule-studio:venueDefinitions:v1';
+  const LS_KEY_VENUE_DEFS = __LS_PREFIX + 'venueDefinitions:v1';
   let venueDefinitions = loadJSON(LS_KEY_VENUE_DEFS, []);
   function saveVenueDefinitions() { saveJSON(LS_KEY_VENUE_DEFS, venueDefinitions); }
 
@@ -6226,7 +6250,7 @@ function show(id) {
 
   // ── DAY SCHEDULE：日付別の自由イベントリスト（開始〜終了 + ラベル） ──
   // R77 P2: localStorage 永続化＋スマホと共有
-  const LS_KEY_DAY_EVENTS = 'schedule-studio:dayEvents:v1';
+  const LS_KEY_DAY_EVENTS = __LS_PREFIX + 'dayEvents:v1';
   const DEFAULT_DAY_EVENT_TEMPLATE = [
     { startTime:'09:00', endTime:'10:00', label:'音響チェック' },
     { startTime:'10:00', endTime:'13:00', label:'テクリハ' },
@@ -6538,7 +6562,7 @@ function show(id) {
 
   // 入り時間データ：日付別管理（仕込み日と本番日で違うので必須）
   // R61 M3: localStorage に永続化（phone.html と共有）
-  const LS_KEY_ARRIVALS = 'schedule-studio:arrivalSectionsByDate:v1';
+  const LS_KEY_ARRIVALS = __LS_PREFIX + 'arrivalSectionsByDate:v1';
   let arrivalSectionsByDate = loadJSON(LS_KEY_ARRIVALS, {});
   function saveArrivals() { saveJSON(LS_KEY_ARRIVALS, arrivalSectionsByDate); }
   function fmtMKey_arrival(d){
@@ -6658,7 +6682,7 @@ function show(id) {
   }
   // R62 M4: hotels を localStorage に永続化（phone.html と共有）
   window.__iife2BeforeHotel = true; // D101 debug
-  const LS_KEY_HOTELS = 'schedule-studio:hotels:v1';
+  const LS_KEY_HOTELS = __LS_PREFIX + 'hotels:v1';
   // D103: デモホテル撤去（空状態 + 手入力で追加するワークフロー）
   const DEFAULT_HOTELS = [];
   let hotels = loadJSON(LS_KEY_HOTELS, JSON.parse(JSON.stringify(DEFAULT_HOTELS)));
@@ -8049,6 +8073,20 @@ function show(id) {
   }
   function saveConcerts(){ localStorage.setItem(LS_CONCERTS, JSON.stringify(concerts)); }
 
+  // ── D120 Phase A2: 認証スキップ判定 ───────────
+  // gotoApp でリロード → 起動時に active concert + authed フラグがあれば screen-pc を直接表示
+  const activeId = localStorage.getItem(LS_ACTIVE);
+  const SS_AUTHED_PREFIX = 'schedule-studio:authed-';
+  if (activeId) {
+    const c = concerts.find(function(x){ return x.id === activeId; });
+    if (c && sessionStorage.getItem(SS_AUTHED_PREFIX + activeId) === '1') {
+      const titleEl = document.querySelector('.master-concert-title');
+      if (titleEl) titleEl.textContent = c.title;
+      pcEl.classList.add('active');
+      return; // 認証済み → ロック画面表示せずに編集画面へ
+    }
+  }
+
   // ── モード要素 ───────────
   const modeList  = document.getElementById('lock-list-mode');
   const modeAdd   = document.getElementById('lock-add-mode');
@@ -8060,7 +8098,6 @@ function show(id) {
 
   // ロック画面に切替
   lockEl.classList.add('active');
-  pcEl.classList.remove('active');
 
   // ── ヘルパー ───────────
   function escH(s){ return String(s).replace(/[&<>"']/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; }); }
@@ -8101,11 +8138,10 @@ function show(id) {
   }
 
   function gotoApp(concert){
-    const titleEl = document.querySelector('.master-concert-title');
-    if (titleEl) titleEl.textContent = concert.title;
+    // D120 Phase A2: active concert id を保存 + 認証フラグ → リロードで全 IIFE を新しい LS_PREFIX で再評価
     localStorage.setItem(LS_ACTIVE, concert.id);
-    lockEl.classList.remove('active');
-    pcEl.classList.add('active');
+    sessionStorage.setItem(SS_AUTHED_PREFIX + concert.id, '1');
+    location.reload();
   }
 
   function startLogin(concert){
