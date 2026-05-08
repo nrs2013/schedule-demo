@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260508.030000">
+<meta name="build-version" content="20260508.031500">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -1937,16 +1937,18 @@
     gap: 6px;
     /* D104: 天地を 5px → 2px に詰めてバーを薄く */
     padding: 2px 10px;
-    background: rgba(216,184,120,0.18);
-    border: 1px solid rgba(216,184,120,0.45);
+    /* D105: 色を Navy Slate に統一（カレンダーの会場帯と同色） */
+    background: rgba(58,68,82,0.55);
+    border: 1px solid rgba(108,128,150,0.65);
     border-radius: 5px;
-    color: #e8d098;
+    color: #c8d8e8;
     font-size: 12px;
     cursor: grab;
     user-select: none;
     transition: transform 0.1s, opacity 0.12s, background 0.12s;
   }
-  .cal-event-venue:hover { background: rgba(216,184,120,0.28); border-color: rgba(216,184,120,0.65); }
+  /* D105: hover も Navy Slate 系で統一 */
+  .cal-event-venue:hover { background: rgba(72,84,100,0.70); border-color: rgba(128,148,170,0.85); color: #e0eef8; }
   .cal-event-venue:active { cursor: grabbing; transform: scale(0.98); }
   .cal-event-venue.dragging { opacity: 0.4; }
   .cal-event-venue .venue-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
