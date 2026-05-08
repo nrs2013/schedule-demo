@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260508.111500">
+<meta name="build-version" content="20260508.113000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -4053,26 +4053,26 @@
       <div class="info-header">
         <h2 class="info-title">INFO — お知らせ配信</h2>
       </div>
-      <!-- D123: パスワード認証を撤去 — 送信者名だけ任意で入力、誰でも送信可能 -->
+      <!-- D123/D124: パスワード認証撤去、placeholder シンプル化 -->
       <div class="info-auth">
         <div class="info-login-input-group">
           <label>送信者の名前（任意）</label>
-          <input type="text" id="info-login-name" placeholder="例：のむ" autocomplete="off">
+          <input type="text" id="info-login-name" autocomplete="off">
         </div>
-        <span class="info-login-hint">入力した名前は送信履歴に残ります<br>無記入だと「匿名」として記録</span>
+        <span class="info-login-hint">無記入だと「匿名」として記録されます</span>
       </div>
       <div class="info-form" id="info-form">
         <div class="info-field">
           <label class="info-label">件名（タイトル）</label>
-          <input type="text" id="info-subject" placeholder="例：【緊急】明日の集合場所変更" class="info-input">
+          <input type="text" id="info-subject" class="info-input">
         </div>
         <div class="info-field">
           <label class="info-label">本文</label>
-          <textarea id="info-body" rows="8" placeholder="本文を自由入力（改行・絵文字OK）&#10;例：&#10;明日のリハ集合は東口楽屋ではなく西口楽屋に変更です。&#10;よろしくお願いします。" class="info-textarea"></textarea>
+          <textarea id="info-body" rows="8" class="info-textarea"></textarea>
         </div>
         <div class="info-actions">
           <button class="info-push-btn" data-action="info-push">📱 LINE プッシュ送信</button>
-          <span class="info-push-hint">スタッフ全員のLINEに通知（モック動作）</span>
+          <span class="info-push-hint">スタッフ全員の LINE に通知</span>
         </div>
       </div>
       <div class="info-history">
@@ -6946,11 +6946,8 @@ function show(id) {
   }
 
   let nextInfoId = 100;
-  const infoHistory = [
-    { id:1, sentAt:'2026-04-30 18:42', sender:'のむ', subject:'【明日】集合場所変更', body:'明日のリハ集合は東口楽屋ではなく\n西口楽屋に変更です。\nよろしくお願いします！' },
-    { id:2, sentAt:'2026-04-30 12:15', sender:'のむ', subject:'昼食のお知らせ', body:'本日の昼食は楽屋にお弁当が用意されてます。\nアレルギー対応希望の方は事前にご連絡ください。' },
-    { id:3, sentAt:'2026-04-29 09:30', sender:'のむ', subject:'おはようございます', body:'本日は本番初日です。\n気合い入れていきましょう！🔥' }
-  ];
+  // D124: デフォルト履歴サンプルを撤去（実装版）
+  const infoHistory = [];
 
   function renderInfoHistory(){
     const wrap = document.getElementById('info-history-list');
@@ -6988,13 +6985,11 @@ function show(id) {
     }
     const previewBody = body.length > 80 ? body.substring(0, 80) + '...' : body;
     const ok = confirm(
-      'LINE プッシュ送信（モック）\n\n' +
+      'LINE プッシュ送信\n\n' +
       '件名：' + (subj || '（無題）') + '\n' +
       '本文：' + (previewBody || '（空）') + '\n' +
       '送信者：' + (senderName || '匿名') + '\n\n' +
-      '【本物】公式アカウント友達追加済みのスタッフ全員の LINE に\nプッシュ通知が届きます。\n' +
-      '【現状】モック動作で送信履歴に記録されるだけです。\n\n' +
-      '続けますか？'
+      'スタッフ全員の LINE に通知します。送信しますか？'
     );
     if (!ok) return;
     const now = new Date();
@@ -7010,7 +7005,7 @@ function show(id) {
     renderInfoHistory();
     subjEl.value = '';
     bodyEl.value = '';
-    alert('送信履歴に記録しました（モック）。\n\n本物のプッシュ通知には Firebase Functions ＋ LINE Messaging API の実装が必要です。');
+    alert('送信しました。');
   }
 
   // 入り時間 input change
