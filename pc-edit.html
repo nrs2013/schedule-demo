@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260508.012405">
+<meta name="build-version" content="20260508.013920">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -5217,9 +5217,9 @@ function show(id) {
           e.target.closest('.pc-cal-venue-band-resize-handle') ||
           e.target.closest('.pc-cal-venue-band-resize-handle-left')
         )) return;
-        // D95: pill / band 本体クリックは別ハンドラに任せる（stopPropagation してくる）
-        // ここに到達したのは「空きセル」クリック → 全選択を解除
-        if (e.target.closest('.pc-cal-pill') || e.target.closest('.pc-cal-venue-band')) return;
+        // D95/D96: pill / band 本体クリックは別ハンドラに任せる（stopPropagation してくる）
+        // is-empty placeholder（透明な band）はここで弾かない（空セル扱い）
+        if (e.target.closest('.pc-cal-pill') || e.target.closest('.pc-cal-venue-band:not(.is-empty)')) return;
         selectedEventIdx = null;
         selectedBandId = null;
         document.querySelectorAll('.pc-cal-pill.selected, .pc-cal-venue-band.selected').forEach(function(s){ s.classList.remove('selected'); });
@@ -7064,9 +7064,15 @@ function show(id) {
       document.body.style.cursor = 'ew-resize';
       e.preventDefault();
       e.stopPropagation();
-    } else if (band) {
+    } else if (band && !band.classList.contains('is-empty')) {
+      // D96: mousedown 時点で selected 化（preventDefault が click を抑止する対策）
+      const bandId = band.getAttribute('data-venue-group-id');
+      document.querySelectorAll('.pc-cal-pill.selected, .pc-cal-venue-band.selected').forEach(function(s){ s.classList.remove('selected'); });
+      document.querySelectorAll('.pc-cal-venue-band[data-venue-group-id="' + bandId + '"]').forEach(function(s){ s.classList.add('selected'); });
+      selectedBandId = bandId;
+      selectedEventIdx = null;
       dnd.mode = 'move-band';
-      dnd.groupId = band.getAttribute('data-venue-group-id');
+      dnd.groupId = bandId;
       dnd.sourceDate = band.getAttribute('data-source-date');
       dnd.startX = e.clientX; dnd.startY = e.clientY;
       band.classList.add('dragging');
@@ -7074,6 +7080,11 @@ function show(id) {
     } else if (pill) {
       const idx = parseInt(pill.getAttribute('data-event-index'), 10);
       if (isNaN(idx)) return;
+      // D96: mousedown 時点で selected 化（preventDefault が click を抑止する対策）
+      document.querySelectorAll('.pc-cal-pill.selected, .pc-cal-venue-band.selected').forEach(function(s){ s.classList.remove('selected'); });
+      document.querySelectorAll('.pc-cal-pill[data-event-index="' + idx + '"]').forEach(function(s){ s.classList.add('selected'); });
+      selectedEventIdx = idx;
+      selectedBandId = null;
       // D68: 掴んだセルの日付を sourceDate として記録（連結バーの中央を掴んでも先頭にならないように）
       const pillCell = pill.closest('.pc-cal-cell');
       dnd.mode = 'move-pill';
