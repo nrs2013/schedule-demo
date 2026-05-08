@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260508.071500">
+<meta name="build-version" content="20260508.073000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -33,7 +33,7 @@
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   * { box-sizing: border-box; }
-  /* D118 Phase B: 起動時ロック画面（CONCERT パス認証） */
+  /* D118c: 起動時ロック画面 — スマホ版 PASS 画面と統一デザイン */
   .lock-screen-tour {
     position: fixed;
     inset: 0;
@@ -42,81 +42,101 @@
     align-items: center;
     justify-content: center;
     z-index: 99999;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
   }
   .lock-screen-tour.active { display: flex; }
   .lock-card {
     background: #1c1b19;
     border: 1px solid #2c2a27;
-    border-radius: 12px;
-    padding: 36px 40px;
+    border-radius: 8px;
+    padding: 40px 32px;
     width: 90%;
-    max-width: 460px;
+    max-width: 380px;
+    text-align: center;
   }
   .lock-brand {
-    font-size: 18px;
+    font-size: 14px;
     font-weight: 500;
-    color: #d8b878;
-    letter-spacing: 0.18em;
-    text-align: center;
-    margin-bottom: 4px;
-    font-family: 'JetBrains Mono', 'Noto Sans JP', monospace;
+    color: #e89a4a;
+    letter-spacing: 0.3em;
+    margin-bottom: 28px;
+  }
+  .lock-icon {
+    width: 60px; height: 60px;
+    background: rgba(232,154,74,0.12);
+    border: 1px solid #e89a4a;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #e89a4a;
+    font-size: 24px;
+    margin: 0 auto 16px;
   }
   .lock-mode-label {
-    font-size: 11px;
-    color: #76766f;
-    letter-spacing: 0.20em;
-    text-align: center;
-    margin-bottom: 26px;
-    text-transform: uppercase;
+    font-size: 16px;
+    color: #e8e8e2;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    margin-bottom: 4px;
   }
-  .lock-form { display: none; flex-direction: column; gap: 12px; }
-  .lock-form.active { display: flex; }
-  .lock-form-title {
+  .lock-form-sub {
     font-size: 12px;
     color: #a8a8a0;
-    margin-bottom: 4px;
-    text-align: center;
-    line-height: 1.7;
+    line-height: 1.6;
+    margin-bottom: 24px;
   }
+  .lock-form { display: none; flex-direction: column; gap: 10px; }
+  .lock-form.active { display: flex; }
   .lock-tour-display {
-    font-size: 16px;
-    color: #f0a85a;
-    text-align: center;
-    margin-bottom: 8px;
+    font-size: 13px;
+    color: #d8b878;
+    margin-bottom: 12px;
     letter-spacing: 0.04em;
     font-weight: 500;
   }
   .lock-input {
-    background: #14130f;
+    width: 100%;
+    box-sizing: border-box;
+    background: #1d1b19;
     border: 1px solid #2c2a27;
+    border-radius: 4px;
     color: #e8e8e2;
     font-family: inherit;
     font-size: 14px;
-    padding: 10px 14px;
-    border-radius: 6px;
+    padding: 12px;
+    text-align: center;
+    letter-spacing: 0.05em;
   }
-  .lock-input:focus { outline: none; border-color: rgba(232,154,74,0.55); background: #1f1c18; }
+  .lock-input[type="password"] {
+    font-size: 18px;
+    letter-spacing: 0.4em;
+    font-variant-numeric: tabular-nums;
+  }
+  .lock-input:focus { outline: none; border-color: rgba(232,154,74,0.55); background: #221d18; }
   .lock-btn {
-    background: rgba(232,154,74,0.15);
-    border: 1px solid rgba(232,154,74,0.55);
-    color: #f0a85a;
-    font-size: 13px;
+    width: 100%;
+    background: #e89a4a;
+    color: #0a0a08;
+    border: none;
+    padding: 12px;
+    border-radius: 4px;
+    font-size: 12px;
     font-weight: 500;
-    letter-spacing: 0.10em;
-    padding: 12px 20px;
-    border-radius: 6px;
+    letter-spacing: 0.25em;
     cursor: pointer;
-    margin-top: 8px;
     font-family: inherit;
+    margin-top: 4px;
     transition: background 0.12s;
   }
-  .lock-btn:hover { background: rgba(232,154,74,0.25); }
+  .lock-btn:hover { background: #f0a85a; }
+  .lock-btn:active { background: #d88a3a; }
   .lock-error {
-    font-size: 12px;
+    font-size: 11px;
     color: #e07a5f;
-    text-align: center;
-    margin-top: 6px;
-    min-height: 16px;
+    margin-top: 4px;
+    min-height: 14px;
+    letter-spacing: 0.04em;
   }
   /* D118: ログアウトボタン（マスター日付バー） */
   .master-logout-btn {
@@ -3713,25 +3733,29 @@
 
 
 <!-- ════════ PC編集画面 ════════ -->
-<!-- D118 Phase B: 起動時ロック画面（CONCERT パス認証 / 初回はパスワード設定） -->
+<!-- D118 Phase B / D118c: 起動時ロック画面（スマホ版 PASS 画面と統一デザイン） -->
 <div class="screen lock-screen-tour" id="screen-tour-lock">
   <div class="lock-card">
     <div class="lock-brand">SCHEDULE STUDIO</div>
-    <div class="lock-mode-label" id="lock-mode-label">PC 編集版</div>
     <!-- 初回設定モード -->
     <div class="lock-form lock-init-form" id="lock-init-form">
-      <div class="lock-form-title">初回設定 — このツアーのパスワードを決めてください</div>
-      <input type="text" class="lock-input" placeholder="ツアー名（例：櫻坂46 5th Anniversary Live）" id="lock-init-title" autocomplete="off">
-      <input type="password" class="lock-input" placeholder="🎼 CONCERT パスワード（PC 編集用）" id="lock-init-concert" autocomplete="new-password">
-      <input type="password" class="lock-input" placeholder="🎤 ARTIST パスワード（メンバー閲覧用）" id="lock-init-artist" autocomplete="new-password">
-      <input type="password" class="lock-input" placeholder="✏️ 編集パスワード（スタッフ編集解除用）" id="lock-init-edit" autocomplete="new-password">
+      <div class="lock-icon">🔧</div>
+      <div class="lock-mode-label">初回設定</div>
+      <div class="lock-form-sub">このツアーのパスワードを<br>決めてください</div>
+      <input type="text" class="lock-input" placeholder="ツアー名" id="lock-init-title" autocomplete="off">
+      <input type="password" class="lock-input" placeholder="CONCERT パスワード" id="lock-init-concert" autocomplete="new-password">
+      <input type="password" class="lock-input" placeholder="ARTIST パスワード" id="lock-init-artist" autocomplete="new-password">
+      <input type="password" class="lock-input" placeholder="編集パスワード" id="lock-init-edit" autocomplete="new-password">
       <button class="lock-btn" id="lock-init-btn">設定して入る</button>
     </div>
     <!-- ログインモード -->
     <div class="lock-form lock-login-form" id="lock-login-form">
+      <div class="lock-icon">🔒</div>
+      <div class="lock-mode-label">PC 編集版</div>
       <div class="lock-tour-display" id="lock-login-tour-title"></div>
-      <input type="password" class="lock-input" placeholder="🎼 CONCERT パスワード" id="lock-login-concert" autocomplete="current-password">
-      <button class="lock-btn" id="lock-login-btn">入る</button>
+      <div class="lock-form-sub">CONCERT パスワードを入力してください</div>
+      <input type="password" class="lock-input" placeholder="••••" id="lock-login-concert" autocomplete="current-password">
+      <button class="lock-btn" id="lock-login-btn">認証する</button>
       <div class="lock-error" id="lock-login-error"></div>
     </div>
   </div>
