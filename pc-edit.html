@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260508.180000">
+<meta name="build-version" content="20260508.190000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -2754,18 +2754,13 @@
     border-left: 1px solid rgba(216,184,120,0.45) !important;
     border-right: 1px solid rgba(216,184,120,0.45) !important;
   }
-  /* D130: ドラッグ・リサイズ中の挙動を Apple Calendar 流の「指と 1:1 追従」に
-     - transition は完全に切る（width 0.15s も background 0.10s も）
-     - 指の動きに遅延ゼロで追従する → 「最上級カレンダー」のスムーズな感触
-     - 塗りは Phase D129 の薄ゴールド一面塗りを継続 */
-  .pc-cal-cell.resize-preview {
-    background: rgba(232,154,74,0.08) !important;
-    outline: none;
-    transition: none !important;
-  }
+  /* D130b: バー伸縮中はセル側のハイライト・塗りを完全撤去。
+     バー（venue band）が伸び縮みする動きだけがプレビュー。Apple Calendar と同じ作法。
+     指の動きに 1:1 で追従するため transition も全切り。 */
+  .pc-cal-cell.resize-preview,
   .pc-cal-cell.resize-target {
-    background: rgba(232,154,74,0.16) !important;
-    outline: none;
+    background: transparent !important;
+    outline: none !important;
     transition: none !important;
   }
   .pc-cal-cell.resize-preview .pc-cal-venue-band,
