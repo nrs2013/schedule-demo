@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260508.054500">
+<meta name="build-version" content="20260508.060000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -3645,6 +3645,10 @@
         <button class="pc-btn pc-add-row" data-add-type="encore">＋ EN</button>
         <button class="pc-btn pc-add-row" data-add-type="event">＋ VCR</button>
         <button class="pc-btn pc-add-row" data-add-type="end">＋ END</button>
+        <!-- D115: 曲リストの Excel 取込 / テンプレートDL -->
+        <button id="pc-btn-rh-excel" class="pc-btn">📊 Excel取込</button>
+        <button id="pc-btn-rh-template" class="pc-btn">📥 テンプレDL</button>
+        <input type="file" id="pc-rh-file-input" accept=".xlsx,.xls" style="display:none;">
       </div>
     </div>
 
@@ -4615,6 +4619,102 @@ function show(id) {
       render();
     });
   });
+
+  // D115: 曲リストの Excel 取込 / テンプレートDL（M# / タイトル / タイム の 3 列）
+  const btnRhExcel = document.getElementById('pc-btn-rh-excel');
+  const btnRhTemplate = document.getElementById('pc-btn-rh-template');
+  const rhFileInput = document.getElementById('pc-rh-file-input');
+  function rhMNoLabel(s, idx) {
+    if (s.isMC) return 'MC' + idx;
+    if (s.isEncore) return 'EN' + idx;
+    if (s.isEvent) return 'VCR';
+    if (s.isEnd) return 'END';
+    return 'M' + idx;
+  }
+  function rhFormatTime(sec) {
+    const m = Math.floor((sec || 0) / 60);
+    const s = (sec || 0) % 60;
+    return m + ':' + String(s).padStart(2, '0');
+  }
+  function rhParseTime(str) {
+    if (!str) return 0;
+    const parts = String(str).trim().split(':');
+    if (parts.length === 2) return (parseInt(parts[0], 10) || 0) * 60 + (parseInt(parts[1], 10) || 0);
+    if (parts.length === 1) return parseInt(parts[0], 10) || 0;
+    return 0;
+  }
+  if (btnRhTemplate) {
+    btnRhTemplate.addEventListener('click', function(){
+      if (typeof XLSX === 'undefined') { alert('Excel ライブラリが読み込まれていません'); return; }
+      const data = [['M#', 'タイトル', 'タイム (m:ss)']];
+      let songCnt=0, mcCnt=0, encCnt=0;
+      songs.forEach(function(s){
+        let label;
+        if (s.isMC) { mcCnt++; label = 'MC' + mcCnt; }
+        else if (s.isEncore) { encCnt++; label = 'EN' + encCnt; }
+        else if (s.isEvent) label = 'VCR';
+        else if (s.isEnd) label = 'END';
+        else { songCnt++; label = 'M' + songCnt; }
+        data.push([label, s.title || '', rhFormatTime(s.durationSeconds)]);
+      });
+      const ws = XLSX.utils.aoa_to_sheet(data);
+      ws['!cols'] = [{wch: 8}, {wch: 32}, {wch: 12}];
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, '曲リスト');
+      XLSX.writeFile(wb, 'rehearsal-songs.xlsx');
+    });
+  }
+  if (btnRhExcel && rhFileInput) {
+    btnRhExcel.addEventListener('click', function(){ rhFileInput.click(); });
+    rhFileInput.addEventListener('change', function(e){
+      const file = e.target.files[0];
+      if (!file) return;
+      if (typeof XLSX === 'undefined') { alert('Excel ライブラリが読み込まれていません'); rhFileInput.value=''; return; }
+      const reader = new FileReader();
+      reader.onload = function(ev){
+        try {
+          const arr = new Uint8Array(ev.target.result);
+          const wb = XLSX.read(arr, {type: 'array'});
+          const ws = wb.Sheets[wb.SheetNames[0]];
+          const rows = XLSX.utils.sheet_to_json(ws, {header: 1});
+          if (!rows || rows.length < 2) { alert('Excel にデータがありません（1 行目はヘッダー、2 行目以降にデータが必要）'); return; }
+          if (!confirm('現在の曲リストを Excel の内容で置き換えます。よろしいですか？')) return;
+          const newSongs = [];
+          let order = 1;
+          for (let i = 1; i < rows.length; i++) {
+            const row = rows[i];
+            if (!row || (!row[0] && !row[1])) continue;
+            const mStr = String(row[0] || '').trim();
+            const title = String(row[1] || '').trim();
+            const dur = rhParseTime(row[2]);
+            const u = mStr.toUpperCase().replace(/\s/g, '');
+            const isMC = /^MC\d*$/.test(u);
+            const isEncore = !isMC && /^EN\d*$/.test(u);
+            const isEvent = /^VCR/.test(u);
+            const isEnd = u === 'END';
+            newSongs.push({
+              id: Date.now() + i,
+              orderIndex: order++,
+              title: title || '（タイトル未定）',
+              durationSeconds: dur,
+              isEvent: isEvent,
+              isMC: isMC,
+              isEncore: isEncore,
+              isEnd: isEnd
+            });
+          }
+          songs.length = 0;
+          Array.prototype.push.apply(songs, newSongs);
+          render();
+          alert('Excel から ' + newSongs.length + ' 件の曲を取り込みました。');
+        } catch (err) {
+          alert('Excel 取込エラー: ' + err.message);
+        }
+        rhFileInput.value = '';
+      };
+      reader.readAsArrayBuffer(file);
+    });
+  }
 
   // マスター日付バーから呼ばれる：日付変更時にリハ計画を再レンダー
   window.__rehearsalRender = render;
