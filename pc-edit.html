@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260508.040000">
+<meta name="build-version" content="20260508.041500">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -7144,6 +7144,40 @@ function show(id) {
 
   // D51: 統合 D&D 実装（resize-right / resize-left / move-band / move-pill）
   let dnd = { mode: null, groupId: null, sourceDate: null, eventIndex: null, startX: 0, startY: 0, ghost: null, lastDk: null, moved: false };
+  // D108b: リサイズの RAF throttle 用 state
+  let _resizeRafScheduled = false;
+  let _resizePending = null;
+  function _processResizePending() {
+    _resizeRafScheduled = false;
+    if (!_resizePending || !window.__calApi) { _resizePending = null; return; }
+    const p = _resizePending;
+    _resizePending = null;
+    if (p.mode === 'resize-event-right' || p.mode === 'resize-event-left') {
+      const allEvs = window.__calApi.listAllEvents();
+      const ev = allEvs && allEvs[p.eventIndex];
+      if (!ev) return;
+      const start = ev.date;
+      const end = ev.endDate || ev.date;
+      let newStart = start, newEnd = end;
+      if (p.mode === 'resize-event-right') newEnd = (p.dk > start) ? p.dk : start;
+      else newStart = (p.dk < end) ? p.dk : end;
+      if (newStart !== ev.date || newEnd !== end) {
+        const newEv = Object.assign({}, ev, { date: newStart, endDate: newEnd });
+        if (newEnd === newStart) delete newEv.endDate;
+        window.__calApi.updateEvent(ev, newEv);
+      }
+    } else if (p.mode === 'resize-right' || p.mode === 'resize-left') {
+      const group = window.__calApi.getVenueGroupByDateKey(p.sourceDate);
+      if (!group) return;
+      if (p.mode === 'resize-right') {
+        const newEnd = (p.dk > group.startDate) ? p.dk : group.startDate;
+        if (newEnd !== group.endDate) window.__calApi.updateVenueGroup(p.groupId, { endDate: newEnd });
+      } else {
+        const newStart = (p.dk < group.endDate) ? p.dk : group.endDate;
+        if (newStart !== group.startDate) window.__calApi.updateVenueGroup(p.groupId, { startDate: newStart });
+      }
+    }
+  }
   // D95+D102: 選択削除用 state — window 経由で IIFE #2/#3 で共有（ReferenceError 回避）
   function clearDnd() {
     document.querySelectorAll('.pc-cal-cell.drag-over, .pc-cal-cell.resize-target, .pc-cal-cell.resize-preview').forEach(function(el){ el.classList.remove('drag-over'); el.classList.remove('resize-target'); el.classList.remove('resize-preview'); });
@@ -7286,62 +7320,16 @@ function show(id) {
     });
     if (dnd.mode === 'move-band' || dnd.mode === 'move-pill') {
       cell.classList.add('drag-over');
-    } else if (dnd.mode === 'resize-event-right' || dnd.mode === 'resize-event-left') {
-      // D108: ドラッグ中はリアルタイム update せず preview のみ表示（カクつき解消）。確定は mouseup で 1 回だけ。
-      const allEvs = window.__calApi.listAllEvents();
-      const ev = allEvs && allEvs[dnd.eventIndex];
-      if (ev) {
-        const start = ev.date;
-        const end = ev.endDate || ev.date;
-        let rangeStart = start;
-        let rangeEnd = end;
-        if (dnd.mode === 'resize-event-right') {
-          rangeEnd = (dk > start) ? dk : start;
-        } else {
-          rangeStart = (dk < end) ? dk : end;
-        }
-        requestAnimationFrame(function(){
-          document.querySelectorAll('.pc-cal-cell.drag-over, .pc-cal-cell.resize-target, .pc-cal-cell.resize-preview').forEach(function(el){
-            el.classList.remove('drag-over');
-            el.classList.remove('resize-target');
-            el.classList.remove('resize-preview');
-          });
-          const t = document.querySelector('.pc-cal-cell[data-date="' + dk + '"]');
-          if (t) t.classList.add('resize-target');
-          document.querySelectorAll('.pc-cal-cell').forEach(function(c){
-            const cdk = c.getAttribute('data-date');
-            if (cdk && !c.classList.contains('outside') && cdk >= rangeStart && cdk <= rangeEnd) {
-              c.classList.add('resize-preview');
-            }
-          });
-        });
-      }
-    } else if (dnd.mode === 'resize-right' || dnd.mode === 'resize-left') {
-      // D108: ドラッグ中はリアルタイム update せず preview のみ表示（カクつき解消）。確定は mouseup で 1 回だけ。
-      const group = window.__calApi && window.__calApi.getVenueGroupByDateKey(dnd.sourceDate);
-      if (group) {
-        let rangeStart = group.startDate;
-        let rangeEnd = group.endDate;
-        if (dnd.mode === 'resize-right') {
-          rangeEnd = (dk > group.startDate) ? dk : group.startDate;
-        } else {
-          rangeStart = (dk < group.endDate) ? dk : group.endDate;
-        }
-        requestAnimationFrame(function(){
-          document.querySelectorAll('.pc-cal-cell.drag-over, .pc-cal-cell.resize-target, .pc-cal-cell.resize-preview').forEach(function(el){
-            el.classList.remove('drag-over');
-            el.classList.remove('resize-target');
-            el.classList.remove('resize-preview');
-          });
-          const targetCell = document.querySelector('.pc-cal-cell[data-date="' + dk + '"]');
-          if (targetCell) targetCell.classList.add('resize-target');
-          document.querySelectorAll('.pc-cal-cell').forEach(function(c){
-            const cdk = c.getAttribute('data-date');
-            if (cdk && !c.classList.contains('outside') && cdk >= rangeStart && cdk <= rangeEnd) {
-              c.classList.add('resize-preview');
-            }
-          });
-        });
+    } else if (dnd.mode === 'resize-event-right' || dnd.mode === 'resize-event-left' || dnd.mode === 'resize-right' || dnd.mode === 'resize-left') {
+      // D108b: リアルタイム伸縮を復活。RAF throttle で update を 1 frame 1 回に制限（カクつき軽減）
+      _resizePending = {
+        mode: dnd.mode, dk: dk,
+        eventIndex: dnd.eventIndex,
+        groupId: dnd.groupId, sourceDate: dnd.sourceDate
+      };
+      if (!_resizeRafScheduled) {
+        _resizeRafScheduled = true;
+        requestAnimationFrame(_processResizePending);
       }
     }
   });
