@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260508.063000">
+<meta name="build-version" content="20260508.070000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -33,6 +33,110 @@
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   * { box-sizing: border-box; }
+  /* D118 Phase B: 起動時ロック画面（CONCERT パス認証） */
+  .lock-screen-tour {
+    position: fixed;
+    inset: 0;
+    background: #1a1918;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 99999;
+  }
+  .lock-screen-tour.active { display: flex; }
+  .lock-card {
+    background: #1c1b19;
+    border: 1px solid #2c2a27;
+    border-radius: 12px;
+    padding: 36px 40px;
+    width: 90%;
+    max-width: 460px;
+  }
+  .lock-brand {
+    font-size: 18px;
+    font-weight: 500;
+    color: #d8b878;
+    letter-spacing: 0.18em;
+    text-align: center;
+    margin-bottom: 4px;
+    font-family: 'JetBrains Mono', 'Noto Sans JP', monospace;
+  }
+  .lock-mode-label {
+    font-size: 11px;
+    color: #76766f;
+    letter-spacing: 0.20em;
+    text-align: center;
+    margin-bottom: 26px;
+    text-transform: uppercase;
+  }
+  .lock-form { display: none; flex-direction: column; gap: 12px; }
+  .lock-form.active { display: flex; }
+  .lock-form-title {
+    font-size: 12px;
+    color: #a8a8a0;
+    margin-bottom: 4px;
+    text-align: center;
+    line-height: 1.7;
+  }
+  .lock-tour-display {
+    font-size: 16px;
+    color: #f0a85a;
+    text-align: center;
+    margin-bottom: 8px;
+    letter-spacing: 0.04em;
+    font-weight: 500;
+  }
+  .lock-input {
+    background: #14130f;
+    border: 1px solid #2c2a27;
+    color: #e8e8e2;
+    font-family: inherit;
+    font-size: 14px;
+    padding: 10px 14px;
+    border-radius: 6px;
+  }
+  .lock-input:focus { outline: none; border-color: rgba(232,154,74,0.55); background: #1f1c18; }
+  .lock-btn {
+    background: rgba(232,154,74,0.15);
+    border: 1px solid rgba(232,154,74,0.55);
+    color: #f0a85a;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.10em;
+    padding: 12px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-top: 8px;
+    font-family: inherit;
+    transition: background 0.12s;
+  }
+  .lock-btn:hover { background: rgba(232,154,74,0.25); }
+  .lock-error {
+    font-size: 12px;
+    color: #e07a5f;
+    text-align: center;
+    margin-top: 6px;
+    min-height: 16px;
+  }
+  /* D118: ログアウトボタン（マスター日付バー） */
+  .master-logout-btn {
+    background: transparent;
+    border: 1px solid #2c2a27;
+    color: #76766f;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 13px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    padding: 0;
+    margin-left: 4px;
+    transition: background 0.12s, border-color 0.12s, color 0.12s;
+  }
+  .master-logout-btn:hover { background: rgba(216,184,156,0.10); border-color: rgba(216,184,156,0.55); color: #d8b89c; }
   /* D116: Excel ファイル drop 中の視覚フィードバック（金色破線で「ここにドロップ」感を出す） */
   body.excel-drop-hint {
     outline: 4px dashed rgba(232,154,74,0.85);
@@ -3609,6 +3713,30 @@
 
 
 <!-- ════════ PC編集画面 ════════ -->
+<!-- D118 Phase B: 起動時ロック画面（CONCERT パス認証 / 初回はパスワード設定） -->
+<div class="screen lock-screen-tour" id="screen-tour-lock">
+  <div class="lock-card">
+    <div class="lock-brand">SCHEDULE STUDIO</div>
+    <div class="lock-mode-label" id="lock-mode-label">PC 編集版</div>
+    <!-- 初回設定モード -->
+    <div class="lock-form lock-init-form" id="lock-init-form">
+      <div class="lock-form-title">初回設定 — このツアーのパスワードを決めてください</div>
+      <input type="text" class="lock-input" placeholder="ツアー名（例：櫻坂46 5th Anniversary Live）" id="lock-init-title" autocomplete="off">
+      <input type="password" class="lock-input" placeholder="🎼 CONCERT パスワード（PC 編集用）" id="lock-init-concert" autocomplete="new-password">
+      <input type="password" class="lock-input" placeholder="🎤 ARTIST パスワード（メンバー閲覧用）" id="lock-init-artist" autocomplete="new-password">
+      <input type="password" class="lock-input" placeholder="✏️ 編集パスワード（スタッフ編集解除用）" id="lock-init-edit" autocomplete="new-password">
+      <button class="lock-btn" id="lock-init-btn">設定して入る</button>
+    </div>
+    <!-- ログインモード -->
+    <div class="lock-form lock-login-form" id="lock-login-form">
+      <div class="lock-tour-display" id="lock-login-tour-title"></div>
+      <input type="password" class="lock-input" placeholder="🎼 CONCERT パスワード" id="lock-login-concert" autocomplete="current-password">
+      <button class="lock-btn" id="lock-login-btn">入る</button>
+      <div class="lock-error" id="lock-login-error"></div>
+    </div>
+  </div>
+</div>
+
 <div class="screen active" id="screen-pc">
   <div class="pc-frame">
     <div class="pc-brand-strip">
@@ -3633,6 +3761,8 @@
           <span class="master-chip master-chip-day" id="master-date-day">DAY 1</span>
           <!-- D112: Undo ボタン（Cmd+Z のバックアップ） -->
           <button class="master-undo-btn" title="元に戻す (Cmd+Z)" onclick="if(window.__undo)window.__undo()">↶</button>
+          <!-- D118: ログアウト -->
+          <button class="master-logout-btn" title="ログアウト" onclick="if(confirm('ログアウトしますか？次回起動時に CONCERT パスが必要になります')){sessionStorage.removeItem('schedule-studio:concert-authed');location.reload();}">🔓</button>
         </div>
       </div>
     </div>
@@ -7750,6 +7880,111 @@ function show(id) {
     });
   })();
   console.log('[D34/D51] CALENDAR D&D + モーダル + 会場帯ドラッグ + 選択削除 init OK');
+})();
+</script>
+
+<!-- D118 Phase B: 起動時認証フロー -->
+<script>
+(function bootstrapAuth(){
+  const LS_PWS = 'schedule-studio:tour:passwords';
+  const LS_TOUR_TITLE = 'schedule-studio:tour:title';
+  const SS_AUTHED = 'schedule-studio:concert-authed';
+
+  const lockEl = document.getElementById('screen-tour-lock');
+  const pcEl = document.getElementById('screen-pc');
+  if (!lockEl || !pcEl) return;
+
+  const initForm = document.getElementById('lock-init-form');
+  const loginForm = document.getElementById('lock-login-form');
+  const modeLabel = document.getElementById('lock-mode-label');
+
+  let passwords = null;
+  try {
+    const stored = localStorage.getItem(LS_PWS);
+    if (stored) passwords = JSON.parse(stored);
+  } catch (e) {}
+
+  const authed = sessionStorage.getItem(SS_AUTHED) === '1';
+
+  // 認証済みなら何もしない（screen-pc がそのまま active）
+  if (passwords && authed) {
+    // 起動時、保存されてるツアー名を master-concert-title に反映
+    const titleEl = document.querySelector('.master-concert-title');
+    const storedTitle = localStorage.getItem(LS_TOUR_TITLE);
+    if (titleEl && storedTitle) titleEl.textContent = storedTitle;
+    return;
+  }
+
+  // ロック画面に切替
+  lockEl.classList.add('active');
+  pcEl.classList.remove('active');
+
+  function gotoApp(title) {
+    sessionStorage.setItem(SS_AUTHED, '1');
+    if (title) {
+      const titleEl = document.querySelector('.master-concert-title');
+      if (titleEl) titleEl.textContent = title;
+    }
+    lockEl.classList.remove('active');
+    pcEl.classList.add('active');
+  }
+
+  if (!passwords) {
+    // 初回設定モード
+    initForm.classList.add('active');
+    modeLabel.textContent = '初回設定';
+    const initBtn = document.getElementById('lock-init-btn');
+    function tryInit(){
+      const title = (document.getElementById('lock-init-title').value || '').trim();
+      const concert = document.getElementById('lock-init-concert').value;
+      const artist = document.getElementById('lock-init-artist').value;
+      const edit = document.getElementById('lock-init-edit').value;
+      if (!title) { alert('ツアー名を入力してください'); return; }
+      if (!concert || !artist || !edit) { alert('3 つのパスワードを全部入力してください'); return; }
+      try {
+        localStorage.setItem(LS_PWS, JSON.stringify({concert: concert, artist: artist, edit: edit}));
+        localStorage.setItem(LS_TOUR_TITLE, title);
+      } catch (e) {
+        alert('保存に失敗しました：' + e.message);
+        return;
+      }
+      gotoApp(title);
+    }
+    initBtn.addEventListener('click', tryInit);
+    setTimeout(function(){ document.getElementById('lock-init-title').focus(); }, 100);
+  } else {
+    // ログインモード
+    loginForm.classList.add('active');
+    modeLabel.textContent = 'PC 編集版 ログイン';
+    const title = localStorage.getItem(LS_TOUR_TITLE) || '（ツアー名未設定）';
+    document.getElementById('lock-login-tour-title').textContent = title;
+    const passInput = document.getElementById('lock-login-concert');
+    const errorEl = document.getElementById('lock-login-error');
+    function tryLogin(){
+      const input = passInput.value;
+      if (input === passwords.concert) {
+        gotoApp(title);
+      } else {
+        errorEl.textContent = 'パスワードが違います';
+        passInput.value = '';
+        passInput.focus();
+      }
+    }
+    document.getElementById('lock-login-btn').addEventListener('click', tryLogin);
+    passInput.addEventListener('keydown', function(e){ if (e.key === 'Enter') tryLogin(); });
+    setTimeout(function(){ passInput.focus(); }, 100);
+  }
+
+  // master-concert-title が編集されたら localStorage に保存（永続化）
+  setTimeout(function(){
+    const titleEl = document.querySelector('.master-concert-title');
+    if (titleEl) {
+      titleEl.addEventListener('blur', function(){
+        const t = (titleEl.textContent || '').trim();
+        if (t) localStorage.setItem(LS_TOUR_TITLE, t);
+      });
+    }
+  }, 300);
 })();
 </script>
 </body>
