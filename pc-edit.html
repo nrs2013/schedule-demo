@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260508.031500">
+<meta name="build-version" content="20260508.033000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -2248,17 +2248,40 @@
   .pc-cal-pill.dragging,
   .pc-cal-venue-band.dragging { opacity: 0.4; }
   /* D45: ハイライト選択（クリックで選択 / Delete で削除） */
-  .pc-cal-pill.selected {
-    outline: 2px solid #d8b878;
-    outline-offset: -1px;
-    filter: brightness(1.2);
-    box-shadow: 0 0 0 1px rgba(216,184,120,0.6);
-  }
+  /* D106: 選択ハイライト — outline は片側だけ消せないので box-shadow inset で側ごと制御。
+     連結バー（bar-start/mid/end）のつなぎ目では縦線を消す */
+  .pc-cal-pill.selected,
   .pc-cal-venue-band.selected {
-    outline: 2px solid #d8b878;
-    outline-offset: -1px;
-    filter: brightness(1.25);
-    box-shadow: 0 0 0 1px rgba(216,184,120,0.7);
+    outline: none;
+    filter: brightness(1.2);
+    box-shadow:
+      inset 0 2px 0 0 #d8b878,
+      inset 0 -2px 0 0 #d8b878,
+      inset 2px 0 0 0 #d8b878,
+      inset -2px 0 0 0 #d8b878;
+  }
+  /* bar-start: 右側は次に繋がるので右の縦線を消す */
+  .pc-cal-pill.bar-start.selected,
+  .pc-cal-venue-band.bar-start.selected {
+    box-shadow:
+      inset 0 2px 0 0 #d8b878,
+      inset 0 -2px 0 0 #d8b878,
+      inset 2px 0 0 0 #d8b878;
+  }
+  /* bar-mid: 両端繋がるので左右の縦線を消す（上下のみ） */
+  .pc-cal-pill.bar-mid.selected,
+  .pc-cal-venue-band.bar-mid.selected {
+    box-shadow:
+      inset 0 2px 0 0 #d8b878,
+      inset 0 -2px 0 0 #d8b878;
+  }
+  /* bar-end: 左側は前から繋がるので左の縦線を消す */
+  .pc-cal-pill.bar-end.selected,
+  .pc-cal-venue-band.bar-end.selected {
+    box-shadow:
+      inset 0 2px 0 0 #d8b878,
+      inset 0 -2px 0 0 #d8b878,
+      inset -2px 0 0 0 #d8b878;
   }
   /* D34: 詳細モーダル */
   .event-detail-modal-bg {
