@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260507.233448">
+<meta name="build-version" content="20260508.000218">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -192,7 +192,8 @@
     border: 1px solid transparent;
     color: #d8b878;
     font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
-    font-size: 14px;
+    /* D89: 14 → 18px に拡大（ツアー名を主役級に） */
+    font-size: 18px;
     font-weight: 600;
     letter-spacing: 0.02em;
     padding: 4px 8px;
@@ -1943,10 +1944,10 @@
   /* D39/D46: 会場帯（venue band）— セル上部に貫通バーで表示
      D46: セル padding(6px) + grid gap(1px) を打ち消し、隣セルまで連結 */
   .pc-cal-venue-band {
-    /* D87: Charcoal — 黒バックに溶ける濃グレー（pill を主役にする） */
-    background: rgba(64,60,55,0.85);
-    border: 1px solid rgba(120,108,90,0.65);
-    color: #d8c8a8;
+    /* D92: Navy Slate — 寒色寄りの濃紺グレー（pill と色相棲み分け、知的トーン） */
+    background: rgba(58,68,82,0.85);
+    border: 1px solid rgba(108,128,150,0.70);
+    color: #c8d8e8;
     font-size: 9px;
     font-weight: 500;
     letter-spacing: 0.04em;
@@ -1964,7 +1965,7 @@
     position: relative;
     z-index: 1;
   }
-  .pc-cal-venue-band:hover { background: rgba(80,75,68,0.95); border-color: rgba(140,128,108,0.85); color: #f0e4c8; }
+  .pc-cal-venue-band:hover { background: rgba(72,84,100,0.95); border-color: rgba(128,148,170,0.85); color: #e0eef8; }
   /* D86: 同じ週に venue band がある時、band の無いセルにも空 placeholder を入れて
      events の縦位置を揃える（venue band 行ぶんの隙間を確保） */
   .pc-cal-venue-band.is-empty {
@@ -2147,6 +2148,37 @@
   .pc-cal-pill-resize-handle:hover::after {
     background: #ffffff;
   }
+  /* D91: pill の左端 resize handle — venue band と仕様統一（startDate を引き伸ばす） */
+  .pc-cal-pill-resize-handle-left {
+    position: absolute;
+    left: -3px;
+    top: -1px;
+    bottom: -1px;
+    width: 14px;
+    cursor: ew-resize;
+    background: transparent;
+    z-index: 3;
+    border-radius: 3px 0 0 3px;
+    transition: background 0.12s;
+  }
+  .pc-cal-pill-resize-handle-left::after {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 2px;
+    height: 10px;
+    background: rgba(216,184,120,0.7);
+    border-radius: 1px;
+    transition: opacity 0.12s, background 0.12s;
+  }
+  .pc-cal-pill-resize-handle-left:hover {
+    background: rgba(216,184,120,0.45);
+  }
+  .pc-cal-pill-resize-handle-left:hover::after {
+    background: #ffffff;
+  }
   .pc-cal-pill:active { cursor: grabbing; }
   /* D49: ドラッグ中の ghost 要素 */
   .pc-cal-drag-ghost {
@@ -2304,7 +2336,7 @@
     padding: 6px 0;
     border-bottom: 1px solid #2c2a27;
   }
-  /* D71: 「今月へ」ジャンプバー */
+  /* D71: 「今月へ」ジャンプバー（D92: ラベル "TODAY" に変更、CSS は維持） */
   .pc-cal-jump-bar {
     position: sticky;
     top: 0;
@@ -4920,8 +4952,10 @@ function show(id) {
           if (e.startTime) labelText += ' ' + e.startTime;
         }
         const showPillHandle = (positionCls === '' || positionCls === ' bar-end');
+        const showPillLeftHandle = (positionCls === '' || positionCls === ' bar-start');
         const pillHandleHtml = showPillHandle ? '<span class="pc-cal-pill-resize-handle" draggable="false"></span>' : '';
-        return '<span class="pc-cal-pill ' + e.type + positionCls + '" data-event-index="' + (calEvents.indexOf(e)) + '">' + escH(labelText) + pillHandleHtml + '</span>';
+        const pillLeftHandleHtml = showPillLeftHandle ? '<span class="pc-cal-pill-resize-handle-left" draggable="false"></span>' : '';
+        return '<span class="pc-cal-pill ' + e.type + positionCls + '" data-event-index="' + (calEvents.indexOf(e)) + '">' + pillLeftHandleHtml + escH(labelText) + pillHandleHtml + '</span>';
       }).join('');
       // D39: 会場帯
       let venueBandHtml = '';
@@ -5014,9 +5048,9 @@ function show(id) {
 
     // HTML 組立
     let html = '';
-    // 「今月へ」ジャンプボタン
+    // 「今月へ」ジャンプボタン（D92: ラベル "TODAY" に変更）
     html += '<div class="pc-cal-jump-bar">';
-    html += '<button type="button" class="pc-cal-jump-btn" data-jump="today">今月へ</button>';
+    html += '<button type="button" class="pc-cal-jump-btn" data-jump="today">TODAY</button>';
     html += '</div>';
     // スティッキー曜日行（D76: 先頭に左レール分のスペーサー）
     html += '<div class="pc-cal-dow-row pc-cal-dow-sticky">';
@@ -5115,8 +5149,10 @@ function show(id) {
           if (e.startTime) labelText += ' ' + e.startTime;
         }
         const showPillHandle = (positionCls === '' || positionCls === ' bar-end');
+        const showPillLeftHandle = (positionCls === '' || positionCls === ' bar-start');
         const pillHandleHtml = showPillHandle ? '<span class="pc-cal-pill-resize-handle" draggable="false"></span>' : '';
-        return '<span class="pc-cal-pill ' + e.type + positionCls + '" data-event-index="' + (calEvents.indexOf(e)) + '">' + escH(labelText) + pillHandleHtml + '</span>';
+        const pillLeftHandleHtml = showPillLeftHandle ? '<span class="pc-cal-pill-resize-handle-left" draggable="false"></span>' : '';
+        return '<span class="pc-cal-pill ' + e.type + positionCls + '" data-event-index="' + (calEvents.indexOf(e)) + '">' + pillLeftHandleHtml + escH(labelText) + pillHandleHtml + '</span>';
       }).join('');
 
       // 会場帯
@@ -5174,7 +5210,12 @@ function show(id) {
     // セルクリック
     monthEl.querySelectorAll('.pc-cal-cell').forEach(function(el){
       el.addEventListener('click', function(e){
-        if (e && e.target && e.target.closest && (e.target.closest('.pc-cal-pill') || e.target.closest('.pc-cal-venue-band'))) return;
+        // D90: pill / venue band 本体クリックでもセル選択を発火。リサイズハンドルだけ除外する
+        if (e && e.target && e.target.closest && (
+          e.target.closest('.pc-cal-pill-resize-handle') ||
+          e.target.closest('.pc-cal-venue-band-resize-handle') ||
+          e.target.closest('.pc-cal-venue-band-resize-handle-left')
+        )) return;
         const dk = el.getAttribute('data-date');
         if (!dk) return;
         const parts = dk.split('-').map(Number);
@@ -5185,7 +5226,7 @@ function show(id) {
         if (typeof changeMasterDate === 'function') changeMasterDate(newDate);
       });
     });
-    // 「今月へ」ボタン
+    // 「今月へ」ボタン（D92: ラベル "TODAY" に変更）
     const jumpBtn = monthEl.querySelector('[data-jump="today"]');
     if (jumpBtn) {
       jumpBtn.addEventListener('click', function(){
@@ -6936,14 +6977,16 @@ function show(id) {
 
     const rightHandle = e.target.closest && e.target.closest('.pc-cal-venue-band-resize-handle:not(.pc-cal-venue-band-resize-handle-left)');
     const leftHandle = e.target.closest && e.target.closest('.pc-cal-venue-band-resize-handle-left');
-    const pillHandle = e.target.closest && e.target.closest('.pc-cal-pill-resize-handle');
+    const pillHandle = e.target.closest && e.target.closest('.pc-cal-pill-resize-handle:not(.pc-cal-pill-resize-handle-left)');
+    const pillLeftHandle = e.target.closest && e.target.closest('.pc-cal-pill-resize-handle-left');
     const band = e.target.closest && e.target.closest('.pc-cal-venue-band');
     const pill = e.target.closest && e.target.closest('.pc-cal-pill');
 
-    if (pillHandle && pill) {
+    if ((pillHandle || pillLeftHandle) && pill) {
       const idx = parseInt(pill.getAttribute('data-event-index'), 10);
       if (!isNaN(idx)) {
-        dnd.mode = 'resize-event-right';
+        // D91: 左ハンドル → resize-event-left, 右ハンドル → resize-event-right
+        dnd.mode = pillLeftHandle ? 'resize-event-left' : 'resize-event-right';
         dnd.eventIndex = idx;
         dnd.startX = e.clientX; dnd.startY = e.clientY;
         document.body.style.cursor = 'ew-resize';
@@ -7046,20 +7089,29 @@ function show(id) {
     });
     if (dnd.mode === 'move-band' || dnd.mode === 'move-pill') {
       cell.classList.add('drag-over');
-    } else if (dnd.mode === 'resize-event-right') {
-      // D54: イベントピル右端ドラッグで endDate 更新（リアルタイム）
+    } else if (dnd.mode === 'resize-event-right' || dnd.mode === 'resize-event-left') {
+      // D54+D91: イベントピル左右端ドラッグで date / endDate を更新（リアルタイム）
       const allEvs = window.__calApi.listAllEvents();
       const ev = allEvs && allEvs[dnd.eventIndex];
       if (ev) {
         const start = ev.date;
-        const newEnd = (dk > start) ? dk : start;
-        const oldEnd = ev.endDate || ev.date;
-        if (newEnd !== oldEnd) {
-          const newEv = Object.assign({}, ev, { endDate: newEnd });
-          if (newEnd === ev.date) delete newEv.endDate;
+        const end = ev.endDate || ev.date;
+        let newStart = start;
+        let newEnd = end;
+        if (dnd.mode === 'resize-event-right') {
+          newEnd = (dk > start) ? dk : start;
+        } else {
+          // D91: 左ハンドルは date（開始日）を更新
+          newStart = (dk < end) ? dk : end;
+        }
+        if (newStart !== ev.date || newEnd !== end) {
+          const newEv = Object.assign({}, ev, { date: newStart, endDate: newEnd });
+          if (newEnd === newStart) delete newEv.endDate;
           window.__calApi.updateEvent(ev, newEv);
         }
         // ハイライト
+        const rangeStart = newStart;
+        const rangeEnd = newEnd;
         requestAnimationFrame(function(){
           document.querySelectorAll('.pc-cal-cell.drag-over, .pc-cal-cell.resize-target, .pc-cal-cell.resize-preview').forEach(function(el){
             el.classList.remove('drag-over');
@@ -7070,7 +7122,7 @@ function show(id) {
           if (t) t.classList.add('resize-target');
           document.querySelectorAll('.pc-cal-cell').forEach(function(c){
             const cdk = c.getAttribute('data-date');
-            if (cdk && !c.classList.contains('outside') && cdk >= start && cdk <= newEnd) {
+            if (cdk && !c.classList.contains('outside') && cdk >= rangeStart && cdk <= rangeEnd) {
               c.classList.add('resize-preview');
             }
           });
