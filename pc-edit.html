@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260508.093000">
+<meta name="build-version" content="20260508.094500">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -5851,6 +5851,9 @@ function show(id) {
     }
   }
 
+  // D120d: bootstrapConcerts から呼べるように window expose
+  window.__renderMonth = renderMonth;
+
   // R53: カレンダー右パネルの描画（常に編集UI、保存ボタン付き）
   function renderDetail(){
     const detailEl = document.getElementById('pc-cal-detail');
@@ -8104,6 +8107,13 @@ function show(id) {
       const titleEl = document.querySelector('.master-concert-title');
       if (titleEl) titleEl.textContent = c.title;
       pcEl.classList.add('active');
+      // D120d: screen-pc 表示後に renderMonth を再実行 → TODAY スクロールを正しく効かせる
+      // (IIFE 末尾で renderMonth 走った時 screen-pc は hidden だったため offsetTop=0 になっていた)
+      setTimeout(function(){
+        const monthEl = document.getElementById('pc-cal-month');
+        if (monthEl) monthEl._d71Initialized = false;
+        if (typeof window.__renderMonth === 'function') window.__renderMonth();
+      }, 0);
       return; // 認証済み → ロック画面表示せずに編集画面へ
     }
   }
