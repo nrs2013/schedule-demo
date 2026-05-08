@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260508.160000">
+<meta name="build-version" content="20260508.170000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -2485,17 +2485,19 @@
   }
   .cal-event-venue .venue-del:hover { color: #d08888; }
   .cal-event-block-add:hover { background: rgba(216,184,120,0.08); border-color: rgba(216,184,120,0.7); }
-  /* D34: ドロップ可能セル の hover 効果 */
+  /* D129: ドラッグ・範囲選択プレビューを Apple Calendar 流に
+     - 太い点線 outline と濃い茶塗りを撤去
+     - 薄ゴールドの一面塗りだけ。複数セルが連なって見えるが「ガビガビ点線」じゃない
+     - transition でじわっと表示 */
   .pc-cal-cell.drag-over {
-    outline: 2px dashed rgba(216,184,120,0.7);
-    outline-offset: -3px;
-    background: #221d18 !important;
+    outline: none;
+    background: rgba(232,154,74,0.08) !important;
+    transition: background 0.12s ease-out;
   }
-  /* D39: ドラッグ範囲選択中のハイライト */
   .pc-cal-cell.range-selecting {
-    outline: 2px dashed rgba(216,184,120,0.85);
-    outline-offset: -3px;
-    background: #221d18 !important;
+    outline: none;
+    background: rgba(232,154,74,0.10) !important;
+    transition: background 0.12s ease-out;
   }
   /* D39/D46: 会場帯（venue band）— セル上部に貫通バーで表示
      D46: セル padding(6px) + grid gap(1px) を打ち消し、隣セルまで連結 */
@@ -2752,21 +2754,19 @@
     border-left: 1px solid rgba(216,184,120,0.45) !important;
     border-right: 1px solid rgba(216,184,120,0.45) !important;
   }
-  .pc-cal-cell.resize-target {
-    outline: 2px dashed rgba(216,184,120,0.85);
-    outline-offset: -3px;
-    background: #221d18 !important;
-  }
-  /* D50: resize 中の preview range（伸びてる感のアニメ） */
-  /* D108c: ドラッグ中 preview を強化（縮める方向もハッキリ見える） */
+  /* D129: リサイズ中も同じ作法 — 点線 outline 完全撤去、薄ゴールドの一面塗りのみ
+     - resize-preview = 中間セル（淡い）
+     - resize-target  = 最終端セル（少し濃い、つまみのサイン）
+     - 隣り合うと自然に「一塊の塗り」に見える */
   .pc-cal-cell.resize-preview {
-    background: rgba(216,184,120,0.18) !important;
-    outline: 1px dashed rgba(216,184,120,0.85);
-    outline-offset: -3px;
+    background: rgba(232,154,74,0.08) !important;
+    outline: none;
     transition: background 0.10s ease-out;
   }
   .pc-cal-cell.resize-target {
-    background: rgba(232,154,74,0.22) !important;
+    background: rgba(232,154,74,0.16) !important;
+    outline: none;
+    transition: background 0.10s ease-out;
   }
   .pc-cal-cell.resize-preview .pc-cal-venue-band {
     transition: width 0.15s ease-out;
