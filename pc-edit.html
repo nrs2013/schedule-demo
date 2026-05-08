@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260508.020000">
+<meta name="build-version" content="20260508.020530">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -5232,13 +5232,21 @@ function show(id) {
 
     // スクロール位置
     if (wasInitialRender) {
-      // D98: scrollIntoView だと「動く」感が見えるので scrollTop 直設定で instant 位置決め
+      // D99: CSS の scroll-behavior: smooth が原因で scrollTop = X でも smooth スクロールしてしまう。
+      // 初回だけ auto に上書き + visibility:hidden で「動く瞬間」を完全に隠す。
+      monthEl.style.visibility = 'hidden';
+      monthEl.style.scrollBehavior = 'auto';
       const currentKey = TODAY.getFullYear() + '-' + String(TODAY.getMonth()+1).padStart(2,'0');
       const target = monthEl.querySelector('[data-month-key="' + currentKey + '"]');
       if (target) {
         monthEl.scrollTop = target.offsetTop;
       }
       monthEl._d71Initialized = true;
+      // 次フレームで両方戻す（既に TODAY が見えてる位置で表示）
+      requestAnimationFrame(function(){
+        monthEl.style.scrollBehavior = '';
+        monthEl.style.visibility = '';
+      });
     } else {
       monthEl.scrollTop = prevScroll;
     }
