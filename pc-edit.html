@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260508.044500">
+<meta name="build-version" content="20260508.050000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -1949,6 +1949,12 @@
   }
   /* D105: hover も Navy Slate 系で統一 */
   .cal-event-venue:hover { background: rgba(72,84,100,0.70); border-color: rgba(128,148,170,0.85); color: #e0eef8; }
+  /* D111: 選択中（Delete で削除可能の合図） */
+  .cal-event-venue.selected {
+    outline: 2px solid #d8b878;
+    outline-offset: -1px;
+    box-shadow: 0 0 0 1px rgba(216,184,120,0.6);
+  }
   .cal-event-venue:active { cursor: grabbing; transform: scale(0.98); }
   .cal-event-venue.dragging { opacity: 0.4; }
   .cal-event-venue .venue-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -4614,9 +4620,10 @@ function show(id) {
 <script>
 (function(){
   window.__iife2Started = true; // D101 debug
-  // D102: 選択削除 state を window で共有（IIFE #2/#3 越え）
+  // D102+D111: 選択削除 state を window で共有（IIFE #2/#3 越え）
   if (typeof window.__selectedEventIdx === 'undefined') window.__selectedEventIdx = null;
   if (typeof window.__selectedBandId === 'undefined') window.__selectedBandId = null;
+  if (typeof window.__selectedVenueDefId === 'undefined') window.__selectedVenueDefId = null;
   const TODAY      = new Date(2026, 4, 1);
   // D69: TOUR_START/END は撤去。ツアー期間の概念は廃止し、カレンダー D&D が真の入力源。
 
@@ -5304,7 +5311,7 @@ function show(id) {
         if (e.target.closest('.pc-cal-pill') || e.target.closest('.pc-cal-venue-band:not(.is-empty)')) return;
         window.__selectedEventIdx = null;
         window.__selectedBandId = null;
-        document.querySelectorAll('.pc-cal-pill.selected, .pc-cal-venue-band.selected').forEach(function(s){ s.classList.remove('selected'); });
+        document.querySelectorAll('.pc-cal-pill.selected, .pc-cal-venue-band.selected, .cal-event-venue.selected').forEach(function(s){ s.classList.remove('selected'); });
         const dk = el.getAttribute('data-date');
         if (!dk) return;
         const parts = dk.split('-').map(Number);
@@ -5321,7 +5328,7 @@ function show(id) {
         if (e.target.closest('.pc-cal-pill-resize-handle') || e.target.closest('.pc-cal-pill-resize-handle-left')) return;
         const idx = parseInt(pillEl.getAttribute('data-event-index'), 10);
         if (isNaN(idx)) return;
-        document.querySelectorAll('.pc-cal-pill.selected, .pc-cal-venue-band.selected').forEach(function(s){ s.classList.remove('selected'); });
+        document.querySelectorAll('.pc-cal-pill.selected, .pc-cal-venue-band.selected, .cal-event-venue.selected').forEach(function(s){ s.classList.remove('selected'); });
         document.querySelectorAll('.pc-cal-pill[data-event-index="' + idx + '"]').forEach(function(s){ s.classList.add('selected'); });
         window.__selectedEventIdx = idx;
         window.__selectedBandId = null;
@@ -5343,7 +5350,7 @@ function show(id) {
         if (e.target.closest('.pc-cal-venue-band-resize-handle') || e.target.closest('.pc-cal-venue-band-resize-handle-left')) return;
         const id = bandEl.getAttribute('data-venue-group-id');
         if (!id) return;
-        document.querySelectorAll('.pc-cal-pill.selected, .pc-cal-venue-band.selected').forEach(function(s){ s.classList.remove('selected'); });
+        document.querySelectorAll('.pc-cal-pill.selected, .pc-cal-venue-band.selected, .cal-event-venue.selected').forEach(function(s){ s.classList.remove('selected'); });
         document.querySelectorAll('.pc-cal-venue-band[data-venue-group-id="' + id + '"]').forEach(function(s){ s.classList.add('selected'); });
         window.__selectedBandId = id;
         window.__selectedEventIdx = null;
@@ -7112,16 +7119,34 @@ function show(id) {
         b.classList.remove('dragging');
         document.querySelectorAll('.pc-cal-cell.drag-over').forEach(function(c){ c.classList.remove('drag-over'); });
       });
+      // D111: クリックで selected 化（× ボタンクリックは除く）→ Delete キーで削除
+      b.addEventListener('click', function(e){
+        if (e.target.closest('[data-venue-del-id]')) return;
+        document.querySelectorAll('.pc-cal-pill.selected, .pc-cal-venue-band.selected, .cal-event-venue.selected').forEach(function(s){ s.classList.remove('selected'); });
+        b.classList.add('selected');
+        window.__selectedVenueDefId = b.getAttribute('data-venue-id');
+        window.__selectedEventIdx = null;
+        window.__selectedBandId = null;
+        e.stopPropagation();
+      });
     });
     list.querySelectorAll('[data-venue-del-id]').forEach(function(b){
       b.addEventListener('click', function(e){
         e.stopPropagation();
         const id = b.getAttribute('data-venue-del-id');
         if (window.__calApi) window.__calApi.deleteVenueDefinition(id);
+        if (window.__selectedVenueDefId === id) window.__selectedVenueDefId = null;
         renderVenueDefList();
       });
     });
+    // D111: 再描画後に selected を復元
+    if (window.__selectedVenueDefId !== null) {
+      const sel = list.querySelector('.cal-event-venue[data-venue-id="' + window.__selectedVenueDefId + '"]');
+      if (sel) sel.classList.add('selected');
+    }
   }
+  // D111: IIFE #3 (keydown handler) から呼べるよう expose
+  window.__renderVenueDefList = renderVenueDefList;
 
   // 公演名 入力 → 追加ボタン
   const venueInput = document.getElementById('venue-name-input');
@@ -7232,7 +7257,7 @@ function show(id) {
     } else if (band && !band.classList.contains('is-empty')) {
       // D96: mousedown 時点で selected 化（preventDefault が click を抑止する対策）
       const bandId = band.getAttribute('data-venue-group-id');
-      document.querySelectorAll('.pc-cal-pill.selected, .pc-cal-venue-band.selected').forEach(function(s){ s.classList.remove('selected'); });
+      document.querySelectorAll('.pc-cal-pill.selected, .pc-cal-venue-band.selected, .cal-event-venue.selected').forEach(function(s){ s.classList.remove('selected'); });
       document.querySelectorAll('.pc-cal-venue-band[data-venue-group-id="' + bandId + '"]').forEach(function(s){ s.classList.add('selected'); });
       window.__selectedBandId = bandId;
       window.__selectedEventIdx = null;
@@ -7246,7 +7271,7 @@ function show(id) {
       const idx = parseInt(pill.getAttribute('data-event-index'), 10);
       if (isNaN(idx)) return;
       // D96: mousedown 時点で selected 化（preventDefault が click を抑止する対策）
-      document.querySelectorAll('.pc-cal-pill.selected, .pc-cal-venue-band.selected').forEach(function(s){ s.classList.remove('selected'); });
+      document.querySelectorAll('.pc-cal-pill.selected, .pc-cal-venue-band.selected, .cal-event-venue.selected').forEach(function(s){ s.classList.remove('selected'); });
       document.querySelectorAll('.pc-cal-pill[data-event-index="' + idx + '"]').forEach(function(s){ s.classList.add('selected'); });
       window.__selectedEventIdx = idx;
       window.__selectedBandId = null;
@@ -7502,6 +7527,14 @@ function show(id) {
         if (confirm('選択中の会場帯を削除しますか？')) {
           window.__calApi.deleteVenueGroup(window.__selectedBandId);
           window.__selectedBandId = null;
+        }
+        e.preventDefault();
+      } else if (window.__selectedVenueDefId !== null && window.__calApi) {
+        // D111: VENUES パレットの会場ブロック削除
+        if (confirm('選択中の VENUE（会場）を VENUES パレットから削除しますか？')) {
+          window.__calApi.deleteVenueDefinition(window.__selectedVenueDefId);
+          window.__selectedVenueDefId = null;
+          if (typeof window.__renderVenueDefList === 'function') window.__renderVenueDefList();
         }
         e.preventDefault();
       }
