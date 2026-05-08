@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260508.050000">
+<meta name="build-version" content="20260508.051500">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -3575,6 +3575,8 @@
           <!-- D94: 順序入れ替え（場所=左、DAY=右） — 日程情報を右端に -->
           <span class="master-chip master-chip-venue" id="master-date-venue">横浜アリーナ</span>
           <span class="master-chip master-chip-day" id="master-date-day">DAY 1</span>
+          <!-- D112: Undo ボタン（Cmd+Z のバックアップ） -->
+          <button class="master-undo-btn" title="元に戻す (Cmd+Z)" onclick="if(window.__undo)window.__undo()">↶</button>
         </div>
       </div>
     </div>
@@ -7500,15 +7502,15 @@ function show(id) {
 
   document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape' && dnd.mode) { clearDnd(); }
-    // D107: Cmd+Z (Mac) / Ctrl+Z (Win) で undo
-    if ((e.metaKey || e.ctrlKey) && e.key === 'z' && !e.shiftKey) {
+    // D107+D112: Cmd+Z (Mac) / Ctrl+Z (Win) で undo（e.code でも検出して確実に）
+    if ((e.metaKey || e.ctrlKey) && !e.shiftKey && (e.key === 'z' || e.key === 'Z' || e.code === 'KeyZ')) {
       const tag = (e.target && e.target.tagName) || '';
       // 入力中はブラウザ標準の undo に任せる
       if (tag === 'INPUT' || tag === 'TEXTAREA') return;
       if (e.target && e.target.isContentEditable) return;
-      if (window.__undo && window.__undo()) {
-        e.preventDefault();
-      }
+      e.preventDefault();
+      e.stopPropagation();
+      if (window.__undo) window.__undo();
     }
     // D95: Delete / Backspace で選択中の pill / venue band を削除
     if (e.key === 'Delete' || e.key === 'Backspace') {
