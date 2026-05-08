@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260508.073000">
+<meta name="build-version" content="20260508.074500">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -7919,7 +7919,7 @@ function show(id) {
 
   const initForm = document.getElementById('lock-init-form');
   const loginForm = document.getElementById('lock-login-form');
-  const modeLabel = document.getElementById('lock-mode-label');
+  // D118d: D118c で HTML から id="lock-mode-label" を撤去。textContent 動的変更は不要（HTML に静的記述）
 
   let passwords = null;
   try {
@@ -7947,7 +7947,6 @@ function show(id) {
   if (!passwords) {
     // 初回設定モード
     initForm.classList.add('active');
-    modeLabel.textContent = '初回設定';
     const initBtn = document.getElementById('lock-init-btn');
     function tryInit(){
       const title = (document.getElementById('lock-init-title').value || '').trim();
@@ -7970,7 +7969,6 @@ function show(id) {
   } else {
     // ログインモード
     loginForm.classList.add('active');
-    modeLabel.textContent = 'PC 編集版 ログイン';
     const title = localStorage.getItem(LS_TOUR_TITLE) || '（ツアー名未設定）';
     document.getElementById('lock-login-tour-title').textContent = title;
     const passInput = document.getElementById('lock-login-concert');
