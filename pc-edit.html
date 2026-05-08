@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260508.021000">
+<meta name="build-version" content="20260508.022500">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -3636,16 +3636,18 @@
       <!-- 子: HOTEL -->
       <div class="sub-content" id="sub-hotel">
         <div class="hotel-toolbar">
-          <!-- D100: 確実動作のため inline onclick + debug 表示 -->
+          <!-- D101: 詳細 debug（IIFE 進行フラグも表示） -->
           <button class="toolbar-btn primary" data-action="add-hotel" onclick="
             var dbg = document.getElementById('hotel-debug');
+            var s = (window.__iife2Started?'S':'-') + (window.__iife2BeforeHotel?'H':'-') + (window.__iife2AfterHotelDef?'A':'-') + (window.__iife2BeforeSync?'B':'-') + (window.__iife2SyncOk?'Y':'-') + (window.__iife2Completed?'C':'-');
+            var err = window.__iife2SyncError ? ' / SYNC_ERR=' + window.__iife2SyncError : '';
             var fnType = typeof window.__addHotelManually;
-            var hLen0 = (window.hotels && window.hotels.length) || 'N/A';
-            if (window.__addHotelManually) { try { window.__addHotelManually(); } catch(err) { if (dbg) dbg.textContent = 'ERROR: ' + err.message; return; } }
-            var hLen1 = (window.hotels && window.hotels.length) || 'N/A';
+            var hLen0 = (window.hotels && window.hotels.length !== undefined) ? window.hotels.length : 'N/A';
+            if (window.__addHotelManually) { try { window.__addHotelManually(); } catch(err2) { if (dbg) dbg.textContent = 'ERROR: ' + err2.message + ' / iife=' + s + err; return; } }
+            var hLen1 = (window.hotels && window.hotels.length !== undefined) ? window.hotels.length : 'N/A';
             var w = document.getElementById('hotel-list-wrap');
             var ch = w ? w.children.length : 'no wrap';
-            if (dbg) dbg.textContent = '✓ click @ ' + new Date().toLocaleTimeString() + ' / fn=' + fnType + ' / hotels: ' + hLen0 + '→' + hLen1 + ' / DOM cards=' + ch;
+            if (dbg) dbg.textContent = '✓ ' + new Date().toLocaleTimeString() + ' / iife=' + s + err + ' / fn=' + fnType + ' / hotels: ' + hLen0 + '→' + hLen1 + ' / DOM=' + ch;
           ">＋ HOTEL を手入力で追加</button>
           <button class="toolbar-btn" data-action="import-excel">📊 Excel から取込</button>
           <button class="toolbar-btn" data-action="download-template">📥 テンプレートDL</button>
@@ -4590,6 +4592,7 @@ function show(id) {
 <!-- ════ CALENDAR + mode-tabs 切替 ════ -->
 <script>
 (function(){
+  window.__iife2Started = true; // D101 debug
   const TODAY      = new Date(2026, 4, 1);
   // D69: TOUR_START/END は撤去。ツアー期間の概念は廃止し、カレンダー D&D が真の入力源。
 
@@ -6199,6 +6202,7 @@ function show(id) {
     XLSX.writeFile(wb, 'schedule-studio-arrival-template.xlsx');
   }
   // R62 M4: hotels を localStorage に永続化（phone.html と共有）
+  window.__iife2BeforeHotel = true; // D101 debug
   const LS_KEY_HOTELS = 'schedule-studio:hotels:v1';
   const DEFAULT_HOTELS = [
     {
@@ -6357,6 +6361,7 @@ function show(id) {
 
   function findHotel(id){ return hotels.find(function(h){ return h.id === +id; }); }
 
+  window.__iife2AfterHotelDef = true; // D101 debug — hotels / saveHotels / renderHotels まで定義完了した
   // D98: window から直接呼べる「ホテル追加」関数を公開（inline onclick バックアップ用）
   window.__addHotelManually = function() {
     hotels.push({
@@ -6773,8 +6778,16 @@ function show(id) {
     }
   };
 
+  window.__iife2BeforeSync = true; // D101 debug
   // R49: 初期同期（IIFE 末尾で呼ぶことで、上の const/let 宣言がすべて済んだ後に実行される）
-  syncAllDateDisplays();
+  try {
+    syncAllDateDisplays();
+    window.__iife2SyncOk = true; // D101 debug
+  } catch (e) {
+    window.__iife2SyncError = (e && e.message) || String(e); // D101 debug
+    console.error('[D101] syncAllDateDisplays error:', e);
+  }
+  window.__iife2Completed = true; // D101 debug
 })();
 </script>
 
