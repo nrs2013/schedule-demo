@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260508.060000">
+<meta name="build-version" content="20260508.061500">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -33,6 +33,30 @@
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   * { box-sizing: border-box; }
+  /* D116: Excel ファイル drop 中の視覚フィードバック（金色破線で「ここにドロップ」感を出す） */
+  body.excel-drop-hint {
+    outline: 4px dashed rgba(232,154,74,0.85);
+    outline-offset: -8px;
+    background-color: rgba(232,154,74,0.06) !important;
+  }
+  body.excel-drop-hint::before {
+    content: '📊  Excel をドロップして取込';
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 24px;
+    color: #f0a85a;
+    background: rgba(20,18,15,0.92);
+    border: 2px solid rgba(232,154,74,0.6);
+    border-radius: 12px;
+    padding: 18px 32px;
+    pointer-events: none;
+    z-index: 99999;
+    letter-spacing: 0.06em;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+    font-weight: 500;
+  }
   body {
     margin: 0;
     background: #1a1918;
@@ -4664,55 +4688,60 @@ function show(id) {
       XLSX.writeFile(wb, 'rehearsal-songs.xlsx');
     });
   }
+  // D116: 取込ロジックを関数化（drop でも呼べるように）
+  function handleRhExcelFile(file) {
+    if (!file) return;
+    if (typeof XLSX === 'undefined') { alert('Excel ライブラリが読み込まれていません'); return; }
+    const reader = new FileReader();
+    reader.onload = function(ev){
+      try {
+        const arr = new Uint8Array(ev.target.result);
+        const wb = XLSX.read(arr, {type: 'array'});
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(ws, {header: 1});
+        if (!rows || rows.length < 2) { alert('Excel にデータがありません（1 行目はヘッダー、2 行目以降にデータが必要）'); return; }
+        if (!confirm('現在の曲リストを Excel の内容で置き換えます。よろしいですか？')) return;
+        const newSongs = [];
+        let order = 1;
+        for (let i = 1; i < rows.length; i++) {
+          const row = rows[i];
+          if (!row || (!row[0] && !row[1])) continue;
+          const mStr = String(row[0] || '').trim();
+          const title = String(row[1] || '').trim();
+          const dur = rhParseTime(row[2]);
+          const u = mStr.toUpperCase().replace(/\s/g, '');
+          const isMC = /^MC\d*$/.test(u);
+          const isEncore = !isMC && /^EN\d*$/.test(u);
+          const isEvent = /^VCR/.test(u);
+          const isEnd = u === 'END';
+          newSongs.push({
+            id: Date.now() + i,
+            orderIndex: order++,
+            title: title || '（タイトル未定）',
+            durationSeconds: dur,
+            isEvent: isEvent,
+            isMC: isMC,
+            isEncore: isEncore,
+            isEnd: isEnd
+          });
+        }
+        songs.length = 0;
+        Array.prototype.push.apply(songs, newSongs);
+        render();
+        alert('Excel から ' + newSongs.length + ' 件の曲を取り込みました。');
+      } catch (err) {
+        alert('Excel 取込エラー: ' + err.message);
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+  window.__handleRhExcelFile = handleRhExcelFile;
   if (btnRhExcel && rhFileInput) {
     btnRhExcel.addEventListener('click', function(){ rhFileInput.click(); });
     rhFileInput.addEventListener('change', function(e){
       const file = e.target.files[0];
-      if (!file) return;
-      if (typeof XLSX === 'undefined') { alert('Excel ライブラリが読み込まれていません'); rhFileInput.value=''; return; }
-      const reader = new FileReader();
-      reader.onload = function(ev){
-        try {
-          const arr = new Uint8Array(ev.target.result);
-          const wb = XLSX.read(arr, {type: 'array'});
-          const ws = wb.Sheets[wb.SheetNames[0]];
-          const rows = XLSX.utils.sheet_to_json(ws, {header: 1});
-          if (!rows || rows.length < 2) { alert('Excel にデータがありません（1 行目はヘッダー、2 行目以降にデータが必要）'); return; }
-          if (!confirm('現在の曲リストを Excel の内容で置き換えます。よろしいですか？')) return;
-          const newSongs = [];
-          let order = 1;
-          for (let i = 1; i < rows.length; i++) {
-            const row = rows[i];
-            if (!row || (!row[0] && !row[1])) continue;
-            const mStr = String(row[0] || '').trim();
-            const title = String(row[1] || '').trim();
-            const dur = rhParseTime(row[2]);
-            const u = mStr.toUpperCase().replace(/\s/g, '');
-            const isMC = /^MC\d*$/.test(u);
-            const isEncore = !isMC && /^EN\d*$/.test(u);
-            const isEvent = /^VCR/.test(u);
-            const isEnd = u === 'END';
-            newSongs.push({
-              id: Date.now() + i,
-              orderIndex: order++,
-              title: title || '（タイトル未定）',
-              durationSeconds: dur,
-              isEvent: isEvent,
-              isMC: isMC,
-              isEncore: isEncore,
-              isEnd: isEnd
-            });
-          }
-          songs.length = 0;
-          Array.prototype.push.apply(songs, newSongs);
-          render();
-          alert('Excel から ' + newSongs.length + ' 件の曲を取り込みました。');
-        } catch (err) {
-          alert('Excel 取込エラー: ' + err.message);
-        }
-        rhFileInput.value = '';
-      };
-      reader.readAsArrayBuffer(file);
+      if (file) handleRhExcelFile(file);
+      rhFileInput.value = '';
     });
   }
 
@@ -6690,56 +6719,64 @@ function show(id) {
     }
   });
 
-  // 入り時間 Excel 取込
+  // 入り時間 Excel 取込（D116: 関数化 + drop 対応）
+  function handleArrivalExcelFile(file) {
+    if (!file) return;
+    if (typeof XLSX === 'undefined') {
+      alert('Excel取込ライブラリ(SheetJS)がまだ読込まれていません。');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = function(ev){
+      try {
+        const data = new Uint8Array(ev.target.result);
+        const wb = XLSX.read(data, { type: 'array', cellDates: false });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true });
+        importArrivalsFromRows(rows);
+      } catch (err) {
+        alert('Excel の読み込みに失敗しました：' + err.message);
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+  window.__handleArrivalExcelFile = handleArrivalExcelFile;
   const arrivalFileInput = document.getElementById('arrival-file-input');
   if (arrivalFileInput) {
     arrivalFileInput.addEventListener('change', function(e){
       const file = e.target.files[0];
-      if (!file) return;
-      if (typeof XLSX === 'undefined') {
-        alert('Excel取込ライブラリ(SheetJS)がまだ読込まれていません。');
-        return;
-      }
-      const reader = new FileReader();
-      reader.onload = function(ev){
-        try {
-          const data = new Uint8Array(ev.target.result);
-          const wb = XLSX.read(data, { type: 'array', cellDates: false });
-          const ws = wb.Sheets[wb.SheetNames[0]];
-          const rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true });
-          importArrivalsFromRows(rows);
-        } catch (err) {
-          alert('Excel の読み込みに失敗しました：' + err.message);
-        }
-      };
-      reader.readAsArrayBuffer(file);
+      if (file) handleArrivalExcelFile(file);
       e.target.value = '';
     });
   }
 
-  // ── Excel取込：ファイル選択 → 解析 → ホテル一覧を置換 ──
+  // ── Excel取込：D116 関数化 + drop 対応 ──
+  function handleHotelExcelFile(file) {
+    if (!file) return;
+    if (typeof XLSX === 'undefined') {
+      alert('Excel取込ライブラリ(SheetJS)がまだ読込まれていません。少し待ってから再度お試しください。');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = function(ev){
+      try {
+        const data = new Uint8Array(ev.target.result);
+        const wb = XLSX.read(data, { type: 'array' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
+        importHotelsFromRows(rows);
+      } catch (err) {
+        alert('Excel の読み込みに失敗しました：' + err.message);
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+  window.__handleHotelExcelFile = handleHotelExcelFile;
   const hotelFileInput = document.getElementById('hotel-file-input');
   if (hotelFileInput) {
     hotelFileInput.addEventListener('change', function(e){
       const file = e.target.files[0];
-      if (!file) return;
-      if (typeof XLSX === 'undefined') {
-        alert('Excel取込ライブラリ(SheetJS)がまだ読込まれていません。少し待ってから再度お試しください。');
-        return;
-      }
-      const reader = new FileReader();
-      reader.onload = function(ev){
-        try {
-          const data = new Uint8Array(ev.target.result);
-          const wb = XLSX.read(data, { type: 'array' });
-          const ws = wb.Sheets[wb.SheetNames[0]];
-          const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
-          importHotelsFromRows(rows);
-        } catch (err) {
-          alert('Excel の読み込みに失敗しました：' + err.message);
-        }
-      };
-      reader.readAsArrayBuffer(file);
+      if (file) handleHotelExcelFile(file);
       e.target.value = '';
     });
   }
@@ -7678,6 +7715,40 @@ function show(id) {
     document.querySelectorAll('.pc-cal-cell.drag-over').forEach(function(c){ c.classList.remove('drag-over'); });
   });
 
+  // D116: ページ全体で Excel ファイルを drop 受け付け → 現在のタブに応じて取込
+  (function setupExcelDropHandler(){
+    document.body.addEventListener('dragover', function(e){
+      if (e.dataTransfer && Array.from(e.dataTransfer.types || []).indexOf('Files') >= 0) {
+        e.preventDefault();
+        document.body.classList.add('excel-drop-hint');
+      }
+    });
+    document.body.addEventListener('dragleave', function(e){
+      // ページ外に出た時のみ hint を消す（子要素間の dragleave は無視）
+      if (!e.relatedTarget) {
+        document.body.classList.remove('excel-drop-hint');
+      }
+    });
+    document.body.addEventListener('drop', function(e){
+      document.body.classList.remove('excel-drop-hint');
+      if (!e.dataTransfer || !e.dataTransfer.files || !e.dataTransfer.files.length) return;
+      const file = e.dataTransfer.files[0];
+      if (!/\.(xlsx|xls)$/i.test(file.name)) return;
+      e.preventDefault();
+      const modeRh = document.getElementById('mode-rehearsal');
+      const subHotel = document.getElementById('sub-hotel');
+      const subArrival = document.getElementById('sub-arrival');
+      if (modeRh && modeRh.classList.contains('active') && typeof window.__handleRhExcelFile === 'function') {
+        window.__handleRhExcelFile(file);
+      } else if (subHotel && subHotel.classList.contains('active') && typeof window.__handleHotelExcelFile === 'function') {
+        window.__handleHotelExcelFile(file);
+      } else if (subArrival && subArrival.classList.contains('active') && typeof window.__handleArrivalExcelFile === 'function') {
+        window.__handleArrivalExcelFile(file);
+      } else {
+        alert('Excel をドロップする場所が分かりません。\nREHEARSAL / HOTEL / 入り時間 タブを開いてからドロップしてください。');
+      }
+    });
+  })();
   console.log('[D34/D51] CALENDAR D&D + モーダル + 会場帯ドラッグ + 選択削除 init OK');
 })();
 </script>
