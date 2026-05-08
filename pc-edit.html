@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260508.074500">
+<meta name="build-version" content="20260508.080000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -138,6 +138,19 @@
     min-height: 14px;
     letter-spacing: 0.04em;
   }
+  /* D118e: リセットリンク（パスワード忘れた時） */
+  .lock-reset-link {
+    background: transparent;
+    border: none;
+    color: #76766f;
+    font-size: 11px;
+    text-decoration: underline;
+    margin-top: 12px;
+    cursor: pointer;
+    font-family: inherit;
+    padding: 4px;
+  }
+  .lock-reset-link:hover { color: #d8b89c; }
   /* D118: ログアウトボタン（マスター日付バー） */
   .master-logout-btn {
     background: transparent;
@@ -3757,6 +3770,8 @@
       <input type="password" class="lock-input" placeholder="••••" id="lock-login-concert" autocomplete="current-password">
       <button class="lock-btn" id="lock-login-btn">認証する</button>
       <div class="lock-error" id="lock-login-error"></div>
+      <!-- D118e: パスワード忘れた → リセット（Console 不要） -->
+      <button class="lock-reset-link" id="lock-reset-link" type="button">パスワードを忘れた／設定し直す</button>
     </div>
   </div>
 </div>
@@ -7986,6 +8001,17 @@ function show(id) {
     document.getElementById('lock-login-btn').addEventListener('click', tryLogin);
     passInput.addEventListener('keydown', function(e){ if (e.key === 'Enter') tryLogin(); });
     setTimeout(function(){ passInput.focus(); }, 100);
+    // D118e: 「パスワードを忘れた」→ パスワードのみリセットして初期設定モードへ（Console 不要）
+    const resetBtn = document.getElementById('lock-reset-link');
+    if (resetBtn) {
+      resetBtn.addEventListener('click', function(){
+        if (confirm('パスワードを設定し直します。\n\n※ パスワードのみリセットされます。\n※ カレンダー・ホテル等のデータはそのまま残ります。\n\n続けますか？')) {
+          localStorage.removeItem(LS_PWS);
+          // ツアー名は残す（ユーザーが入れ直すか、自動的にプリフィル可能だがシンプルに残置）
+          location.reload();
+        }
+      });
+    }
   }
 
   // master-concert-title が編集されたら localStorage に保存（永続化）
