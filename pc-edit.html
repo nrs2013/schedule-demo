@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260508.103000">
+<meta name="build-version" content="20260508.104500">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -1801,9 +1801,9 @@
     line-height: 1.5;
   }
 
-  /* 認証されていない時：フォームを薄く */
+  /* 認証されていない時：フォームを薄く（D122: 0.5 → 0.85 で文字を見やすく） */
   .info-form.disabled {
-    opacity: 0.5;
+    opacity: 0.85;
     pointer-events: none;
   }
   .info-form.disabled .info-push-btn { cursor: not-allowed; }
