@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260508.130000">
+<meta name="build-version" content="20260508.140000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -3042,7 +3042,8 @@
   .pc-cal-cell:hover { background: #221f1c; }
   .pc-cal-cell.outside { background: #141312; }
   /* D69: ツアー期間ハイライト撤去 — フラット化（カレンダー D&D を真の入力源にしたため） */
-  .pc-cal-cell.today   { background: rgba(232,154,74,0.08); }
+  /* D127: today の薄ベージュ背景を撤去（数字はもともと太字で強調されているので二重マークだった） */
+  .pc-cal-cell.today   { background: transparent; }
   .pc-cal-cell.selected { box-shadow: inset 0 0 0 2px #e89a4a; }
   .pc-cal-day-num {
     font-size: 13px;
@@ -3061,9 +3062,13 @@
   .pc-cal-cell.outside .pc-cal-day-num { color: #3a3a37; }
   .pc-cal-cell.outside .pc-cal-day-num.sat { color: #3a4854; }
   .pc-cal-cell.outside .pc-cal-day-num.sun { color: #543a3a; }
+  /* D127: TODAY の数字を「塗りつぶしチップ」→「色文字＋小さい点」に変更
+     これがオレンジ塗りつぶしで非常に目立っていて、隣の selected セルと並ぶと
+     「ここからここまで範囲選択中」っぽい錯覚を生んでいた */
   .pc-cal-cell.today .pc-cal-day-num {
-    background: rgba(232,154,74,0.85);
-    color: #1a1a16;
+    background: transparent;
+    color: #e89a4a;
+    font-weight: 700;
   }
   /* D58/D59: pill が隣セルまで食い込んで連結バー化（flex→block で負 margin 有効化）*/
   .pc-cal-events {
