@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260508.020530">
+<meta name="build-version" content="20260508.021000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -3636,13 +3636,23 @@
       <!-- 子: HOTEL -->
       <div class="sub-content" id="sub-hotel">
         <div class="hotel-toolbar">
-          <!-- D97: ラベルを「手入力で追加」に変更（Excel取込との違いを明確化）。D98: 確実動作のため inline onclick も付与 -->
-          <button class="toolbar-btn primary" data-action="add-hotel" onclick="if(window.__addHotelManually)window.__addHotelManually()">＋ HOTEL を手入力で追加</button>
+          <!-- D100: 確実動作のため inline onclick + debug 表示 -->
+          <button class="toolbar-btn primary" data-action="add-hotel" onclick="
+            var dbg = document.getElementById('hotel-debug');
+            var fnType = typeof window.__addHotelManually;
+            var hLen0 = (window.hotels && window.hotels.length) || 'N/A';
+            if (window.__addHotelManually) { try { window.__addHotelManually(); } catch(err) { if (dbg) dbg.textContent = 'ERROR: ' + err.message; return; } }
+            var hLen1 = (window.hotels && window.hotels.length) || 'N/A';
+            var w = document.getElementById('hotel-list-wrap');
+            var ch = w ? w.children.length : 'no wrap';
+            if (dbg) dbg.textContent = '✓ click @ ' + new Date().toLocaleTimeString() + ' / fn=' + fnType + ' / hotels: ' + hLen0 + '→' + hLen1 + ' / DOM cards=' + ch;
+          ">＋ HOTEL を手入力で追加</button>
           <button class="toolbar-btn" data-action="import-excel">📊 Excel から取込</button>
           <button class="toolbar-btn" data-action="download-template">📥 テンプレートDL</button>
           <input type="file" class="hotel-file-input" id="hotel-file-input" accept=".xlsx,.xls">
           <span class="toolbar-hint">PCでは横に列を増やす ／ スマホは縦スクロールで閲覧</span>
         </div>
+        <div id="hotel-debug" style="font-size:11px; color:#e89a4a; padding:4px 16px 8px; font-family:'JetBrains Mono', monospace;"></div>
         <div class="hotel-list-wrap" id="hotel-list-wrap"></div>
       </div>
 
@@ -6268,7 +6278,11 @@ function show(id) {
     }
   ];
   let hotels = loadJSON(LS_KEY_HOTELS, JSON.parse(JSON.stringify(DEFAULT_HOTELS)));
-  function saveHotels() { saveJSON(LS_KEY_HOTELS, hotels); }
+  // D100: localStorage が壊れて配列じゃないケースをフォールバック
+  if (!Array.isArray(hotels)) hotels = JSON.parse(JSON.stringify(DEFAULT_HOTELS));
+  function saveHotels() { saveJSON(LS_KEY_HOTELS, hotels); window.hotels = hotels; }
+  // D100: window から hotels を確認できるよう expose（debug用）
+  window.hotels = hotels;
 
   function escH(s){ return (s==null?'':String(s)).replace(/[&<>"']/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; }); }
 
