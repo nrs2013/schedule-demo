@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260508.090000">
+<meta name="build-version" content="20260508.091500">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -5090,26 +5090,37 @@ function show(id) {
   };
 
   // R51 B1: localStorage 読み書きヘルパー
-  // D120 Phase A2: コンサート別データ分離 — LS_KEY を active concert ID で名前空間化
-  const __activeConcertId = localStorage.getItem('schedule-studio:active-concert-id') || 'default';
-  const __LS_PREFIX = 'schedule-studio:concert-' + __activeConcertId + ':';
-  // 旧キー（単一ツアー時代）→ 新キー（concert-default 名前空間）へ 1 度だけ migration
+  // D120 Phase A2 + D120b: コンサート別データ分離 — LS_KEY を active concert ID で名前空間化
+  // 注: concert id は既に 'concert-' プレフィックス付きで保存されてるので、LS_PREFIX には付けない
+  const __activeConcertId = localStorage.getItem('schedule-studio:active-concert-id') || 'concert-default';
+  const __LS_PREFIX = 'schedule-studio:' + __activeConcertId + ':';
+  // 旧キー（単一ツアー時代）→ concert-default 名前空間へ + D120 二重 concert- prefix bug を修正
   (function migrateToConcertNamespace(){
-    const MIG_KEY = 'schedule-studio:migration:concert-namespace:v1';
+    const MIG_KEY = 'schedule-studio:migration:concert-namespace:v2';
     if (localStorage.getItem(MIG_KEY)) return;
+    // (1) 旧キー → concert-default 名前空間
     const oldNewMap = [
-      ['schedule-studio:calEvents:v1',           'schedule-studio:concert-default:calEvents:v1'],
-      ['schedule-studio:showTimes:v1',           'schedule-studio:concert-default:showTimes:v1'],
-      ['schedule-studio:calMemos:v1',            'schedule-studio:concert-default:calMemos:v1'],
-      ['schedule-studio:venueGroups:v1',         'schedule-studio:concert-default:venueGroups:v1'],
-      ['schedule-studio:venueDefinitions:v1',    'schedule-studio:concert-default:venueDefinitions:v1'],
-      ['schedule-studio:hotels:v1',              'schedule-studio:concert-default:hotels:v1'],
+      ['schedule-studio:calEvents:v1',             'schedule-studio:concert-default:calEvents:v1'],
+      ['schedule-studio:showTimes:v1',             'schedule-studio:concert-default:showTimes:v1'],
+      ['schedule-studio:calMemos:v1',              'schedule-studio:concert-default:calMemos:v1'],
+      ['schedule-studio:venueGroups:v1',           'schedule-studio:concert-default:venueGroups:v1'],
+      ['schedule-studio:venueDefinitions:v1',      'schedule-studio:concert-default:venueDefinitions:v1'],
+      ['schedule-studio:hotels:v1',                'schedule-studio:concert-default:hotels:v1'],
       ['schedule-studio:arrivalSectionsByDate:v1', 'schedule-studio:concert-default:arrivalSectionsByDate:v1'],
-      ['schedule-studio:dayEvents:v1',           'schedule-studio:concert-default:dayEvents:v1']
+      ['schedule-studio:dayEvents:v1',             'schedule-studio:concert-default:dayEvents:v1']
     ];
     oldNewMap.forEach(function(pair){
       const v = localStorage.getItem(pair[0]);
       if (v && !localStorage.getItem(pair[1])) localStorage.setItem(pair[1], v);
+    });
+    // (2) D120 v1 二重 prefix bug を修正：'schedule-studio:concert-concert-XXX:...' → 'schedule-studio:concert-XXX:...'
+    Object.keys(localStorage).forEach(function(k){
+      const m = k.match(/^schedule-studio:concert-(concert-.+?):(.+)$/);
+      if (m) {
+        const newK = 'schedule-studio:' + m[1] + ':' + m[2];
+        if (!localStorage.getItem(newK)) localStorage.setItem(newK, localStorage.getItem(k));
+        localStorage.removeItem(k);
+      }
     });
     localStorage.setItem(MIG_KEY, '1');
   })();
