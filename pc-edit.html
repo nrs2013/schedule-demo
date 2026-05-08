@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260508.051500">
+<meta name="build-version" content="20260508.053000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -194,6 +194,9 @@
     font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
     /* D89/D110: 14 → 18 → 22px にさらに拡大（ツアー名を主役級に） */
     font-size: 22px;
+    /* D113: 左バランス — 日付ナビを中央に押し出すため flex:1 で左半分を占有 */
+    flex: 1;
+    min-width: 0;
     font-weight: 600;
     letter-spacing: 0.02em;
     padding: 4px 8px;
@@ -269,12 +272,37 @@
   }
   /* 下段：DAY/会場 チップ */
   .master-meta-row {
-    /* D88: ボイドティッカー — チップ群を右端に押し出し */
+    /* D88+D113: チップ群を右端に。flex:1 で右バランスを取り、日付ナビを中央に押し出す */
     display: flex;
     gap: 6px;
     align-items: center;
-    margin-left: auto;
+    flex: 1;
+    justify-content: flex-end;
   }
+  /* D112: Undo ボタン（Cmd+Z のバックアップ） */
+  .master-undo-btn {
+    background: transparent;
+    border: 1px solid #2c2a27;
+    color: #a8a8a0;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    padding: 0;
+    margin-left: 6px;
+    transition: background 0.12s, border-color 0.12s, color 0.12s;
+  }
+  .master-undo-btn:hover {
+    background: rgba(232,154,74,0.10);
+    border-color: rgba(232,154,74,0.55);
+    color: #f0a85a;
+  }
+  .master-undo-btn:active { transform: scale(0.94); }
   .master-chip {
     display: inline-flex;
     align-items: center;
@@ -1867,6 +1895,10 @@
   .cal-event-block.rh     { background: rgba(126,216,72,0.42);  color: #e0f5d0; border-color: rgba(126,216,72,0.85); }
   .cal-event-block.stay   { background: rgba(184,168,216,0.36); color: #ece4f5; border-color: rgba(184,168,216,0.75); }
   .cal-event-block.off    { background: rgba(184,168,216,0.20); color: #c8b8e0; border-color: rgba(184,168,216,0.5); }
+  /* D113: パレット用の追加表示色（type は既存 genchi/stay を流用、見た目だけ差別化） */
+  .cal-event-block.koya   { background: rgba(199,154,72,0.30);  color: #f0d4a8; border-color: rgba(199,154,72,0.65); }
+  .cal-event-block.pre    { background: rgba(110,184,160,0.25); color: #b8e0c8; border-color: rgba(110,184,160,0.55); }
+  .cal-event-block.back   { background: rgba(199,93,140,0.20);  color: #e8a8c8; border-color: rgba(199,93,140,0.50); }
   .cal-event-block-add {
     flex-basis: 100%;
     background: transparent;
@@ -3660,14 +3692,16 @@
             <hr class="cal-events-palette-divider">
             <div class="cal-events-palette-title">EVENTS</div>
             <div class="cal-events-palette-list">
-              <!-- D74: 順序入替 — 時系列に近い順（現地仕込み → 仕込み → テクリハ → リハ → 本番 → 移動 → 休） -->
+              <!-- D74/D113: 時系列順 + OFF/休 → 小屋打ち / 前乗り / 戻り に置換 -->
+              <div class="cal-event-block koya"   draggable="true" data-type="genchi" data-default-label="小屋打ち">小屋打ち</div>
               <div class="cal-event-block genchi" draggable="true" data-type="genchi" data-default-label="現地仕込み">現地仕込み</div>
               <div class="cal-event-block setup"  draggable="true" data-type="setup"  data-default-label="仕込み">仕込み</div>
               <div class="cal-event-block tek"    draggable="true" data-type="tek"    data-default-label="テクリハ">テクリハ</div>
               <div class="cal-event-block rh"     draggable="true" data-type="rh"     data-default-label="リハ">リハ</div>
               <div class="cal-event-block show"   draggable="true" data-type="show"   data-default-label="本番">本番</div>
+              <div class="cal-event-block pre"    draggable="true" data-type="stay"   data-default-label="前乗り">前乗り</div>
               <div class="cal-event-block stay"   draggable="true" data-type="stay"   data-default-label="移動">移動</div>
-              <div class="cal-event-block off"    draggable="true" data-type="stay"   data-default-label="休">OFF / 休</div>
+              <div class="cal-event-block back"   draggable="true" data-type="stay"   data-default-label="戻り">戻り</div>
             </div>
           </aside>
           <div class="pc-cal-detail" id="pc-cal-detail"></div>
