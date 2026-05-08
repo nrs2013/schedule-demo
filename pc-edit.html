@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260508.001818">
+<meta name="build-version" content="20260508.012405">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -5217,6 +5217,12 @@ function show(id) {
           e.target.closest('.pc-cal-venue-band-resize-handle') ||
           e.target.closest('.pc-cal-venue-band-resize-handle-left')
         )) return;
+        // D95: pill / band 本体クリックは別ハンドラに任せる（stopPropagation してくる）
+        // ここに到達したのは「空きセル」クリック → 全選択を解除
+        if (e.target.closest('.pc-cal-pill') || e.target.closest('.pc-cal-venue-band')) return;
+        selectedEventIdx = null;
+        selectedBandId = null;
+        document.querySelectorAll('.pc-cal-pill.selected, .pc-cal-venue-band.selected').forEach(function(s){ s.classList.remove('selected'); });
         const dk = el.getAttribute('data-date');
         if (!dk) return;
         const parts = dk.split('-').map(Number);
@@ -5227,6 +5233,57 @@ function show(id) {
         if (typeof changeMasterDate === 'function') changeMasterDate(newDate);
       });
     });
+    // D95: pill クリック → selected 状態 + セル選択 + stopPropagation
+    monthEl.querySelectorAll('.pc-cal-pill').forEach(function(pillEl){
+      pillEl.addEventListener('click', function(e){
+        if (e.target.closest('.pc-cal-pill-resize-handle') || e.target.closest('.pc-cal-pill-resize-handle-left')) return;
+        const idx = parseInt(pillEl.getAttribute('data-event-index'), 10);
+        if (isNaN(idx)) return;
+        document.querySelectorAll('.pc-cal-pill.selected, .pc-cal-venue-band.selected').forEach(function(s){ s.classList.remove('selected'); });
+        document.querySelectorAll('.pc-cal-pill[data-event-index="' + idx + '"]').forEach(function(s){ s.classList.add('selected'); });
+        selectedEventIdx = idx;
+        selectedBandId = null;
+        const cell = pillEl.closest('.pc-cal-cell');
+        const dk = cell ? cell.getAttribute('data-date') : null;
+        if (dk) {
+          const parts = dk.split('-').map(Number);
+          const newDate = new Date(parts[0], parts[1]-1, parts[2]);
+          calState.selected = newDate;
+          if (typeof changeMasterDate === 'function') changeMasterDate(newDate);
+          renderDetail();
+        }
+        e.stopPropagation();
+      });
+    });
+    // D95: venue band クリック → selected 状態 + セル選択 + stopPropagation
+    monthEl.querySelectorAll('.pc-cal-venue-band:not(.is-empty)').forEach(function(bandEl){
+      bandEl.addEventListener('click', function(e){
+        if (e.target.closest('.pc-cal-venue-band-resize-handle') || e.target.closest('.pc-cal-venue-band-resize-handle-left')) return;
+        const id = bandEl.getAttribute('data-venue-group-id');
+        if (!id) return;
+        document.querySelectorAll('.pc-cal-pill.selected, .pc-cal-venue-band.selected').forEach(function(s){ s.classList.remove('selected'); });
+        document.querySelectorAll('.pc-cal-venue-band[data-venue-group-id="' + id + '"]').forEach(function(s){ s.classList.add('selected'); });
+        selectedBandId = id;
+        selectedEventIdx = null;
+        const cell = bandEl.closest('.pc-cal-cell');
+        const dk = cell ? cell.getAttribute('data-date') : null;
+        if (dk) {
+          const parts = dk.split('-').map(Number);
+          const newDate = new Date(parts[0], parts[1]-1, parts[2]);
+          calState.selected = newDate;
+          if (typeof changeMasterDate === 'function') changeMasterDate(newDate);
+          renderDetail();
+        }
+        e.stopPropagation();
+      });
+    });
+    // D95: renderMonth 後に selected 状態を復元
+    if (selectedEventIdx !== null) {
+      document.querySelectorAll('.pc-cal-pill[data-event-index="' + selectedEventIdx + '"]').forEach(function(s){ s.classList.add('selected'); });
+    }
+    if (selectedBandId !== null) {
+      document.querySelectorAll('.pc-cal-venue-band[data-venue-group-id="' + selectedBandId + '"]').forEach(function(s){ s.classList.add('selected'); });
+    }
     // 「今月へ」ボタン（D92: ラベル "TODAY" に変更）
     const jumpBtn = monthEl.querySelector('[data-jump="today"]');
     if (jumpBtn) {
@@ -6960,6 +7017,9 @@ function show(id) {
 
   // D51: 統合 D&D 実装（resize-right / resize-left / move-band / move-pill）
   let dnd = { mode: null, groupId: null, sourceDate: null, eventIndex: null, startX: 0, startY: 0, ghost: null, lastDk: null, moved: false };
+  // D95: 選択削除用 state（pill / venue band クリックで selected → Delete キーで削除）
+  let selectedEventIdx = null;
+  let selectedBandId = null;
   function clearDnd() {
     document.querySelectorAll('.pc-cal-cell.drag-over, .pc-cal-cell.resize-target, .pc-cal-cell.resize-preview').forEach(function(el){ el.classList.remove('drag-over'); el.classList.remove('resize-target'); el.classList.remove('resize-preview'); });
     document.querySelectorAll('.pc-cal-venue-band.dragging, .pc-cal-pill.dragging').forEach(function(el){ el.classList.remove('dragging'); });
@@ -7248,6 +7308,27 @@ function show(id) {
 
   document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape' && dnd.mode) { clearDnd(); }
+    // D95: Delete / Backspace で選択中の pill / venue band を削除
+    if (e.key === 'Delete' || e.key === 'Backspace') {
+      const tag = (e.target && e.target.tagName) || '';
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+      if (e.target && e.target.isContentEditable) return;
+      if (selectedEventIdx !== null && window.__calApi) {
+        const evs = window.__calApi.listAllEvents();
+        const ev = evs && evs[selectedEventIdx];
+        if (ev && confirm('選択中のイベントを削除しますか？')) {
+          window.__calApi.deleteEvent(ev);
+          selectedEventIdx = null;
+        }
+        e.preventDefault();
+      } else if (selectedBandId !== null && window.__calApi) {
+        if (confirm('選択中の会場帯を削除しますか？')) {
+          window.__calApi.deleteVenueGroup(selectedBandId);
+          selectedBandId = null;
+        }
+        e.preventDefault();
+      }
+    }
   });
 
   // パレット → カレンダー の HTML5 D&D は残す（既存）
