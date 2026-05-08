@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260508.114500">
+<meta name="build-version" content="20260508.120000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -8434,7 +8434,7 @@ function show(id) {
   }
 
   // ── ボタン handlers ───────────
-  document.getElementById('concert-add-btn').onclick = startAdd;
+  // ※ concert-add-btn は renderList() で動的生成されるので、ここでは取らない（renderList 内で listener 付与）
   document.getElementById('lock-add-btn').onclick = tryAdd;
   document.getElementById('lock-add-back').onclick = function(){
     if (concerts.length === 0) {
