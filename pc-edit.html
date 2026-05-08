@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260508.200000">
+<meta name="build-version" content="20260508.210000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -5098,18 +5098,31 @@ function show(id) {
     }
   });
 
-  // rh-no にフォーカスが入った瞬間、中身を全選択（即上書きできるように）
+  // D133: rh-no にフォーカスが入った瞬間、中身を全選択（即上書きできるように）
+  // 旧コード：requestAnimationFrame で次のフレームを待っていたが、その間にユーザーの
+  // キー入力（例：「1」）が先に届いてしまい、既存値「1」+「1」=「11」になるバグ。
+  // mousedown で先に select all を仕込み、focus は通常通り進ませる二段構え。
+  container.addEventListener('mousedown', function(e){
+    const el = e.target;
+    if (el && el.classList && el.classList.contains('rh-no') && document.activeElement !== el) {
+      e.preventDefault();
+      el.focus();
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
+  });
+  // キーボードで Tab フォーカスした場合の保険（mousedown を経由しないケース）
   container.addEventListener('focusin', function(e){
     const el = e.target;
     if (el && el.classList && el.classList.contains('rh-no')) {
-      // 次のフレームで選択（focus イベントの後にカーソルがセットされるのを待つ）
-      requestAnimationFrame(function(){
-        const range = document.createRange();
-        range.selectNodeContents(el);
-        const sel = window.getSelection();
-        sel.removeAllRanges();
-        sel.addRange(range);
-      });
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
     }
   });
 
