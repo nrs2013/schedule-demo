@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260508.022500">
+<meta name="build-version" content="20260508.024000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -4593,6 +4593,9 @@ function show(id) {
 <script>
 (function(){
   window.__iife2Started = true; // D101 debug
+  // D102: 選択削除 state を window で共有（IIFE #2/#3 越え）
+  if (typeof window.__selectedEventIdx === 'undefined') window.__selectedEventIdx = null;
+  if (typeof window.__selectedBandId === 'undefined') window.__selectedBandId = null;
   const TODAY      = new Date(2026, 4, 1);
   // D69: TOUR_START/END は撤去。ツアー期間の概念は廃止し、カレンダー D&D が真の入力源。
 
@@ -5276,8 +5279,8 @@ function show(id) {
         // D95/D96: pill / band 本体クリックは別ハンドラに任せる（stopPropagation してくる）
         // is-empty placeholder（透明な band）はここで弾かない（空セル扱い）
         if (e.target.closest('.pc-cal-pill') || e.target.closest('.pc-cal-venue-band:not(.is-empty)')) return;
-        selectedEventIdx = null;
-        selectedBandId = null;
+        window.__selectedEventIdx = null;
+        window.__selectedBandId = null;
         document.querySelectorAll('.pc-cal-pill.selected, .pc-cal-venue-band.selected').forEach(function(s){ s.classList.remove('selected'); });
         const dk = el.getAttribute('data-date');
         if (!dk) return;
@@ -5297,8 +5300,8 @@ function show(id) {
         if (isNaN(idx)) return;
         document.querySelectorAll('.pc-cal-pill.selected, .pc-cal-venue-band.selected').forEach(function(s){ s.classList.remove('selected'); });
         document.querySelectorAll('.pc-cal-pill[data-event-index="' + idx + '"]').forEach(function(s){ s.classList.add('selected'); });
-        selectedEventIdx = idx;
-        selectedBandId = null;
+        window.__selectedEventIdx = idx;
+        window.__selectedBandId = null;
         const cell = pillEl.closest('.pc-cal-cell');
         const dk = cell ? cell.getAttribute('data-date') : null;
         if (dk) {
@@ -5319,8 +5322,8 @@ function show(id) {
         if (!id) return;
         document.querySelectorAll('.pc-cal-pill.selected, .pc-cal-venue-band.selected').forEach(function(s){ s.classList.remove('selected'); });
         document.querySelectorAll('.pc-cal-venue-band[data-venue-group-id="' + id + '"]').forEach(function(s){ s.classList.add('selected'); });
-        selectedBandId = id;
-        selectedEventIdx = null;
+        window.__selectedBandId = id;
+        window.__selectedEventIdx = null;
         const cell = bandEl.closest('.pc-cal-cell');
         const dk = cell ? cell.getAttribute('data-date') : null;
         if (dk) {
@@ -5334,11 +5337,11 @@ function show(id) {
       });
     });
     // D95: renderMonth 後に selected 状態を復元
-    if (selectedEventIdx !== null) {
-      document.querySelectorAll('.pc-cal-pill[data-event-index="' + selectedEventIdx + '"]').forEach(function(s){ s.classList.add('selected'); });
+    if (window.__selectedEventIdx !== null) {
+      document.querySelectorAll('.pc-cal-pill[data-event-index="' + window.__selectedEventIdx + '"]').forEach(function(s){ s.classList.add('selected'); });
     }
-    if (selectedBandId !== null) {
-      document.querySelectorAll('.pc-cal-venue-band[data-venue-group-id="' + selectedBandId + '"]').forEach(function(s){ s.classList.add('selected'); });
+    if (window.__selectedBandId !== null) {
+      document.querySelectorAll('.pc-cal-venue-band[data-venue-group-id="' + window.__selectedBandId + '"]').forEach(function(s){ s.classList.add('selected'); });
     }
     // 「今月へ」ボタン（D92: ラベル "TODAY" に変更）
     const jumpBtn = monthEl.querySelector('[data-jump="today"]');
@@ -7114,9 +7117,7 @@ function show(id) {
 
   // D51: 統合 D&D 実装（resize-right / resize-left / move-band / move-pill）
   let dnd = { mode: null, groupId: null, sourceDate: null, eventIndex: null, startX: 0, startY: 0, ghost: null, lastDk: null, moved: false };
-  // D95: 選択削除用 state（pill / venue band クリックで selected → Delete キーで削除）
-  let selectedEventIdx = null;
-  let selectedBandId = null;
+  // D95+D102: 選択削除用 state — window 経由で IIFE #2/#3 で共有（ReferenceError 回避）
   function clearDnd() {
     document.querySelectorAll('.pc-cal-cell.drag-over, .pc-cal-cell.resize-target, .pc-cal-cell.resize-preview').forEach(function(el){ el.classList.remove('drag-over'); el.classList.remove('resize-target'); el.classList.remove('resize-preview'); });
     document.querySelectorAll('.pc-cal-venue-band.dragging, .pc-cal-pill.dragging').forEach(function(el){ el.classList.remove('dragging'); });
@@ -7166,8 +7167,8 @@ function show(id) {
       const bandId = band.getAttribute('data-venue-group-id');
       document.querySelectorAll('.pc-cal-pill.selected, .pc-cal-venue-band.selected').forEach(function(s){ s.classList.remove('selected'); });
       document.querySelectorAll('.pc-cal-venue-band[data-venue-group-id="' + bandId + '"]').forEach(function(s){ s.classList.add('selected'); });
-      selectedBandId = bandId;
-      selectedEventIdx = null;
+      window.__selectedBandId = bandId;
+      window.__selectedEventIdx = null;
       dnd.mode = 'move-band';
       dnd.groupId = bandId;
       dnd.sourceDate = band.getAttribute('data-source-date');
@@ -7180,8 +7181,8 @@ function show(id) {
       // D96: mousedown 時点で selected 化（preventDefault が click を抑止する対策）
       document.querySelectorAll('.pc-cal-pill.selected, .pc-cal-venue-band.selected').forEach(function(s){ s.classList.remove('selected'); });
       document.querySelectorAll('.pc-cal-pill[data-event-index="' + idx + '"]').forEach(function(s){ s.classList.add('selected'); });
-      selectedEventIdx = idx;
-      selectedBandId = null;
+      window.__selectedEventIdx = idx;
+      window.__selectedBandId = null;
       // D68: 掴んだセルの日付を sourceDate として記録（連結バーの中央を掴んでも先頭にならないように）
       const pillCell = pill.closest('.pc-cal-cell');
       dnd.mode = 'move-pill';
@@ -7421,18 +7422,18 @@ function show(id) {
       const tag = (e.target && e.target.tagName) || '';
       if (tag === 'INPUT' || tag === 'TEXTAREA') return;
       if (e.target && e.target.isContentEditable) return;
-      if (selectedEventIdx !== null && window.__calApi) {
+      if (window.__selectedEventIdx !== null && window.__calApi) {
         const evs = window.__calApi.listAllEvents();
-        const ev = evs && evs[selectedEventIdx];
+        const ev = evs && evs[window.__selectedEventIdx];
         if (ev && confirm('選択中のイベントを削除しますか？')) {
           window.__calApi.deleteEvent(ev);
-          selectedEventIdx = null;
+          window.__selectedEventIdx = null;
         }
         e.preventDefault();
-      } else if (selectedBandId !== null && window.__calApi) {
+      } else if (window.__selectedBandId !== null && window.__calApi) {
         if (confirm('選択中の会場帯を削除しますか？')) {
-          window.__calApi.deleteVenueGroup(selectedBandId);
-          selectedBandId = null;
+          window.__calApi.deleteVenueGroup(window.__selectedBandId);
+          window.__selectedBandId = null;
         }
         e.preventDefault();
       }
