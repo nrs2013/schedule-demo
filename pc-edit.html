@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260508.034500">
+<meta name="build-version" content="20260508.040000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -7287,28 +7287,19 @@ function show(id) {
     if (dnd.mode === 'move-band' || dnd.mode === 'move-pill') {
       cell.classList.add('drag-over');
     } else if (dnd.mode === 'resize-event-right' || dnd.mode === 'resize-event-left') {
-      // D54+D91: イベントピル左右端ドラッグで date / endDate を更新（リアルタイム）
+      // D108: ドラッグ中はリアルタイム update せず preview のみ表示（カクつき解消）。確定は mouseup で 1 回だけ。
       const allEvs = window.__calApi.listAllEvents();
       const ev = allEvs && allEvs[dnd.eventIndex];
       if (ev) {
         const start = ev.date;
         const end = ev.endDate || ev.date;
-        let newStart = start;
-        let newEnd = end;
+        let rangeStart = start;
+        let rangeEnd = end;
         if (dnd.mode === 'resize-event-right') {
-          newEnd = (dk > start) ? dk : start;
+          rangeEnd = (dk > start) ? dk : start;
         } else {
-          // D91: 左ハンドルは date（開始日）を更新
-          newStart = (dk < end) ? dk : end;
+          rangeStart = (dk < end) ? dk : end;
         }
-        if (newStart !== ev.date || newEnd !== end) {
-          const newEv = Object.assign({}, ev, { date: newStart, endDate: newEnd });
-          if (newEnd === newStart) delete newEv.endDate;
-          window.__calApi.updateEvent(ev, newEv);
-        }
-        // ハイライト
-        const rangeStart = newStart;
-        const rangeEnd = newEnd;
         requestAnimationFrame(function(){
           document.querySelectorAll('.pc-cal-cell.drag-over, .pc-cal-cell.resize-target, .pc-cal-cell.resize-preview').forEach(function(el){
             el.classList.remove('drag-over');
@@ -7326,45 +7317,31 @@ function show(id) {
         });
       }
     } else if (dnd.mode === 'resize-right' || dnd.mode === 'resize-left') {
+      // D108: ドラッグ中はリアルタイム update せず preview のみ表示（カクつき解消）。確定は mouseup で 1 回だけ。
       const group = window.__calApi && window.__calApi.getVenueGroupByDateKey(dnd.sourceDate);
       if (group) {
-        // D53: リアルタイム反映 — mousemove で実体（venueGroup）を更新 → 帯が伸び縮み
-        let updated = false;
+        let rangeStart = group.startDate;
+        let rangeEnd = group.endDate;
         if (dnd.mode === 'resize-right') {
-          const newEnd = (dk > group.startDate) ? dk : group.startDate;
-          if (newEnd !== group.endDate) {
-            window.__calApi.updateVenueGroup(dnd.groupId, { endDate: newEnd });
-            updated = true;
-          }
+          rangeEnd = (dk > group.startDate) ? dk : group.startDate;
         } else {
-          const newStart = (dk < group.endDate) ? dk : group.endDate;
-          if (newStart !== group.startDate) {
-            window.__calApi.updateVenueGroup(dnd.groupId, { startDate: newStart });
-            updated = true;
-          }
+          rangeStart = (dk < group.endDate) ? dk : group.endDate;
         }
-        // renderMonth 後の DOM にハイライトを再付与
-        const refreshed = updated ? window.__calApi.getVenueGroupByDateKey(dnd.sourceDate) : group;
-        if (refreshed) {
-          let rangeStart = refreshed.startDate;
-          let rangeEnd = refreshed.endDate;
-          // 再描画後に target / preview class を付け直す
-          requestAnimationFrame(function(){
-            document.querySelectorAll('.pc-cal-cell.drag-over, .pc-cal-cell.resize-target, .pc-cal-cell.resize-preview').forEach(function(el){
-              el.classList.remove('drag-over');
-              el.classList.remove('resize-target');
-              el.classList.remove('resize-preview');
-            });
-            const targetCell = document.querySelector('.pc-cal-cell[data-date="' + dk + '"]');
-            if (targetCell) targetCell.classList.add('resize-target');
-            document.querySelectorAll('.pc-cal-cell').forEach(function(c){
-              const cdk = c.getAttribute('data-date');
-              if (cdk && !c.classList.contains('outside') && cdk >= rangeStart && cdk <= rangeEnd) {
-                c.classList.add('resize-preview');
-              }
-            });
+        requestAnimationFrame(function(){
+          document.querySelectorAll('.pc-cal-cell.drag-over, .pc-cal-cell.resize-target, .pc-cal-cell.resize-preview').forEach(function(el){
+            el.classList.remove('drag-over');
+            el.classList.remove('resize-target');
+            el.classList.remove('resize-preview');
           });
-        }
+          const targetCell = document.querySelector('.pc-cal-cell[data-date="' + dk + '"]');
+          if (targetCell) targetCell.classList.add('resize-target');
+          document.querySelectorAll('.pc-cal-cell').forEach(function(c){
+            const cdk = c.getAttribute('data-date');
+            if (cdk && !c.classList.contains('outside') && cdk >= rangeStart && cdk <= rangeEnd) {
+              c.classList.add('resize-preview');
+            }
+          });
+        });
       }
     }
   });
@@ -7437,6 +7414,32 @@ function show(id) {
             }
             window.__calApi.updateEvent(oldEv, newEv);
           }
+        }
+      }
+    } else if (mode === 'resize-event-right' && typeof evIdx === 'number') {
+      // D108: pill 右ハンドル mouseup 確定（mousemove ではなくここで update）
+      const allEvs = window.__calApi.listAllEvents();
+      const oldEv = allEvs && allEvs[evIdx];
+      if (oldEv) {
+        const newEnd = targetDk > oldEv.date ? targetDk : oldEv.date;
+        const oldEnd = oldEv.endDate || oldEv.date;
+        if (newEnd !== oldEnd) {
+          const newEv = Object.assign({}, oldEv, { endDate: newEnd });
+          if (newEnd === oldEv.date) delete newEv.endDate;
+          window.__calApi.updateEvent(oldEv, newEv);
+        }
+      }
+    } else if (mode === 'resize-event-left' && typeof evIdx === 'number') {
+      // D108: pill 左ハンドル mouseup 確定（startDate=date を更新）
+      const allEvs = window.__calApi.listAllEvents();
+      const oldEv = allEvs && allEvs[evIdx];
+      if (oldEv) {
+        const oldEnd = oldEv.endDate || oldEv.date;
+        const newStart = targetDk < oldEnd ? targetDk : oldEnd;
+        if (newStart !== oldEv.date) {
+          const newEv = Object.assign({}, oldEv, { date: newStart, endDate: oldEnd });
+          if (oldEnd === newStart) delete newEv.endDate;
+          window.__calApi.updateEvent(oldEv, newEv);
         }
       }
     }
