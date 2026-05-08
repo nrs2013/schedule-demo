@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260508.070000">
+<meta name="build-version" content="20260508.071500">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -3761,8 +3761,8 @@
           <span class="master-chip master-chip-day" id="master-date-day">DAY 1</span>
           <!-- D112: Undo ボタン（Cmd+Z のバックアップ） -->
           <button class="master-undo-btn" title="元に戻す (Cmd+Z)" onclick="if(window.__undo)window.__undo()">↶</button>
-          <!-- D118: ログアウト -->
-          <button class="master-logout-btn" title="ログアウト" onclick="if(confirm('ログアウトしますか？次回起動時に CONCERT パスが必要になります')){sessionStorage.removeItem('schedule-studio:concert-authed');location.reload();}">🔓</button>
+          <!-- D118: ログアウト（D118b: リロードで再認証なのでログアウト = 単純リロード） -->
+          <button class="master-logout-btn" title="ログアウト（再ログインへ）" onclick="if(confirm('ログアウトしますか？')){location.reload();}">🔓</button>
         </div>
       </div>
     </div>
@@ -7888,7 +7888,6 @@ function show(id) {
 (function bootstrapAuth(){
   const LS_PWS = 'schedule-studio:tour:passwords';
   const LS_TOUR_TITLE = 'schedule-studio:tour:title';
-  const SS_AUTHED = 'schedule-studio:concert-authed';
 
   const lockEl = document.getElementById('screen-tour-lock');
   const pcEl = document.getElementById('screen-pc');
@@ -7904,23 +7903,15 @@ function show(id) {
     if (stored) passwords = JSON.parse(stored);
   } catch (e) {}
 
-  const authed = sessionStorage.getItem(SS_AUTHED) === '1';
-
-  // 認証済みなら何もしない（screen-pc がそのまま active）
-  if (passwords && authed) {
-    // 起動時、保存されてるツアー名を master-concert-title に反映
-    const titleEl = document.querySelector('.master-concert-title');
-    const storedTitle = localStorage.getItem(LS_TOUR_TITLE);
-    if (titleEl && storedTitle) titleEl.textContent = storedTitle;
-    return;
-  }
+  // D118b: 認証フラグをメモリ変数のみで保持 → リロード = 必ず再ログイン
+  // （sessionStorage はリロードで消えないので不採用）
+  // 起動時は常にロック画面表示（パスワード設定済みでも認証は要求）
 
   // ロック画面に切替
   lockEl.classList.add('active');
   pcEl.classList.remove('active');
 
   function gotoApp(title) {
-    sessionStorage.setItem(SS_AUTHED, '1');
     if (title) {
       const titleEl = document.querySelector('.master-concert-title');
       if (titleEl) titleEl.textContent = title;
