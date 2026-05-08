@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260508.104500">
+<meta name="build-version" content="20260508.110000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -4054,24 +4054,13 @@
         <h2 class="info-title">INFO — お知らせ配信</h2>
         <p class="info-desc">本文を書いて「LINE プッシュ送信」を押すと、スタッフ全員の LINE に通知が届きます。送信にはパスワード認証が必要、履歴に名前が残ります。</p>
       </div>
+      <!-- D123: パスワード認証を撤去 — 送信者名だけ任意で入力、誰でも送信可能 -->
       <div class="info-auth">
-        <div class="info-login-panel" id="info-login-panel">
-          <div class="info-login-input-group">
-            <label>あなたの名前</label>
-            <input type="text" id="info-login-name" placeholder="例：のむ" autocomplete="off">
-          </div>
-          <div class="info-login-input-group">
-            <label>パスワード</label>
-            <input type="password" id="info-login-pass" placeholder="1234" maxlength="10" autocomplete="off">
-          </div>
-          <button class="info-login-btn" data-action="info-login">🔓 ログイン</button>
-          <span class="info-login-hint">認証通った人なら誰でも送信できる<br>送信履歴に名前が記録される</span>
+        <div class="info-login-input-group">
+          <label>送信者の名前（任意）</label>
+          <input type="text" id="info-login-name" placeholder="例：のむ" autocomplete="off">
         </div>
-        <div class="info-loggedin-panel" id="info-loggedin-panel">
-          <span class="info-loggedin-icon">✓ 認証済み</span>
-          <span class="info-loggedin-text"><span class="info-loggedin-name" id="info-loggedin-name"></span> として送信できます</span>
-          <button class="info-logout-btn" data-action="info-logout">ログアウト</button>
-        </div>
+        <span class="info-login-hint">入力した名前は送信履歴に残ります<br>無記入だと「匿名」として記録</span>
       </div>
       <div class="info-form" id="info-form">
         <div class="info-field">
@@ -6986,26 +6975,25 @@ function show(id) {
   }
 
   function handleInfoPush(){
-    if (!infoAuth.authed) {
-      alert('🔒 送信にはログインが必要です。\n\n上のフォームに名前とパスワード（1234）を入れてログインしてください。');
-      return;
-    }
+    // D123: パスワード認証撤去 — 名前を任意入力、誰でも送信可能
     const subjEl = document.getElementById('info-subject');
     const bodyEl = document.getElementById('info-body');
+    const nameEl = document.getElementById('info-login-name');
     if (!subjEl || !bodyEl) return;
     const subj = subjEl.value.trim();
     const body = bodyEl.value.trim();
+    const senderName = nameEl ? (nameEl.value || '').trim() : '';
     if (!subj && !body) {
       alert('件名 or 本文を入力してください。');
       return;
     }
     const previewBody = body.length > 80 ? body.substring(0, 80) + '...' : body;
     const ok = confirm(
-      '📱 LINE プッシュ送信（モック）\n\n' +
+      'LINE プッシュ送信（モック）\n\n' +
       '件名：' + (subj || '（無題）') + '\n' +
-      '本文：' + (previewBody || '（空）') + '\n\n' +
-      '【本物】公式アカウント友達追加済みのスタッフ全員のLINEに\n' +
-      'プッシュ通知が届きます。\n' +
+      '本文：' + (previewBody || '（空）') + '\n' +
+      '送信者：' + (senderName || '匿名') + '\n\n' +
+      '【本物】公式アカウント友達追加済みのスタッフ全員の LINE に\nプッシュ通知が届きます。\n' +
       '【現状】モック動作で送信履歴に記録されるだけです。\n\n' +
       '続けますか？'
     );
@@ -7016,14 +7004,14 @@ function show(id) {
     infoHistory.push({
       id: nextInfoId++,
       sentAt: ts,
-      sender: infoAuth.userName || '匿名',
+      sender: senderName || '匿名',
       subject: subj || '（無題）',
       body: body
     });
     renderInfoHistory();
     subjEl.value = '';
     bodyEl.value = '';
-    alert('✅ 送信履歴に記録しました（モック）。\n\n本物のプッシュ通知には Firebase Functions ＋ LINE Messaging API の実装が必要です。');
+    alert('送信履歴に記録しました（モック）。\n\n本物のプッシュ通知には Firebase Functions ＋ LINE Messaging API の実装が必要です。');
   }
 
   // 入り時間 input change
