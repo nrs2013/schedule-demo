@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260509.114000">
+<meta name="build-version" content="20260509.111817">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -7268,44 +7268,11 @@ function show(id) {
   }
 
   function dayEventCardHtml(ev){
-    /* R58: 入り時間と同じ J案1窓型に統一（外枠1個 + 中に H/M 透明select） */
-    var st = ev.startTime || '';
-    var et = ev.endTime || '';
-    var sHH = st.length >= 2 ? st.substring(0, 2) : '';
-    var sMM = st.length >= 5 ? st.substring(3, 5) : '';
-    var eHH = et.length >= 2 ? et.substring(0, 2) : '';
-    var eMM = et.length >= 5 ? et.substring(3, 5) : '';
     return ''
       + '<div class="day-event-card" data-day-event="' + ev.id + '">'
-      +   '<div class="arr-time-frame" data-field="startTime">'
-      +     '<div class="arr-time-col">'
-      +       '<span class="arr-time-lbl">H</span>'
-      +       '<select class="arr-time-h" data-day-tpart="start-h">' + arrTimeHourOptionsHtml(sHH) + '</select>'
-      +     '</div>'
-      +     '<div class="arr-time-colon-wrap">'
-      +       '<span class="arr-time-colon-spacer">·</span>'
-      +       '<span class="arr-time-colon">:</span>'
-      +     '</div>'
-      +     '<div class="arr-time-col">'
-      +       '<span class="arr-time-lbl">M</span>'
-      +       '<select class="arr-time-m" data-day-tpart="start-m">' + arrTimeMinOptionsHtml(sMM) + '</select>'
-      +     '</div>'
-      +   '</div>'
+      +   '<select class="day-event-time" data-field="startTime">' + timeOptionsHtml(ev.startTime) + '</select>'
       +   '<span class="day-event-tilde">〜</span>'
-      +   '<div class="arr-time-frame" data-field="endTime">'
-      +     '<div class="arr-time-col">'
-      +       '<span class="arr-time-lbl">H</span>'
-      +       '<select class="arr-time-h" data-day-tpart="end-h">' + arrTimeHourOptionsHtml(eHH) + '</select>'
-      +     '</div>'
-      +     '<div class="arr-time-colon-wrap">'
-      +       '<span class="arr-time-colon-spacer">·</span>'
-      +       '<span class="arr-time-colon">:</span>'
-      +     '</div>'
-      +     '<div class="arr-time-col">'
-      +       '<span class="arr-time-lbl">M</span>'
-      +       '<select class="arr-time-m" data-day-tpart="end-m">' + arrTimeMinOptionsHtml(eMM) + '</select>'
-      +     '</div>'
-      +   '</div>'
+      +   '<select class="day-event-time end" data-field="endTime">' + timeOptionsHtml(ev.endTime || '') + '</select>'
       +   '<input type="text" class="day-event-label" value="' + escH(ev.label) + '" data-field="label" placeholder="項目名（例：音響チェック）">'
       +   '<button class="row-del" data-action="del-day-event" title="削除">×</button>'
       + '</div>';
@@ -7322,7 +7289,6 @@ function show(id) {
   }
 
   // 入力変更 → データ更新（startTime 変更時は再ソート）
-  // R58: J案1窓型（H/M別 select）対応 — frame 内の H/M select 変化時は両方の値を結合
   document.addEventListener('change', function(e){
     const card = e.target && e.target.closest && e.target.closest('.day-event-card');
     if (!card) return;
@@ -7330,22 +7296,6 @@ function show(id) {
     const events = getDayEvents(masterDateState.current);
     const ev = events.find(function(x){ return x.id === id; });
     if (!ev) return;
-    const tpart = e.target.getAttribute && e.target.getAttribute('data-day-tpart');
-    if (tpart) {
-      // J案：frame 内の H/M select の値を結合して startTime/endTime を作る
-      const frame = e.target.closest('.arr-time-frame');
-      if (!frame) return;
-      const field = frame.getAttribute('data-field'); // startTime or endTime
-      const hSel = frame.querySelector('select.arr-time-h');
-      const mSel = frame.querySelector('select.arr-time-m');
-      const hh = (hSel && hSel.value) ? hSel.value : '';
-      const mm = (mSel && mSel.value) ? mSel.value : '';
-      ev[field] = (hh && mm) ? (hh + ':' + mm) : '';
-      saveDayEvents();
-      if (field === 'startTime') renderDaySchedule();
-      return;
-    }
-    // 従来通り（label など）
     const field = e.target.getAttribute('data-field');
     if (!field) return;
     ev[field] = e.target.value;
