@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260509.145434">
+<meta name="build-version" content="20260509.145754">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -5990,7 +5990,8 @@ function show(id) {
   }
   function _r69BuildRowHtml(song, setlist){
     /* M# / Title / Time / RH# / Tags / Memo */
-    var mNo = (typeof computeMNo === 'function') ? computeMNo(song, setlist) : (song.mNo || '');
+    /* R69c: テストパターン用は song.mNo を直接優先 */
+    var mNo = song.mNo || ((typeof computeMNo === 'function') ? computeMNo(song, setlist) : '');
     var time = (song.timeStr != null && song.timeStr !== '')
       ? song.timeStr
       : ((typeof formatTime === 'function' && song.duration != null) ? formatTime(song.duration) : '');
@@ -6025,12 +6026,30 @@ function show(id) {
       '<td class="col-memo">' + _r69EscHtml(memo) + '</td>' +
     '</tr>';
   }
+  /* R69c: PRINT 用テストパターン（レイアウト確認用 14 曲 + EN）
+     のむさん指示『プリントを押したときテストパターンをプレビューしてほしい』 */
+  var R69_TEST_PATTERN_SONGS = [
+    { mNo:'VCR', isEvent:true, title:'Opening VCR',         timeStr:'3:42', rhNo:null, tags:['oto','shoumei'],          memo:'客電 OUT → ロゴ展開' },
+    { mNo:'M1',  title:'BAN',                              timeStr:'4:05', rhNo:1,    tags:['monitor','shoumei'],      memo:'頭サビでセンター昇り' },
+    { mNo:'M2',  title:'Buddies',                          timeStr:'4:18', rhNo:2,    tags:['bagari','kikou'],         memo:'セリ降り → 花道へ' },
+    { mNo:'M3',  title:'桜月',                              timeStr:'4:30', rhNo:3,    tags:['monitor','bagari','shoumei'], memo:'2 番からハケ位置入替' },
+    { mNo:'M4',  title:'流れ弾',                            timeStr:'3:55', rhNo:4,    tags:['oto'],                    memo:'' },
+    { mNo:'M5',  title:'なぜ 恋をして来なかったんだろう？',   timeStr:'4:12', rhNo:5,    tags:['koutou'],                 memo:'' },
+    { mNo:'M6',  title:'ドローン',                          timeStr:'4:00', rhNo:6,    tags:['kigae','shoumei'],        memo:'' },
+    { mNo:'MC',  isMC:true,    title:'MC 1',                timeStr:'5:00', rhNo:null, tags:['koutou'],                 memo:'桜月リプライズの導線' },
+    { mNo:'M7',  title:'承認欲求',                          timeStr:'3:30', rhNo:7,    tags:['monitor','bagari'],       memo:'' },
+    { mNo:'M8',  title:'One-Way Street',                   timeStr:'3:48', rhNo:8,    tags:['oto'],                    memo:'' },
+    { mNo:'M9',  title:'Cool',                              timeStr:'3:22', rhNo:9,    tags:['shoumei','kikou'],        memo:'' },
+    { mNo:'M10', title:'桜月（リプライズ）',                timeStr:'2:30', rhNo:10,   tags:['monitor'],                memo:'アコースティック' },
+    { mNo:'M11', title:'桜の音',                            timeStr:'4:15', rhNo:11,   tags:['bagari'],                 memo:'' },
+    { mNo:'M12', title:'Tokyo新景',                         timeStr:'4:08', rhNo:12,   tags:['monitor'],                memo:'' },
+    { mNo:'EN',  isEncore:true, title:'Anniversary Song',   timeStr:'5:30', rhNo:'EN', tags:['bagari','shoumei','block'], memo:'花道 + メインステージ全員' }
+  ];
+
   function openRehearsalPrint(){
-    /* 現在の SET LIST を取得 */
-    var sl = (typeof setlists !== 'undefined' && Array.isArray(setlists))
-      ? setlists.find(function(s){ return s.id === activeSetlistId; })
-      : null;
-    var songList = (sl && Array.isArray(sl.songs)) ? sl.songs : (typeof songs !== 'undefined' ? songs : []);
+    /* R69c: 現在の SET LIST ではなく、テストパターンを使う（レイアウト確認用） */
+    var sl = null;
+    var songList = R69_TEST_PATTERN_SONGS;
 
     /* 日付 */
     var d = (window.__masterDateState && window.__masterDateState.current)
