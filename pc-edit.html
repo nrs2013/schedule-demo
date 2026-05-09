@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260509.230720">
+<meta name="build-version" content="20260509.231003">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -6229,6 +6229,21 @@ function show(id) {
     var dowEn = _r69DowEn(d);
     var dowJp = _r69DowJp(d);
 
+    /* R77: 合計演奏時間を計算 */
+    var _r77TotalSec = 0;
+    songList.forEach(function(s){
+      var t = String(s.timeStr || '').match(/^(\d+):(\d+)(?::(\d+))?$/);
+      if (t) {
+        _r77TotalSec += parseInt(t[1])*60 + parseInt(t[2]);
+        if (t[3]) _r77TotalSec += parseInt(t[3]);
+      }
+    });
+    var _r77H = Math.floor(_r77TotalSec / 3600);
+    var _r77M = Math.floor((_r77TotalSec % 3600) / 60);
+    var _r77S = _r77TotalSec % 60;
+    var _r77Pad = function(n){ return String(n).padStart(2, '0'); };
+    var _r77TotalRuntime = _r77H > 0 ? (_r77H + ':' + _r77Pad(_r77M) + ':' + _r77Pad(_r77S)) : (_r77M + ':' + _r77Pad(_r77S));
+
     /* 行 HTML を生成（リハ順 or セトリ順は現在の表示順を尊重） */
     var rowsHtml = songList.map(function(song){ return _r69BuildRowHtml(song, sl); }).join('');
 
@@ -6409,7 +6424,7 @@ function show(id) {
       '#r70pdf-root .r70p-foot{margin-top:6px;padding-top:4px;border-top:0.5px solid #ececec;display:flex;justify-content:space-between;font-family:\'JetBrains Mono\',monospace;font-size:7px;color:#b0b0b0;letter-spacing:0.24em;text-transform:uppercase;font-weight:300;}' +
       '</style>' +
       '<div class="r70p-mast">' +
-        '<div><span class="r70p-eyebrow">Schedule Studio</span><div class="r70p-title">Rehearsal Menu</div></div>' +
+        '<div><div class="r70p-title">Rehearsal Menu</div></div>' /* R77: eyebrow 撤去 */ +
         '<div class="r70p-mast-r"><span class="r70p-dow">' + dowEn + '</span><span class="r70p-date">' + dateStr + ' (' + dowJp + ')</span></div>' +
       '</div>' +
       '<div class="r70p-bar">' +
@@ -6426,7 +6441,7 @@ function show(id) {
         '<thead><tr><th class="col-mno">M#</th><th class="col-title">Title</th><th class="col-time">Time</th><th class="col-rh">RH</th><th class="col-tags">Tags</th><th class="col-memo">Memo</th></tr></thead>' +
         '<tbody>' + rowsHtml + '</tbody>' +
       '</table>' +
-      '<div class="r70p-foot"><span>' + modeLabel + ' · ' + songList.length + ' songs · ' + dateStr + '</span><span>Schedule Studio · A4</span></div>' +
+      '<div class="r70p-foot"><span>Runtime · ' + _r77TotalRuntime + '</span><span>Songs · ' + songList.length + '</span></div>' /* R77: 合計時間表示 */ +
     '</div>';
 
     /* DOM に一時挿入 → html2pdf で PDF 化 → 削除 */
