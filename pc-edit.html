@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260509.223438">
+<meta name="build-version" content="20260509.223901">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -1598,6 +1598,25 @@
     color: #f5d4a8 !important;
     font-weight: 600 !important;
     padding: 8px 22px !important;
+  }
+  /* R71: 曲リスト末尾のフルワイド追加ボタン */
+  .pc-btn.pc-add-row.pc-add-row-bottom {
+    display: block !important;
+    width: 100% !important;
+    margin: 8px 0 16px !important;
+    padding: 14px 0 !important;
+    font-size: 13px !important;
+    letter-spacing: 0.18em !important;
+    text-align: center;
+    background: rgba(232,154,74,0.05) !important;
+    border: 1px dashed rgba(232,154,74,0.35) !important;
+    color: #e8c890 !important;
+    transition: background 0.12s, color 0.12s, border-color 0.12s;
+  }
+  .pc-btn.pc-add-row.pc-add-row-bottom:hover {
+    background: rgba(232,154,74,0.15) !important;
+    color: #ffd9a8 !important;
+    border-color: rgba(232,154,74,0.55) !important;
   }
   .pc-btn.pc-add-row:hover {
     background: rgba(232,154,74,0.30) !important;
@@ -4843,14 +4862,12 @@
         <button class="setlist-add-btn" id="setlist-add-btn" type="button">＋ セトリ追加</button>
       </div>
       <div class="pc-rh-actions">
-        <!-- D154 Phase 4: 種別ボタン群を撤去、「+ 行を追加」1 個に統合 -->
-        <button class="pc-btn pc-add-row" data-add-type="song">＋ 行を追加</button>
-        <!-- D115: 曲リストの Excel 取込 / テンプレートDL -->
-        <button id="pc-btn-rh-excel" class="pc-btn">📊 Excel取込</button>
-        <button id="pc-btn-rh-template" class="pc-btn">📥 テンプレDL</button>
+        <!-- R71: Excel取込 / テンプレDL / + 行を追加 を撤去
+             - Excel: D&D で代替（既存 handler はそのまま動く）
+             - テンプレ: 不要に
+             - + 行を追加: 曲リストの末尾にフルワイドで配置（後段の pc-add-row-bottom） -->
         <!-- R70 B-2d: PDF ボタン (現在のモードを自動判定) -->
         <button id="pc-btn-rh-pdf" class="pc-btn" type="button" onclick="window.__openRehearsalPdfCurrent && window.__openRehearsalPdfCurrent()">PDF</button>
-        <input type="file" id="pc-rh-file-input" accept=".xlsx,.xls" style="display:none;">
       </div>
     </div>
 
@@ -4866,6 +4883,8 @@
     </div>
 
     <div id="pc-rows-container"></div>
+    <!-- R71: 曲リスト末尾のフルワイド追加ボタン（セットリスト行と同じ横幅）-->
+    <button class="pc-btn pc-add-row pc-add-row-bottom" type="button" data-add-type="song">＋ 行を追加</button>
     </div><!-- /mode-rehearsal -->
 
     <!-- ── mode-content: SCHEDULE（親タブ：CALENDAR/HOTEL/入り時間 を内包） ───────── -->
