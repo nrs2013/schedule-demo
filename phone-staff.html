@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260509.141259">
+<meta name="build-version" content="20260509.142031">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="apple-touch-icon" href="favicon.svg">
 <title>SCHEDULE STUDIO — STAFF</title>
@@ -2519,7 +2519,7 @@
   <button onclick="show('info')"><span class="ico">⚑</span>INFO</button>
   <button onclick="show('arrival')"><span class="ico">◷</span>ARRIVAL</button>
   <button onclick="show('hotel')"><span class="ico">★</span>HOTEL</button>
-  <button data-pass onclick="show('pass')"><span class="ico">⊡</span>PASS</button>
+  <button data-pass onclick="show('pass')"><span class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;"><circle cx="9" cy="14" r="3"/><path d="M12 14h9"/><path d="M17 14v4"/><path d="M20 14v3"/></svg></span>PASS</button>
 </div>
 
 <!-- ツアー日付選択モーダル -->
@@ -2986,8 +2986,28 @@ document.body.classList.add('sort-rh');
 
 // ── ツアー日程（モック・期間→日数自動展開）──
 const TOUR_YEAR = 2026;
-let tourStart = '2026-04-27';
-let tourEnd   = '2026-05-03';
+/* R65e: tourStart/tourEnd を動的化
+   - localStorage から読む（PC 版と共有：schedule-studio:tour:start / end）
+   - 無ければデフォルト '2026-04-27' 〜 '2026-05-03'
+   - 今日が範囲外なら、ツアー期間を「今日を含む」よう自動拡張 */
+const _R65E_LS_TS = 'schedule-studio:tour:start';
+const _R65E_LS_TE = 'schedule-studio:tour:end';
+function _r65eYmd(d){ return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+let tourStart = (function(){
+  try { return localStorage.getItem(_R65E_LS_TS) || '2026-04-27'; }
+  catch(e){ return '2026-04-27'; }
+})();
+let tourEnd = (function(){
+  try { return localStorage.getItem(_R65E_LS_TE) || '2026-05-03'; }
+  catch(e){ return '2026-05-03'; }
+})();
+(function _r65eExtendToToday(){
+  const _t = new Date(); _t.setHours(0,0,0,0);
+  const _ts = new Date(tourStart);
+  const _te = new Date(tourEnd);
+  if (_t < _ts) tourStart = _r65eYmd(_t);
+  if (_t > _te) tourEnd   = _r65eYmd(_t);
+})();
 let tourDays = [];
 let selectedDayIdx = 0;
 
