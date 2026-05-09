@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260510.000100">
+<meta name="build-version" content="20260510.001500">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -6156,7 +6156,7 @@ function show(id) {
       tagsHtml = '<div class="r69-tags-list">' +
         tagKeys.map(function(k, i){
           var lbl = TAG_LABELS[k] || k;
-          return '<span class="r69-tag' + (i === 0 ? ' solid' : '') + '">' + _r69EscHtml(lbl) + '</span>';
+          return '<span class="r69-tag solid">' + _r69EscHtml(lbl) + '</span>';
         }).join('') +
       '</div>';
     }
@@ -6379,13 +6379,16 @@ function show(id) {
     var dowJp = _r69DowJp(d);
     var dowEn = _r69DowEn(d);
 
-    /* 行 padding 自動調整 */
+    /* R79: 行間と文字サイズを 7 段階で自動調整 */
     var _rowCount = songList.length;
-    var _rowPad = 14;
-    if (_rowCount > 14) _rowPad = 11;
-    if (_rowCount > 20) _rowPad = 8;
-    if (_rowCount > 25) _rowPad = 6;
-    if (_rowCount > 35) _rowPad = 3;
+    var _rowPad, _fTitle, _fMain, _fMemo, _fMno, _fTime, _fRh, _fTag, _fLh;
+    if (_rowCount <= 10)        { _rowPad = 24; _fTitle = 14; _fMain = 12; _fMemo = 11; _fMno = 11; _fTime = 13; _fRh = 11; _fTag = 11; _fLh = 1.4; }
+    else if (_rowCount <= 15)   { _rowPad = 18; _fTitle = 13; _fMain = 11; _fMemo = 10; _fMno = 10; _fTime = 12; _fRh = 10; _fTag = 10; _fLh = 1.35; }
+    else if (_rowCount <= 20)   { _rowPad = 14; _fTitle = 12; _fMain = 10; _fMemo = 9.5; _fMno = 9.5; _fTime = 11; _fRh = 9.5; _fTag = 9.5; _fLh = 1.3; }
+    else if (_rowCount <= 25)   { _rowPad = 10; _fTitle = 11; _fMain = 9.5; _fMemo = 9; _fMno = 9; _fTime = 10; _fRh = 9; _fTag = 9; _fLh = 1.25; }
+    else if (_rowCount <= 30)   { _rowPad = 7;  _fTitle = 10; _fMain = 9; _fMemo = 8.5; _fMno = 8.5; _fTime = 9.5; _fRh = 8.5; _fTag = 8.5; _fLh = 1.22; }
+    else if (_rowCount <= 35)   { _rowPad = 5;  _fTitle = 9.5; _fMain = 8.5; _fMemo = 8; _fMno = 8; _fTime = 9; _fRh = 8; _fTag = 8; _fLh = 1.2; }
+    else                         { _rowPad = 3;  _fTitle = 9; _fMain = 8; _fMemo = 7.5; _fMno = 7.5; _fTime = 8.5; _fRh = 7.5; _fTag = 7.5; _fLh = 1.18; }
 
     /* 行 HTML */
     var rowsHtml = songList.map(function(song){ return _r69BuildRowHtml(song, null); }).join('');
@@ -6423,20 +6426,22 @@ function show(id) {
       '#r70pdf-root .r70p-pill .val{font-family:\'JetBrains Mono\',monospace;font-size:12px;font-weight:700;letter-spacing:0.04em;}' +
       '#r70pdf-root table.r70p-tbl{width:100%;border-collapse:collapse;font-family:\'Noto Sans JP\',Inter,sans-serif;font-size:9px;table-layout:fixed;}' +
       '#r70pdf-root .r70p-tbl thead th{font-family:Inter,sans-serif;font-size:6.5px;letter-spacing:0.36em;font-weight:400;color:#b0b0b0;text-transform:uppercase;text-align:left;padding:0 8px 3px;border:none;border-bottom:0.5px solid #1a1a1a;}' +
-      '#r70pdf-root .r70p-tbl tbody td{padding:' + _rowPad + 'px 8px;border:none;border-bottom:0.5px solid #f2f2f2;vertical-align:baseline;line-height:1.15;}' +
+      '#r70pdf-root .r70p-tbl tbody td{padding:' + _rowPad + 'px 8px;border:none;border-bottom:0.5px solid #f2f2f2;vertical-align:baseline;line-height:' + _fLh + ';}' +
       '#r70pdf-root .r70p-tbl tbody tr.is-section .col-title{color:#555;font-weight:400;letter-spacing:0.04em;}' +
-      '#r70pdf-root .r70p-tbl .col-mno{width:42px;font-family:\'JetBrains Mono\',monospace;font-size:7.5px;color:#1a1a1a;letter-spacing:0.1em;text-align:left;font-weight:500;}' +
-      '#r70pdf-root .r70p-tbl .col-title{font-family:\'Noto Sans JP\',sans-serif;font-weight:500;font-size:9px;color:#1a1a1a;letter-spacing:0.005em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}' +
-      '#r70pdf-root .r70p-tbl .col-time{width:48px;font-family:\'JetBrains Mono\',monospace;font-size:8.5px;color:#1a1a1a;letter-spacing:0.04em;text-align:right;font-weight:300;}' +
-      '#r70pdf-root .r70p-tbl .col-rh{width:34px;font-family:\'JetBrains Mono\',monospace;font-size:7.5px;text-align:center;color:#1a1a1a;font-weight:500;}' +
-      '#r70pdf-root .r70p-tbl .col-tags{width:200px;}' +
-      '#r70pdf-root .r70p-tbl .col-memo{font-family:\'Noto Sans JP\',sans-serif;color:#888;font-size:7.5px;line-height:1.2;font-weight:300;letter-spacing:0.02em;}' +
+      '#r70pdf-root .r70p-tbl .col-mno{width:48px;font-family:\'JetBrains Mono\',monospace;font-size:' + _fMno + 'px;color:#1a1a1a;letter-spacing:0.1em;text-align:left;font-weight:500;}' +
+      '#r70pdf-root .r70p-tbl .col-title{font-family:\'Noto Sans JP\',sans-serif;font-weight:500;font-size:' + _fTitle + 'px;color:#1a1a1a;letter-spacing:0.005em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}' +
+      '#r70pdf-root .r70p-tbl .col-time{width:54px;font-family:\'JetBrains Mono\',monospace;font-size:' + _fTime + 'px;color:#1a1a1a;letter-spacing:0.04em;text-align:right;font-weight:300;}' +
+      '#r70pdf-root .r70p-tbl .col-rh{width:38px;font-family:\'JetBrains Mono\',monospace;font-size:' + _fRh + 'px;text-align:center;color:#1a1a1a;font-weight:500;}' +
+      '#r70pdf-root .r70p-tbl .col-tags{width:220px;}' +
+      '#r70pdf-root .r70p-tbl .col-memo{font-family:\'Noto Sans JP\',sans-serif;color:#555;font-size:' + _fMemo + 'px;line-height:1.35;font-weight:300;letter-spacing:0.02em;}' +
       '#r70pdf-root .r70-tags-list{display:flex;flex-wrap:wrap;gap:0;align-items:baseline;}' +
-      '#r70pdf-root .r70-tag{font-family:\'Noto Sans JP\',sans-serif;font-size:7.5px;color:#6a6a6a;font-weight:300;letter-spacing:0.06em;margin-right:6px;}' +
+      '#r70pdf-root .r70-tag{font-family:\'Noto Sans JP\',sans-serif;font-size:' + _fTag + 'px;color:#1a1a1a;font-weight:500;letter-spacing:0.06em;margin-right:6px;}' +
       '#r70pdf-root .r70-tag.solid{color:#1a1a1a;font-weight:500;}' +
-      '#r70pdf-root .r70-tag::after{content:"/";margin-left:6px;color:#d0d0d0;font-weight:300;}' +
+      '#r70pdf-root .r70-tag::after{content:"/";margin-left:6px;color:#1a1a1a;font-weight:400;}' +
       '#r70pdf-root .r70-tag:last-child::after{content:"";}' +
-      '#r70pdf-root .r70p-foot{margin-top:6px;padding-top:4px;border-top:0.5px solid #ececec;display:flex;justify-content:space-between;font-family:\'JetBrains Mono\',monospace;font-size:7px;color:#b0b0b0;letter-spacing:0.24em;text-transform:uppercase;font-weight:300;}' +
+      '#r70pdf-root .r70p-foot{margin-top:10px;padding-top:8px;border-top:1px solid #1a1a1a;display:flex;justify-content:space-between;align-items:baseline;font-family:Inter,sans-serif;font-size:18px;color:#1a1a1a;letter-spacing:0.04em;font-weight:700;}' +
+      '#r70pdf-root .r70p-foot .lbl{font-family:Inter,sans-serif;font-size:9px;letter-spacing:0.32em;font-weight:500;color:#888;text-transform:uppercase;margin-right:8px;}' +
+      '#r70pdf-root .r70p-foot .val{font-family:\'JetBrains Mono\',monospace;font-size:22px;font-weight:700;color:#1a1a1a;letter-spacing:0.04em;}' +
       '</style>' +
       '<div class="r70p-mast">' +
         '<div><div class="r70p-title">Rehearsal Menu</div></div>' /* R77: eyebrow 撤去 */ +
@@ -6456,7 +6461,7 @@ function show(id) {
         '<thead><tr><th class="col-mno">M#</th><th class="col-title">Title</th><th class="col-time">Time</th><th class="col-rh">RH</th><th class="col-tags">Tags</th><th class="col-memo">Memo</th></tr></thead>' +
         '<tbody>' + rowsHtml + '</tbody>' +
       '</table>' +
-      '<div class="r70p-foot"><span>Runtime · ' + _r77TotalRuntime + '</span><span>Songs · ' + songList.length + '</span></div>' /* R77: 合計時間表示 */ +
+      '<div class="r70p-foot"><span><span class="lbl">Runtime</span><span class="val">' + _r77TotalRuntime + '</span></span><span><span class="lbl">Songs</span><span class="val">' + songList.length + '</span></span></div>' /* R79: Runtime を大型黒字に */ +
     '</div>';
 
     /* DOM に一時挿入 → html2pdf で PDF 化 → 削除 */
