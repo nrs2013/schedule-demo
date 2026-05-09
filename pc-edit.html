@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260509.510000">
+<meta name="build-version" content="20260509.520000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -1130,6 +1130,23 @@
   .setlist-tab { white-space: nowrap; }
   .setlist-add-btn { white-space: nowrap; }
   .setlist-tabs-label { white-space: nowrap; }
+
+  /* D162: REHEARSAL タブの全ボタンの高さ・線太さを完全統一 */
+  /* 既存の各クラス CSS の縦余白・border 太さの違いに左右されず、共通の見た目に揃える */
+  /* !important は .pc-btn.pc-add-row 等の既存 !important に勝つために必要 */
+  .pc-rh-header button,
+  .pc-rh-header .setlist-tab {
+    height: 32px !important;
+    box-sizing: border-box !important;
+    border-width: 1px !important;
+    line-height: 1 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    vertical-align: middle !important;
+  }
   .pc-btn {
     padding: 8px 16px;
     background: #1c1b19;
@@ -5486,53 +5503,46 @@ function show(id) {
     }
   });
 
-  // D160 Phase 1: RH# 「1→11」バグの根本対処
-  // 原因：focusin で select() しても、その後の mouseup でカーソル位置が確定し選択が解除される
-  //      → 既存の「1」の隣に新しい「1」が挿入されて「11」になる
-  // 対策：① click（mouseup より後）で select() を再実行
-  //      ② mouseup でも setTimeout(0) で select() を再実行（保険）
-  //      ③ 万が一 select 失敗時の最後の砦：keydown で「1文字目入力時は強制クリア」
-  container.addEventListener('keydown', function(e){
+  // D162: RH# 「1→11」バグを王道で根本対処
+  // ─────────────────────────────────────────────────────────────────
+  // 【原因】<input> をクリックすると、ブラウザは mousedown → focus → mouseup → click の順で発火する。
+  //   focus で el.select() しても、その後の mouseup でブラウザがクリック位置にカーソルを置くため、
+  //   全選択が解除されてしまう。結果、既存値「1」の右に新規「1」が追加されて「11」になる。
+  //
+  // 【正攻法】mousedown で preventDefault() すれば、ブラウザの「mouseup でカーソル位置を設定」自体
+  //   が起こらない。focus と select は手動で行う。Excel/Numbers のセル編集と同じ標準パターン。
+  //   ただし「すでに focus 済み」の場合だけは preventDefault せず、ユーザーがカーソル移動できるようにする。
+  // ─────────────────────────────────────────────────────────────────
+  container.addEventListener('mousedown', function(e){
     const el = e.target;
     if (!el || !el.classList || !el.classList.contains('rh-no')) return;
-    if (e.key === 'Enter') {
+    if (document.activeElement !== el) {
+      // 初回 focus：ブラウザの mouseup を止めて、手動で focus + 全選択
       e.preventDefault();
-      el.blur();
-      return;
+      el.focus();
+      el.select();
     }
-    // ③ 数字キーが押された時、もし「全選択されてない」かつ「既に値がある」なら → クリアしてから入力させる
-    if (/^[0-9]$/.test(e.key) && el.value && el.value.length > 0) {
-      const isAllSelected = (el.selectionStart === 0 && el.selectionEnd === el.value.length);
-      if (!isAllSelected) {
-        // 一旦クリアして上書き入力にする
-        el.value = '';
-      }
-    }
+    // 既に focus 済みの場合は何もしない（ユーザーがカーソル位置を変えたい等のため）
   });
+  // 万が一 mousedown が走らない経路（タブキー移動 / プログラム focus）でも全選択
   container.addEventListener('focusin', function(e){
     const el = e.target;
     if (el && el.classList && el.classList.contains('rh-no')) {
       try { el.select(); } catch(err) {}
     }
   });
-  // ① click は mousedown→focus→mouseup→click の順で発火するので、ここで select() すれば確実
-  container.addEventListener('click', function(e){
+  // Enter で確定（blur）
+  container.addEventListener('keydown', function(e){
     const el = e.target;
-    if (el && el.classList && el.classList.contains('rh-no')) {
-      try { el.select(); } catch(err) {}
+    if (el && el.classList && el.classList.contains('rh-no') && e.key === 'Enter') {
+      e.preventDefault();
+      el.blur();
     }
   });
-  // ② mouseup 直後にも setTimeout で select（保険）
-  container.addEventListener('mouseup', function(e){
-    const el = e.target;
-    if (el && el.classList && el.classList.contains('rh-no')) {
-      setTimeout(function(){ try { el.select(); } catch(err) {} }, 0);
-    }
-  });
+  // 数字以外は即除去
   container.addEventListener('input', function(e){
     const el = e.target;
     if (!el || !el.classList || !el.classList.contains('rh-no')) return;
-    // 数字以外を即時除去（× は blur 時に空扱いに変換）
     const cleaned = (el.value || '').replace(/[^0-9]/g, '');
     if (cleaned !== el.value) {
       const pos = el.selectionStart;
