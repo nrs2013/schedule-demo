@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260509.350000">
+<meta name="build-version" content="20260509.360000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -1362,6 +1362,60 @@
   #pc-btn-rh.primary:hover {
     background: rgba(91,155,213,0.18) !important;
     border-color: rgba(91,155,213,0.75) !important;
+  }
+  /* D157: SET LIST タブ */
+  .setlist-tabs-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    margin-bottom: 6px;
+  }
+  .setlist-tabs {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    flex: 1;
+  }
+  .setlist-tab {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.08);
+    color: #76766f;
+    padding: 6px 14px 5px;
+    border-radius: 6px 6px 0 0;
+    font-family: inherit;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.12s, border-color 0.12s, color 0.12s;
+    border-bottom: none;
+    margin-bottom: -1px;
+  }
+  .setlist-tab:hover { color: #d8d8d4; background: rgba(255,255,255,0.025); }
+  .setlist-tab.active {
+    background: rgba(232,154,74,0.10);
+    border-color: rgba(232,154,74,0.55);
+    border-bottom: 1px solid rgba(232,154,74,0.55);
+    color: #f5d4a8;
+  }
+  .setlist-add-btn {
+    background: transparent;
+    border: 1px dashed rgba(232,154,74,0.45);
+    color: rgba(232,154,74,0.85);
+    padding: 5px 14px;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 11px;
+    letter-spacing: 0.10em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.12s, color 0.12s;
+  }
+  .setlist-add-btn:hover {
+    background: rgba(232,154,74,0.08);
+    color: #f5d4a8;
   }
   /* D155: 「+ 行を追加」ボタンを目立たせる */
   .pc-btn.pc-add-row {
@@ -4376,6 +4430,11 @@
           </div>
         </div>
       </div>
+      <!-- D157 Phase 1: SET LIST タブ（複数セトリ管理） -->
+      <div class="setlist-tabs-row" id="setlist-tabs-row">
+        <div class="setlist-tabs" id="setlist-tabs"><!-- JSで生成 --></div>
+        <button class="setlist-add-btn" id="setlist-add-btn" type="button">＋ セトリ追加</button>
+      </div>
       <div class="pc-rh-actions">
         <!-- D154 Phase 4: 種別ボタン群を撤去、「+ 行を追加」1 個に統合 -->
         <button class="pc-btn pc-add-row" data-add-type="song">＋ 行を追加</button>
@@ -4965,7 +5024,8 @@ function show(id) {
   // R46 診断: 各関数の呼出回数とボタンクリック数を記録
   if (!window.__diag) window.__diag = { click:0, shift:0, change:0, sync:0, render:0 };
   // CDS の LocalSong 形式に揃える（曲データのマスターは CDS、SCHEDULE は rhNo/tags/memo を被せるだけ）
-  const songs = [
+  // D157: songs を let に変更（setlists 切替で参照を差し替えるため）
+  let songs = [
     {id:1,  orderIndex:1,  title:'OPENING VCR',                    durationSeconds:222, isEvent:true,  isMC:false, isEncore:false, isEnd:false, rhNo:1,    tags:['bagari','shoumei','kikou','block'], memo:'場当たり込み・銀テのタイミング確認'},
     {id:2,  orderIndex:2,  title:'BAN',                              durationSeconds:245, isEvent:false, isMC:false, isEncore:false, isEnd:false, rhNo:null, tags:[],                                   memo:''},
     {id:3,  orderIndex:3,  title:'Buddies',                          durationSeconds:258, isEvent:false, isMC:false, isEncore:false, isEnd:false, rhNo:2,    tags:['monitor','oto','kigae'],            memo:'Aメロ前ハケ動線確認'},
@@ -4982,6 +5042,76 @@ function show(id) {
     {id:14, orderIndex:14, title:'Tokyo新景',                         durationSeconds:248, isEvent:false, isMC:false, isEncore:false, isEnd:false, rhNo:null, tags:[],                                   memo:''},
     {id:15, orderIndex:15, title:'Start over!',                       durationSeconds:241, isEvent:false, isMC:false, isEncore:true,  isEnd:false, rhNo:7,    tags:['bagari','shoumei','kikou','block'], memo:'アンコール通し・銀テ2回目・退場まで'}
   ];
+
+  // ── D157 Phase 1: 複数セトリ管理 ──────────────────────────────
+  // setlists = [{id, name, songs}]
+  // activeSetlistId が「今のデフォルトセトリ」（スマホで「今日のセトリ」として読まれる）
+  const __LS_PREFIX_SL = (typeof __LS_PREFIX !== 'undefined') ? __LS_PREFIX : 'schedule-studio:';
+  const LS_KEY_SETLISTS = __LS_PREFIX_SL + 'setlists:v1';
+  const LS_KEY_ACTIVE_SL = __LS_PREFIX_SL + 'activeSetlistId';
+  let setlists = [];
+  let activeSetlistId = null;
+  try {
+    const sls = JSON.parse(localStorage.getItem(LS_KEY_SETLISTS) || 'null');
+    if (Array.isArray(sls) && sls.length > 0) setlists = sls;
+  } catch(e) {}
+  if (setlists.length === 0) {
+    // 初回起動：既存 songs データを SET LIST A として登録
+    setlists = [{
+      id: 'sl-' + Date.now(),
+      name: 'SET LIST A',
+      songs: songs.map(function(s){ return Object.assign({}, s, { tags: s.tags ? s.tags.slice() : [] }); })
+    }];
+    localStorage.setItem(LS_KEY_SETLISTS, JSON.stringify(setlists));
+  }
+  activeSetlistId = localStorage.getItem(LS_KEY_ACTIVE_SL);
+  if (!activeSetlistId || !setlists.find(function(s){ return s.id === activeSetlistId; })) {
+    activeSetlistId = setlists[0].id;
+    localStorage.setItem(LS_KEY_ACTIVE_SL, activeSetlistId);
+  }
+  // songs を active セトリの songs 配列の参照に切替
+  songs = setlists.find(function(s){ return s.id === activeSetlistId; }).songs;
+  function saveSetlists(){
+    localStorage.setItem(LS_KEY_SETLISTS, JSON.stringify(setlists));
+  }
+  function setActiveSetlist(id){
+    const sl = setlists.find(function(s){ return s.id === id; });
+    if (!sl) return;
+    activeSetlistId = id;
+    localStorage.setItem(LS_KEY_ACTIVE_SL, id);
+    songs = sl.songs;
+    renderSetlistTabs();
+    if (typeof render === 'function') render();
+  }
+  function addSetlist(){
+    const nextChar = String.fromCharCode(65 + setlists.length); // A=0 → B, C, D...
+    const newSl = {
+      id: 'sl-' + Date.now(),
+      name: 'SET LIST ' + nextChar,
+      songs: []
+    };
+    setlists.push(newSl);
+    saveSetlists();
+    setActiveSetlist(newSl.id);
+  }
+  function renderSetlistTabs(){
+    const wrap = document.getElementById('setlist-tabs');
+    if (!wrap) return;
+    wrap.innerHTML = setlists.map(function(sl){
+      const cls = sl.id === activeSetlistId ? ' active' : '';
+      const safeName = String(sl.name || 'SET LIST').replace(/[&<>"']/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; });
+      return '<button class="setlist-tab' + cls + '" data-sl-id="' + sl.id + '" type="button">' + safeName + '</button>';
+    }).join('');
+    wrap.querySelectorAll('.setlist-tab').forEach(function(btn){
+      btn.addEventListener('click', function(){ setActiveSetlist(btn.getAttribute('data-sl-id')); });
+    });
+  }
+  // 初回タブ描画（DOM 準備後）
+  setTimeout(function(){
+    renderSetlistTabs();
+    const addBtn = document.getElementById('setlist-add-btn');
+    if (addBtn) addBtn.addEventListener('click', addSetlist);
+  }, 100);
 
   // ── 日付別リハーサル計画（rhNo/tags/memo を日付ごとに保持） ──
   // 曲データ（title/M#/time/種別）は CDS が源で日付関係なく共通
