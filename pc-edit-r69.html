@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260509.144912">
+<meta name="build-version" content="20260509.141259">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -4773,8 +4773,6 @@
         <!-- D115: 曲リストの Excel 取込 / テンプレートDL -->
         <button id="pc-btn-rh-excel" class="pc-btn">📊 Excel取込</button>
         <button id="pc-btn-rh-template" class="pc-btn">📥 テンプレDL</button>
-        <!-- R69: REHEARSAL を A4 縦の印刷ビュー（v7 レイアウト）として別タブで開く -->
-        <button id="pc-btn-rh-print" class="pc-btn" type="button" onclick="openRehearsalPrint()">PRINT</button>
         <input type="file" id="pc-rh-file-input" accept=".xlsx,.xls" style="display:none;">
       </div>
     </div>
@@ -5962,171 +5960,6 @@ function show(id) {
 
   // マスター日付バーから呼ばれる：日付変更時にリハ計画を再レンダー
   window.__rehearsalRender = render;
-
-  /* ========================================================
-     R69: REHEARSAL 印刷ビュー (v7 レイアウト)
-     - 「PRINT」ボタンから呼び出される
-     - 別タブで A4 縦の印刷画面を開く
-     - ブラウザの印刷 (Cmd+P) で PDF 化 or 紙に印刷可能
-     - 曲数が増えても CSS の page-break-inside: avoid で複数ページ自動分割
-     ======================================================== */
-  function _r69EscHtml(s){
-    return String(s == null ? '' : s)
-      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-      .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-  }
-  function _r69FormatDate(d){
-    if (!d) d = new Date();
-    var y = d.getFullYear();
-    var m = String(d.getMonth()+1).padStart(2,'0');
-    var dd = String(d.getDate()).padStart(2,'0');
-    return y + '.' + m + '.' + dd;
-  }
-  function _r69DowEn(d){
-    return ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()];
-  }
-  function _r69DowJp(d){
-    return ['日','月','火','水','木','金','土'][d.getDay()];
-  }
-  function _r69BuildRowHtml(song, setlist){
-    /* M# / Title / Time / RH# / Tags / Memo */
-    var mNo = (typeof computeMNo === 'function') ? computeMNo(song, setlist) : (song.mNo || '');
-    var time = (song.timeStr != null && song.timeStr !== '')
-      ? song.timeStr
-      : ((typeof formatTime === 'function' && song.duration != null) ? formatTime(song.duration) : '');
-    var rh = (song.rhNo == null || song.rhNo === '') ? '—' : String(song.rhNo);
-    var memo = song.memo || '';
-    var title = song.title || '';
-    var isMc = !!song.isMC;
-    var isEn = !!song.isEncore;
-    var isVcr = !!song.isEvent;
-    var isEnd = !!song.isEnd;
-    var sectionClass = (isMc || isEn || isVcr || isEnd) ? ' is-section' : '';
-    var TAG_LABELS = {
-      monitor:'モニター', bagari:'場当たり', oto:'音', koutou:'口答',
-      kigae:'着替', shoumei:'照明', kikou:'機構', block:'ブロック'
-    };
-    var tagsHtml = '';
-    var tagKeys = Array.isArray(song.tags) ? song.tags : [];
-    if (tagKeys.length) {
-      tagsHtml = '<div class="r69-tags-list">' +
-        tagKeys.map(function(k, i){
-          var lbl = TAG_LABELS[k] || k;
-          return '<span class="r69-tag' + (i === 0 ? ' solid' : '') + '">' + _r69EscHtml(lbl) + '</span>';
-        }).join('') +
-      '</div>';
-    }
-    return '<tr class="r69-row' + sectionClass + '">' +
-      '<td class="col-mno">' + _r69EscHtml(mNo) + '</td>' +
-      '<td class="col-title">' + _r69EscHtml(title) + '</td>' +
-      '<td class="col-time">' + _r69EscHtml(time) + '</td>' +
-      '<td class="col-rh">' + _r69EscHtml(rh) + '</td>' +
-      '<td class="col-tags">' + tagsHtml + '</td>' +
-      '<td class="col-memo">' + _r69EscHtml(memo) + '</td>' +
-    '</tr>';
-  }
-  function openRehearsalPrint(){
-    /* 現在の SET LIST を取得 */
-    var sl = (typeof setlists !== 'undefined' && Array.isArray(setlists))
-      ? setlists.find(function(s){ return s.id === activeSetlistId; })
-      : null;
-    var songList = (sl && Array.isArray(sl.songs)) ? sl.songs : (typeof songs !== 'undefined' ? songs : []);
-
-    /* 日付 */
-    var d = (window.__masterDateState && window.__masterDateState.current)
-      ? new Date(window.__masterDateState.current)
-      : new Date();
-    var dateStr = _r69FormatDate(d);
-    var dowEn = _r69DowEn(d);
-    var dowJp = _r69DowJp(d);
-
-    /* 行 HTML を生成（リハ順 or セトリ順は現在の表示順を尊重） */
-    var rowsHtml = songList.map(function(song){ return _r69BuildRowHtml(song, sl); }).join('');
-
-    /* 印刷ビュー HTML */
-    var html = '<!DOCTYPE html>\n<html lang="ja"><head>' +
-      '<meta charset="utf-8">' +
-      '<title>Rehearsal Menu - ' + dateStr + '</title>' +
-      '<link rel="preconnect" href="https://fonts.googleapis.com">' +
-      '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>' +
-      '<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@200;300;400;500;600;700&family=Inter:wght@200;300;400;500;600;700&family=JetBrains+Mono:wght@200;300;400;500&display=swap" rel="stylesheet">' +
-      '<style>' +
-      '* { box-sizing: border-box; }' +
-      'html, body { margin: 0; padding: 0; background: #ffffff; color: #1a1a1a; font-family: \'Inter\', \'Noto Sans JP\', sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; }' +
-      '.r69-page { padding: 18mm 16mm 14mm; max-width: 210mm; margin: 0 auto; }' +
-      '@media screen { body { padding: 24px; background: #f3f3f0; } .r69-page { background: #ffffff; box-shadow: 0 0 0 1px #e8e8e8, 0 14px 36px rgba(0,0,0,0.08); } }' +
-      '@media print { @page { size: A4 portrait; margin: 0; } body { background: #ffffff; padding: 0; } .r69-page { box-shadow: none; max-width: none; } .r69-toolbar { display: none !important; } }' +
-      '.r69-toolbar { max-width: 210mm; margin: 0 auto 12px; display: flex; gap: 10px; }' +
-      '.r69-print-btn { background: #1a1a1a; color: #ffffff; border: none; padding: 9px 22px; font-family: inherit; font-size: 11px; letter-spacing: 0.3em; font-weight: 500; cursor: pointer; text-transform: uppercase; border-radius: 2px; }' +
-      '.r69-print-btn:hover { background: #2a2a2a; }' +
-      '.r69-mast { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 0.5px solid #1a1a1a; padding-bottom: 12px; margin-bottom: 28px; }' +
-      '.r69-mast-l { display: flex; flex-direction: column; gap: 4px; }' +
-      '.r69-eyebrow { font-family: \'Inter\', sans-serif; font-size: 7px; letter-spacing: 0.4em; color: #b0b0b0; font-weight: 500; text-transform: uppercase; }' +
-      '.r69-title { font-family: \'Inter\', sans-serif; font-size: 22px; letter-spacing: 0.16em; color: #1a1a1a; font-weight: 200; text-transform: uppercase; margin: 0; line-height: 1; }' +
-      '.r69-mast-r { text-align: right; display: flex; flex-direction: column; gap: 4px; align-items: flex-end; padding-bottom: 2px; }' +
-      '.r69-date { font-family: \'JetBrains Mono\', monospace; font-size: 13px; letter-spacing: 0.06em; color: #1a1a1a; font-weight: 300; }' +
-      '.r69-dow { font-family: \'Inter\', sans-serif; font-size: 7px; letter-spacing: 0.32em; color: #b0b0b0; font-weight: 500; text-transform: uppercase; }' +
-      'table.r69-tbl { width: 100%; border-collapse: collapse; font-family: \'Noto Sans JP\', \'Inter\', sans-serif; font-size: 9px; table-layout: fixed; }' +
-      '.r69-tbl thead th { font-family: \'Inter\', sans-serif; font-size: 7px; letter-spacing: 0.36em; font-weight: 400; color: #b0b0b0; text-transform: uppercase; text-align: left; padding: 0 8px 8px; border: none; border-bottom: 0.5px solid #1a1a1a; }' +
-      '.r69-tbl tbody td { padding: 12px 8px; border: none; border-bottom: 0.5px solid #f2f2f2; vertical-align: baseline; line-height: 1.5; }' +
-      '.r69-tbl tbody tr:last-child td { border-bottom: 0.5px solid #1a1a1a; }' +
-      '.r69-tbl tbody tr.is-section .col-title { color: #555; font-weight: 400; letter-spacing: 0.04em; }' +
-      '.r69-tbl tbody tr { page-break-inside: avoid; break-inside: avoid; }' +
-      '.r69-tbl thead { display: table-header-group; }' +
-      '.r69-tbl .col-mno { width: 42px; font-family: \'JetBrains Mono\', monospace; font-size: 9px; color: #1a1a1a; letter-spacing: 0.1em; text-align: left; font-weight: 500; }' +
-      '.r69-tbl .col-title { font-family: \'Noto Sans JP\', sans-serif; font-weight: 500; font-size: 12px; color: #1a1a1a; letter-spacing: 0.005em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }' +
-      '.r69-tbl .col-time { width: 50px; font-family: \'JetBrains Mono\', monospace; font-size: 11px; color: #1a1a1a; letter-spacing: 0.04em; text-align: right; font-weight: 300; }' +
-      '.r69-tbl .col-rh { width: 36px; font-family: \'JetBrains Mono\', monospace; font-size: 9px; text-align: center; color: #1a1a1a; font-weight: 500; }' +
-      '.r69-tbl .col-tags { width: 200px; }' +
-      '.r69-tbl .col-memo { font-family: \'Noto Sans JP\', sans-serif; color: #888; font-size: 9px; line-height: 1.5; font-weight: 300; letter-spacing: 0.02em; }' +
-      '.r69-tags-list { display: flex; flex-wrap: wrap; gap: 0; align-items: baseline; }' +
-      '.r69-tag { font-family: \'Noto Sans JP\', sans-serif; font-size: 9px; color: #6a6a6a; font-weight: 300; letter-spacing: 0.06em; margin-right: 6px; }' +
-      '.r69-tag.solid { color: #1a1a1a; font-weight: 500; }' +
-      '.r69-tag::after { content: "/"; margin-left: 6px; color: #d0d0d0; font-weight: 300; }' +
-      '.r69-tag:last-child::after { content: ""; }' +
-      '.r69-foot { margin-top: 22px; padding-top: 8px; border-top: 0.5px solid #ececec; display: flex; justify-content: space-between; font-family: \'JetBrains Mono\', monospace; font-size: 7px; color: #b0b0b0; letter-spacing: 0.24em; text-transform: uppercase; font-weight: 300; }' +
-      '</style></head><body>' +
-      '<div class="r69-toolbar"><button class="r69-print-btn" onclick="window.print()">Print</button></div>' +
-      '<div class="r69-page">' +
-      '<div class="r69-mast">' +
-        '<div class="r69-mast-l">' +
-          '<span class="r69-eyebrow">Schedule Studio</span>' +
-          '<p class="r69-title">Rehearsal Menu</p>' +
-        '</div>' +
-        '<div class="r69-mast-r">' +
-          '<span class="r69-dow">' + dowEn + '</span>' +
-          '<span class="r69-date">' + dateStr + ' (' + dowJp + ')</span>' +
-        '</div>' +
-      '</div>' +
-      '<table class="r69-tbl">' +
-        '<thead><tr>' +
-          '<th class="col-mno">M#</th>' +
-          '<th class="col-title">Title</th>' +
-          '<th class="col-time">Time</th>' +
-          '<th class="col-rh">RH</th>' +
-          '<th class="col-tags">Tags</th>' +
-          '<th class="col-memo">Memo</th>' +
-        '</tr></thead>' +
-        '<tbody>' + rowsHtml + '</tbody>' +
-      '</table>' +
-      '<div class="r69-foot">' +
-        '<span>Printed ' + _r69FormatDate(new Date()) + '</span>' +
-        '<span>Schedule Studio · A4</span>' +
-      '</div>' +
-      '</div>' +
-      '</body></html>';
-
-    var w = window.open('', '_blank');
-    if (!w) {
-      alert('ポップアップがブロックされました。ブラウザのポップアップを許可してください。');
-      return;
-    }
-    w.document.open();
-    w.document.write(html);
-    w.document.close();
-  }
-  /* expose */
-  window.openRehearsalPrint = openRehearsalPrint;
 
   // R47: 編集中の rhNo/memo/title セルの値を、現在の日付の dict に明示保存するヘルパー。
   // 日付切替時、blur ハンドラだけに頼らず確実に値が保存されるよう保険として追加。
