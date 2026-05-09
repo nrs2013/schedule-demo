@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260509.ARTIST.12">
+<meta name="build-version" content="20260509.ARTIST.13">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="apple-touch-icon" href="favicon.svg">
 <title>SCHEDULE STUDIO — ARTIST</title>
@@ -1865,6 +1865,10 @@
   .cal-day-sheet-backdrop, [onclick*="closeCalDaySheet"], [onclick*="show("] {
     display: revert !important;
     pointer-events: auto !important;
+  }
+  /* D151: スマホ CALENDAR は閲覧のみ — 日付タップで開く編集シートを完全撤去 */
+  .cal-day-sheet, .cal-day-sheet.show {
+    display: none !important;
   }
 </style>
 
