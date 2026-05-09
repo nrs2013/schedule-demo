@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260509.500000">
+<meta name="build-version" content="20260509.510000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -1404,37 +1404,30 @@
   }
   #pc-btn-rh-excel:hover,
   #pc-btn-rh-template:hover { opacity: 1; }
-  /* D160 Phase 2: SET LIST タブ — 青系で他のオレンジ系ボタンと完全に差別化 + 独立行 */
+  /* D161: SET LIST タブ — 緑系で他のオレンジ系ボタンと差別化 / テクリハ達と同じ行のセンターに配置 */
   .setlist-tabs-row {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 10px 20px 8px;
-    margin: 0 0 4px;
-    background: linear-gradient(180deg, rgba(91,155,213,0.04) 0%, rgba(91,155,213,0.00) 100%);
-    border-bottom: 1px solid rgba(91,155,213,0.10);
+    justify-content: center; /* センター配置 */
+    gap: 6px;
     flex-wrap: wrap;
-  }
-  .setlist-tabs-label {
-    font-family: 'Bebas Neue', 'Noto Sans JP', sans-serif;
-    font-size: 11px;
-    letter-spacing: 0.32em;
-    color: rgba(168,212,232,0.65);
-    font-weight: 400;
-    margin-right: 4px;
+    /* 同じ行に置くので margin/padding/border は撤去 */
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    border: none;
   }
   .setlist-tabs {
     display: flex;
     gap: 6px;
     flex-wrap: wrap;
-    flex: 1;
-    min-width: 0;
+    align-items: center;
   }
   .setlist-tab {
     position: relative;
-    background: rgba(91,155,213,0.05);
-    border: 1px solid rgba(91,155,213,0.22);
-    color: #88a3b8;
+    background: rgba(110,194,126,0.06);
+    border: 1px solid rgba(110,194,126,0.28);
+    color: #8fb89a;
     padding: 6px 28px 5px 14px; /* 右側に ✕ ぶん余白 */
     border-radius: 6px;
     font-family: inherit;
@@ -1444,12 +1437,12 @@
     cursor: pointer;
     transition: background 0.12s, border-color 0.12s, color 0.12s;
   }
-  .setlist-tab:hover { color: #d8e8f5; background: rgba(91,155,213,0.10); border-color: rgba(91,155,213,0.40); }
+  .setlist-tab:hover { color: #d8f0d8; background: rgba(110,194,126,0.12); border-color: rgba(110,194,126,0.50); }
   .setlist-tab.active {
-    background: rgba(91,155,213,0.18);
-    border-color: #5b9bd5;
-    color: #e8f3fc;
-    box-shadow: 0 0 0 1px rgba(91,155,213,0.35);
+    background: rgba(110,194,126,0.18);
+    border-color: #6ec27e;
+    color: #e8f7e8;
+    box-shadow: 0 0 0 1px rgba(110,194,126,0.35);
   }
   /* タブ内 ✕ ボタン（削除） */
   .setlist-tab-x {
@@ -1463,7 +1456,7 @@
     text-align: center;
     background: transparent;
     border: none;
-    color: rgba(168,212,232,0.45);
+    color: rgba(180,220,180,0.45);
     font-size: 14px;
     font-weight: 400;
     cursor: pointer;
@@ -1475,8 +1468,8 @@
   .setlist-tab.is-only .setlist-tab-x { display: none; } /* 最後の1個は削除不可 */
   .setlist-add-btn {
     background: transparent;
-    border: 1px dashed rgba(91,155,213,0.40);
-    color: rgba(168,212,232,0.85);
+    border: 1px dashed rgba(110,194,126,0.45);
+    color: rgba(180,220,180,0.85);
     padding: 5px 14px;
     border-radius: 6px;
     font-family: inherit;
@@ -1487,9 +1480,9 @@
     transition: background 0.12s, color 0.12s, border-color 0.12s;
   }
   .setlist-add-btn:hover {
-    background: rgba(91,155,213,0.08);
-    color: #d8e8f5;
-    border-color: rgba(91,155,213,0.70);
+    background: rgba(110,194,126,0.10);
+    color: #d8f0d8;
+    border-color: rgba(110,194,126,0.75);
   }
   /* D155: 「+ 行を追加」ボタンを目立たせる */
   .pc-btn.pc-add-row {
@@ -4513,12 +4506,6 @@
 
     <!-- ── mode-content: REHEARSAL（既存内容） ───────── -->
     <div class="mode-content" id="mode-rehearsal">
-    <!-- D160 Phase 2: SET LIST タブ行を独立化（pc-rh-header の外）+ 青系で差別化 -->
-    <div class="setlist-tabs-row" id="setlist-tabs-row">
-      <div class="setlist-tabs-label">SET LIST</div>
-      <div class="setlist-tabs" id="setlist-tabs"><!-- JSで生成 --></div>
-      <button class="setlist-add-btn" id="setlist-add-btn" type="button">＋ セトリ追加</button>
-    </div>
     <div class="pc-rh-header">
       <div class="pc-rh-title-block">
         <div class="pc-rh-title">
@@ -4531,6 +4518,11 @@
             <button id="pc-btn-rh"  class="pc-btn">リハ順</button>
           </div>
         </div>
+      </div>
+      <!-- D161: SET LIST 行を「テクリハ達と同じ行のセンター」に戻す（緑系） -->
+      <div class="setlist-tabs-row" id="setlist-tabs-row">
+        <div class="setlist-tabs" id="setlist-tabs"><!-- JSで生成 --></div>
+        <button class="setlist-add-btn" id="setlist-add-btn" type="button">＋ セトリ追加</button>
       </div>
       <div class="pc-rh-actions">
         <!-- D154 Phase 4: 種別ボタン群を撤去、「+ 行を追加」1 個に統合 -->
