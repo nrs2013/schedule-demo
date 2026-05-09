@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260509.225105">
+<meta name="build-version" content="20260509.225954">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -7494,6 +7494,9 @@ function show(id) {
         const field = inp.getAttribute('data-field');
         showTimes[venue][field] = inp.value;
         saveShowTimes();
+        /* R75: DAY SCHEDULE と マスター日付バーも同期更新 */
+        if (typeof renderDaySchedule === 'function') renderDaySchedule();
+        if (typeof window.__refreshMasterDateBar === 'function') window.__refreshMasterDateBar();
       });
     });
 
@@ -7832,10 +7835,39 @@ function show(id) {
       + '</div>';
   }
 
+  /* R75: DOOR OPEN / SHOW TIME ラベルを判定するヘルパー */
+  function _r75IsDoorLabel(label) {
+    var s = String(label || '').toUpperCase();
+    return s.indexOf('DOOR') >= 0;
+  }
+  function _r75IsShowLabel(label) {
+    var s = String(label || '').toUpperCase();
+    return s.indexOf('SHOW') >= 0 && s.indexOf('SHOW') === s.lastIndexOf('SHOW');
+  }
+  /* R75: 現在の会場（masterDateState.current の日付に紐付く venue）を取得 */
+  function _r75GetCurrentVenue() {
+    try {
+      if (typeof masterDateState === 'undefined' || !masterDateState.current) return '';
+      if (typeof fmtMasterKey !== 'function' || typeof getTourInfo !== 'function') return '';
+      var k = fmtMasterKey(masterDateState.current);
+      var info = getTourInfo(k);
+      return (info && info.venue) ? info.venue : '';
+    } catch(e) { return ''; }
+  }
+
   function renderDaySchedule(){
     const list = document.getElementById('day-event-list');
     if (!list) return;
     const events = getDayEvents(masterDateState.current);
+    /* R75: DOOR OPEN / SHOW TIME ラベルの行は showTimes[venue] から上書き表示 */
+    var venue = _r75GetCurrentVenue();
+    var st = (typeof showTimes !== 'undefined' && venue && showTimes[venue]) ? showTimes[venue] : null;
+    if (st) {
+      events.forEach(function(ev){
+        if (_r75IsDoorLabel(ev.label) && st.door) ev.startTime = st.door;
+        else if (_r75IsShowLabel(ev.label) && st.show) ev.startTime = st.show;
+      });
+    }
     const sorted = events.slice().sort(function(a,b){
       return (a.startTime || '99:99').localeCompare(b.startTime || '99:99');
     });
@@ -7863,7 +7895,18 @@ function show(id) {
       const mm = (mSel && mSel.value) ? mSel.value : '';
       ev[field] = (hh && mm) ? (hh + ':' + mm) : '';
       saveDayEvents();
-      if (field === 'startTime') renderDaySchedule();
+      /* R75: DOOR/SHOW ラベルの startTime 変更は showTimes に書き戻し */
+      if (field === 'startTime') {
+        var _v = _r75GetCurrentVenue();
+        if (_v) {
+          if (typeof showTimes !== 'undefined' && !showTimes[_v]) showTimes[_v] = { door: '17:30', show: '18:30' };
+          if (_r75IsDoorLabel(ev.label) && showTimes[_v]) { showTimes[_v].door = ev[field]; if (typeof saveShowTimes === 'function') saveShowTimes(); }
+          else if (_r75IsShowLabel(ev.label) && showTimes[_v]) { showTimes[_v].show = ev[field]; if (typeof saveShowTimes === 'function') saveShowTimes(); }
+        }
+        renderDaySchedule();
+        /* マスター日付バーのチップも更新 */
+        if (typeof window.__refreshMasterDateBar === 'function') window.__refreshMasterDateBar();
+      }
       return;
     }
     // 従来通り（label など）
@@ -7871,7 +7914,17 @@ function show(id) {
     if (!field) return;
     ev[field] = e.target.value;
     saveDayEvents();
-    if (field === 'startTime') renderDaySchedule();
+    if (field === 'startTime') {
+      /* R75: DOOR/SHOW ラベルの startTime 変更は showTimes に書き戻し（label 更新時も） */
+      var _v2 = _r75GetCurrentVenue();
+      if (_v2) {
+        if (typeof showTimes !== 'undefined' && !showTimes[_v2]) showTimes[_v2] = { door: '17:30', show: '18:30' };
+        if (_r75IsDoorLabel(ev.label) && showTimes[_v2]) { showTimes[_v2].door = ev[field]; if (typeof saveShowTimes === 'function') saveShowTimes(); }
+        else if (_r75IsShowLabel(ev.label) && showTimes[_v2]) { showTimes[_v2].show = ev[field]; if (typeof saveShowTimes === 'function') saveShowTimes(); }
+      }
+      renderDaySchedule();
+      if (typeof window.__refreshMasterDateBar === 'function') window.__refreshMasterDateBar();
+    }
   });
 
   // 追加・削除
