@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
-<title>SCHEDULE STUDIO Mocks</title>
+<title>SCHEDULE STUDIO</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -18,151 +18,267 @@
     color: #e8e8e2;
     font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
     min-height: 100vh;
-    padding: 24px 16px 60px;
+    padding: 48px 20px 60px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
   }
   .wrap {
     max-width: 460px;
-    margin: 0 auto;
+    width: 100%;
+    text-align: center;
   }
   .brand {
     font-size: 11px;
     letter-spacing: 0.4em;
     color: rgba(232,154,74,0.85);
     font-weight: 800;
-    text-align: center;
-    margin-bottom: 8px;
+    margin-bottom: 20px;
   }
-  h1 {
-    font-size: 22px;
+  .concert-title {
+    font-size: 26px;
     font-weight: 700;
-    color: #e8e8e2;
-    text-align: center;
-    margin: 0 0 6px;
-    letter-spacing: 0.02em;
+    color: #f0e0c8;
+    line-height: 1.4;
+    letter-spacing: 0.04em;
+    margin: 0 0 8px;
+    word-break: break-word;
   }
-  .subtitle {
-    text-align: center;
+  .concert-sub {
     color: #76766f;
     font-size: 12px;
-    margin-bottom: 28px;
+    margin-bottom: 44px;
     letter-spacing: 0.05em;
   }
-  .mock-card {
-    display: block;
+  .role-row {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 28px;
+  }
+  .role-btn {
+    flex: 1;
+    min-width: 140px;
     background: #242320;
     border: 1px solid #2c2a27;
-    border-radius: 10px;
-    padding: 18px 20px;
-    margin-bottom: 12px;
-    text-decoration: none;
-    color: inherit;
-    transition: all 0.15s;
-  }
-  .mock-card:hover {
-    border-color: #e89a4a;
-    background: #2a2018;
-  }
-  .mock-card-head {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 6px;
-  }
-  .mock-card-title {
-    font-size: 16px;
-    font-weight: 700;
+    border-radius: 12px;
+    padding: 22px 16px;
     color: #e8e8e2;
+    text-decoration: none;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+    text-align: center;
   }
-  .mock-card-tag {
+  .role-btn:hover { border-color: #e89a4a; background: #2a2018; }
+  .role-btn:active { transform: scale(0.98); }
+  .role-icon {
+    font-size: 30px;
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+  .role-label {
+    font-size: 13px;
+    letter-spacing: 0.2em;
+    font-weight: 700;
+    color: #f0e0c8;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .role-desc {
+    font-size: 11px;
+    color: #76766f;
+    letter-spacing: 0.05em;
+  }
+  .role-btn.artist .role-label { color: #f5d4a8; }
+  .footer {
+    margin-top: 24px;
+    color: #5a5a54;
     font-size: 10px;
     letter-spacing: 0.2em;
-    background: rgba(232,154,74,0.15);
-    color: #e89a4a;
-    border: 1px solid #e89a4a;
-    padding: 3px 10px;
-    border-radius: 99px;
-    font-weight: 700;
+    text-transform: uppercase;
   }
-  .mock-card-tag.pc { background: rgba(91,155,213,0.15); color: #a8d4e8; border-color: #5b9bd5; }
-  .mock-card-desc {
-    font-size: 12px;
-    color: #a8a8a0;
-    line-height: 1.6;
+
+  /* ARTIST パスワード入力モーダル */
+  .pass-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
   }
-  .mock-card-arrow {
-    text-align: right;
-    font-size: 18px;
-    color: #e89a4a;
-    margin-top: 6px;
-  }
-  .footer {
-    margin-top: 28px;
+  .pass-modal.show { display: flex; }
+  .pass-modal-body {
+    background: #242320;
+    border: 1px solid #2c2a27;
+    border-radius: 12px;
+    padding: 28px 24px;
+    width: 100%;
+    max-width: 320px;
     text-align: center;
-    color: #5a5a54;
-    font-size: 11px;
-    line-height: 1.7;
   }
-  .footer a { color: #76766f; text-decoration: none; }
+  .pass-modal-title {
+    font-size: 13px;
+    color: #d8d8d4;
+    letter-spacing: 0.4em;
+    font-weight: 600;
+    margin-bottom: 20px;
+  }
+  .pass-modal-input {
+    width: 100%;
+    background: #14130f;
+    border: 1px solid #2c2a27;
+    color: #f5d4a8;
+    font-size: 24px;
+    text-align: center;
+    letter-spacing: 0.5em;
+    padding: 14px 0;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    font-family: inherit;
+  }
+  .pass-modal-input:focus { outline: none; border-color: rgba(232,154,74,0.55); }
+  .pass-modal-row { display: flex; gap: 10px; }
+  .pass-modal-btn {
+    flex: 1;
+    padding: 12px 0;
+    border-radius: 8px;
+    font-size: 13px;
+    letter-spacing: 0.2em;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    border: 1px solid #2c2a27;
+    background: transparent;
+    color: #a8a8a0;
+  }
+  .pass-modal-btn.primary {
+    background: #e89a4a;
+    border-color: #e89a4a;
+    color: #1a1108;
+  }
+  .pass-modal-err {
+    color: #d08888;
+    font-size: 11px;
+    margin-top: 10px;
+    min-height: 14px;
+  }
 </style>
 
 <div class="wrap">
   <div class="brand">SCHEDULE STUDIO</div>
-  <h1>リハーサルモード モック</h1>
-  <div class="subtitle">2026.04.29 — 評価用</div>
+  <h1 class="concert-title" id="concert-title">CONCERT</h1>
+  <div class="concert-sub" id="concert-sub">スマホでご覧ください</div>
 
-  <a class="mock-card" href="phone-staff.html">
-    <div class="mock-card-head">
-      <div class="mock-card-title">📱 スマホ STAFF 版</div>
-      <span class="mock-card-tag">STAFF</span>
-    </div>
-    <div class="mock-card-desc">
-      スタッフ用のスマホ閲覧画面。<br>
-      RH / INFO / 入り時間 / HOTEL / PASS
-    </div>
-    <div class="mock-card-arrow">→</div>
-  </a>
+  <div class="role-row">
+    <a class="role-btn staff" href="phone-staff.html">
+      <div class="role-icon">📱</div>
+      <div class="role-label">STAFF</div>
+      <div class="role-desc">そのまま入れます</div>
+    </a>
+    <button type="button" class="role-btn artist" onclick="openArtistPass()">
+      <div class="role-icon">🎤</div>
+      <div class="role-label">ARTIST</div>
+      <div class="role-desc">パスワードが必要</div>
+    </button>
+  </div>
 
-  <a class="mock-card" href="phone-artist.html">
-    <div class="mock-card-head">
-      <div class="mock-card-title">🎤 スマホ ARTIST 版</div>
-      <span class="mock-card-tag">ARTIST</span>
-    </div>
-    <div class="mock-card-desc">
-      アーティスト用のスマホ閲覧画面。<br>
-      本日 / セトリ / 連絡 の3タブ
-    </div>
-    <div class="mock-card-arrow">→</div>
-  </a>
+  <div class="footer">SCHEDULE STUDIO</div>
+</div>
 
-  <a class="mock-card" href="pc-edit.html">
-    <div class="mock-card-head">
-      <div class="mock-card-title">🖥 PC編集版（リハ進行表）</div>
-      <span class="mock-card-tag pc">PC EDITOR</span>
+<!-- ARTIST パスワード入力モーダル -->
+<div class="pass-modal" id="artist-pass-modal" onclick="if(event.target===this)closeArtistPass()">
+  <div class="pass-modal-body">
+    <div class="pass-modal-title">ARTIST PASSWORD</div>
+    <input type="password" inputmode="numeric" maxlength="8" class="pass-modal-input" id="artist-pass-input" placeholder="••••" />
+    <div class="pass-modal-row">
+      <button type="button" class="pass-modal-btn" onclick="closeArtistPass()">キャンセル</button>
+      <button type="button" class="pass-modal-btn primary" onclick="checkArtistPass()">入る</button>
     </div>
-    <div class="mock-card-desc">
-      のむさんが組む側。<br>
-      M# / TITLE / TIME / RH# / TAGS / MEMO の編集画面
-    </div>
-    <div class="mock-card-arrow">→</div>
-  </a>
-
-  <a class="mock-card" href="pc-hotel.html">
-    <div class="mock-card-head">
-      <div class="mock-card-title">🏨 PC編集版（HOTEL）</div>
-      <span class="mock-card-tag pc">PC EDITOR</span>
-    </div>
-    <div class="mock-card-desc">
-      Excel取込・ホテル情報・タクシー配車管理。<br>
-      列順: SECTION / NAME / HOTEL
-    </div>
-    <div class="mock-card-arrow">→</div>
-  </a>
-
-  <div class="footer">
-    Mock by Claude<br>
-    本物が出来たらこのページは下げてOK
+    <div class="pass-modal-err" id="artist-pass-err"></div>
   </div>
 </div>
+
+<script>
+  /* R66: index.html を「CONCERT TITLE + STAFF/ARTIST ボタン」入口に改修
+     - CONCERT TITLE は localStorage から（無ければ仮 "CONCERT"）
+     - STAFF: そのまま phone-staff.html へ
+     - ARTIST: モーダルでパスワード入力 → 正しければ phone-artist.html?authed=1 へ
+     - PC EDITOR / PC HOTEL のカードは撤去（会社の人は別途 URL でアクセス） */
+
+  // 1. CONCERT TITLE の取得（localStorage の "schedule-studio:current-concert" 等から）
+  (function loadConcertTitle(){
+    try {
+      // pc-edit.html が保存してる「現在のコンサート」情報を読む（後方互換で複数のキーを試す）
+      var keys = [
+        'schedule-studio:current-concert-title',
+        'schedule-studio:concert-title',
+        'schedule-studio:tour:title'
+      ];
+      for (var i = 0; i < keys.length; i++) {
+        var v = localStorage.getItem(keys[i]);
+        if (v && v.length > 0) {
+          document.getElementById('concert-title').textContent = v;
+          return;
+        }
+      }
+      // URL パラメータ ?title=... も試す
+      var m = location.search.match(/[?&]title=([^&]+)/);
+      if (m) {
+        document.getElementById('concert-title').textContent = decodeURIComponent(m[1]);
+      }
+      // どれも無ければデフォルトの "CONCERT" が表示される
+    } catch(e) {}
+  })();
+
+  // 2. ARTIST パスワード判定
+  // 現状は仮で "2222"（後方互換）。
+  // 本番では pc-edit.html で設定した「ARTIST パスワード」を localStorage から読む。
+  function getArtistPassword(){
+    try {
+      var keys = [
+        'schedule-studio:current-artist-password',
+        'schedule-studio:artist-password'
+      ];
+      for (var i = 0; i < keys.length; i++) {
+        var v = localStorage.getItem(keys[i]);
+        if (v && v.length > 0) return v;
+      }
+    } catch(e) {}
+    return '2222'; // デフォルト
+  }
+
+  function openArtistPass(){
+    document.getElementById('artist-pass-modal').classList.add('show');
+    document.getElementById('artist-pass-input').value = '';
+    document.getElementById('artist-pass-err').textContent = '';
+    setTimeout(function(){ document.getElementById('artist-pass-input').focus(); }, 50);
+  }
+  function closeArtistPass(){
+    document.getElementById('artist-pass-modal').classList.remove('show');
+  }
+  function checkArtistPass(){
+    var v = document.getElementById('artist-pass-input').value;
+    var ok = getArtistPassword();
+    if (v === ok) {
+      // 正しければ ARTIST ページへ。?authed=1 で自動 unlock
+      location.href = 'phone-artist.html?authed=1';
+    } else {
+      document.getElementById('artist-pass-err').textContent = 'パスワードが違います';
+      document.getElementById('artist-pass-input').value = '';
+      document.getElementById('artist-pass-input').focus();
+    }
+  }
+  // Enter キーでも認証
+  document.getElementById('artist-pass-input').addEventListener('keydown', function(e){
+    if (e.key === 'Enter') { e.preventDefault(); checkArtistPass(); }
+  });
+</script>
 
 </body>
 </html>

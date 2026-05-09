@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<title>SCHEDULE STUDIO Mocks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0;
+    background: #1a1918;
+    color: #e8e8e2;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+    min-height: 100vh;
+    padding: 24px 16px 60px;
+  }
+  .wrap {
+    max-width: 460px;
+    margin: 0 auto;
+  }
+  .brand {
+    font-size: 11px;
+    letter-spacing: 0.4em;
+    color: rgba(232,154,74,0.85);
+    font-weight: 800;
+    text-align: center;
+    margin-bottom: 8px;
+  }
+  h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: #e8e8e2;
+    text-align: center;
+    margin: 0 0 6px;
+    letter-spacing: 0.02em;
+  }
+  .subtitle {
+    text-align: center;
+    color: #76766f;
+    font-size: 12px;
+    margin-bottom: 28px;
+    letter-spacing: 0.05em;
+  }
+  .mock-card {
+    display: block;
+    background: #242320;
+    border: 1px solid #2c2a27;
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin-bottom: 12px;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.15s;
+  }
+  .mock-card:hover {
+    border-color: #e89a4a;
+    background: #2a2018;
+  }
+  .mock-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  .mock-card-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #e8e8e2;
+  }
+  .mock-card-tag {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    background: rgba(232,154,74,0.15);
+    color: #e89a4a;
+    border: 1px solid #e89a4a;
+    padding: 3px 10px;
+    border-radius: 99px;
+    font-weight: 700;
+  }
+  .mock-card-tag.pc { background: rgba(91,155,213,0.15); color: #a8d4e8; border-color: #5b9bd5; }
+  .mock-card-desc {
+    font-size: 12px;
+    color: #a8a8a0;
+    line-height: 1.6;
+  }
+  .mock-card-arrow {
+    text-align: right;
+    font-size: 18px;
+    color: #e89a4a;
+    margin-top: 6px;
+  }
+  .footer {
+    margin-top: 28px;
+    text-align: center;
+    color: #5a5a54;
+    font-size: 11px;
+    line-height: 1.7;
+  }
+  .footer a { color: #76766f; text-decoration: none; }
+</style>
+
+<div class="wrap">
+  <div class="brand">SCHEDULE STUDIO</div>
+  <h1>リハーサルモード モック</h1>
+  <div class="subtitle">2026.04.29 — 評価用</div>
+
+  <a class="mock-card" href="phone-staff.html">
+    <div class="mock-card-head">
+      <div class="mock-card-title">📱 スマホ STAFF 版</div>
+      <span class="mock-card-tag">STAFF</span>
+    </div>
+    <div class="mock-card-desc">
+      スタッフ用のスマホ閲覧画面。<br>
+      RH / INFO / 入り時間 / HOTEL / PASS
+    </div>
+    <div class="mock-card-arrow">→</div>
+  </a>
+
+  <a class="mock-card" href="phone-artist.html">
+    <div class="mock-card-head">
+      <div class="mock-card-title">🎤 スマホ ARTIST 版</div>
+      <span class="mock-card-tag">ARTIST</span>
+    </div>
+    <div class="mock-card-desc">
+      アーティスト用のスマホ閲覧画面。<br>
+      本日 / セトリ / 連絡 の3タブ
+    </div>
+    <div class="mock-card-arrow">→</div>
+  </a>
+
+  <a class="mock-card" href="pc-edit.html">
+    <div class="mock-card-head">
+      <div class="mock-card-title">🖥 PC編集版（リハ進行表）</div>
+      <span class="mock-card-tag pc">PC EDITOR</span>
+    </div>
+    <div class="mock-card-desc">
+      のむさんが組む側。<br>
+      M# / TITLE / TIME / RH# / TAGS / MEMO の編集画面
+    </div>
+    <div class="mock-card-arrow">→</div>
+  </a>
+
+  <a class="mock-card" href="pc-hotel.html">
+    <div class="mock-card-head">
+      <div class="mock-card-title">🏨 PC編集版（HOTEL）</div>
+      <span class="mock-card-tag pc">PC EDITOR</span>
+    </div>
+    <div class="mock-card-desc">
+      Excel取込・ホテル情報・タクシー配車管理。<br>
+      列順: SECTION / NAME / HOTEL
+    </div>
+    <div class="mock-card-arrow">→</div>
+  </a>
+
+  <div class="footer">
+    Mock by Claude<br>
+    本物が出来たらこのページは下げてOK
+  </div>
+</div>
+
+</body>
+</html>
