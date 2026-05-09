@@ -230,4 +230,90 @@ b9b3724 D68: move-pill で掴んだセルを sourceDate として記録
 
 ---
 
+## 11. 2026-05-09 セッション末尾申し送り（D157〜D178）
+
+### 今回追加した主な機能・修正
+
+| Rev | 内容 |
+|---|---|
+| D157 | **複数セトリ機能**（SET LIST A/B/C タブ + 切替 + 追加） |
+| D158 | RH# 22バグ + M1/M8 ハイライト + M# データ保持 |
+| D159 | ツアータイトル編集をトップだけに / TOP戻るボタン（鍵→「← TOP」テキスト） |
+| D160 | RH# 1→11 バグ click+mouseup 対処 / SET LIST 行を独立化＋✕削除 / flex-wrap |
+| D161 | SET LIST タブを緑系に変更＋テクリハと同じ行のセンター |
+| D162 | REHEARSAL タブの全ボタン高さ・線太さ完全統一 / RH# **mousedown preventDefault** で 1→11 を根本対処 |
+| D163 | SET LIST border 全タブ統一 |
+| D164 | +行を追加 border opacity 統一 |
+| D165〜D169 | **入り時間 PC版** を J案 → ホイール → J案1窓 と試行錯誤、最終的に **「1つの枠 + H/M ラベル付き透明 select」** に確定 |
+| D170 | SET LIST 文字色を元のベージュに復帰 |
+| D175 | SET LIST × ボタンと + セトリ追加 の **D157 で混入していた緑文字**（rgba(180,220,180,...)）を撤去 |
+| D176〜D177 | TEST/REHEARSAL active/テクリハ active を順次 #d8a878 → #e89a4a などアンバーへ |
+| D178 | 比較用 `pc-edit-old-d156.html` を別 URL でデプロイ |
+
+### **超重要・未解決：「文字色が緑っぽく見える」問題**
+
+**ユーザーの一貫した訴え**：
+- D157（SET LIST A/B 追加）以降、**画面全体の白文字・グレー文字が緑寄りに見える**
+- 「絶対に何かが同時に文字全体にかかった」と確信
+- TEST タイトル、REHEARSAL active タブ文字、テクリハ文字 などピンポイントで指摘
+- シークレットウィンドウで見ても変わらないと明言
+
+**僕の調査結果（不十分）**：
+- D156→D177 の git diff で CSS 全変更を grep
+  - `filter` / `opacity` / `mix-blend-mode` / `backdrop-filter` / `mask` → 全体に効くものは無し
+  - `body` / `html` / `*` / `:root` セレクタへの色追加 → 無し
+  - CSS変数（`--xxx`）の追加 → 無し
+  - `font-smoothing` / `text-shadow` 等 → 無し
+  - inline `style="color: ..."` → 無し
+- 唯一見つかった「緑文字の本当の元凶」：D157 で setlist-tab-x / setlist-add-btn の `color: rgba(180,220,180, ...)` （= G が最大値の **本物の緑**）→ D175 で撤去済み
+- Chrome MCP で実機確認した結果：build-version は最新が反映、TEST color = #e89a4a で間違いなく修正後の値
+
+**それでもユーザーは「変わってない」と言い続ける**
+
+### 次セッションでまずやるべきこと（最優先）
+
+1. **ユーザーの環境を1個ずつ確認**
+   - Chrome 拡張機能（特に Dark Reader, Stylish, Stylus, ColorZilla 等の CSS 注入系）
+   - Mac の Night Shift / True Tone の ON/OFF
+   - モニターのカラープロファイル
+   - ブラウザのテーマ拡張
+2. **Chrome MCP で D156 と現在の computed color を全要素比較**
+   - 比較用 D156 ファイル：`https://nrs2013.github.io/schedule-studio/pc-edit-old-d156.html`
+   - 現在：`https://nrs2013.github.io/schedule-studio/pc-edit.html`
+   - 全要素の computed color を JS で出力し、差分要素だけリスト化
+3. **どうしても見つからなかったら**：pc-edit.html を D156 (`1245d5d`) に完全ロールバックし、SET LIST 機能だけを別の方法で局所的に再実装する
+
+### 今回ユーザーが疲弊した経緯
+
+- 同じ「緑」の問題で D170〜D177 と何度も色を変更したが、ユーザーから見て差が分からず
+- D173 で全グレー色を一括置換 → ユーザーから「全然ダメ、全リバート希望」 → D174 で D170 に戻した
+- D175〜D177 と段階的に色を振ったが「変わってない」「違う」が続いた
+- 最終的にユーザーが「もう君頭まわってない」「引き継ぐ？」と提案 → 引き継ぎへ
+
+**僕（前セッションClaude）の反省**：
+- 修正幅が小さすぎ、視覚的に変化を見せられなかった
+- 「色彩錯視」と決めつけて、ユーザーの観察を素直に信じきれなかった瞬間があった
+- grep でしか調査せず、Chrome MCP の実機 computed color 比較を最初からやればよかった
+
+### 触らなかった/触ってほしくないファイル（今セッション）
+
+- `phone-staff.html` `phone-artist.html` は今回未触
+- `pc-hotel.html` も未触
+
+### 現在の build-version
+
+- `pc-edit.html`: `20260509.640000`（D177 時点）
+- `pc-edit-old-d156.html`: 比較用、デプロイ済み（GitHub Pages 反映に1〜2分）
+
+### 残り pending（今回未着手）
+
+- **DAY SCHEDULE（PC版）の時刻入力統一**（入り時間と同じ J案1窓型に）
+- **スマホ版（STAFF/ARTIST）の時刻入力統一**（既にホイールピッカーは実装済み、UI 統一の話）
+- **D128 Phase C/D**：CALENDAR の連結バー / 右パネル / TODAY を Notion 流に統一
+- **D136 Phase D**：ロック画面で STAFF/ARTIST 振り分け
+- **TODAY 自動更新**（1分ごと、開きっぱなし対策）
+- **Firebase rules を認証付きに**（本番運用前必須）
+
+---
+
 以上。
