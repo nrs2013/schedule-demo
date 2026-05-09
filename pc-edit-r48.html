@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260509.105319">
+<meta name="build-version" content="20260509.104119">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -863,7 +863,7 @@
     /* D88: ボイドティッカー — 30 → 24px に圧縮（1行に収めるため） */
     font-size: 24px;
     font-weight: 300;
-    color: #fff8f0; /* R48 (R47 から再振り): #f0e0c8 (G=224 カーキ寄り) → #fef0d8 (G=240, B=216 クリーム残しつつ緑撤去) */
+    color: #fef0d8; /* R47: #f0e0c8 (G=224 カーキ寄り) → #fef0d8 (G=240, B=216 クリーム残しつつ緑撤去) */
     font-variant-numeric: tabular-nums;
     letter-spacing: 0.02em;
     line-height: 1;
@@ -1341,7 +1341,7 @@
   .parent-tab:hover::after { background: rgba(216,184,120,0.3); left: 26px; right: 26px; }
   .parent-tab.active {
     background: rgba(255,255,255,0.04);
-    color: #fff8f0; /* R48 (R47 から再振り): #ffd9a8 (G=217 カーキ寄り) → #fff5e8 (G=245 暖色オフホワイト, 緑成分撤去) */
+    color: #fff5e8; /* R47: #ffd9a8 (G=217 カーキ寄り) → #fff5e8 (G=245 暖色オフホワイト, 緑成分撤去) */
     border-color: rgba(216,184,120,0.25);
     border-bottom-color: rgba(216,184,120,0.04);
   }
@@ -1445,7 +1445,7 @@
     position: relative;
     background: #14130f; /* 他のボタンと同じニュートラル背景 */
     border: 1px solid rgba(110,194,126,0.40); /* 線だけ緑（差別化キープ） */
-    color: #888888; /* R48: 黄味グレー(G-B=7) → 純グレー(G=B) */
+    color: #76766f; /* 元のいつものグレー */
     padding: 6px 28px 5px 14px;
     border-radius: 6px;
     font-family: inherit;
@@ -1463,7 +1463,7 @@
   .setlist-tab.active {
     background: rgba(255,255,255,0.06);
     border-color: rgba(110,194,126,0.55);
-    color: #fff8f0; /* R48: G=212 カーキ → 純白寄り(G-B=8) 緑撤去 */
+    color: #f5d4a8; /* いつもの active ベージュ・オレンジ */
   }
   /* タブ内 ✕ ボタン（削除） */
   .setlist-tab-x {
@@ -1477,7 +1477,7 @@
     text-align: center;
     background: transparent;
     border: none;
-    color: #888888; /* R48: 黄味グレー → 純グレー */
+    color: #76766f; /* D175: 緑文字（rgba(180,220,180,0.45)）撤去 */
     font-size: 14px;
     font-weight: 400;
     cursor: pointer;
@@ -1490,7 +1490,7 @@
   .setlist-add-btn {
     background: transparent;
     border: 1px dashed rgba(110,194,126,0.45);
-    color: #888888; /* R48: 黄味グレー → 純グレー */
+    color: #76766f; /* D175: 緑文字（rgba(180,220,180,0.85)）撤去 */
     padding: 5px 14px;
     border-radius: 6px;
     font-family: inherit;
@@ -1502,7 +1502,7 @@
   }
   .setlist-add-btn:hover {
     background: rgba(255,255,255,0.04); /* D175: 緑背景（rgba(110,194,126,0.10)）撤去 */
-    color: #fff8f0; /* R48: G=212 カーキ → 純白寄り 緑撤去 */
+    color: #f5d4a8; /* D175: 緑文字（#d8f0d8）→ いつもの active ベージュ */
     border-color: rgba(110,194,126,0.65);
   }
   /* D164: 「+ 行を追加」ボタン — border 濃さを他のボタンと統一（線が太く見えてた問題対処） */
