@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260509.224130">
+<meta name="build-version" content="20260509.224626">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -938,6 +938,9 @@
   /* D84: ステージ照明テーマに合わせてチップも更新（DAY=Apple Green, 会場=Gold） */
   .master-chip-day   { background: rgba(126,216,72,0.22); color: #d8f0bc; border: 1px solid rgba(126,216,72,0.45); }
   .master-chip-venue { background: rgba(216,184,120,0.22); color: #f0d8a0; border: 1px solid rgba(216,184,120,0.55); }
+  /* R73-1: マスター日付バーの DOOR / SHOW チップ */
+  .master-chip-door { background: rgba(232,154,74,0.10); color: #ffd9a8; border: 1px solid rgba(232,154,74,0.45); font-family: 'JetBrains Mono', monospace; letter-spacing: 0.08em; }
+  .master-chip-show { background: rgba(224,122,95,0.16); color: #ffb09b; border: 1px solid rgba(224,122,95,0.55); font-family: 'JetBrains Mono', monospace; letter-spacing: 0.08em; font-weight: 600; }
   .master-chip:empty,
   .master-chip[data-empty="1"] {
     background: transparent;
@@ -4840,6 +4843,9 @@
           <!-- D94: 順序入れ替え（場所=左、DAY=右） — 日程情報を右端に -->
           <span class="master-chip master-chip-venue" id="master-date-venue">横浜アリーナ</span>
           <span class="master-chip master-chip-day" id="master-date-day">DAY 1</span>
+          <!-- R73-1: 本番日のときだけ DOOR / SHOW チップを表示（showTimes[venue] から） -->
+          <span class="master-chip master-chip-door" id="master-date-door" style="display:none;">DOOR --:--</span>
+          <span class="master-chip master-chip-show" id="master-date-show" style="display:none;">SHOW --:--</span>
           <!-- D159b: Undo ボタン撤去（Cmd+Z で十分） -->
 
           <!-- D158: 鍵アイコン → 分かりやすい「← TOP」テキストボタン -->
@@ -7946,7 +7952,7 @@ function show(id) {
 
     return { day: dayLabel || null, venue: venue || null };
   }
-  const DOW_ARR_M = ['日','月','火','水','木','金','土'];
+  const DOW_ARR_M = ['SUN','MON','TUE','WED','THU','FRI','SAT']; /* R73-2: 曜日を英語表記に */
 
   function fmtMasterDate(d){
     return d.getFullYear() + '.' + String(d.getMonth()+1).padStart(2,'0') + '.' + String(d.getDate()).padStart(2,'0');
@@ -7974,6 +7980,29 @@ function show(id) {
     if (elDay)   elDay.textContent   = tour.day || '—';
     if (elVenue) elVenue.textContent = tour.venue || '—';
     if (elInp)   elInp.value         = key;
+
+    /* R73-1: 本番日のときだけ DOOR / SHOW チップを表示（showTimes[venue] から取得） */
+    const elDoor = document.getElementById('master-date-door');
+    const elShow = document.getElementById('master-date-show');
+    if (elDoor && elShow) {
+      try {
+        var venueKey = tour.venue;
+        var st = (typeof showTimes !== 'undefined' && venueKey && showTimes[venueKey]) ? showTimes[venueKey] : null;
+        var isShowDay = !!(tour.day && /^DAY\s*\d/i.test(tour.day));
+        if (isShowDay && st && st.door && st.show) {
+          elDoor.textContent = 'DOOR ' + st.door;
+          elShow.textContent = 'SHOW ' + st.show;
+          elDoor.style.display = '';
+          elShow.style.display = '';
+        } else {
+          elDoor.style.display = 'none';
+          elShow.style.display = 'none';
+        }
+      } catch(e) {
+        elDoor.style.display = 'none';
+        elShow.style.display = 'none';
+      }
+    }
 
     // 各タブの日付ヘッダー（pc-rh-title 内）を一括更新
     document.querySelectorAll('.pc-rh-date-big[data-master-date-display]').forEach(function(el){
