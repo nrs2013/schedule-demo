@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260509.540000">
+<meta name="build-version" content="20260509.550000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -2479,13 +2479,14 @@
     gap: 6px;
   }
   /* R75: arrival-card を day-event-card と統一（時間=ボックス、ラベル=フラット） */
+  /* D165: J案（H/M ラベル + 2連プルダウン）幅に合わせて 1列目を 130px に拡張 */
   .arrival-card {
     background: #1c1b19;
     border: 1px solid #2c2a27;
     border-radius: 6px;
     padding: 8px 14px;
     display: grid;
-    grid-template-columns: 105px 1fr 26px;
+    grid-template-columns: 130px 1fr 26px;
     gap: 10px;
     align-items: center;
     transition: border-color 0.12s, background 0.12s;
@@ -2532,6 +2533,69 @@
   }
   .arrival-section-name:hover { border-color: #2c2a27; background: #14130f; }
   .arrival-section-name:focus { outline: none; border-color: rgba(232,154,74,0.55); background: #14130f; }
+
+  /* D165: 入り時間 J案 — 時/分すぐ隣通し + 上に小さく H/M ラベル */
+  .arr-time-pair {
+    display: inline-flex;
+    align-items: center;
+    gap: 0;
+  }
+  .arr-time-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .arr-time-lbl {
+    font-size: 9px;
+    color: #5a5a54;
+    letter-spacing: 0.20em;
+    margin-bottom: 2px;
+    font-weight: 500;
+    line-height: 1;
+    user-select: none;
+  }
+  .arr-time-pair select.arr-time-h,
+  .arr-time-pair select.arr-time-m {
+    background: #14130f;
+    border: 1px solid #2c2a27;
+    color: #e8e8e2;
+    font-family: 'JetBrains Mono', 'Noto Sans JP', monospace;
+    font-size: 17px;
+    font-weight: 400;
+    padding: 4px 6px;
+    border-radius: 5px;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
+    text-align: center;
+    min-width: 48px;
+    cursor: pointer;
+    appearance: menulist;
+    color-scheme: dark;
+    transition: border-color 0.12s, background 0.12s;
+  }
+  .arr-time-pair select.arr-time-h:hover,
+  .arr-time-pair select.arr-time-m:hover { border-color: #5a5a53; }
+  .arr-time-pair select.arr-time-h:focus,
+  .arr-time-pair select.arr-time-m:focus { outline: none; border-color: rgba(232,154,74,0.55); }
+  .arr-time-colon-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .arr-time-colon-spacer {
+    font-size: 9px;
+    visibility: hidden;
+    margin-bottom: 2px;
+    line-height: 1;
+  }
+  .arr-time-colon {
+    color: #5a5a54;
+    font-size: 17px;
+    font-weight: 500;
+    padding: 4px 4px;
+    line-height: 1;
+    user-select: none;
+  }
 
   /* プレースホルダ（テクリハ／SET LIST／SHOW タブ用） */
   .mode-placeholder {
@@ -7342,10 +7406,46 @@ function show(id) {
     return arrivalSectionsByDate[k];
   }
 
+  // D165: 入り時間 J案用 — 時／分プルダウンの選択肢
+  function arrTimeHourOptionsHtml(selectedHH){
+    let html = '<option value="">--</option>';
+    for (let h = 0; h < 24; h++) {
+      const hh = String(h).padStart(2, '0');
+      const sel = (hh === selectedHH) ? ' selected' : '';
+      html += '<option value="' + hh + '"' + sel + '>' + hh + '</option>';
+    }
+    return html;
+  }
+  function arrTimeMinOptionsHtml(selectedMM){
+    let html = '<option value="">--</option>';
+    for (let m = 0; m < 60; m += 5) {
+      const mm = String(m).padStart(2, '0');
+      const sel = (mm === selectedMM) ? ' selected' : '';
+      html += '<option value="' + mm + '"' + sel + '>' + mm + '</option>';
+    }
+    return html;
+  }
   function arrivalCardHtml(a){
+    // データ "HH:MM" を H/M に分割
+    const t = a.time || '';
+    const hh = t.length >= 2 ? t.substring(0, 2) : '';
+    const mm = t.length >= 5 ? t.substring(3, 5) : '';
     return ''
       + '<div class="arrival-card" data-arrival="' + a.id + '">'
-      +   '<select class="arrival-time" data-field="time">' + timeOptionsHtml(a.time) + '</select>'
+      +   '<div class="arr-time-pair" data-field="time">'
+      +     '<div class="arr-time-col">'
+      +       '<span class="arr-time-lbl">H</span>'
+      +       '<select class="arr-time-h" data-arr-tpart="h">' + arrTimeHourOptionsHtml(hh) + '</select>'
+      +     '</div>'
+      +     '<div class="arr-time-colon-wrap">'
+      +       '<span class="arr-time-colon-spacer">·</span>'
+      +       '<span class="arr-time-colon">:</span>'
+      +     '</div>'
+      +     '<div class="arr-time-col">'
+      +       '<span class="arr-time-lbl">M</span>'
+      +       '<select class="arr-time-m" data-arr-tpart="m">' + arrTimeMinOptionsHtml(mm) + '</select>'
+      +     '</div>'
+      +   '</div>'
       +   '<input type="text" class="arrival-section-name" value="' + escH(a.section) + '" data-field="section" placeholder="セクション名（例：PA）">'
       +   '<button class="row-del" data-action="del-arrival" title="削除">×</button>'
       + '</div>';
@@ -7741,6 +7841,20 @@ function show(id) {
     if (!card) return;
     const a = findArrival(card.getAttribute('data-arrival'));
     if (!a) return;
+    // D165: J案 — 時/分プルダウン（arr-time-pair 内）はカード全体から HH:MM を再構築
+    if (el.getAttribute('data-arr-tpart')) {
+      const pair = card.querySelector('.arr-time-pair');
+      if (!pair) return;
+      const hSel = pair.querySelector('select.arr-time-h');
+      const mSel = pair.querySelector('select.arr-time-m');
+      const hh = hSel ? hSel.value : '';
+      const mm = mSel ? mSel.value : '';
+      // 両方入ってれば "HH:MM"、片方だけなら空扱い
+      a.time = (hh && mm) ? (hh + ':' + mm) : '';
+      saveArrivals();
+      renderArrivals();
+      return;
+    }
     const field = el.getAttribute('data-field');
     if (field) {
       a[field] = el.value;
