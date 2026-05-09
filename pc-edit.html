@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260509.560000">
+<meta name="build-version" content="20260509.570000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -1440,12 +1440,12 @@
     flex-wrap: wrap;
     align-items: center;
   }
-  /* D167: SET LIST タブ — 枠だけ緑、文字は他ボタンと同じグレー系に戻す（緑に引っ張られない） */
+  /* D170: SET LIST タブ — 緑は border 線だけに留める。背景はニュートラル、文字は元の active=ベージュ */
   .setlist-tab {
     position: relative;
-    background: rgba(110,194,126,0.06);
-    border: 1px solid rgba(110,194,126,0.40);
-    color: #a8a8a0; /* 他のボタンと同じグレー */
+    background: #14130f; /* 他のボタンと同じニュートラル背景 */
+    border: 1px solid rgba(110,194,126,0.40); /* 線だけ緑（差別化キープ） */
+    color: #76766f; /* 元のいつものグレー */
     padding: 6px 28px 5px 14px;
     border-radius: 6px;
     font-family: inherit;
@@ -1453,13 +1453,17 @@
     letter-spacing: 0.12em;
     font-weight: 600;
     cursor: pointer;
-    transition: background 0.12s, color 0.12s;
+    transition: background 0.12s, color 0.12s, border-color 0.12s;
   }
-  .setlist-tab:hover { color: #e8e8e2; background: rgba(110,194,126,0.14); }
+  .setlist-tab:hover {
+    color: #e8e8e2;
+    background: rgba(255,255,255,0.04);
+    border-color: rgba(110,194,126,0.55);
+  }
   .setlist-tab.active {
-    background: rgba(110,194,126,0.22);
-    border-color: rgba(110,194,126,0.40);
-    color: #f0f0ec; /* primary と同じ薄ベージュ系 */
+    background: rgba(255,255,255,0.06);
+    border-color: rgba(110,194,126,0.55);
+    color: #f5d4a8; /* いつもの active ベージュ・オレンジ */
   }
   /* タブ内 ✕ ボタン（削除） */
   .setlist-tab-x {
@@ -2533,26 +2537,82 @@
   .arrival-section-name:hover { border-color: #2c2a27; background: #14130f; }
   .arrival-section-name:focus { outline: none; border-color: rgba(232,154,74,0.55); background: #14130f; }
 
-  /* D166: 入り時間 — 時刻ボタン（クリックでホイールピッカー起動） */
-  .arr-time-btn {
-    width: 100%;
-    box-sizing: border-box;
+  /* D169: 入り時間 J案「1つの窓」— 外枠1つの中に H/M ラベル + 透明な select */
+  .arr-time-frame {
+    display: inline-flex;
+    align-items: center;
     background: #14130f;
     border: 1px solid #2c2a27;
+    border-radius: 5px;
+    padding: 2px 6px;
+    transition: border-color 0.12s, background 0.12s;
+    width: 100%;
+    box-sizing: border-box;
+    justify-content: center;
+    gap: 0;
+  }
+  .arr-time-frame:hover { border-color: #5a5a53; }
+  .arr-time-frame:focus-within { border-color: rgba(232,154,74,0.55); background: rgba(232,154,74,0.04); }
+  .arr-time-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .arr-time-lbl {
+    font-size: 9px;
+    color: #5a5a54;
+    letter-spacing: 0.20em;
+    margin-bottom: 1px;
+    font-weight: 500;
+    line-height: 1;
+    user-select: none;
+  }
+  /* 中の select は完全に透明・border 無し — 外枠だけが「1つの窓」になる */
+  .arr-time-frame select.arr-time-h,
+  .arr-time-frame select.arr-time-m {
+    background: transparent;
+    border: none;
     color: #e8e8e2;
     font-family: 'JetBrains Mono', 'Noto Sans JP', monospace;
-    font-size: 17px;
+    font-size: 16px;
     font-weight: 400;
-    padding: 6px 10px;
-    border-radius: 5px;
+    padding: 2px 4px;
+    border-radius: 3px;
     font-variant-numeric: tabular-nums;
     letter-spacing: 0.02em;
     text-align: center;
+    text-align-last: center;
+    min-width: 36px;
     cursor: pointer;
-    transition: border-color 0.12s, background 0.12s, color 0.12s;
+    appearance: none;
+    -webkit-appearance: none;
+    color-scheme: dark;
+    outline: none;
   }
-  .arr-time-btn:hover { border-color: rgba(232,154,74,0.55); color: #f5d4a8; background: rgba(232,154,74,0.05); }
-  .arr-time-btn:active { background: rgba(232,154,74,0.10); }
+  .arr-time-frame select.arr-time-h:hover,
+  .arr-time-frame select.arr-time-m:hover { color: #f5d4a8; background: rgba(232,154,74,0.06); }
+  .arr-time-frame select.arr-time-h:focus,
+  .arr-time-frame select.arr-time-m:focus { color: #f5d4a8; background: rgba(232,154,74,0.10); }
+  .arr-time-colon-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .arr-time-colon-spacer {
+    font-size: 9px;
+    visibility: hidden;
+    margin-bottom: 1px;
+    line-height: 1;
+  }
+  .arr-time-colon {
+    color: #5a5a54;
+    font-size: 16px;
+    font-weight: 500;
+    padding: 2px 2px;
+    line-height: 1;
+    user-select: none;
+    pointer-events: none;
+  }
 
   /* D166: ホイール・ピッカー（時刻 HH:MM）— phone-staff.html から移植 */
   .picker-overlay {
@@ -7496,14 +7556,45 @@ function show(id) {
     return arrivalSectionsByDate[k];
   }
 
-  // D166: 入り時間 ホイールピッカー方式 — 時刻はシンプルな「HH:MM」ボタンで表示。
-  //   クリックで下からシートが出て、HH と MM のホイールが回るスマホ風ピッカー。
+  // D169: 入り時間 「1つの窓」J案 — 外枠1個の中に H/M ラベル + 透明な時/分プルダウン
+  function arrTimeHourOptionsHtml(selectedHH){
+    let html = '<option value="">--</option>';
+    for (let h = 0; h < 24; h++) {
+      const hh = String(h).padStart(2, '0');
+      const sel = (hh === selectedHH) ? ' selected' : '';
+      html += '<option value="' + hh + '"' + sel + '>' + hh + '</option>';
+    }
+    return html;
+  }
+  function arrTimeMinOptionsHtml(selectedMM){
+    let html = '<option value="">--</option>';
+    for (let m = 0; m < 60; m += 5) {
+      const mm = String(m).padStart(2, '0');
+      const sel = (mm === selectedMM) ? ' selected' : '';
+      html += '<option value="' + mm + '"' + sel + '>' + mm + '</option>';
+    }
+    return html;
+  }
   function arrivalCardHtml(a){
     const t = a.time || '';
-    const display = t || '--:--';
+    const hh = t.length >= 2 ? t.substring(0, 2) : '';
+    const mm = t.length >= 5 ? t.substring(3, 5) : '';
     return ''
       + '<div class="arrival-card" data-arrival="' + a.id + '">'
-      +   '<button class="arr-time-btn" type="button" data-action="open-time-picker" data-time="' + escH(t) + '" data-target-field="time">' + escH(display) + '</button>'
+      +   '<div class="arr-time-frame" data-field="time">'
+      +     '<div class="arr-time-col">'
+      +       '<span class="arr-time-lbl">H</span>'
+      +       '<select class="arr-time-h" data-arr-tpart="h">' + arrTimeHourOptionsHtml(hh) + '</select>'
+      +     '</div>'
+      +     '<div class="arr-time-colon-wrap">'
+      +       '<span class="arr-time-colon-spacer">·</span>'
+      +       '<span class="arr-time-colon">:</span>'
+      +     '</div>'
+      +     '<div class="arr-time-col">'
+      +       '<span class="arr-time-lbl">M</span>'
+      +       '<select class="arr-time-m" data-arr-tpart="m">' + arrTimeMinOptionsHtml(mm) + '</select>'
+      +     '</div>'
+      +   '</div>'
       +   '<input type="text" class="arrival-section-name" value="' + escH(a.section) + '" data-field="section" placeholder="セクション名（例：PA）">'
       +   '<button class="row-del" data-action="del-arrival" title="削除">×</button>'
       + '</div>';
@@ -7526,14 +7617,7 @@ function show(id) {
     return list.find(function(x){ return x.id === +id; });
   }
 
-  // D166: ホイール時刻ピッカーから呼ぶ — 入り時間の time を直接更新 → 保存 → 再描画
-  window.__commitArrivalTime = function(arrivalId, newTime){
-    const a = findArrival(arrivalId);
-    if (!a) return;
-    a.time = newTime;
-    saveArrivals();
-    renderArrivals();
-  };
+  // D169: ホイール時刻ピッカーは PC版では撤去（J案 1窓に変更）。スマホ版のみ使用。
 
   function importArrivalsFromRows(rows){
     const dataRows = [];
@@ -7901,13 +7985,25 @@ function show(id) {
     alert('送信しました。');
   }
 
-  // 入り時間 input change（セクション名のみ。時刻はホイールピッカーから commit される）
+  // 入り時間 input change（D169: J案「1つの窓」— H/M どちらが変わっても "HH:MM" 再構築）
   document.addEventListener('change', function(e){
     const el = e.target;
     const card = el.closest && el.closest('.arrival-card');
     if (!card) return;
     const a = findArrival(card.getAttribute('data-arrival'));
     if (!a) return;
+    if (el.getAttribute('data-arr-tpart')) {
+      const frame = card.querySelector('.arr-time-frame');
+      if (!frame) return;
+      const hSel = frame.querySelector('select.arr-time-h');
+      const mSel = frame.querySelector('select.arr-time-m');
+      const hh = hSel ? hSel.value : '';
+      const mm = mSel ? mSel.value : '';
+      a.time = (hh && mm) ? (hh + ':' + mm) : '';
+      saveArrivals();
+      renderArrivals();
+      return;
+    }
     const field = el.getAttribute('data-field');
     if (field) {
       a[field] = el.value;
@@ -9225,154 +9321,16 @@ function show(id) {
 })();
 </script>
 
-<!-- D166: ホイール時刻ピッカー（HH:MM）共通モーダル -->
-<div class="picker-overlay" id="time-picker">
-  <div class="picker-backdrop" onclick="window.__closeTimePicker()"></div>
-  <div class="picker-sheet">
-    <div class="picker-header">
-      <button class="picker-cancel" type="button" onclick="window.__closeTimePicker()">キャンセル</button>
-      <div class="picker-title" id="time-picker-title">時刻</div>
-      <button type="button" onclick="window.__commitTimePicker()">決定</button>
-    </div>
-    <div class="time-picker-wheels">
-      <div class="picker-wheel" id="time-picker-hour"></div>
-      <div class="time-picker-colon">:</div>
-      <div class="picker-wheel" id="time-picker-minute"></div>
-      <div class="picker-wheel-mask top"></div>
-      <div class="picker-wheel-mask bottom"></div>
-      <div class="picker-wheel-line top"></div>
-      <div class="picker-wheel-line bottom"></div>
-    </div>
-  </div>
-</div>
+<!-- D169: ホイール overlay は PC 版では撤去。スマホ版のみ使用。 -->
 
 <script>
-// D166: ホイール時刻ピッカー — phone-staff.html から移植 + PC 用拡張
+// D169: PC版ではホイール時刻ピッカーは撤去。外部参照に備えて空関数だけ残す。
 (function(){
-  let activeBtn = null;
-  let onCommit = null;
-
-  function openTimePicker(btn, opts){
-    activeBtn = btn;
-    onCommit = (opts && opts.onCommit) || null;
-    const titleEl = document.getElementById('time-picker-title');
-    if (titleEl) titleEl.textContent = (opts && opts.title) || '時刻';
-
-    const t = (btn && btn.dataset && btn.dataset.time) || '00:00';
-    const m = t.match(/^(\d{1,2}):(\d{1,2})$/);
-    const curH = m ? parseInt(m[1], 10) : 0;
-    const curM = m ? parseInt(m[2], 10) : 0;
-    const minuteStep = 5;
-    const minuteIdx = Math.round(curM / minuteStep);
-
-    const hourWheel = document.getElementById('time-picker-hour');
-    let html = '<div class="picker-wheel-spacer"></div>';
-    for (let h = 0; h < 24; h++) {
-      html += '<div class="picker-wheel-item" data-value="' + h + '">' + String(h).padStart(2,'0') + '</div>';
-    }
-    html += '<div class="picker-wheel-spacer"></div>';
-    hourWheel.innerHTML = html;
-
-    const minuteWheel = document.getElementById('time-picker-minute');
-    html = '<div class="picker-wheel-spacer"></div>';
-    for (let mm = 0; mm < 60; mm += minuteStep) {
-      html += '<div class="picker-wheel-item" data-value="' + mm + '">' + String(mm).padStart(2,'0') + '</div>';
-    }
-    html += '<div class="picker-wheel-spacer"></div>';
-    minuteWheel.innerHTML = html;
-
-    document.getElementById('time-picker').classList.add('show');
-
-    setTimeout(function(){
-      hourWheel.scrollTop = curH * 40;
-      minuteWheel.scrollTop = minuteIdx * 40;
-      updateHighlight(hourWheel);
-      updateHighlight(minuteWheel);
-    }, 20);
-
-    hourWheel.onscroll = function(){ updateHighlight(hourWheel); };
-    minuteWheel.onscroll = function(){ updateHighlight(minuteWheel); };
-  }
-
-  function updateHighlight(wheel){
-    const items = wheel.querySelectorAll('.picker-wheel-item');
-    if (!items.length) return;
-    const r = wheel.getBoundingClientRect();
-    const cy = r.top + r.height / 2;
-    let closest = null, bestDist = Infinity;
-    items.forEach(function(it){
-      it.classList.remove('center', 'near');
-      const ir = it.getBoundingClientRect();
-      const ic = ir.top + ir.height / 2;
-      const d = Math.abs(ic - cy);
-      if (d < bestDist) { bestDist = d; closest = it; }
-    });
-    if (closest) {
-      closest.classList.add('center');
-      const arr = Array.prototype.slice.call(items);
-      const idx = arr.indexOf(closest);
-      if (idx > 0) arr[idx - 1].classList.add('near');
-      if (idx < arr.length - 1) arr[idx + 1].classList.add('near');
-    }
-  }
-
-  function commitTimePicker(){
-    if (!activeBtn) { closeTimePicker(); return; }
-    const hC = document.querySelector('#time-picker-hour .picker-wheel-item.center');
-    const mC = document.querySelector('#time-picker-minute .picker-wheel-item.center');
-    if (hC && mC) {
-      const hh = String(hC.dataset.value).padStart(2, '0');
-      const mm = String(mC.dataset.value).padStart(2, '0');
-      const t = hh + ':' + mm;
-      activeBtn.dataset.time = t;
-      activeBtn.textContent = t;
-      if (typeof onCommit === 'function') {
-        try { onCommit(t, activeBtn); } catch(e) { console.error('[time-picker onCommit]', e); }
-      }
-    }
-    closeTimePicker();
-  }
-
-  function closeTimePicker(){
-    document.getElementById('time-picker').classList.remove('show');
-    activeBtn = null;
-    onCommit = null;
-  }
-
-  // ESC で閉じる
-  document.addEventListener('keydown', function(e){
-    if (e.key === 'Escape' && document.getElementById('time-picker').classList.contains('show')) {
-      closeTimePicker();
-    }
-  });
-
-  window.__openTimePicker = openTimePicker;
-  window.__commitTimePicker = commitTimePicker;
-  window.__closeTimePicker = closeTimePicker;
+  function noop(){}
+  window.__openTimePicker = noop;
+  window.__commitTimePicker = noop;
+  window.__closeTimePicker = noop;
 })();
-
-// D166: 入り時間カードの時刻ボタンクリック → ピッカー起動
-document.addEventListener('click', function(e){
-  const btn = e.target.closest && e.target.closest('[data-action="open-time-picker"]');
-  if (!btn) return;
-  e.preventDefault();
-  const card = btn.closest('.arrival-card');
-  const sectionInput = card ? card.querySelector('.arrival-section-name') : null;
-  const sectionName = sectionInput ? (sectionInput.value || '入り時間') : '時刻';
-  window.__openTimePicker(btn, {
-    title: sectionName,
-    onCommit: function(newTime){
-      // 入り時間データに反映
-      if (!card) return;
-      const aid = card.getAttribute('data-arrival');
-      // arrivalSectionsByDate を直接いじる代わりに、change イベントを発火させてもいいが、
-      // ここはダイレクトにデータ更新 + 保存 + 再描画
-      if (typeof window.__commitArrivalTime === 'function') {
-        window.__commitArrivalTime(aid, newTime);
-      }
-    }
-  });
-});
 </script>
 
 </body>
