@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260509.223053">
+<meta name="build-version" content="20260509.223438">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -4828,17 +4828,8 @@
       <div class="pc-rh-title-block">
         <div class="pc-rh-title">
           <div class="rh-mode-toggle">
-            <!-- R70 B-2c: テクリハ + PDF をセグメントボタン化（E案：外枠一体 active） -->
-            <div class="rh-mode-seg" data-rh-mode="tekuriha">
-              <button class="rh-mode-seg-left" type="button" onclick="window.__showRehearsalSubMode('tekuriha')">テクリハ</button>
-              <span class="rh-mode-seg-divider"></span>
-              <button class="rh-mode-seg-pdf" type="button" onclick="window.__openRehearsalPdf && window.__openRehearsalPdf('tekuriha')">PDF</button>
-            </div>
-            <div class="rh-mode-seg" data-rh-mode="rehearsal-main">
-              <button class="rh-mode-seg-left" type="button" onclick="window.__showRehearsalSubMode('rehearsal-main')">全体リハーサル</button>
-              <span class="rh-mode-seg-divider"></span>
-              <button class="rh-mode-seg-pdf" type="button" onclick="window.__openRehearsalPdf && window.__openRehearsalPdf('all')">PDF</button>
-            </div>
+            <button class="rh-mode-btn" data-rh-mode="tekuriha" onclick="window.__showRehearsalSubMode('tekuriha')">テクリハ</button>
+            <button class="rh-mode-btn" data-rh-mode="rehearsal-main" onclick="window.__showRehearsalSubMode('rehearsal-main')">全体リハーサル</button>
             <!-- D154 Phase 2: セトリ順 / リハ順 をテクリハ／全体リハの右横へ移動 -->
             <span style="display:inline-block;width:18px;"></span>
             <button id="pc-btn-set" class="pc-btn primary">セトリ順</button>
@@ -4857,8 +4848,8 @@
         <!-- D115: 曲リストの Excel 取込 / テンプレートDL -->
         <button id="pc-btn-rh-excel" class="pc-btn">📊 Excel取込</button>
         <button id="pc-btn-rh-template" class="pc-btn">📥 テンプレDL</button>
-        <!-- R69: REHEARSAL を A4 縦の印刷ビュー（v7 レイアウト）として別タブで開く -->
-        <button id="pc-btn-rh-print" class="pc-btn" type="button" onclick="openRehearsalPrint()">PRINT</button>
+        <!-- R70 B-2d: PDF ボタン (現在のモードを自動判定) -->
+        <button id="pc-btn-rh-pdf" class="pc-btn" type="button" onclick="window.__openRehearsalPdfCurrent && window.__openRehearsalPdfCurrent()">PDF</button>
         <input type="file" id="pc-rh-file-input" accept=".xlsx,.xls" style="display:none;">
       </div>
     </div>
@@ -6395,6 +6386,15 @@ function show(id) {
     });
   }
   window.__openRehearsalPdf = openRehearsalPdf;
+
+  /* R70 B-2d: 現在のリハーサルモード（テクリハ or 全体リハ）を判定して PDF 出力 */
+  function openRehearsalPdfCurrent() {
+    /* body.classList で現在の rh モードを判定 */
+    var isTekuriha = document.body.classList.contains('rh-mode-tekuriha');
+    var mode = isTekuriha ? 'tekuriha' : 'all';
+    openRehearsalPdf(mode);
+  }
+  window.__openRehearsalPdfCurrent = openRehearsalPdfCurrent;
 
   // R47: 編集中の rhNo/memo/title セルの値を、現在の日付の dict に明示保存するヘルパー。
   // 日付切替時、blur ハンドラだけに頼らず確実に値が保存されるよう保険として追加。
