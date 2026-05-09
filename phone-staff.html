@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260509.STAFF.13">
+<meta name="build-version" content="20260509.121831">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="apple-touch-icon" href="favicon.svg">
 <title>SCHEDULE STUDIO — STAFF</title>
@@ -1338,7 +1338,8 @@
     padding: 10px 10px;
   }
   .sde-time,
-  select.sde-time {
+  select.sde-time,
+  button.sde-time {
     width: 78px;
     box-sizing: border-box;
     background: #1a1a1a;
@@ -1354,6 +1355,15 @@
     color-scheme: dark;
     cursor: pointer;
     appearance: menulist;
+  }
+  
+  /* R61: button.sde-time をピッカー起動ボタンとして select と同じ見た目に */
+  button.sde-time {
+    appearance: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+    text-align: center;
+    font-family: inherit;
   }
   .sde-time.end { color: #b0b0b0; }
   /* 時／分プルダウン（time-pair） スマホ版 */
@@ -2427,7 +2437,7 @@
       <div style="font-size: 14px; letter-spacing:0.2em; color:#a8a8a8; font-weight: 500; margin-bottom:10px;">＋ 入り時間を追加</div>
       <div style="display:flex; gap:8px;">
         <input type="text" placeholder="セクション名 (例: PA)" style="flex:1; background:#1d1d1d; border:1px solid #2c2c2c; border-radius:4px; padding:9px 10px; color:#e8e8e8; font-size: 17px;" />
-        <input type="time" value="09:00" style="width:110px; background:#1d1d1d; border:1px solid #2c2c2c; border-radius:4px; padding:9px 10px; color:#e8e8e8; font-size: 17px;" />
+        <button class="sde-time" data-time="09:00" onclick="openTimePicker(this)" style="width:110px; background:#1d1d1d; border:1px solid #2c2c2c; border-radius:4px; padding:9px 10px; color:#e8e8e8; font-size: 17px; cursor: pointer;">09:00</button>
       </div>
       <button style="width:100%; margin-top:8px; background:#e89a4a; color:#0a0a08; border:none; padding:9px; border-radius:4px; font-size: 15px; font-weight: 500; letter-spacing:0.2em; cursor:pointer;">登録する</button>
     </div>
@@ -2915,6 +2925,9 @@ function commitTimePicker() {
     const t = `${h}:${m}`;
     activeTimeBtn.dataset.time = t;
     activeTimeBtn.textContent = t;
+    /* R61: ボタンを value として扱えるよう property 代入 + change イベント発火（既存 change ハンドラを再利用） */
+    activeTimeBtn.value = t;
+    activeTimeBtn.dispatchEvent(new Event('change', { bubbles: true }));
   }
   closeTimePicker();
 }
@@ -3439,9 +3452,9 @@ function renderScheduleDayListPhone() {
     if (isEditable) {
       // 編集モード：3つの入力欄＋削除ボタン
       html += '<div class="schedule-day-row edit" data-day-id="' + ev.id + '">' +
-        '<select class="sde-time" data-field="startTime">' + timeOptionsHtmlPhone(start) + '</select>' +
+        '<button class="sde-time" data-field="startTime" data-time="' + (start || '') + '" onclick="openTimePicker(this)">' + (start || '--:--') + '</button>' +
         '<span class="sde-tilde">〜</span>' +
-        '<select class="sde-time end" data-field="endTime">' + timeOptionsHtmlPhone(end) + '</select>' +
+        '<button class="sde-time end" data-field="endTime" data-time="' + (end || '') + '" onclick="openTimePicker(this)">' + (end || '--:--') + '</button>' +
         '<input type="text" class="sde-label" data-field="label" value="' + escHtmlPhone(label) + '" placeholder="項目名">' +
         '<button class="sde-del" data-action="del-day-ev" title="削除">×</button>' +
         '</div>';
