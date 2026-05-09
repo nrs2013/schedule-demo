@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260509.STAFF.12">
+<meta name="build-version" content="20260509.STAFF.13">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="apple-touch-icon" href="favicon.svg">
 <title>SCHEDULE STUDIO — STAFF</title>
@@ -2548,7 +2548,8 @@
 </div>
 
 <script>
-let authed = false;
+// D152 STAFF: 常に認証済み（PASS タブ撤去 + パスワードプロンプト一切なし）
+let authed = true;
 const topTabsHiddenScreens = ['schedule','info','arrival','hotel','pass'];
 
 // R67 P1: 「リハーサル」下タブが「テクリハ」「全体リハ」両方を内包する

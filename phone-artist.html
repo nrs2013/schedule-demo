@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260509.ARTIST.13">
+<meta name="build-version" content="20260509.ARTIST.14">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="apple-touch-icon" href="favicon.svg">
 <title>SCHEDULE STUDIO — ARTIST</title>
@@ -2589,7 +2589,8 @@
 </div>
 
 <script>
-let authed = false;
+// D152 ARTIST: 常に認証済み（ロック画面で ARTIST パス入力済みの想定。本体内部のパスプロンプトは出さない）
+let authed = true;
 const topTabsHiddenScreens = ['schedule','info','arrival','hotel','pass'];
 
 // R67 P1: 「リハーサル」下タブが「テクリハ」「全体リハ」両方を内包する
