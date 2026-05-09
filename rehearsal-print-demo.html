@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rehearsal Menu - Demo (40 songs)</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@200;300;400;500;600;700&family=Inter:wght@200;300;400;500;600;700&family=JetBrains+Mono:wght@200;300;400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: #ffffff; color: #1a1a1a; font-family: 'Inter', 'Noto Sans JP', sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .r69-page { padding: 18mm 16mm 14mm; max-width: 210mm; margin: 0 auto; }
+  @media screen { body { padding: 24px; background: #f3f3f0; } .r69-page { background: #ffffff; box-shadow: 0 0 0 1px #e8e8e8, 0 14px 36px rgba(0,0,0,0.08); margin-bottom: 12px; } }
+  @media print { @page { size: A4 portrait; margin: 0; } body { background: #ffffff; padding: 0; } .r69-page { box-shadow: none; max-width: none; margin: 0 auto; } .r69-toolbar { display: none !important; } }
+  .r69-toolbar { max-width: 210mm; margin: 0 auto 12px; display: flex; gap: 10px; }
+  .r69-print-btn { background: #1a1a1a; color: #ffffff; border: none; padding: 9px 22px; font-family: inherit; font-size: 11px; letter-spacing: 0.3em; font-weight: 500; cursor: pointer; text-transform: uppercase; border-radius: 2px; }
+  .r69-print-btn:hover { background: #2a2a2a; }
+  .r69-mast { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 0.5px solid #1a1a1a; padding-bottom: 12px; margin-bottom: 28px; }
+  .r69-mast-l { display: flex; flex-direction: column; gap: 4px; }
+  .r69-eyebrow { font-family: 'Inter', sans-serif; font-size: 7px; letter-spacing: 0.4em; color: #b0b0b0; font-weight: 500; text-transform: uppercase; }
+  .r69-title { font-family: 'Inter', sans-serif; font-size: 22px; letter-spacing: 0.16em; color: #1a1a1a; font-weight: 200; text-transform: uppercase; margin: 0; line-height: 1; }
+  .r69-mast-r { text-align: right; display: flex; flex-direction: column; gap: 4px; align-items: flex-end; padding-bottom: 2px; }
+  .r69-date { font-family: 'JetBrains Mono', monospace; font-size: 13px; letter-spacing: 0.06em; color: #1a1a1a; font-weight: 300; }
+  .r69-dow { font-family: 'Inter', sans-serif; font-size: 7px; letter-spacing: 0.32em; color: #b0b0b0; font-weight: 500; text-transform: uppercase; }
+  table.r69-tbl { width: 100%; border-collapse: collapse; font-family: 'Noto Sans JP', 'Inter', sans-serif; font-size: 9px; table-layout: fixed; }
+  .r69-tbl thead th { font-family: 'Inter', sans-serif; font-size: 7px; letter-spacing: 0.36em; font-weight: 400; color: #b0b0b0; text-transform: uppercase; text-align: left; padding: 0 8px 8px; border: none; border-bottom: 0.5px solid #1a1a1a; }
+  .r69-tbl tbody td { padding: 6px 8px; border: none; border-bottom: 0.5px solid #f2f2f2; vertical-align: baseline; line-height: 1.5; }
+  .r69-tbl tbody tr:last-child td { border-bottom: 0.5px solid #1a1a1a; }
+  .r69-tbl tbody tr.is-section .col-title { color: #555; font-weight: 400; letter-spacing: 0.04em; }
+  .r69-tbl tbody tr { page-break-inside: avoid; break-inside: avoid; }
+  .r69-tbl thead { display: table-header-group; }
+  .r69-tbl .col-mno { width: 42px; font-family: 'JetBrains Mono', monospace; font-size: 9px; color: #1a1a1a; letter-spacing: 0.1em; text-align: left; font-weight: 500; }
+  .r69-tbl .col-title { font-family: 'Noto Sans JP', sans-serif; font-weight: 500; font-size: 12px; color: #1a1a1a; letter-spacing: 0.005em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .r69-tbl .col-time { width: 50px; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #1a1a1a; letter-spacing: 0.04em; text-align: right; font-weight: 300; }
+  .r69-tbl .col-rh { width: 36px; font-family: 'JetBrains Mono', monospace; font-size: 9px; text-align: center; color: #1a1a1a; font-weight: 500; }
+  .r69-tbl .col-tags { width: 200px; }
+  .r69-tbl .col-memo { font-family: 'Noto Sans JP', sans-serif; color: #888; font-size: 9px; line-height: 1.5; font-weight: 300; letter-spacing: 0.02em; }
+  .r69-tags-list { display: flex; flex-wrap: wrap; gap: 0; align-items: baseline; }
+  .r69-tag { font-family: 'Noto Sans JP', sans-serif; font-size: 9px; color: #6a6a6a; font-weight: 300; letter-spacing: 0.06em; margin-right: 6px; }
+  .r69-tag.solid { color: #1a1a1a; font-weight: 500; }
+  .r69-tag::after { content: "/"; margin-left: 6px; color: #d0d0d0; font-weight: 300; }
+  .r69-tag:last-child::after { content: ""; }
+  .r69-foot { margin-top: 22px; padding-top: 8px; border-top: 0.5px solid #ececec; display: flex; justify-content: space-between; font-family: 'JetBrains Mono', monospace; font-size: 7px; color: #b0b0b0; letter-spacing: 0.24em; text-transform: uppercase; font-weight: 300; }
+</style>
+</head>
+<body>
+<div class="r69-toolbar"><button class="r69-print-btn" onclick="window.print()">Print</button></div>
+<div class="r69-page">
+  <div class="r69-mast">
+    <div class="r69-mast-l">
+      <span class="r69-eyebrow">Schedule Studio</span>
+      <p class="r69-title">Rehearsal Menu</p>
+    </div>
+    <div class="r69-mast-r">
+      <span class="r69-dow">DEMO</span>
+      <span class="r69-date">2026.04.29 (水)</span>
+    </div>
+  </div>
+  <table class="r69-tbl">
+    <thead>
+      <tr>
+        <th class="col-mno">M#</th>
+        <th class="col-title">Title</th>
+        <th class="col-time">Time</th>
+        <th class="col-rh">RH</th>
+        <th class="col-tags">Tags</th>
+        <th class="col-memo">Memo</th>
+      </tr>
+    </thead>
+    <tbody id="rows-body">
+      <!-- JS で生成 -->
+    </tbody>
+  </table>
+  <div class="r69-foot">
+    <span>Demo · 40 songs</span>
+    <span>Schedule Studio · A4</span>
+  </div>
+</div>
+<script>
+  var SONGS = [
+    { mNo:'VCR', isEvent:true, title:'Opening VCR',         timeStr:'3:42', rhNo:null, tags:['oto','shoumei'],              memo:'客電 OUT → ロゴ展開' },
+    { mNo:'M1',  title:'BAN',                              timeStr:'4:05', rhNo:1,    tags:['monitor','shoumei'],          memo:'頭サビでセンター昇り' },
+    { mNo:'M2',  title:'Buddies',                          timeStr:'4:18', rhNo:2,    tags:['bagari','kikou'],             memo:'セリ降り → 花道へ' },
+    { mNo:'M3',  title:'桜月',                              timeStr:'4:30', rhNo:3,    tags:['monitor','bagari','shoumei'], memo:'2 番からハケ位置入替' },
+    { mNo:'M4',  title:'流れ弾',                            timeStr:'3:55', rhNo:4,    tags:['oto'],                        memo:'' },
+    { mNo:'M5',  title:'なぜ 恋をして来なかったんだろう？',   timeStr:'4:12', rhNo:5,    tags:['koutou'],                     memo:'' },
+    { mNo:'M6',  title:'ドローン',                          timeStr:'4:00', rhNo:6,    tags:['kigae','shoumei'],            memo:'' },
+    { mNo:'MC',  isMC:true,    title:'MC 1',                timeStr:'5:00', rhNo:null, tags:['koutou'],                     memo:'桜月リプライズの導線' },
+    { mNo:'M7',  title:'承認欲求',                          timeStr:'3:30', rhNo:7,    tags:['monitor','bagari'],           memo:'' },
+    { mNo:'M8',  title:'One-Way Street',                   timeStr:'3:48', rhNo:8,    tags:['oto'],                        memo:'' },
+    { mNo:'M9',  title:'Cool',                              timeStr:'3:22', rhNo:9,    tags:['shoumei','kikou'],            memo:'' },
+    { mNo:'M10', title:'桜月（リプライズ）',                timeStr:'2:30', rhNo:10,   tags:['monitor'],                    memo:'アコースティック' },
+    { mNo:'M11', title:'桜の音',                            timeStr:'4:15', rhNo:11,   tags:['bagari'],                     memo:'' },
+    { mNo:'M12', title:'Tokyo新景',                         timeStr:'4:08', rhNo:12,   tags:['monitor'],                    memo:'' },
+    { mNo:'M13', title:'Plastic Regret',                   timeStr:'3:48', rhNo:13,   tags:['monitor','bagari'],           memo:'' },
+    { mNo:'M14', title:'Start over!',                       timeStr:'4:02', rhNo:14,   tags:['shoumei'],                    memo:'' },
+    { mNo:'M15', title:'I want tomorrow to come',          timeStr:'4:25', rhNo:15,   tags:['monitor','kikou'],            memo:'機構入替' },
+    { mNo:'M16', title:'摩擦係数',                          timeStr:'3:40', rhNo:16,   tags:['oto','bagari'],               memo:'' },
+    { mNo:'M17', title:'Dead end',                          timeStr:'3:55', rhNo:17,   tags:['monitor','shoumei'],          memo:'' },
+    { mNo:'M18', title:'静寂の暴力',                        timeStr:'4:10', rhNo:18,   tags:['monitor'],                    memo:'' },
+    { mNo:'M19', title:'Lost in tomorrow',                 timeStr:'3:50', rhNo:19,   tags:['monitor','shoumei'],          memo:'' },
+    { mNo:'M20', title:"Boys (Don't Cry)",                 timeStr:'4:00', rhNo:20,   tags:['bagari'],                     memo:'' },
+    { mNo:'M21', title:'静寂の街',                          timeStr:'3:45', rhNo:21,   tags:['monitor','kigae'],            memo:'' },
+    { mNo:'MC',  isMC:true,    title:'MC 2',                timeStr:'4:00', rhNo:null, tags:['koutou'],                     memo:'メンバー紹介' },
+    { mNo:'M22', title:'Last Bloom',                       timeStr:'4:30', rhNo:22,   tags:['monitor','shoumei'],          memo:'' },
+    { mNo:'M23', title:'Catch the Wave',                   timeStr:'3:55', rhNo:23,   tags:['oto'],                        memo:'' },
+    { mNo:'M24', title:'Drive',                             timeStr:'3:30', rhNo:24,   tags:['monitor'],                    memo:'' },
+    { mNo:'M25', title:'Fade Out',                          timeStr:'4:18', rhNo:25,   tags:['monitor','kikou'],            memo:'' },
+    { mNo:'M26', title:'ガラスのリリィ',                    timeStr:'3:42', rhNo:26,   tags:['shoumei'],                    memo:'' },
+    { mNo:'M27', title:'Marigold',                          timeStr:'4:08', rhNo:27,   tags:['bagari','shoumei'],           memo:'' },
+    { mNo:'M28', title:'Hello, the wind',                  timeStr:'3:52', rhNo:28,   tags:['monitor'],                    memo:'' },
+    { mNo:'M29', title:'Tide',                              timeStr:'4:15', rhNo:29,   tags:['oto','bagari'],               memo:'' },
+    { mNo:'M30', title:'風光る',                            timeStr:'4:00', rhNo:30,   tags:['monitor','shoumei'],          memo:'' },
+    { mNo:'M31', title:'Moonlight',                         timeStr:'3:48', rhNo:31,   tags:['shoumei','kikou'],            memo:'' },
+    { mNo:'M32', title:'Black Mirror',                     timeStr:'4:22', rhNo:32,   tags:['monitor','bagari'],           memo:'' },
+    { mNo:'M33', title:'流星',                              timeStr:'3:40', rhNo:33,   tags:['oto'],                        memo:'' },
+    { mNo:'M34', title:'Daybreak',                          timeStr:'4:05', rhNo:34,   tags:['monitor'],                    memo:'' },
+    { mNo:'M35', title:'Reflection',                        timeStr:'3:58', rhNo:35,   tags:['shoumei'],                    memo:'' },
+    { mNo:'M36', title:'Petals',                            timeStr:'4:12', rhNo:36,   tags:['monitor','bagari'],           memo:'' },
+    { mNo:'M37', title:'Final Light',                       timeStr:'4:30', rhNo:37,   tags:['monitor','shoumei','kikou'],  memo:'最後のクライマックス' },
+    { mNo:'EN',  isEncore:true, title:'Anniversary Song',   timeStr:'5:30', rhNo:'EN', tags:['bagari','shoumei','block'],   memo:'花道 + メインステージ全員' }
+  ];
+  var TAG_LABELS = { monitor:'モニター', bagari:'場当たり', oto:'音', koutou:'口答', kigae:'着替', shoumei:'照明', kikou:'機構', block:'ブロック' };
+  function escHtml(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+  function buildRow(song){
+    var rh = (song.rhNo == null || song.rhNo === '') ? '—' : String(song.rhNo);
+    var memo = song.memo || '';
+    var isSection = !!(song.isMC || song.isEncore || song.isEvent || song.isEnd);
+    var tagsHtml = '';
+    if (Array.isArray(song.tags) && song.tags.length) {
+      tagsHtml = '<div class="r69-tags-list">' + song.tags.map(function(k, i){
+        return '<span class="r69-tag' + (i === 0 ? ' solid' : '') + '">' + escHtml(TAG_LABELS[k] || k) + '</span>';
+      }).join('') + '</div>';
+    }
+    return '<tr class="r69-row' + (isSection ? ' is-section' : '') + '">' +
+      '<td class="col-mno">' + escHtml(song.mNo) + '</td>' +
+      '<td class="col-title">' + escHtml(song.title) + '</td>' +
+      '<td class="col-time">' + escHtml(song.timeStr) + '</td>' +
+      '<td class="col-rh">' + escHtml(rh) + '</td>' +
+      '<td class="col-tags">' + tagsHtml + '</td>' +
+      '<td class="col-memo">' + escHtml(memo) + '</td>' +
+    '</tr>';
+  }
+  document.getElementById('rows-body').innerHTML = SONGS.map(buildRow).join('');
+</script>
+</body>
+</html>
