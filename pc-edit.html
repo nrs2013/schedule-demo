@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260509.231003">
+<meta name="build-version" content="20260510.000100">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -6389,6 +6389,21 @@ function show(id) {
 
     /* 行 HTML */
     var rowsHtml = songList.map(function(song){ return _r69BuildRowHtml(song, null); }).join('');
+
+    /* R78: 合計演奏時間を計算（openRehearsalPrint と同じロジックを PDF 用関数内にも複製） */
+    var _r77TotalSec = 0;
+    songList.forEach(function(s){
+      var t = String(s.timeStr || '').match(/^(\d+):(\d+)(?::(\d+))?$/);
+      if (t) {
+        _r77TotalSec += parseInt(t[1])*60 + parseInt(t[2]);
+        if (t[3]) _r77TotalSec += parseInt(t[3]);
+      }
+    });
+    var _r77H = Math.floor(_r77TotalSec / 3600);
+    var _r77M = Math.floor((_r77TotalSec % 3600) / 60);
+    var _r77S = _r77TotalSec % 60;
+    var _r77Pad = function(n){ return String(n).padStart(2, '0'); };
+    var _r77TotalRuntime = _r77H > 0 ? (_r77H + ':' + _r77Pad(_r77M) + ':' + _r77Pad(_r77S)) : (_r77M + ':' + _r77Pad(_r77S));
 
     /* 印刷ビュー HTML（A2-Bold ヘッダー付き） */
     var pageHtml = '<div id="r70pdf-root" style="background:#fff;color:#1a1a1a;font-family:Inter,\'Noto Sans JP\',sans-serif;padding:10mm 12mm 8mm;width:210mm;box-sizing:border-box;">' +
