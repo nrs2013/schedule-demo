@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260509.STAFF.5">
+<meta name="build-version" content="20260509.STAFF.6">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="apple-touch-icon" href="favicon.svg">
 <title>SCHEDULE STUDIO — STAFF</title>
@@ -30,9 +30,7 @@
 })();
 </script>
 <script>
-// D136 STAFF: パスなしで全閲覧
-// コンサートが 1 つ以上あれば、最初のを active 化 + authed フラグを立てて
-// bootstrapConcerts のロック画面をスキップ → 即 PC 編集画面を表示
+// D140 STAFF: パスなしで全閲覧（最初のコンサートを active 化 + authed フラグ）
 (function staffAutoEnter(){
   try {
     const concerts = JSON.parse(localStorage.getItem('schedule-studio:concerts:v1') || '[]');
@@ -4116,146 +4114,61 @@
   .caption strong { color: #e89a4a; }
 
   /* ════════════════════════════════════════════════════════════
-     D136 Phase B2: スマホ用レスポンシブ CSS（max-width 768px）
-     - 親タブを下端固定のボトムナビに
-     - CALENDAR の右サイドパネル（VENUES/EVENTS/MEMO）を縦並びに
-     - マスター日付バー・タイトルをスマホ用に圧縮
-     - タップ領域 44px 確保
+     D140 STAFF: スマホ用レスポンシブ CSS（max-width 768px）
      ════════════════════════════════════════════════════════════ */
   @media (max-width: 768px) {
-    /* 全体：ボトムナビ高さ分の下余白 */
-    body, html {
-      overflow-x: hidden;
-    }
-    .pc-frame {
-      padding-bottom: 76px !important;
-    }
-    /* ── ヘッダー圧縮 ── */
-    .pc-brand-strip {
-      padding: 8px 12px !important;
-    }
-    .ss-logo-square {
-      width: 24px !important;
-      height: 24px !important;
-      font-size: 13px !important;
-    }
-    .ss-logo-text {
-      font-size: 11px !important;
-      letter-spacing: 0.18em !important;
-    }
-    /* ── マスター日付バーをスマホ用に圧縮 ── */
-    .master-date-bar {
-      padding: 8px 10px !important;
-    }
-    .master-bar-row1 {
-      flex-direction: column !important;
-      align-items: stretch !important;
-      gap: 6px !important;
-    }
-    .master-concert-title {
-      font-size: 16px !important;
-      text-align: center !important;
-    }
-    .master-date-row {
-      justify-content: center !important;
-      gap: 8px !important;
-    }
-    .master-date-main {
-      font-size: 18px !important;
-    }
-    .master-date-nav {
-      min-width: 40px !important;
-      min-height: 40px !important;
-      font-size: 22px !important;
-    }
-    .master-meta-row {
-      flex-wrap: wrap !important;
-      gap: 6px !important;
-      justify-content: center !important;
-    }
-    /* ── 親タブを下端固定（ボトムナビ風） ── */
+    body, html { overflow-x: hidden; }
+    .pc-frame { padding-bottom: 76px !important; }
+    /* ヘッダー圧縮 */
+    .pc-brand-strip { padding: 8px 12px !important; }
+    .ss-logo-square { width: 24px !important; height: 24px !important; font-size: 13px !important; }
+    .ss-logo-text { font-size: 11px !important; letter-spacing: 0.18em !important; }
+    /* マスター日付バー */
+    .master-date-bar { padding: 8px 10px !important; }
+    .master-bar-row1 { flex-direction: column !important; align-items: stretch !important; gap: 6px !important; }
+    .master-concert-title { font-size: 16px !important; text-align: center !important; }
+    .master-date-row { justify-content: center !important; gap: 8px !important; }
+    .master-date-main { font-size: 18px !important; }
+    .master-date-nav { min-width: 40px !important; min-height: 40px !important; font-size: 22px !important; }
+    .master-meta-row { flex-wrap: wrap !important; gap: 6px !important; justify-content: center !important; }
+    /* 親タブを下端固定（ボトムナビ） */
     .tab-bar {
-      position: fixed !important;
-      bottom: 0 !important;
-      left: 0 !important;
-      right: 0 !important;
-      background: #0a0908 !important;
-      border-top: 1px solid rgba(255,255,255,0.08) !important;
-      z-index: 100 !important;
-      padding: 0 !important;
-      margin: 0 !important;
+      position: fixed !important; bottom: 0 !important; left: 0 !important; right: 0 !important;
+      background: #0a0908 !important; border-top: 1px solid rgba(255,255,255,0.08) !important;
+      z-index: 100 !important; padding: 0 !important; margin: 0 !important;
     }
-    .tab-bar-row {
-      display: flex !important;
-      width: 100% !important;
-      gap: 0 !important;
-    }
+    .tab-bar-row { display: flex !important; width: 100% !important; gap: 0 !important; }
     .parent-tab {
-      flex: 1 !important;
-      padding: 10px 2px 14px !important;
-      font-size: 9.5px !important;
-      letter-spacing: 0.06em !important;
-      border-radius: 0 !important;
-      margin: 0 !important;
-      text-align: center !important;
-      min-height: 56px !important;
-      border: none !important;
-      border-top: 2px solid transparent !important;
+      flex: 1 !important; padding: 10px 2px 14px !important; font-size: 9.5px !important;
+      letter-spacing: 0.06em !important; border-radius: 0 !important; margin: 0 !important;
+      text-align: center !important; min-height: 56px !important;
+      border: none !important; border-top: 2px solid transparent !important;
     }
     .parent-tab.active {
-      background: rgba(232,154,74,0.08) !important;
-      color: #e89a4a !important;
+      background: rgba(232,154,74,0.08) !important; color: #e89a4a !important;
       border-top-color: #e89a4a !important;
     }
-    .parent-tab::after,
-    .parent-tabs-spacer,
-    .cds-divider,
-    .parent-tab.cds {
-      display: none !important;
-    }
-    /* 子タブ（テクリハ/全体リハ など）は親タブの直上に */
+    .parent-tab::after, .parent-tabs-spacer, .cds-divider, .parent-tab.cds { display: none !important; }
     .children-bar {
-      position: fixed !important;
-      bottom: 60px !important;
-      left: 0 !important;
-      right: 0 !important;
-      background: #14130f !important;
-      border-top: 1px solid rgba(255,255,255,0.05) !important;
-      z-index: 99 !important;
-      padding: 6px 8px !important;
-      overflow-x: auto !important;
+      position: fixed !important; bottom: 60px !important; left: 0 !important; right: 0 !important;
+      background: #14130f !important; border-top: 1px solid rgba(255,255,255,0.05) !important;
+      z-index: 99 !important; padding: 6px 8px !important; overflow-x: auto !important;
     }
-    /* ── CALENDAR グリッドを縦 1 列に ── */
+    /* CALENDAR グリッドを縦 1 列 */
     .pc-cal-grid {
       grid-template-columns: 1fr !important;
       grid-template-rows: auto auto auto !important;
-      gap: 10px !important;
-      padding: 0 8px 12px !important;
+      gap: 10px !important; padding: 0 8px 12px !important;
     }
     .pc-cal-grid > #pc-cal-month { grid-column: 1 !important; grid-row: 1 !important; }
     .pc-cal-grid > .cal-events-palette { grid-column: 1 !important; grid-row: 2 !important; }
     .pc-cal-grid > .pc-cal-detail { grid-column: 1 !important; grid-row: 3 !important; }
-    .pc-cal-cell {
-      min-height: 60px !important;
-      padding: 4px !important;
-    }
-    .pc-cal-day-num {
-      font-size: 11px !important;
-      width: 22px !important;
-      height: 22px !important;
-    }
-    /* ── 右側コントロール群（巻き戻し・鍵） ── */
-    .master-controls {
-      flex-wrap: wrap !important;
-      justify-content: center !important;
-    }
-    /* ── REHEARSAL 行を横スクロール可能に ── */
-    #pc-rows-container {
-      overflow-x: auto !important;
-    }
-    .pc-row {
-      min-width: 900px !important;
-    }
+    .pc-cal-cell { min-height: 60px !important; padding: 4px !important; }
+    .pc-cal-day-num { font-size: 11px !important; width: 22px !important; height: 22px !important; }
+    .master-controls { flex-wrap: wrap !important; justify-content: center !important; }
+    /* REHEARSAL 行を横スクロール可能に */
+    #pc-rows-container { overflow-x: auto !important; }
+    .pc-row { min-width: 900px !important; }
   }
 </style>
 
@@ -4309,6 +4222,19 @@
       </div>
     </div>
 
+    <!-- D139: グランドパスワード入力モード（新規 CONCERT 作成時のみ要求） -->
+    <div class="lock-mode" id="lock-grand-mode">
+      <div class="lock-card">
+        <div class="lock-icon">🛡</div>
+        <div class="lock-mode-label">GRAND PASS</div>
+        <div class="lock-form-sub">新しい CONCERT を作成するには<br>会社のグランドパスワードが必要です</div>
+        <input type="password" class="lock-input" placeholder="グランドパスワード" id="lock-grand-pass" autocomplete="off">
+        <button class="lock-btn" id="lock-grand-btn" type="button">次へ</button>
+        <div class="lock-error" id="lock-grand-error"></div>
+        <button class="lock-back-link" id="lock-grand-back" type="button">← 一覧に戻る</button>
+      </div>
+    </div>
+
     <!-- ログインモード（中央カード） -->
     <div class="lock-mode" id="lock-login-mode">
       <div class="lock-card">
@@ -4328,7 +4254,8 @@
 <!-- D120 Phase A2: 起動時は active なし。bootstrapAuth が認証スキップ判定後に付与 -->
 <div class="screen" id="screen-pc">
   <div class="pc-frame">
-    <div class="pc-brand-strip">
+    <!-- D138: ロゴをクリックすると CONCERT LIST に戻る -->
+    <div class="pc-brand-strip" id="pc-brand-strip" title="クリックで CONCERT 一覧に戻る" style="cursor: pointer;">
       <span class="ss-logo-square">S</span>
       <span class="ss-logo-text">SCHEDULE STUDIO</span>
     </div>
@@ -8573,10 +8500,14 @@ function show(id) {
   const modeList  = document.getElementById('lock-list-mode');
   const modeAdd   = document.getElementById('lock-add-mode');
   const modeLogin = document.getElementById('lock-login-mode');
+  const modeGrand = document.getElementById('lock-grand-mode'); // D139
   function showMode(modeEl){
-    [modeList, modeAdd, modeLogin].forEach(function(m){ if (m) m.classList.remove('active'); });
+    [modeList, modeAdd, modeLogin, modeGrand].forEach(function(m){ if (m) m.classList.remove('active'); });
     if (modeEl) modeEl.classList.add('active');
   }
+  // D139: グランドパスワード（新規 CONCERT 作成時のみ要求）
+  const GRAND_PASS = 'Nrs20132525';
+  const SS_GRAND_AUTHED = 'schedule-studio:grand-authed';
 
   // ロック画面に切替
   lockEl.classList.add('active');
@@ -8616,7 +8547,7 @@ function show(id) {
         '</div>' +
       '</div>';
     }).join('');
-    // D136 STAFF: スマホは閲覧専用。新規追加カードは出さない（再撤去）
+    // D140 STAFF: スマホは閲覧専用。新規追加カードは出さない
     cardsEl.innerHTML = cardsHtml;
     cardsEl.querySelectorAll('.concert-card').forEach(function(card){
       card.addEventListener('click', function(e){
@@ -8672,13 +8603,45 @@ function show(id) {
     };
   }
 
+  // D139: 既にグランドパス済みなら即追加モード、未認証なら grand-mode を出す
   function startAdd(){
+    if (sessionStorage.getItem(SS_GRAND_AUTHED) === '1') {
+      enterAddMode();
+    } else {
+      startGrand();
+    }
+  }
+  function enterAddMode(){
     showMode(modeAdd);
     document.getElementById('lock-add-title').value = '';
     document.getElementById('lock-add-concert').value = '';
     document.getElementById('lock-add-artist').value = '';
     document.getElementById('lock-add-edit').value = '';
     setTimeout(function(){ document.getElementById('lock-add-title').focus(); }, 100);
+  }
+  function startGrand(){
+    showMode(modeGrand);
+    const inp = document.getElementById('lock-grand-pass');
+    const errEl = document.getElementById('lock-grand-error');
+    inp.value = '';
+    errEl.textContent = '';
+    setTimeout(function(){ inp.focus(); }, 100);
+    function tryGrand(){
+      if (inp.value === GRAND_PASS) {
+        sessionStorage.setItem(SS_GRAND_AUTHED, '1');
+        enterAddMode();
+      } else {
+        errEl.textContent = 'グランドパスワードが違います';
+        inp.value = '';
+        inp.focus();
+      }
+    }
+    document.getElementById('lock-grand-btn').onclick = tryGrand;
+    inp.onkeydown = function(e){ if (e.key === 'Enter') tryGrand(); };
+    document.getElementById('lock-grand-back').onclick = function(){
+      showMode(modeList);
+      renderList();
+    };
   }
 
   function tryAdd(){
@@ -8711,7 +8674,7 @@ function show(id) {
     renderList();
   };
 
-  // ── 起動：D136 STAFF — 0 個でも追加モードに行かず、案内メッセージを出す ───────────
+  // ── 起動：D140 STAFF — 0 個でも追加モードに行かず案内メッセージを出す ───────────
   if (concerts.length === 0) {
     showMode(modeList);
     const cardsEl = document.getElementById('concert-cards');
@@ -8742,6 +8705,17 @@ function show(id) {
           c.title = t;
           saveConcerts();
         }
+      });
+    }
+    // D138: 左上の SS ロゴをクリックで CONCERT 一覧に戻る
+    const brandStrip = document.getElementById('pc-brand-strip');
+    if (brandStrip) {
+      brandStrip.addEventListener('click', function(){
+        // 現在の active concert の authed フラグを外して、active 自体も解除
+        const activeId = localStorage.getItem(LS_ACTIVE);
+        if (activeId) sessionStorage.removeItem(SS_AUTHED_PREFIX + activeId);
+        localStorage.removeItem(LS_ACTIVE);
+        location.reload();
       });
     }
   }, 300);
