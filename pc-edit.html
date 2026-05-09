@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260510.001500">
+<meta name="build-version" content="20260510.003000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -6153,10 +6153,12 @@ function show(id) {
     var tagsHtml = '';
     var tagKeys = Array.isArray(song.tags) ? song.tags : [];
     if (tagKeys.length) {
+      /* R80: html2canvas が ::after を描けないので、スラッシュを実テキストとして挟む */
       tagsHtml = '<div class="r69-tags-list">' +
         tagKeys.map(function(k, i){
           var lbl = TAG_LABELS[k] || k;
-          return '<span class="r69-tag solid">' + _r69EscHtml(lbl) + '</span>';
+          var sep = (i > 0) ? '<span class="r69-tag-sep">&nbsp;/&nbsp;</span>' : '';
+          return sep + '<span class="r69-tag solid">' + _r69EscHtml(lbl) + '</span>';
         }).join('') +
       '</div>';
     }
@@ -6292,10 +6294,9 @@ function show(id) {
       '.r69-tbl .col-tags { width: 200px; }' +
       '.r69-tbl .col-memo { font-family: \'Noto Sans JP\', sans-serif; color: #888; font-size: 9px; line-height: 1.5; font-weight: 300; letter-spacing: 0.02em; }' +
       '.r69-tags-list { display: flex; flex-wrap: wrap; gap: 0; align-items: baseline; }' +
-      '.r69-tag { font-family: \'Noto Sans JP\', sans-serif; font-size: 9px; color: #6a6a6a; font-weight: 300; letter-spacing: 0.06em; margin-right: 6px; }' +
+      '.r69-tag { font-family: \'Noto Sans JP\', sans-serif; font-size: 9px; color: #1a1a1a; font-weight: 500; letter-spacing: 0.06em; }' +
       '.r69-tag.solid { color: #1a1a1a; font-weight: 500; }' +
-      '.r69-tag::after { content: "/"; margin-left: 6px; color: #d0d0d0; font-weight: 300; }' +
-      '.r69-tag:last-child::after { content: ""; }' +
+      '.r69-tag-sep { font-family: \'Noto Sans JP\', sans-serif; font-size: 9px; color: #1a1a1a; font-weight: 400; }' +
       '.r69-foot { margin-top: 22px; padding-top: 8px; border-top: 0.5px solid #ececec; display: flex; justify-content: space-between; font-family: \'JetBrains Mono\', monospace; font-size: 7px; color: #b0b0b0; letter-spacing: 0.24em; text-transform: uppercase; font-weight: 300; }' +
       _rowPadCss + '</style></head><body>' +
       '<div class="r69-toolbar"><button class="r69-print-btn" onclick="window.print()">Print</button></div>' +
@@ -6435,10 +6436,12 @@ function show(id) {
       '#r70pdf-root .r70p-tbl .col-tags{width:220px;}' +
       '#r70pdf-root .r70p-tbl .col-memo{font-family:\'Noto Sans JP\',sans-serif;color:#555;font-size:' + _fMemo + 'px;line-height:1.35;font-weight:300;letter-spacing:0.02em;}' +
       '#r70pdf-root .r70-tags-list{display:flex;flex-wrap:wrap;gap:0;align-items:baseline;}' +
-      '#r70pdf-root .r70-tag{font-family:\'Noto Sans JP\',sans-serif;font-size:' + _fTag + 'px;color:#1a1a1a;font-weight:500;letter-spacing:0.06em;margin-right:6px;}' +
+      '#r70pdf-root .r70-tag{font-family:\'Noto Sans JP\',sans-serif;font-size:' + _fTag + 'px;color:#1a1a1a;font-weight:500;letter-spacing:0.06em;}' +
       '#r70pdf-root .r70-tag.solid{color:#1a1a1a;font-weight:500;}' +
-      '#r70pdf-root .r70-tag::after{content:"/";margin-left:6px;color:#1a1a1a;font-weight:400;}' +
-      '#r70pdf-root .r70-tag:last-child::after{content:"";}' +
+      '#r70pdf-root .r70-tag-sep{font-family:\'Noto Sans JP\',sans-serif;font-size:' + _fTag + 'px;color:#1a1a1a;font-weight:400;}' +
+      '#r70pdf-root .r69-tags-list{display:flex;flex-wrap:wrap;gap:0;align-items:baseline;}' +
+      '#r70pdf-root .r69-tag{font-family:\'Noto Sans JP\',sans-serif;font-size:' + _fTag + 'px;color:#1a1a1a;font-weight:500;letter-spacing:0.06em;}' +
+      '#r70pdf-root .r69-tag-sep{font-family:\'Noto Sans JP\',sans-serif;font-size:' + _fTag + 'px;color:#1a1a1a;font-weight:400;margin:0 2px;}' +
       '#r70pdf-root .r70p-foot{margin-top:10px;padding-top:8px;border-top:1px solid #1a1a1a;display:flex;justify-content:space-between;align-items:baseline;font-family:Inter,sans-serif;font-size:18px;color:#1a1a1a;letter-spacing:0.04em;font-weight:700;}' +
       '#r70pdf-root .r70p-foot .lbl{font-family:Inter,sans-serif;font-size:9px;letter-spacing:0.32em;font-weight:500;color:#888;text-transform:uppercase;margin-right:8px;}' +
       '#r70pdf-root .r70p-foot .val{font-family:\'JetBrains Mono\',monospace;font-size:22px;font-weight:700;color:#1a1a1a;letter-spacing:0.04em;}' +
