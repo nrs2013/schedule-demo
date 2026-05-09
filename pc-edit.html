@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260510.005000">
+<meta name="build-version" content="20260510.010500">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -6352,6 +6352,8 @@ function show(id) {
       alert('PDF ライブラリの読み込みに失敗しました。再読み込みしてからもう一度お試しください。');
       return;
     }
+    /* R81b: 実データソース確認ログ */
+    console.log('[PDF R81b] songs typeof=', typeof songs, 'isArray=', (typeof songs !== 'undefined' && Array.isArray(songs)), 'length=', (typeof songs !== 'undefined' && songs ? songs.length : 'N/A'));
     /* R81: 実データを使う（active setlist の songs + 当日の rehearsalByDate） */
     var allSongs = (typeof songs !== 'undefined' && Array.isArray(songs))
       ? songs.map(function(s){
@@ -6486,7 +6488,7 @@ function show(id) {
         '<thead><tr><th class="col-mno">M#</th><th class="col-title">Title</th><th class="col-time">Time</th><th class="col-rh">RH</th><th class="col-tags">Tags</th><th class="col-memo">Memo</th></tr></thead>' +
         '<tbody>' + rowsHtml + '</tbody>' +
       '</table>' +
-      '<div class="r70p-foot"><span><span class="lbl">Runtime</span><span class="val">' + _r77TotalRuntime + '</span></span><span><span class="lbl">Songs</span><span class="val">' + songList.length + '</span></span></div>' /* R79: Runtime を大型黒字に */ +
+      '<div class="r70p-foot"><span><span class="lbl">Runtime</span><span class="val">' + _r77TotalRuntime + '</span></span><span style="font-size:8px;color:#b0b0b0;font-weight:400;letter-spacing:0.2em;align-self:flex-end;">Build ' + (document.querySelector('meta[name="build-version"]') ? document.querySelector('meta[name="build-version"]').content : '?') + '</span><span><span class="lbl">Songs</span><span class="val">' + songList.length + '</span></span></div>' /* R81b: ビルド刻印で検証 */ +
     '</div>';
 
     /* DOM に一時挿入 → html2pdf で PDF 化 → 削除 */
