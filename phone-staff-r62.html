@@ -11,13 +11,13 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260509.122409">
+<meta name="build-version" content="20260509.121831">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="apple-touch-icon" href="favicon.svg">
-<title>SCHEDULE STUDIO — ARTIST</title>
+<title>SCHEDULE STUDIO — STAFF</title>
 <!-- R57 LIFF: LINE Front-end Framework SDK -->
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-<!-- D147 ARTIST: Firebase SDK + 同期 -->
+<!-- D147 STAFF: Firebase SDK + 同期 -->
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
 <script>
@@ -34,9 +34,12 @@
   try {
     firebase.initializeApp(firebaseConfig);
     window.__db = firebase.database();
-    window.__db.ref('.info/connected').on('value', function(snap){ window.__fbConnected = snap.val() === true; });
+    window.__db.ref('.info/connected').on('value', function(snap){
+      window.__fbConnected = snap.val() === true;
+    });
   } catch (e) { console.error('[FB] init err', e); }
 })();
+// localStorage ↔ Firebase 自動同期
 (function fbSync(){
   if (!window.__db) return;
   const FB_ROOT = 'ls';
@@ -58,6 +61,7 @@
       try { window.__db.ref(FB_ROOT + '/' + encKey(key)).remove(); } catch(e){}
     }
   };
+  // 起動時 pull
   window.__db.ref(FB_ROOT).once('value').then(function(snap){
     const all = snap.val() || {};
     suppress = true;
@@ -67,10 +71,13 @@
     });
     suppress = false;
     console.log('[FB] pull keys=' + Object.keys(all).length);
+    // リアルタイム購読
     window.__db.ref(FB_ROOT).on('child_changed', function(s){
       const it = s.val();
       if (it && it.k && typeof it.v === 'string' && localStorage.getItem(it.k) !== it.v) {
         suppress = true; _setItem(it.k, it.v); suppress = false;
+        console.log('[FB] sync', it.k);
+        // 簡易再描画：ページ全体の sync は state リフレッシュ系の関数を呼ぶ
         if (typeof window.__phoneRefreshAll === 'function') window.__phoneRefreshAll();
       }
     });
@@ -1827,55 +1834,6 @@
     display: flex; align-items: center; justify-content: center;
     padding: 0 5px;
   }
-
-  /* ════════════════════════════════════════════════════════════
-     D147 ARTIST: アクセント色を STAFF オレンジ → ベージュ #c5a572 に上書き
-     ════════════════════════════════════════════════════════════ */
-  .phone-bottom-tabs button.active { color: #c5a572 !important; }
-  .phone-bottom-tabs button .badge { background: #c5a572 !important; color: #1a1a1a !important; }
-  /* 旧 phone.html の #e89a4a 系を全部 #c5a572 に */
-  [style*="#e89a4a"] { color: #c5a572 !important; }
-  /* ARTIST 識別バッジ */
-  body::after {
-    content: 'ARTIST';
-    position: fixed;
-    top: 6px;
-    right: 6px;
-    z-index: 9998;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 8px;
-    letter-spacing: 0.25em;
-    padding: 2px 8px;
-    border-radius: 99px;
-    background: rgba(197,165,114,0.14);
-    color: #c5a572;
-    border: 1px solid rgba(197,165,114,0.4);
-    pointer-events: none;
-  }
-  /* D149 ARTIST: 編集を完全に無効化（pass-input は除外、ログイン用） */
-  input:not(.pass-input):not([type="password"]),
-  textarea,
-  [contenteditable="true"],
-  [contenteditable=""],
-  select {
-    pointer-events: none !important;
-    -webkit-user-modify: read-only !important;
-    user-select: text !important;
-    cursor: default !important;
-    caret-color: transparent !important;
-  }
-  /* +追加 / 削除 / 編集ボタン類は ARTIST では非表示 */
-  .add-btn, .delete-btn, .edit-btn, .row-action,
-  [class*="-add"], [class*="add-row"], [class*="delete"],
-  button[onclick*="delete"], button[onclick*="add"], button[onclick*="edit"] {
-    display: none !important;
-  }
-  /* ただし、戻る・タブ切替・モーダル開閉ボタンは残す */
-  .tour-cal-back, .tour-cal-btn, .phone-bottom-tabs button,
-  .cal-day-sheet-backdrop, [onclick*="closeCalDaySheet"], [onclick*="show("] {
-    display: revert !important;
-    pointer-events: auto !important;
-  }
   /* D151: スマホ CALENDAR は閲覧のみ — 日付タップで開く編集シートを完全撤去 */
   .cal-day-sheet, .cal-day-sheet.show {
     display: none !important;
@@ -2514,13 +2472,14 @@
 
 </div>
 
-<!-- 下タブ -->
-<!-- R67 P1: 下タブを統合（テクリハ＋RH→リハーサル1個に） -->
-<!-- D150 ARTIST: 3 タブを英語ラベルに（PC 版と統一感） -->
+<!-- 下タブ — D147 STAFF: PASS タブ撤去（パスなし全閲覧） -->
+<!-- D150 STAFF: タブを全部英語化（PC 版と統一感） -->
 <div class="phone-bottom-tabs" id="bottom-tabs">
-  <button class="active" onclick="show('schedule')"><span class="ico">▤</span>DAY SCHEDULE</button>
-  <button class="rehearsal-btn" onclick="show('rehearsal')"><span class="ico">▶</span>REHEARSAL</button>
+  <button onclick="show('schedule')"><span class="ico">▤</span>DAY SCHEDULE</button>
+  <button class="active rehearsal-btn" onclick="show('rehearsal')"><span class="ico">▶</span>REHEARSAL</button>
   <button onclick="show('info')"><span class="ico">⚑</span>INFO</button>
+  <button onclick="show('arrival')"><span class="ico">◷</span>ARRIVAL</button>
+  <button onclick="show('hotel')"><span class="ico">★</span>HOTEL</button>
 </div>
 
 <!-- ツアー日付選択モーダル -->
@@ -2599,7 +2558,7 @@
 </div>
 
 <script>
-// D152 ARTIST: 常に認証済み（ロック画面で ARTIST パス入力済みの想定。本体内部のパスプロンプトは出さない）
+// D152 STAFF: 常に認証済み（PASS タブ撤去 + パスワードプロンプト一切なし）
 let authed = true;
 const topTabsHiddenScreens = ['schedule','info','arrival','hotel','pass'];
 
@@ -2658,8 +2617,7 @@ function showRehearsalSub(sub) {
 
 function tryUnlock() {
   const v = document.getElementById('pass-field').value;
-  if (v === '2222') {
-    /* R62: ARTIST 用パスワード → このページで unlock */
+  if (v === '1234') {
     authed = true;
     document.getElementById('pass-input-view').style.display = 'none';
     document.getElementById('pass-unlocked-view').style.display = 'flex';
@@ -2668,35 +2626,10 @@ function tryUnlock() {
     document.querySelectorAll('.finish-btn.disabled').forEach(b => b.classList.remove('disabled'));
     // R77 P3: SCHEDULE タブを編集UI に切り替え
     if (typeof renderScheduleDayListPhone === 'function') renderScheduleDayListPhone();
-  } else if (v === '1111') {
-    /* R62: 反対側のパスワード → 相手ページに ?authed=1 でリダイレクト */
-    location.href = 'phone-staff.html?authed=1';
   } else {
-    alert('パスワードが違います');
+    alert('パスワードが違います（デモ用: 1234）');
   }
 }
-
-/* R62: ?authed=1 で来たら自動 unlock（相手側ページから振り分けられて来た時用） */
-(function autoUnlockFromQuery(){
-  if (location.search.indexOf('authed=1') >= 0) {
-    /* DOM 読み込み後に実行 */
-    function _doUnlock(){
-      if (typeof authed !== 'undefined') authed = true;
-      var pi = document.getElementById('pass-input-view');
-      var pu = document.getElementById('pass-unlocked-view');
-      if (pi) pi.style.display = 'none';
-      if (pu) pu.style.display = 'flex';
-      document.body.classList.add('authed');
-      document.querySelectorAll('.finish-btn.disabled').forEach(b => b.classList.remove('disabled'));
-      if (typeof renderScheduleDayListPhone === 'function') renderScheduleDayListPhone();
-    }
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', _doUnlock);
-    } else {
-      setTimeout(_doUnlock, 50);
-    }
-  }
-})();
 
 function resetAuth() {
   authed = false;
@@ -3006,6 +2939,8 @@ function closeTimePicker() {
 
 // 初期：リハ順モード（×カードは隠れる）
 document.body.classList.add('sort-rh');
+// D147 STAFF: パスなしで即全閲覧
+document.body.classList.add('authed');
 
 // ── ツアー日程（モック・期間→日数自動展開）──
 const TOUR_YEAR = 2026;

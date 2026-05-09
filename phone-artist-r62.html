@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260509.122409">
+<meta name="build-version" content="20260509.121831">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="apple-touch-icon" href="favicon.svg">
 <title>SCHEDULE STUDIO — ARTIST</title>
@@ -2658,8 +2658,7 @@ function showRehearsalSub(sub) {
 
 function tryUnlock() {
   const v = document.getElementById('pass-field').value;
-  if (v === '2222') {
-    /* R62: ARTIST 用パスワード → このページで unlock */
+  if (v === '1234') {
     authed = true;
     document.getElementById('pass-input-view').style.display = 'none';
     document.getElementById('pass-unlocked-view').style.display = 'flex';
@@ -2668,35 +2667,10 @@ function tryUnlock() {
     document.querySelectorAll('.finish-btn.disabled').forEach(b => b.classList.remove('disabled'));
     // R77 P3: SCHEDULE タブを編集UI に切り替え
     if (typeof renderScheduleDayListPhone === 'function') renderScheduleDayListPhone();
-  } else if (v === '1111') {
-    /* R62: 反対側のパスワード → 相手ページに ?authed=1 でリダイレクト */
-    location.href = 'phone-staff.html?authed=1';
   } else {
-    alert('パスワードが違います');
+    alert('パスワードが違います（デモ用: 1234）');
   }
 }
-
-/* R62: ?authed=1 で来たら自動 unlock（相手側ページから振り分けられて来た時用） */
-(function autoUnlockFromQuery(){
-  if (location.search.indexOf('authed=1') >= 0) {
-    /* DOM 読み込み後に実行 */
-    function _doUnlock(){
-      if (typeof authed !== 'undefined') authed = true;
-      var pi = document.getElementById('pass-input-view');
-      var pu = document.getElementById('pass-unlocked-view');
-      if (pi) pi.style.display = 'none';
-      if (pu) pu.style.display = 'flex';
-      document.body.classList.add('authed');
-      document.querySelectorAll('.finish-btn.disabled').forEach(b => b.classList.remove('disabled'));
-      if (typeof renderScheduleDayListPhone === 'function') renderScheduleDayListPhone();
-    }
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', _doUnlock);
-    } else {
-      setTimeout(_doUnlock, 50);
-    }
-  }
-})();
 
 function resetAuth() {
   authed = false;
