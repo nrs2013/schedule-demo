@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260509.122409">
+<meta name="build-version" content="20260509.123508">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="apple-touch-icon" href="favicon.svg">
 <title>SCHEDULE STUDIO — STAFF</title>
@@ -1569,6 +1569,35 @@
   .cal-dow.sat { color: #88a8d0; }
   .cal-dow.sun { color: #d08888; }
 
+  /* R63 B2: 縦スクロール多月コンテナ */
+  .cal-months-wrap {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    max-height: calc(100vh - 220px);
+    padding-bottom: 24px;
+  }
+  .cal-month-block { margin-bottom: 18px; }
+  .cal-month-block .cal-month-title {
+    font-size: 13px;
+    letter-spacing: 0.06em;
+    color: #c8c8c0;
+    font-weight: 500;
+    padding: 12px 6px 6px;
+    text-align: left;
+  }
+  .cal-today-btn {
+    background: rgba(232,154,74,0.15);
+    border: 1px solid rgba(232,154,74,0.5);
+    color: #e89a4a;
+    padding: 5px 16px;
+    border-radius: 99px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    cursor: pointer;
+  }
+  .cal-today-btn:active { background: rgba(232,154,74,0.30); }
+
   .cal-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
@@ -1880,9 +1909,8 @@
     <div class="tour-cal-title">TOUR CALENDAR</div>
 
     <div class="cal-header">
-      <button class="cal-nav" onclick="changeCalMonth(-1)">‹</button>
-      <div class="cal-month-title" id="cal-month-title">2026 年 4 月</div>
-      <button class="cal-nav" onclick="changeCalMonth(1)">›</button>
+      <!-- R63 B2: prev/next 撤去、TODAY ボタンだけ。月ブロックが縦に積まれて自然スクロール -->
+      <button class="cal-today-btn" onclick="scrollCalToToday()">TODAY</button>
     </div>
 
     <div class="cal-dow-row">
@@ -1895,7 +1923,7 @@
       <div class="cal-dow sun">日</div>
     </div>
 
-    <div class="cal-grid" id="cal-grid"></div>
+    <div class="cal-months-wrap" id="cal-months-wrap"><!-- R63 B2: 縦スクロール多月 --></div>
 
     <div style="font-size:11px; color:#5a5a55; text-align:center; margin:14px 0 6px; letter-spacing:0.08em;">
       日をタップで編集／PCのCALENDARタブと相互リンク
@@ -3191,8 +3219,17 @@ let calCurrentMonth = new Date(); // 表示中の月（1日に正規化）
 calCurrentMonth.setDate(1);
 
 function changeCalMonth(delta) {
+  /* R63 B2: 多月縦スクロール化により単独使用は不要だが、互換のため残す */
   calCurrentMonth.setMonth(calCurrentMonth.getMonth() + delta);
   renderCalendarMonth();
+}
+/* R63 B2: 今月へスクロール */
+function scrollCalToToday() {
+  const wrap = document.getElementById('cal-months-wrap');
+  if (!wrap) return;
+  const today = new Date();
+  const tb = wrap.querySelector('[data-year="' + today.getFullYear() + '"][data-month="' + today.getMonth() + '"]');
+  if (tb) tb.scrollIntoView({ block: 'start', behavior: 'smooth' });
 }
 
 // 月曜=0, 火=1, ..., 日=6 に変換（日曜を一番右にするため）
@@ -3202,6 +3239,84 @@ function dayCol(d) {
 }
 
 function renderCalendarMonth() {
+  /* R63 B2: 単一月レンダリングは廃止、renderCalendarMonths を呼ぶ */
+  renderCalendarMonths();
+}
+
+/* R63 B2: 前12ヶ月＋今月＋後12ヶ月 = 25ヶ月を縦に並べる */
+function renderCalendarMonths() {
+  const wrap = document.getElementById('cal-months-wrap');
+  if (!wrap) return;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const baseY = today.getFullYear();
+  const baseM = today.getMonth();
+  const tourStartDt = new Date(tourStart); tourStartDt.setHours(0,0,0,0);
+  const tourEndDt = new Date(tourEnd); tourEndDt.setHours(0,0,0,0);
+
+  let html = '';
+  for (let off = -12; off <= 12; off++) {
+    const md = new Date(baseY, baseM + off, 1);
+    const y = md.getFullYear();
+    const m = md.getMonth();
+    html += '<div class="cal-month-block" data-year="' + y + '" data-month="' + m + '">';
+    html += '<div class="cal-month-title">' + y + ' 年 ' + (m + 1) + ' 月</div>';
+    html += '<div class="cal-grid">';
+
+    const first = new Date(y, m, 1);
+    const startDate = new Date(first);
+    startDate.setDate(first.getDate() - dayCol(first));
+
+    for (let i = 0; i < 42; i++) {
+      const d = new Date(startDate);
+      d.setDate(startDate.getDate() + i);
+      d.setHours(0,0,0,0);
+
+      const dow = dayCol(d);
+      const isOutside = d.getMonth() !== m;
+      const isToday = d.getTime() === today.getTime();
+      const inTour = d >= tourStartDt && d <= tourEndDt;
+
+      const cellCls = ['cal-cell'];
+      if (isOutside) cellCls.push('outside');
+      if (inTour) cellCls.push('in-tour');
+      if (isToday) cellCls.push('today');
+
+      const numCls = ['cal-day-num'];
+      if (dow === 5) numCls.push('sat');
+      if (dow === 6) numCls.push('sun');
+
+      let events = '';
+      const evs = (!isOutside) ? getEventsForDate(d) : [];
+      evs.slice(0, 3).forEach(function(e){
+        const cont = isContinuousEvent(d, e);
+        const positionCls = (cont.hasPrev && cont.hasNext) ? ' bar-mid'
+                          : cont.hasNext ? ' bar-start'
+                          : cont.hasPrev ? ' bar-end'
+                          : '';
+        /* R63 A1: bar-start (or 単独日) では label + 会場 を表示 */
+        const labelText = e.label + (e.venue ? ' · ' + e.venue : '');
+        const label = cont.hasPrev ? '' : escHtmlPhone(labelText);
+        events += '<div class="cal-event-pill ' + e.type + positionCls + '">' + label + '</div>';
+      });
+
+      const iso = fmtCalKey(d);
+      html += '<div class="' + cellCls.join(' ') + '" onclick="openCalDaySheet(\'' + iso + '\')">' +
+              '<div class="' + numCls.join(' ') + '">' + d.getDate() + '</div>' +
+              '<div class="cal-events">' + events + '</div>' +
+              '</div>';
+    }
+    html += '</div></div>'; /* cal-grid + cal-month-block */
+  }
+  wrap.innerHTML = html;
+
+  /* 今月の位置にスクロール */
+  setTimeout(function(){
+    const tb = wrap.querySelector('[data-year="' + baseY + '"][data-month="' + baseM + '"]');
+    if (tb) tb.scrollIntoView({ block: 'start', behavior: 'auto' });
+  }, 30);
+}
+
+function _renderCalendarMonth_OLD() {
   const grid = document.getElementById('cal-grid');
   if (!grid) return;
 
