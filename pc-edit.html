@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260509.410000">
+<meta name="build-version" content="20260509.500000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -1040,7 +1040,11 @@
   .pc-rh-header {
     padding: 0 20px 12px;
     border-bottom: 1px solid #2c2a27;
-    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px;
+    /* D160 Phase 3: 画面狭時に横並びを保ったまま縦書き化するのを防ぐ */
+    flex-wrap: wrap;
+    row-gap: 10px;
   }
   .pc-rh-title {
     display: flex;
@@ -1117,7 +1121,15 @@
     letter-spacing: 0.04em;
     margin-left: -6px;
   }
-  .pc-rh-actions { display: flex; gap: 8px; }
+  .pc-rh-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  /* D160 Phase 3: rh-mode-toggle 内のボタン群も画面狭時に折り返す */
+  .rh-mode-toggle { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  /* D160 Phase 3: ボタンが圧縮されて縦書き化するのを防ぐ */
+  .pc-btn { white-space: nowrap; }
+  .rh-mode-btn { white-space: nowrap; }
+  .setlist-tab { white-space: nowrap; }
+  .setlist-add-btn { white-space: nowrap; }
+  .setlist-tabs-label { white-space: nowrap; }
   .pc-btn {
     padding: 8px 16px;
     background: #1c1b19;
@@ -1392,47 +1404,79 @@
   }
   #pc-btn-rh-excel:hover,
   #pc-btn-rh-template:hover { opacity: 1; }
-  /* D157: SET LIST タブ */
+  /* D160 Phase 2: SET LIST タブ — 青系で他のオレンジ系ボタンと完全に差別化 + 独立行 */
   .setlist-tabs-row {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 8px 14px 0;
-    border-bottom: 1px solid rgba(255,255,255,0.04);
-    margin-bottom: 6px;
+    gap: 10px;
+    padding: 10px 20px 8px;
+    margin: 0 0 4px;
+    background: linear-gradient(180deg, rgba(91,155,213,0.04) 0%, rgba(91,155,213,0.00) 100%);
+    border-bottom: 1px solid rgba(91,155,213,0.10);
+    flex-wrap: wrap;
+  }
+  .setlist-tabs-label {
+    font-family: 'Bebas Neue', 'Noto Sans JP', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.32em;
+    color: rgba(168,212,232,0.65);
+    font-weight: 400;
+    margin-right: 4px;
   }
   .setlist-tabs {
     display: flex;
-    gap: 4px;
+    gap: 6px;
     flex-wrap: wrap;
     flex: 1;
+    min-width: 0;
   }
   .setlist-tab {
-    background: transparent;
-    border: 1px solid rgba(255,255,255,0.08);
-    color: #76766f;
-    padding: 6px 14px 5px;
-    border-radius: 6px 6px 0 0;
+    position: relative;
+    background: rgba(91,155,213,0.05);
+    border: 1px solid rgba(91,155,213,0.22);
+    color: #88a3b8;
+    padding: 6px 28px 5px 14px; /* 右側に ✕ ぶん余白 */
+    border-radius: 6px;
     font-family: inherit;
     font-size: 11px;
     letter-spacing: 0.12em;
     font-weight: 600;
     cursor: pointer;
     transition: background 0.12s, border-color 0.12s, color 0.12s;
-    border-bottom: none;
-    margin-bottom: -1px;
   }
-  .setlist-tab:hover { color: #d8d8d4; background: rgba(255,255,255,0.025); }
+  .setlist-tab:hover { color: #d8e8f5; background: rgba(91,155,213,0.10); border-color: rgba(91,155,213,0.40); }
   .setlist-tab.active {
-    background: rgba(232,154,74,0.10);
-    border-color: rgba(232,154,74,0.55);
-    border-bottom: 1px solid rgba(232,154,74,0.55);
-    color: #f5d4a8;
+    background: rgba(91,155,213,0.18);
+    border-color: #5b9bd5;
+    color: #e8f3fc;
+    box-shadow: 0 0 0 1px rgba(91,155,213,0.35);
   }
+  /* タブ内 ✕ ボタン（削除） */
+  .setlist-tab-x {
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 16px;
+    line-height: 14px;
+    text-align: center;
+    background: transparent;
+    border: none;
+    color: rgba(168,212,232,0.45);
+    font-size: 14px;
+    font-weight: 400;
+    cursor: pointer;
+    border-radius: 3px;
+    padding: 0;
+    transition: background 0.12s, color 0.12s;
+  }
+  .setlist-tab-x:hover { background: rgba(224,122,95,0.20); color: #ffb09b; }
+  .setlist-tab.is-only .setlist-tab-x { display: none; } /* 最後の1個は削除不可 */
   .setlist-add-btn {
     background: transparent;
-    border: 1px dashed rgba(232,154,74,0.45);
-    color: rgba(232,154,74,0.85);
+    border: 1px dashed rgba(91,155,213,0.40);
+    color: rgba(168,212,232,0.85);
     padding: 5px 14px;
     border-radius: 6px;
     font-family: inherit;
@@ -1440,11 +1484,12 @@
     letter-spacing: 0.10em;
     font-weight: 600;
     cursor: pointer;
-    transition: background 0.12s, color 0.12s;
+    transition: background 0.12s, color 0.12s, border-color 0.12s;
   }
   .setlist-add-btn:hover {
-    background: rgba(232,154,74,0.08);
-    color: #f5d4a8;
+    background: rgba(91,155,213,0.08);
+    color: #d8e8f5;
+    border-color: rgba(91,155,213,0.70);
   }
   /* D155: 「+ 行を追加」ボタンを目立たせる */
   .pc-btn.pc-add-row {
@@ -4468,6 +4513,12 @@
 
     <!-- ── mode-content: REHEARSAL（既存内容） ───────── -->
     <div class="mode-content" id="mode-rehearsal">
+    <!-- D160 Phase 2: SET LIST タブ行を独立化（pc-rh-header の外）+ 青系で差別化 -->
+    <div class="setlist-tabs-row" id="setlist-tabs-row">
+      <div class="setlist-tabs-label">SET LIST</div>
+      <div class="setlist-tabs" id="setlist-tabs"><!-- JSで生成 --></div>
+      <button class="setlist-add-btn" id="setlist-add-btn" type="button">＋ セトリ追加</button>
+    </div>
     <div class="pc-rh-header">
       <div class="pc-rh-title-block">
         <div class="pc-rh-title">
@@ -4480,11 +4531,6 @@
             <button id="pc-btn-rh"  class="pc-btn">リハ順</button>
           </div>
         </div>
-      </div>
-      <!-- D157 Phase 1: SET LIST タブ（複数セトリ管理） -->
-      <div class="setlist-tabs-row" id="setlist-tabs-row">
-        <div class="setlist-tabs" id="setlist-tabs"><!-- JSで生成 --></div>
-        <button class="setlist-add-btn" id="setlist-add-btn" type="button">＋ セトリ追加</button>
       </div>
       <div class="pc-rh-actions">
         <!-- D154 Phase 4: 種別ボタン群を撤去、「+ 行を追加」1 個に統合 -->
@@ -5145,16 +5191,52 @@ function show(id) {
     saveSetlists();
     setActiveSetlist(newSl.id);
   }
+  // D160 Phase 2: セトリ削除（最後の1個は削除不可）
+  function deleteSetlist(id){
+    if (setlists.length <= 1) {
+      alert('最後のセトリは削除できません。');
+      return;
+    }
+    const sl = setlists.find(function(s){ return s.id === id; });
+    if (!sl) return;
+    const songCount = (sl.songs || []).length;
+    const msg = '「' + (sl.name || 'SET LIST') + '」を削除しますか？'
+              + (songCount > 0 ? '\nこのセトリの ' + songCount + ' 曲も一緒に削除されます。' : '')
+              + '\n（この操作は元に戻せません）';
+    if (!confirm(msg)) return;
+    const idx = setlists.findIndex(function(s){ return s.id === id; });
+    if (idx < 0) return;
+    setlists.splice(idx, 1);
+    saveSetlists();
+    // active が消えた場合は最初のセトリに切り替え
+    if (activeSetlistId === id) {
+      setActiveSetlist(setlists[0].id);
+    } else {
+      renderSetlistTabs();
+    }
+  }
   function renderSetlistTabs(){
     const wrap = document.getElementById('setlist-tabs');
     if (!wrap) return;
+    const onlyCls = setlists.length === 1 ? ' is-only' : '';
     wrap.innerHTML = setlists.map(function(sl){
-      const cls = sl.id === activeSetlistId ? ' active' : '';
+      const cls = (sl.id === activeSetlistId ? ' active' : '') + onlyCls;
       const safeName = String(sl.name || 'SET LIST').replace(/[&<>"']/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; });
-      return '<button class="setlist-tab' + cls + '" data-sl-id="' + sl.id + '" type="button">' + safeName + '</button>';
+      return '<button class="setlist-tab' + cls + '" data-sl-id="' + sl.id + '" type="button">'
+           +    safeName
+           +    '<span class="setlist-tab-x" data-x-id="' + sl.id + '" title="このセトリを削除">×</span>'
+           + '</button>';
     }).join('');
     wrap.querySelectorAll('.setlist-tab').forEach(function(btn){
-      btn.addEventListener('click', function(){ setActiveSetlist(btn.getAttribute('data-sl-id')); });
+      btn.addEventListener('click', function(e){
+        // ✕ をクリックしたときはタブ切替せず削除へ
+        if (e.target && e.target.classList && e.target.classList.contains('setlist-tab-x')) {
+          e.stopPropagation();
+          deleteSetlist(e.target.getAttribute('data-x-id'));
+          return;
+        }
+        setActiveSetlist(btn.getAttribute('data-sl-id'));
+      });
     });
   }
   // 初回タブ描画（DOM 準備後）
@@ -5412,22 +5494,47 @@ function show(id) {
     }
   });
 
-  // D158b: rh-no を <input> に変えたので、ブラウザ標準の form 動作で完結
-  // - Enter で blur（confirm）
-  // - focus で el.select() — 中身全選択 → 次のキー入力で上書き（標準動作）
-  // - 数字以外を即除去
+  // D160 Phase 1: RH# 「1→11」バグの根本対処
+  // 原因：focusin で select() しても、その後の mouseup でカーソル位置が確定し選択が解除される
+  //      → 既存の「1」の隣に新しい「1」が挿入されて「11」になる
+  // 対策：① click（mouseup より後）で select() を再実行
+  //      ② mouseup でも setTimeout(0) で select() を再実行（保険）
+  //      ③ 万が一 select 失敗時の最後の砦：keydown で「1文字目入力時は強制クリア」
   container.addEventListener('keydown', function(e){
     const el = e.target;
-    if (el && el.classList && el.classList.contains('rh-no') && e.key === 'Enter') {
+    if (!el || !el.classList || !el.classList.contains('rh-no')) return;
+    if (e.key === 'Enter') {
       e.preventDefault();
       el.blur();
+      return;
+    }
+    // ③ 数字キーが押された時、もし「全選択されてない」かつ「既に値がある」なら → クリアしてから入力させる
+    if (/^[0-9]$/.test(e.key) && el.value && el.value.length > 0) {
+      const isAllSelected = (el.selectionStart === 0 && el.selectionEnd === el.value.length);
+      if (!isAllSelected) {
+        // 一旦クリアして上書き入力にする
+        el.value = '';
+      }
     }
   });
   container.addEventListener('focusin', function(e){
     const el = e.target;
     if (el && el.classList && el.classList.contains('rh-no')) {
-      // <input> の標準：全選択 → 次の入力でブラウザが自動で置換
       try { el.select(); } catch(err) {}
+    }
+  });
+  // ① click は mousedown→focus→mouseup→click の順で発火するので、ここで select() すれば確実
+  container.addEventListener('click', function(e){
+    const el = e.target;
+    if (el && el.classList && el.classList.contains('rh-no')) {
+      try { el.select(); } catch(err) {}
+    }
+  });
+  // ② mouseup 直後にも setTimeout で select（保険）
+  container.addEventListener('mouseup', function(e){
+    const el = e.target;
+    if (el && el.classList && el.classList.contains('rh-no')) {
+      setTimeout(function(){ try { el.select(); } catch(err) {} }, 0);
     }
   });
   container.addEventListener('input', function(e){
