@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260509.133650">
+<meta name="build-version" content="20260509.141259">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -34,6 +34,8 @@
 <!-- D141 Phase 2-A: Firebase SDK (compat) — クラウド同期の入口 -->
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
+<!-- R68: Firebase 匿名認証 SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
 <script>
 // Firebase 初期化 + 接続確認
 (function initFirebase(){
@@ -48,6 +50,15 @@
   };
   try {
     firebase.initializeApp(firebaseConfig);
+    /* R68 (A案): 匿名認証 — アプリを開いた人だけが Firebase にアクセス可能になる
+       ルール側で auth != null を要求すれば、外から URL 直叩きは弾ける */
+    firebase.auth().signInAnonymously().then(function(){
+      window.__fbAuthed = true;
+      console.log('[Firebase Auth] 匿名認証 OK');
+    }).catch(function(err){
+      window.__fbAuthed = false;
+      console.warn('[Firebase Auth] 匿名認証失敗:', err && err.message);
+    });
     window.__db = firebase.database();
     // 接続状態を画面に小さく表示するためのフラグ
     window.__db.ref('.info/connected').on('value', function(snap){
