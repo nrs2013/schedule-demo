@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260508.240000">
+<meta name="build-version" content="20260509.250000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -4144,6 +4144,19 @@
       </div>
     </div>
 
+    <!-- D139: グランドパスワード入力モード（新規 CONCERT 作成時のみ要求） -->
+    <div class="lock-mode" id="lock-grand-mode">
+      <div class="lock-card">
+        <div class="lock-icon">🛡</div>
+        <div class="lock-mode-label">GRAND PASS</div>
+        <div class="lock-form-sub">新しい CONCERT を作成するには<br>会社のグランドパスワードが必要です</div>
+        <input type="password" class="lock-input" placeholder="グランドパスワード" id="lock-grand-pass" autocomplete="off">
+        <button class="lock-btn" id="lock-grand-btn" type="button">次へ</button>
+        <div class="lock-error" id="lock-grand-error"></div>
+        <button class="lock-back-link" id="lock-grand-back" type="button">← 一覧に戻る</button>
+      </div>
+    </div>
+
     <!-- ログインモード（中央カード） -->
     <div class="lock-mode" id="lock-login-mode">
       <div class="lock-card">
@@ -4163,7 +4176,8 @@
 <!-- D120 Phase A2: 起動時は active なし。bootstrapAuth が認証スキップ判定後に付与 -->
 <div class="screen" id="screen-pc">
   <div class="pc-frame">
-    <div class="pc-brand-strip">
+    <!-- D138: ロゴをクリックすると CONCERT LIST に戻る -->
+    <div class="pc-brand-strip" id="pc-brand-strip" title="クリックで CONCERT 一覧に戻る" style="cursor: pointer;">
       <span class="ss-logo-square">S</span>
       <span class="ss-logo-text">SCHEDULE STUDIO</span>
     </div>
@@ -8408,10 +8422,14 @@ function show(id) {
   const modeList  = document.getElementById('lock-list-mode');
   const modeAdd   = document.getElementById('lock-add-mode');
   const modeLogin = document.getElementById('lock-login-mode');
+  const modeGrand = document.getElementById('lock-grand-mode'); // D139
   function showMode(modeEl){
-    [modeList, modeAdd, modeLogin].forEach(function(m){ if (m) m.classList.remove('active'); });
+    [modeList, modeAdd, modeLogin, modeGrand].forEach(function(m){ if (m) m.classList.remove('active'); });
     if (modeEl) modeEl.classList.add('active');
   }
+  // D139: グランドパスワード（新規 CONCERT 作成時のみ要求）
+  const GRAND_PASS = 'Nrs20132525';
+  const SS_GRAND_AUTHED = 'schedule-studio:grand-authed';
 
   // ロック画面に切替
   lockEl.classList.add('active');
@@ -8510,13 +8528,45 @@ function show(id) {
     };
   }
 
+  // D139: 既にグランドパス済みなら即追加モード、未認証なら grand-mode を出す
   function startAdd(){
+    if (sessionStorage.getItem(SS_GRAND_AUTHED) === '1') {
+      enterAddMode();
+    } else {
+      startGrand();
+    }
+  }
+  function enterAddMode(){
     showMode(modeAdd);
     document.getElementById('lock-add-title').value = '';
     document.getElementById('lock-add-concert').value = '';
     document.getElementById('lock-add-artist').value = '';
     document.getElementById('lock-add-edit').value = '';
     setTimeout(function(){ document.getElementById('lock-add-title').focus(); }, 100);
+  }
+  function startGrand(){
+    showMode(modeGrand);
+    const inp = document.getElementById('lock-grand-pass');
+    const errEl = document.getElementById('lock-grand-error');
+    inp.value = '';
+    errEl.textContent = '';
+    setTimeout(function(){ inp.focus(); }, 100);
+    function tryGrand(){
+      if (inp.value === GRAND_PASS) {
+        sessionStorage.setItem(SS_GRAND_AUTHED, '1');
+        enterAddMode();
+      } else {
+        errEl.textContent = 'グランドパスワードが違います';
+        inp.value = '';
+        inp.focus();
+      }
+    }
+    document.getElementById('lock-grand-btn').onclick = tryGrand;
+    inp.onkeydown = function(e){ if (e.key === 'Enter') tryGrand(); };
+    document.getElementById('lock-grand-back').onclick = function(){
+      showMode(modeList);
+      renderList();
+    };
   }
 
   function tryAdd(){
@@ -8572,6 +8622,17 @@ function show(id) {
           c.title = t;
           saveConcerts();
         }
+      });
+    }
+    // D138: 左上の SS ロゴをクリックで CONCERT 一覧に戻る
+    const brandStrip = document.getElementById('pc-brand-strip');
+    if (brandStrip) {
+      brandStrip.addEventListener('click', function(){
+        // 現在の active concert の authed フラグを外して、active 自体も解除
+        const activeId = localStorage.getItem(LS_ACTIVE);
+        if (activeId) sessionStorage.removeItem(SS_AUTHED_PREFIX + activeId);
+        localStorage.removeItem(LS_ACTIVE);
+        location.reload();
       });
     }
   }, 300);
