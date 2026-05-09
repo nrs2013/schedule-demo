@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260509.STAFF.7">
+<meta name="build-version" content="20260509.STAFF.8">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="apple-touch-icon" href="favicon.svg">
 <title>SCHEDULE STUDIO — STAFF</title>
@@ -89,6 +89,81 @@
   } catch (e) {
     console.error('[Firebase] init 失敗:', e);
   }
+})();
+
+// D142 Phase 2-B+C: localStorage ↔ Firebase 自動同期（STAFF 版）
+(function fbSync(){
+  if (!window.__db) return;
+  const FB_ROOT = 'ls';
+  function encKey(k){ return k.replace(/[.#$/\[\]]/g, '_'); }
+  const _setItem = localStorage.setItem.bind(localStorage);
+  const _removeItem = localStorage.removeItem.bind(localStorage);
+  let suppressFbWrite = false;
+  localStorage.setItem = function(key, value){
+    _setItem(key, value);
+    if (suppressFbWrite) return;
+    if (typeof key === 'string' && key.indexOf('schedule-studio:') === 0) {
+      try {
+        window.__db.ref(FB_ROOT + '/' + encKey(key)).set({ k: key, v: String(value), t: Date.now() });
+      } catch(e) { console.warn('[FB] write fail', key, e); }
+    }
+  };
+  localStorage.removeItem = function(key){
+    _removeItem(key);
+    if (suppressFbWrite) return;
+    if (typeof key === 'string' && key.indexOf('schedule-studio:') === 0) {
+      try { window.__db.ref(FB_ROOT + '/' + encKey(key)).remove(); } catch(e) {}
+    }
+  };
+  window.__db.ref(FB_ROOT).once('value').then(function(snap){
+    const all = snap.val() || {};
+    suppressFbWrite = true;
+    Object.keys(all).forEach(function(escKey){
+      const item = all[escKey];
+      if (item && item.k && typeof item.v === 'string') {
+        const localVal = localStorage.getItem(item.k);
+        if (localVal !== item.v) _setItem(item.k, item.v);
+      }
+    });
+    suppressFbWrite = false;
+    console.log('[FB] pull 完了 / keys=' + Object.keys(all).length);
+    window.__db.ref(FB_ROOT).on('child_changed', function(snap2){
+      const item = snap2.val();
+      if (item && item.k && typeof item.v === 'string') {
+        const localVal = localStorage.getItem(item.k);
+        if (localVal !== item.v) {
+          suppressFbWrite = true;
+          _setItem(item.k, item.v);
+          suppressFbWrite = false;
+          console.log('[FB] sync', item.k);
+          if (typeof window.__renderMonth === 'function') window.__renderMonth();
+          if (typeof window.__refreshMasterDateBar === 'function') window.__refreshMasterDateBar();
+          if (typeof window.__rehearsalRender === 'function') window.__rehearsalRender();
+        }
+      }
+    });
+    window.__db.ref(FB_ROOT).on('child_added', function(snap2){
+      const item = snap2.val();
+      if (item && item.k && typeof item.v === 'string') {
+        const localVal = localStorage.getItem(item.k);
+        if (localVal === null) {
+          suppressFbWrite = true;
+          _setItem(item.k, item.v);
+          suppressFbWrite = false;
+        }
+      }
+    });
+    window.__db.ref(FB_ROOT).on('child_removed', function(snap2){
+      const item = snap2.val();
+      if (item && item.k) {
+        suppressFbWrite = true;
+        _removeItem(item.k);
+        suppressFbWrite = false;
+      }
+    });
+  }).catch(function(e){
+    console.error('[FB] pull 失敗:', e);
+  });
 })();
 </script>
 <style>

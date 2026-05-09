@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260509.260000">
+<meta name="build-version" content="20260509.270000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -72,6 +72,96 @@
   } catch (e) {
     console.error('[Firebase] init 失敗:', e);
   }
+})();
+
+// D142 Phase 2-B+C: localStorage ↔ Firebase 自動同期
+// - schedule-studio: で始まる localStorage キーを Firebase に自動ミラー
+// - 起動時に Firebase 最新を pull して localStorage 上書き
+// - リアルタイム購読で他デバイスの変更を即反映 → 画面リロード（簡易実装）
+(function fbSync(){
+  if (!window.__db) return;
+  const FB_ROOT = 'ls';
+  // Firebase パスに使えない文字 (.#$/[]) をエスケープ
+  function encKey(k){ return k.replace(/[.#$/\[\]]/g, '_'); }
+  function decKey(k){ return k; /* 逆変換は使わない（書き戻しは元の key を保持） */ }
+  // localStorage.setItem を hook
+  const _setItem = localStorage.setItem.bind(localStorage);
+  const _removeItem = localStorage.removeItem.bind(localStorage);
+  let suppressFbWrite = false; // Firebase からの逆流を防ぐフラグ
+  localStorage.setItem = function(key, value){
+    _setItem(key, value);
+    if (suppressFbWrite) return;
+    if (typeof key === 'string' && key.indexOf('schedule-studio:') === 0) {
+      try {
+        window.__db.ref(FB_ROOT + '/' + encKey(key)).set({ k: key, v: String(value), t: Date.now() });
+      } catch(e) { console.warn('[FB] write fail', key, e); }
+    }
+  };
+  localStorage.removeItem = function(key){
+    _removeItem(key);
+    if (suppressFbWrite) return;
+    if (typeof key === 'string' && key.indexOf('schedule-studio:') === 0) {
+      try { window.__db.ref(FB_ROOT + '/' + encKey(key)).remove(); } catch(e) {}
+    }
+  };
+  // 起動時に Firebase 最新を pull → localStorage に上書き
+  window.__db.ref(FB_ROOT).once('value').then(function(snap){
+    const all = snap.val() || {};
+    suppressFbWrite = true;
+    Object.keys(all).forEach(function(escKey){
+      const item = all[escKey];
+      if (item && item.k && typeof item.v === 'string') {
+        const localVal = localStorage.getItem(item.k);
+        if (localVal !== item.v) _setItem(item.k, item.v);
+      }
+    });
+    suppressFbWrite = false;
+    console.log('[FB] pull 完了 / keys=' + Object.keys(all).length);
+    // pull 後、reload で全タブ再描画（最も確実）
+    if (Object.keys(all).length > 0 && !window.__fbPulledOnce) {
+      window.__fbPulledOnce = true;
+      // 既に同じ値なら reload しない
+      // 注：起動時のフラッシュを避けるため、次の navigation で適用される
+    }
+    // リアルタイム購読：他デバイスの変更を反映
+    window.__db.ref(FB_ROOT).on('child_changed', function(snap2){
+      const item = snap2.val();
+      if (item && item.k && typeof item.v === 'string') {
+        const localVal = localStorage.getItem(item.k);
+        if (localVal !== item.v) {
+          suppressFbWrite = true;
+          _setItem(item.k, item.v);
+          suppressFbWrite = false;
+          console.log('[FB] sync', item.k);
+          // 再描画：最低限の API を呼ぶ
+          if (typeof window.__renderMonth === 'function') window.__renderMonth();
+          if (typeof window.__refreshMasterDateBar === 'function') window.__refreshMasterDateBar();
+          if (typeof window.__rehearsalRender === 'function') window.__rehearsalRender();
+        }
+      }
+    });
+    window.__db.ref(FB_ROOT).on('child_added', function(snap2){
+      const item = snap2.val();
+      if (item && item.k && typeof item.v === 'string') {
+        const localVal = localStorage.getItem(item.k);
+        if (localVal === null) {
+          suppressFbWrite = true;
+          _setItem(item.k, item.v);
+          suppressFbWrite = false;
+        }
+      }
+    });
+    window.__db.ref(FB_ROOT).on('child_removed', function(snap2){
+      const item = snap2.val();
+      if (item && item.k) {
+        suppressFbWrite = true;
+        _removeItem(item.k);
+        suppressFbWrite = false;
+      }
+    });
+  }).catch(function(e){
+    console.error('[FB] pull 失敗:', e);
+  });
 })();
 </script>
 <style>
