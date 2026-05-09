@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260509.STAFF.8">
+<meta name="build-version" content="20260509.STAFF.9">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="apple-touch-icon" href="favicon.svg">
 <title>SCHEDULE STUDIO — STAFF</title>
@@ -4342,8 +4342,8 @@
       <div class="lock-card">
         <div class="lock-icon">🛡</div>
         <div class="lock-mode-label">GRAND PASS</div>
-        <div class="lock-form-sub">新しい CONCERT を作成するには<br>会社のグランドパスワードが必要です</div>
-        <input type="password" class="lock-input" placeholder="グランドパスワード" id="lock-grand-pass" autocomplete="off">
+        <div class="lock-form-sub">新しい CONCERT を作成するには<br>nrs の GRAND PASSWORD が必要です</div>
+        <input type="password" class="lock-input" placeholder="GRAND PASSWORD" id="lock-grand-pass" autocomplete="off">
         <button class="lock-btn" id="lock-grand-btn" type="button">次へ</button>
         <div class="lock-error" id="lock-grand-error"></div>
         <button class="lock-back-link" id="lock-grand-back" type="button">← 一覧に戻る</button>
@@ -8746,7 +8746,7 @@ function show(id) {
         sessionStorage.setItem(SS_GRAND_AUTHED, '1');
         enterAddMode();
       } else {
-        errEl.textContent = 'グランドパスワードが違います';
+        errEl.textContent = 'GRAND PASSWORD が違います';
         inp.value = '';
         inp.focus();
       }
