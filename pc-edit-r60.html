@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260509.120830">
+<meta name="build-version" content="20260509.114000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -5988,24 +5988,7 @@ function show(id) {
   if (typeof window.__selectedBandId === 'undefined') window.__selectedBandId = null;
   if (typeof window.__selectedVenueDefId === 'undefined') window.__selectedVenueDefId = null;
   // D148: 開発用固定日付 (2026/5/1) を撤去。実日付の今日 (時刻は 0:00:00) を使う
-  // R60: const → let に変更（1分ごとに自動更新するため再代入が必要）
-  let TODAY = (function(){ const d = new Date(); d.setHours(0, 0, 0, 0); return d; })();
-  // R60: 1分ごとに「今日」を再評価。日付が変わったら TODAY を更新してカレンダーを再描画
-  // → 開きっぱなしで日付が変わっても TODAY マークが本物の今日に追従する
-  setInterval(function(){
-    const _newToday = new Date();
-    _newToday.setHours(0, 0, 0, 0);
-    if (_newToday.getTime() !== TODAY.getTime()) {
-      TODAY = _newToday;
-      if (typeof renderMonth === 'function') {
-        try { renderMonth(); } catch(e) { console.warn('[R60 TODAY auto-refresh] renderMonth failed:', e); }
-      }
-      // マスター日付バーは window.__refreshMasterDateBar 経由で再描画（あれば）
-      if (typeof window.__refreshMasterDateBar === 'function') {
-        try { window.__refreshMasterDateBar(); } catch(e) { console.warn('[R60 TODAY auto-refresh] refreshMasterDateBar failed:', e); }
-      }
-    }
-  }, 60000); // 60秒ごと
+  const TODAY = (function(){ const d = new Date(); d.setHours(0, 0, 0, 0); return d; })();
   // D69: TOUR_START/END は撤去。ツアー期間の概念は廃止し、カレンダー D&D が真の入力源。
 
   // R51 B1: カレンダーデータの初期値（localStorage に何も無いときのデフォルト）
