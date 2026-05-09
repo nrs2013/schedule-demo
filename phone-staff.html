@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260509.STAFF.4">
+<meta name="build-version" content="20260509.STAFF.5">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="apple-touch-icon" href="favicon.svg">
 <title>SCHEDULE STUDIO — STAFF</title>
@@ -4114,6 +4114,149 @@
     line-height: 1.6;
   }
   .caption strong { color: #e89a4a; }
+
+  /* ════════════════════════════════════════════════════════════
+     D136 Phase B2: スマホ用レスポンシブ CSS（max-width 768px）
+     - 親タブを下端固定のボトムナビに
+     - CALENDAR の右サイドパネル（VENUES/EVENTS/MEMO）を縦並びに
+     - マスター日付バー・タイトルをスマホ用に圧縮
+     - タップ領域 44px 確保
+     ════════════════════════════════════════════════════════════ */
+  @media (max-width: 768px) {
+    /* 全体：ボトムナビ高さ分の下余白 */
+    body, html {
+      overflow-x: hidden;
+    }
+    .pc-frame {
+      padding-bottom: 76px !important;
+    }
+    /* ── ヘッダー圧縮 ── */
+    .pc-brand-strip {
+      padding: 8px 12px !important;
+    }
+    .ss-logo-square {
+      width: 24px !important;
+      height: 24px !important;
+      font-size: 13px !important;
+    }
+    .ss-logo-text {
+      font-size: 11px !important;
+      letter-spacing: 0.18em !important;
+    }
+    /* ── マスター日付バーをスマホ用に圧縮 ── */
+    .master-date-bar {
+      padding: 8px 10px !important;
+    }
+    .master-bar-row1 {
+      flex-direction: column !important;
+      align-items: stretch !important;
+      gap: 6px !important;
+    }
+    .master-concert-title {
+      font-size: 16px !important;
+      text-align: center !important;
+    }
+    .master-date-row {
+      justify-content: center !important;
+      gap: 8px !important;
+    }
+    .master-date-main {
+      font-size: 18px !important;
+    }
+    .master-date-nav {
+      min-width: 40px !important;
+      min-height: 40px !important;
+      font-size: 22px !important;
+    }
+    .master-meta-row {
+      flex-wrap: wrap !important;
+      gap: 6px !important;
+      justify-content: center !important;
+    }
+    /* ── 親タブを下端固定（ボトムナビ風） ── */
+    .tab-bar {
+      position: fixed !important;
+      bottom: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      background: #0a0908 !important;
+      border-top: 1px solid rgba(255,255,255,0.08) !important;
+      z-index: 100 !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+    .tab-bar-row {
+      display: flex !important;
+      width: 100% !important;
+      gap: 0 !important;
+    }
+    .parent-tab {
+      flex: 1 !important;
+      padding: 10px 2px 14px !important;
+      font-size: 9.5px !important;
+      letter-spacing: 0.06em !important;
+      border-radius: 0 !important;
+      margin: 0 !important;
+      text-align: center !important;
+      min-height: 56px !important;
+      border: none !important;
+      border-top: 2px solid transparent !important;
+    }
+    .parent-tab.active {
+      background: rgba(232,154,74,0.08) !important;
+      color: #e89a4a !important;
+      border-top-color: #e89a4a !important;
+    }
+    .parent-tab::after,
+    .parent-tabs-spacer,
+    .cds-divider,
+    .parent-tab.cds {
+      display: none !important;
+    }
+    /* 子タブ（テクリハ/全体リハ など）は親タブの直上に */
+    .children-bar {
+      position: fixed !important;
+      bottom: 60px !important;
+      left: 0 !important;
+      right: 0 !important;
+      background: #14130f !important;
+      border-top: 1px solid rgba(255,255,255,0.05) !important;
+      z-index: 99 !important;
+      padding: 6px 8px !important;
+      overflow-x: auto !important;
+    }
+    /* ── CALENDAR グリッドを縦 1 列に ── */
+    .pc-cal-grid {
+      grid-template-columns: 1fr !important;
+      grid-template-rows: auto auto auto !important;
+      gap: 10px !important;
+      padding: 0 8px 12px !important;
+    }
+    .pc-cal-grid > #pc-cal-month { grid-column: 1 !important; grid-row: 1 !important; }
+    .pc-cal-grid > .cal-events-palette { grid-column: 1 !important; grid-row: 2 !important; }
+    .pc-cal-grid > .pc-cal-detail { grid-column: 1 !important; grid-row: 3 !important; }
+    .pc-cal-cell {
+      min-height: 60px !important;
+      padding: 4px !important;
+    }
+    .pc-cal-day-num {
+      font-size: 11px !important;
+      width: 22px !important;
+      height: 22px !important;
+    }
+    /* ── 右側コントロール群（巻き戻し・鍵） ── */
+    .master-controls {
+      flex-wrap: wrap !important;
+      justify-content: center !important;
+    }
+    /* ── REHEARSAL 行を横スクロール可能に ── */
+    #pc-rows-container {
+      overflow-x: auto !important;
+    }
+    .pc-row {
+      min-width: 900px !important;
+    }
+  }
 </style>
 
 
