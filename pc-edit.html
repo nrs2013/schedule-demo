@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260509.223901">
+<meta name="build-version" content="20260509.224130">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -1622,7 +1622,26 @@
     background: rgba(232,154,74,0.30) !important;
     color: #ffffff !important;
   }
-  /* tab-bar 内のLINEボタンは廃止（タブ整理で削除） */
+  /* R72: PDF ボタン（pc-btn-rh-pdf）を SET LIST タブと同じ緑ベースに */
+  #pc-btn-rh-pdf {
+    background: #14130f !important;
+    border: 1px solid rgba(110,194,126,0.40) !important;
+    color: #b8d9b0 !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.18em !important;
+    text-transform: uppercase;
+    transition: background 0.12s, color 0.12s, border-color 0.12s;
+  }
+  #pc-btn-rh-pdf:hover {
+    background: rgba(110,194,126,0.10) !important;
+    border-color: rgba(110,194,126,0.65) !important;
+    color: #d8f0bc !important;
+  }
+  #pc-btn-rh-pdf:active {
+    background: rgba(110,194,126,0.18) !important;
+  }
+
+    /* tab-bar 内のLINEボタンは廃止（タブ整理で削除） */
   /* 子タブ帯：A案モック準拠（margin-top -1px で親タブに重ねる／左右マージン無し→tab-bar padding を活用） */
   .children-bar {
     background:
