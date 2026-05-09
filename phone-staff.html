@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260509.132254">
+<meta name="build-version" content="20260509.132656">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="apple-touch-icon" href="favicon.svg">
 <title>SCHEDULE STUDIO — STAFF</title>
@@ -871,7 +871,7 @@
     border: 1px solid #2c2c2c;
     cursor: not-allowed;
   }
-  .finish-btn.disabled::before { content: '🔒'; opacity: 0.6; margin-right: 4px; font-size: 15px; }
+  .finish-btn.disabled::before { content: '⊡'; opacity: 0.6; margin-right: 4px; font-size: 15px; } /* R65c B: 🔒 emoji → ⊡ シンプル Unicode */
   .rh-card.done .finish-btn {
     background: rgba(126,194,122,0.15);
     color: #7ec27a;
@@ -1839,7 +1839,7 @@
     overflow: hidden;
     text-overflow: clip;
   }
-  .phone-bottom-tabs button.active { color: #e89a4a; }
+  .phone-bottom-tabs button.active { color: #f0e0c8; } /* R65c A: オレンジ → クリームに統一 */
   /* 認証後：PASSタブが緑に点灯（認証済み表示の代わり） */
   body.authed .phone-bottom-tabs button[data-pass] {
     color: #7ec27a;
