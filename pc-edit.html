@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260509.250000">
+<meta name="build-version" content="20260509.260000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -31,6 +31,49 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <!-- R56 LIFF: LINE Front-end Framework SDK -->
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<!-- D141 Phase 2-A: Firebase SDK (compat) — クラウド同期の入口 -->
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
+<script>
+// Firebase 初期化 + 接続確認
+(function initFirebase(){
+  const firebaseConfig = {
+    apiKey: "AIzaSyB0g9NU2jHWLgHSpgxyvWjizdloLbkJ_aM",
+    authDomain: "schedule-studio-2b14f.firebaseapp.com",
+    databaseURL: "https://schedule-studio-2b14f-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "schedule-studio-2b14f",
+    storageBucket: "schedule-studio-2b14f.firebasestorage.app",
+    messagingSenderId: "480145267674",
+    appId: "1:480145267674:web:8d1a8e9b11d3ee69613ee3"
+  };
+  try {
+    firebase.initializeApp(firebaseConfig);
+    window.__db = firebase.database();
+    // 接続状態を画面に小さく表示するためのフラグ
+    window.__db.ref('.info/connected').on('value', function(snap){
+      const ok = snap.val() === true;
+      window.__fbConnected = ok;
+      console.log('[Firebase]', ok ? '接続成功 ✓' : '未接続 ⚠');
+      // 画面右下に接続バッジを出す（D141 仮表示）
+      let badge = document.getElementById('fb-conn-badge');
+      if (!badge) {
+        badge = document.createElement('div');
+        badge.id = 'fb-conn-badge';
+        badge.style.cssText = 'position:fixed;bottom:8px;right:8px;z-index:9999;font-family:JetBrains Mono,monospace;font-size:10px;letter-spacing:0.1em;padding:4px 10px;border-radius:99px;pointer-events:none;';
+        document.body && document.body.appendChild(badge);
+      }
+      if (badge) {
+        badge.style.background = ok ? 'rgba(126,194,122,0.18)' : 'rgba(216,120,80,0.20)';
+        badge.style.color = ok ? '#7ec27a' : '#d8a878';
+        badge.style.border = '1px solid ' + (ok ? 'rgba(126,194,122,0.5)' : 'rgba(216,120,80,0.5)');
+        badge.textContent = ok ? '☁ FB CONNECTED' : '☁ FB OFFLINE';
+      }
+    });
+  } catch (e) {
+    console.error('[Firebase] init 失敗:', e);
+  }
+})();
+</script>
 <style>
   * { box-sizing: border-box; }
   /* D126: 起動時ロック画面 — CDS (Home.tsx) と完全同一構造に揃えた */
