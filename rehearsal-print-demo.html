@@ -42,6 +42,14 @@
   .r69-tag.solid { color: #1a1a1a; font-weight: 500; }
   .r69-tag::after { content: "/"; margin-left: 6px; color: #d0d0d0; font-weight: 300; }
   .r69-tag:last-child::after { content: ""; }
+  /* R70 A2-Bold: リハ時間 + DOOR/SHOW を 1 行で表示 */
+  .r70-bar { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 0.5px solid #ececec; margin-bottom: 8px; gap: 8px; flex-wrap: nowrap; white-space: nowrap; }
+  .r70-l { display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; min-width: 0; }
+  .r70-r { display: flex; gap: 6px; align-items: center; flex-shrink: 0; flex-wrap: nowrap; }
+  .r70-pill { display: inline-flex; align-items: baseline; gap: 7px; padding: 4px 12px; border: 1px solid #1a1a1a; border-radius: 99px; white-space: nowrap; flex-shrink: 0; }
+  .r70-pill.is-stage { background: #1a1a1a; color: #ffffff; }
+  .r70-pill .lbl { font-family: 'Inter', sans-serif; font-size: 8px; letter-spacing: 0.28em; font-weight: 700; text-transform: uppercase; }
+  .r70-pill .val { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; letter-spacing: 0.04em; }
   .r69-foot { margin-top: 4px; padding-top: 3px; border-top: 0.5px solid #ececec; display: flex; justify-content: space-between; font-family: 'JetBrains Mono', monospace; font-size: 7px; color: #b0b0b0; letter-spacing: 0.24em; text-transform: uppercase; font-weight: 300; }
 </style>
 </head>
@@ -56,6 +64,16 @@
     <div class="r69-mast-r">
       <span class="r69-dow">DEMO</span>
       <span class="r69-date">2026.04.29 (水)</span>
+    </div>
+  </div>
+  <div class="r70-bar">
+    <div class="r70-l">
+      <span class="r70-pill"><span class="lbl">テクリハ</span><span class="val">10:00 → 16:00</span></span>
+      <span class="r70-pill"><span class="lbl">全体リハ</span><span class="val">17:00 → 18:30</span></span>
+    </div>
+    <div class="r70-r">
+      <span class="r70-pill is-stage"><span class="lbl">Door</span><span class="val">18:30</span></span>
+      <span class="r70-pill is-stage"><span class="lbl">Show</span><span class="val">19:00</span></span>
     </div>
   </div>
   <table class="r69-tbl">
