@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260508.220000">
+<meta name="build-version" content="20260508.230000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -8148,25 +8148,27 @@ function show(id) {
         });
       }
     } else if (dnd.mode === 'resize-right' || dnd.mode === 'resize-left') {
-      // D108c: 点滅防止のため renderMonth を呼ばない。preview ハイライトのみ表示、確定は mouseup で 1 回。
+      // D135: mousemove で group の startDate/endDate を直接書き換え + renderMonth を RAF throttle で呼ぶ。
+      // → bar が指の動きにリアルタイムで追従して伸び縮みする（Apple Calendar 流の感触）。
+      // saveVenueGroups は呼ばないので localStorage 書き込みは mouseup で 1 回だけ。
       const group = window.__calApi && window.__calApi.getVenueGroupByDateKey(dnd.sourceDate);
       if (group) {
-        let rangeStart = group.startDate, rangeEnd = group.endDate;
-        if (dnd.mode === 'resize-right') rangeEnd = (dk > group.startDate) ? dk : group.startDate;
-        else rangeStart = (dk < group.endDate) ? dk : group.endDate;
-        document.querySelectorAll('.pc-cal-cell.drag-over, .pc-cal-cell.resize-target, .pc-cal-cell.resize-preview').forEach(function(el){
-          el.classList.remove('drag-over');
-          el.classList.remove('resize-target');
-          el.classList.remove('resize-preview');
-        });
-        const targetCell = document.querySelector('.pc-cal-cell[data-date="' + dk + '"]');
-        if (targetCell) targetCell.classList.add('resize-target');
-        document.querySelectorAll('.pc-cal-cell').forEach(function(c){
-          const cdk = c.getAttribute('data-date');
-          if (cdk && !c.classList.contains('outside') && cdk >= rangeStart && cdk <= rangeEnd) {
-            c.classList.add('resize-preview');
+        let newStart = group.startDate, newEnd = group.endDate;
+        if (dnd.mode === 'resize-right') newEnd = (dk > group.startDate) ? dk : group.startDate;
+        else newStart = (dk < group.endDate) ? dk : group.endDate;
+        if (newStart !== group.startDate || newEnd !== group.endDate) {
+          group.startDate = newStart;
+          group.endDate = newEnd;
+          // dnd.sourceDate を range 内にキープ（次の mousemove で getVenueGroupByDateKey が機能するように）
+          if (dnd.sourceDate < newStart) dnd.sourceDate = newStart;
+          else if (dnd.sourceDate > newEnd) dnd.sourceDate = newEnd;
+          if (!dnd._resizeRaf) {
+            dnd._resizeRaf = requestAnimationFrame(function(){
+              dnd._resizeRaf = null;
+              if (typeof window.__renderMonth === 'function') window.__renderMonth();
+            });
           }
-        });
+        }
       }
     }
   });
@@ -8192,14 +8194,13 @@ function show(id) {
     if (mode === 'resize-right' && grpId && srcDate) {
       const group = window.__calApi.getVenueGroupByDateKey(srcDate);
       if (group) {
-        const newEnd = targetDk > group.startDate ? targetDk : group.startDate;
-        if (newEnd !== group.endDate) window.__calApi.updateVenueGroup(grpId, { endDate: newEnd });
+        // D135: mousemove で group.endDate は既に最新。常に updateVenueGroup を呼んで save と merge を走らせる
+        window.__calApi.updateVenueGroup(grpId, { endDate: group.endDate });
       }
     } else if (mode === 'resize-left' && grpId && srcDate) {
       const group = window.__calApi.getVenueGroupByDateKey(srcDate);
       if (group) {
-        const newStart = targetDk < group.endDate ? targetDk : group.endDate;
-        if (newStart !== group.startDate) window.__calApi.updateVenueGroup(grpId, { startDate: newStart });
+        window.__calApi.updateVenueGroup(grpId, { startDate: group.startDate });
       }
     } else if (mode === 'move-band' && grpId && srcDate && targetDk !== srcDate) {
       const group = window.__calApi.getVenueGroupByDateKey(srcDate);
