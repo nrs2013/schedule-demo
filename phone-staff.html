@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260509.STAFF.2">
+<meta name="build-version" content="20260509.STAFF.3">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="apple-touch-icon" href="favicon.svg">
 <title>SCHEDULE STUDIO — STAFF</title>
@@ -8473,11 +8473,8 @@ function show(id) {
         '</div>' +
       '</div>';
     }).join('');
-    const addCardHtml = '<div class="concert-card-add" id="concert-add-btn" role="button" tabindex="0">' +
-      '<span class="concert-card-add-icon">+</span>' +
-      '<span class="concert-card-add-text">New Concert</span>' +
-    '</div>';
-    cardsEl.innerHTML = cardsHtml + addCardHtml;
+    // D136 STAFF: スマホは閲覧専用。新規追加カードは出さない
+    cardsEl.innerHTML = cardsHtml;
     cardsEl.querySelectorAll('.concert-card').forEach(function(card){
       card.addEventListener('click', function(e){
         const delBtn = e.target.closest('[data-action="del"]');
@@ -8571,10 +8568,18 @@ function show(id) {
     renderList();
   };
 
-  // ── 起動：concerts が 0 個 → 追加モード、1+ 個 → 一覧モード ───────────
+  // ── 起動：D136 STAFF — 0 個でも追加モードに行かず、案内メッセージを出す ───────────
   if (concerts.length === 0) {
-    showMode(modeAdd);
-    setTimeout(function(){ document.getElementById('lock-add-title').focus(); }, 100);
+    showMode(modeList);
+    const cardsEl = document.getElementById('concert-cards');
+    if (cardsEl) {
+      cardsEl.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:#76766f;">'
+        + '<div style="font-size:14px;color:#a8a8a0;margin-bottom:12px;">コンサートがまだ作られていません</div>'
+        + '<div style="font-size:11px;line-height:1.7;letter-spacing:0.05em;">PC 編集版（pc-edit.html）でコンサートを作成してください。<br>スマホ版は閲覧専用です。</div>'
+        + '</div>';
+    }
+    const totalEl = document.getElementById('lock-concert-total');
+    if (totalEl) totalEl.textContent = '0';
   } else {
     showMode(modeList);
     renderList();
