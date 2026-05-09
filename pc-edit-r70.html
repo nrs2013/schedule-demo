@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260509.222242">
+<meta name="build-version" content="20260509.150741">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -32,8 +32,6 @@
 <!-- R56 LIFF: LINE Front-end Framework SDK -->
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <!-- D141 Phase 2-A: Firebase SDK (compat) — クラウド同期の入口 -->
-<!-- R70 B-3: html2pdf.js (PDF 化用) -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
 <!-- R68: Firebase 匿名認証 SDK -->
@@ -1143,26 +1141,6 @@
   .setlist-tab { white-space: nowrap; }
   .setlist-add-btn { white-space: nowrap; }
   .setlist-tabs-label { white-space: nowrap; }
-
-  /* R70 B-2: テクリハ/全体リハ 横の小さい「PDF」ボタン */
-  .pc-btn.pc-pdf-btn {
-    background: #14130f;
-    border: 1px solid rgba(232,154,74,0.55);
-    color: #e89a4a;
-    padding: 0 12px !important;
-    font-size: 11px !important;
-    font-weight: 600;
-    letter-spacing: 0.16em;
-    cursor: pointer;
-    border-radius: 4px;
-    margin-left: 4px;
-    text-transform: uppercase;
-    transition: background 0.12s, color 0.12s;
-  }
-  .pc-btn.pc-pdf-btn:hover {
-    background: rgba(232,154,74,0.18);
-    color: #ffd9a8;
-  }
 
   /* D162: REHEARSAL タブの全ボタンの高さ・線太さを完全統一 */
   /* 既存の各クラス CSS の縦余白・border 太さの違いに左右されず、共通の見た目に揃える */
@@ -4776,11 +4754,7 @@
         <div class="pc-rh-title">
           <div class="rh-mode-toggle">
             <button class="rh-mode-btn" data-rh-mode="tekuriha" onclick="window.__showRehearsalSubMode('tekuriha')">テクリハ</button>
-            <!-- R70 B-2: テクリハ用 PDF 出力ボタン -->
-            <button class="pc-btn pc-pdf-btn" type="button" onclick="window.__openRehearsalPdf && window.__openRehearsalPdf('tekuriha')">PDF</button>
             <button class="rh-mode-btn" data-rh-mode="rehearsal-main" onclick="window.__showRehearsalSubMode('rehearsal-main')">全体リハーサル</button>
-            <!-- R70 B-2: 全体リハ用 PDF 出力ボタン -->
-            <button class="pc-btn pc-pdf-btn" type="button" onclick="window.__openRehearsalPdf && window.__openRehearsalPdf('all')">PDF</button>
             <!-- D154 Phase 2: セトリ順 / リハ順 をテクリハ／全体リハの右横へ移動 -->
             <span style="display:inline-block;width:18px;"></span>
             <button id="pc-btn-set" class="pc-btn primary">セトリ順</button>
@@ -6207,136 +6181,6 @@ function show(id) {
   }
   /* expose */
   window.openRehearsalPrint = openRehearsalPrint;
-
-  /* ========================================================
-     R70 B-2 + B-3: テクリハ/全体リハ用 PDF ダウンロード
-     - mode='tekuriha' なら リハ順（× 曲除外、rhNo 昇順）
-     - mode='all'      なら セトリ順（全曲）
-     - html2pdf.js を使って PDF をダウンロード
-     ======================================================== */
-  function openRehearsalPdf(mode){
-    if (typeof html2pdf === 'undefined') {
-      alert('PDF ライブラリの読み込みに失敗しました。再読み込みしてからもう一度お試しください。');
-      return;
-    }
-    /* テストパターン使用（R69c の R69_TEST_PATTERN_SONGS を流用） */
-    var allSongs = (typeof R69_TEST_PATTERN_SONGS !== 'undefined') ? R69_TEST_PATTERN_SONGS : [];
-    var songList;
-    var modeLabel;
-    if (mode === 'tekuriha') {
-      /* リハ順：rhNo が空でないもの、rhNo 昇順、EN は末尾 */
-      songList = allSongs.filter(function(s){
-        return s.rhNo !== null && s.rhNo !== undefined && s.rhNo !== '';
-      }).slice().sort(function(a, b){
-        var av = (a.rhNo === 'EN') ? 9999 : Number(a.rhNo);
-        var bv = (b.rhNo === 'EN') ? 9999 : Number(b.rhNo);
-        return av - bv;
-      });
-      modeLabel = 'tekuriha';
-    } else {
-      /* セトリ順：全曲 */
-      songList = allSongs;
-      modeLabel = 'all-rehearsal';
-    }
-
-    /* 日付・曜日 */
-    var d = (window.__masterDateState && window.__masterDateState.current)
-      ? new Date(window.__masterDateState.current)
-      : new Date();
-    var dateStr = _r69FormatDate(d);
-    var dowJp = _r69DowJp(d);
-    var dowEn = _r69DowEn(d);
-
-    /* 行 padding 自動調整 */
-    var _rowCount = songList.length;
-    var _rowPad = 14;
-    if (_rowCount > 14) _rowPad = 11;
-    if (_rowCount > 20) _rowPad = 8;
-    if (_rowCount > 25) _rowPad = 6;
-    if (_rowCount > 35) _rowPad = 3;
-
-    /* 行 HTML */
-    var rowsHtml = songList.map(function(song){ return _r69BuildRowHtml(song, null); }).join('');
-
-    /* 印刷ビュー HTML（A2-Bold ヘッダー付き） */
-    var pageHtml = '<div id="r70pdf-root" style="background:#fff;color:#1a1a1a;font-family:Inter,\'Noto Sans JP\',sans-serif;padding:10mm 12mm 8mm;width:210mm;box-sizing:border-box;">' +
-      '<style>' +
-      '#r70pdf-root .r70p-mast{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:0.5px solid #1a1a1a;padding-bottom:4px;margin-bottom:6px;}' +
-      '#r70pdf-root .r70p-eyebrow{font-family:Inter,sans-serif;font-size:7px;letter-spacing:0.4em;color:#b0b0b0;font-weight:500;text-transform:uppercase;}' +
-      '#r70pdf-root .r70p-title{font-family:Inter,sans-serif;font-size:16px;letter-spacing:0.16em;color:#1a1a1a;font-weight:200;text-transform:uppercase;margin:0;line-height:1;}' +
-      '#r70pdf-root .r70p-mast-r{text-align:right;display:flex;flex-direction:column;gap:2px;align-items:flex-end;}' +
-      '#r70pdf-root .r70p-date{font-family:\'JetBrains Mono\',monospace;font-size:11px;letter-spacing:0.06em;color:#1a1a1a;font-weight:300;}' +
-      '#r70pdf-root .r70p-dow{font-family:Inter,sans-serif;font-size:7px;letter-spacing:0.32em;color:#b0b0b0;font-weight:500;text-transform:uppercase;}' +
-      '#r70pdf-root .r70p-bar{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:0.5px solid #ececec;margin-bottom:8px;gap:8px;flex-wrap:nowrap;white-space:nowrap;}' +
-      '#r70pdf-root .r70p-l{display:flex;align-items:center;gap:6px;flex-wrap:nowrap;}' +
-      '#r70pdf-root .r70p-r{display:flex;gap:6px;align-items:center;flex-shrink:0;}' +
-      '#r70pdf-root .r70p-pill{display:inline-flex;align-items:baseline;gap:7px;padding:4px 12px;border:1px solid #1a1a1a;border-radius:99px;white-space:nowrap;}' +
-      '#r70pdf-root .r70p-pill.is-stage{background:#1a1a1a;color:#ffffff;}' +
-      '#r70pdf-root .r70p-pill .lbl{font-family:Inter,sans-serif;font-size:8px;letter-spacing:0.28em;font-weight:700;text-transform:uppercase;}' +
-      '#r70pdf-root .r70p-pill .val{font-family:\'JetBrains Mono\',monospace;font-size:12px;font-weight:700;letter-spacing:0.04em;}' +
-      '#r70pdf-root table.r70p-tbl{width:100%;border-collapse:collapse;font-family:\'Noto Sans JP\',Inter,sans-serif;font-size:9px;table-layout:fixed;}' +
-      '#r70pdf-root .r70p-tbl thead th{font-family:Inter,sans-serif;font-size:6.5px;letter-spacing:0.36em;font-weight:400;color:#b0b0b0;text-transform:uppercase;text-align:left;padding:0 8px 3px;border:none;border-bottom:0.5px solid #1a1a1a;}' +
-      '#r70pdf-root .r70p-tbl tbody td{padding:' + _rowPad + 'px 8px;border:none;border-bottom:0.5px solid #f2f2f2;vertical-align:baseline;line-height:1.15;}' +
-      '#r70pdf-root .r70p-tbl tbody tr.is-section .col-title{color:#555;font-weight:400;letter-spacing:0.04em;}' +
-      '#r70pdf-root .r70p-tbl .col-mno{width:42px;font-family:\'JetBrains Mono\',monospace;font-size:7.5px;color:#1a1a1a;letter-spacing:0.1em;text-align:left;font-weight:500;}' +
-      '#r70pdf-root .r70p-tbl .col-title{font-family:\'Noto Sans JP\',sans-serif;font-weight:500;font-size:9px;color:#1a1a1a;letter-spacing:0.005em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}' +
-      '#r70pdf-root .r70p-tbl .col-time{width:48px;font-family:\'JetBrains Mono\',monospace;font-size:8.5px;color:#1a1a1a;letter-spacing:0.04em;text-align:right;font-weight:300;}' +
-      '#r70pdf-root .r70p-tbl .col-rh{width:34px;font-family:\'JetBrains Mono\',monospace;font-size:7.5px;text-align:center;color:#1a1a1a;font-weight:500;}' +
-      '#r70pdf-root .r70p-tbl .col-tags{width:200px;}' +
-      '#r70pdf-root .r70p-tbl .col-memo{font-family:\'Noto Sans JP\',sans-serif;color:#888;font-size:7.5px;line-height:1.2;font-weight:300;letter-spacing:0.02em;}' +
-      '#r70pdf-root .r70-tags-list{display:flex;flex-wrap:wrap;gap:0;align-items:baseline;}' +
-      '#r70pdf-root .r70-tag{font-family:\'Noto Sans JP\',sans-serif;font-size:7.5px;color:#6a6a6a;font-weight:300;letter-spacing:0.06em;margin-right:6px;}' +
-      '#r70pdf-root .r70-tag.solid{color:#1a1a1a;font-weight:500;}' +
-      '#r70pdf-root .r70-tag::after{content:"/";margin-left:6px;color:#d0d0d0;font-weight:300;}' +
-      '#r70pdf-root .r70-tag:last-child::after{content:"";}' +
-      '#r70pdf-root .r70p-foot{margin-top:6px;padding-top:4px;border-top:0.5px solid #ececec;display:flex;justify-content:space-between;font-family:\'JetBrains Mono\',monospace;font-size:7px;color:#b0b0b0;letter-spacing:0.24em;text-transform:uppercase;font-weight:300;}' +
-      '</style>' +
-      '<div class="r70p-mast">' +
-        '<div><span class="r70p-eyebrow">Schedule Studio</span><div class="r70p-title">Rehearsal Menu</div></div>' +
-        '<div class="r70p-mast-r"><span class="r70p-dow">' + dowEn + '</span><span class="r70p-date">' + dateStr + ' (' + dowJp + ')</span></div>' +
-      '</div>' +
-      '<div class="r70p-bar">' +
-        '<div class="r70p-l">' +
-          '<span class="r70p-pill"><span class="lbl">テクリハ</span><span class="val">10:00 → 16:00</span></span>' +
-          '<span class="r70p-pill"><span class="lbl">全体リハ</span><span class="val">17:00 → 18:30</span></span>' +
-        '</div>' +
-        '<div class="r70p-r">' +
-          '<span class="r70p-pill is-stage"><span class="lbl">Door</span><span class="val">18:30</span></span>' +
-          '<span class="r70p-pill is-stage"><span class="lbl">Show</span><span class="val">19:00</span></span>' +
-        '</div>' +
-      '</div>' +
-      '<table class="r70p-tbl">' +
-        '<thead><tr><th class="col-mno">M#</th><th class="col-title">Title</th><th class="col-time">Time</th><th class="col-rh">RH</th><th class="col-tags">Tags</th><th class="col-memo">Memo</th></tr></thead>' +
-        '<tbody>' + rowsHtml + '</tbody>' +
-      '</table>' +
-      '<div class="r70p-foot"><span>' + modeLabel + ' · ' + songList.length + ' songs · ' + dateStr + '</span><span>Schedule Studio · A4</span></div>' +
-    '</div>';
-
-    /* DOM に一時挿入 → html2pdf で PDF 化 → 削除 */
-    var tmp = document.createElement('div');
-    tmp.style.position = 'fixed';
-    tmp.style.left = '-9999px';
-    tmp.style.top = '0';
-    tmp.innerHTML = pageHtml;
-    document.body.appendChild(tmp);
-
-    var fname = 'rehearsal-menu-' + modeLabel + '-' + dateStr.replace(/\./g, '-') + '.pdf';
-    var opt = {
-      margin: 0,
-      filename: fname,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true, letterRendering: true },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
-    html2pdf().set(opt).from(tmp.querySelector('#r70pdf-root')).save().then(function(){
-      document.body.removeChild(tmp);
-    }).catch(function(err){
-      console.error('[R70 PDF] 失敗:', err);
-      try { document.body.removeChild(tmp); } catch(e){}
-      alert('PDF 生成に失敗しました：' + (err && err.message));
-    });
-  }
-  window.__openRehearsalPdf = openRehearsalPdf;
 
   // R47: 編集中の rhNo/memo/title セルの値を、現在の日付の dict に明示保存するヘルパー。
   // 日付切替時、blur ハンドラだけに頼らず確実に値が保存されるよう保険として追加。
