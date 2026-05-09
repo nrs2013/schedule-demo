@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260509.310000">
+<meta name="build-version" content="20260509.320000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -4364,12 +4364,8 @@
       <div class="pc-rh-actions">
         <button id="pc-btn-set" class="pc-btn primary">セトリ順</button>
         <button id="pc-btn-rh"  class="pc-btn">リハ順</button>
-        <!-- D114: プルダウン撤去 → 種別ごとの専用ボタンに分割 -->
-        <button class="pc-btn pc-add-row" data-add-type="song">＋ 曲</button>
-        <button class="pc-btn pc-add-row" data-add-type="mc">＋ MC</button>
-        <button class="pc-btn pc-add-row" data-add-type="encore">＋ EN</button>
-        <button class="pc-btn pc-add-row" data-add-type="event">＋ VCR</button>
-        <button class="pc-btn pc-add-row" data-add-type="end">＋ END</button>
+        <!-- D154 Phase 4: 種別ボタン群を撤去、「+ 行を追加」1 個に統合 -->
+        <button class="pc-btn pc-add-row" data-add-type="song">＋ 行を追加</button>
         <!-- D115: 曲リストの Excel 取込 / テンプレートDL -->
         <button id="pc-btn-rh-excel" class="pc-btn">📊 Excel取込</button>
         <button id="pc-btn-rh-template" class="pc-btn">📥 テンプレDL</button>
@@ -5238,31 +5234,44 @@ function show(id) {
   });
 
   // rh-no で Enter キーを押したら確定（改行を入れない）
-  // D153: フォーカス取得後の最初の数字キーで既存値を空にする（mousedown/focusin の select all
-  // が間に合わずに「2 → 22」になる問題の根本対処。最初の 1 撃のみ空にする ＝ 2 桁入力もできる）
-  let __rhPendingClear = false;
+  let __rhFirstInput = false;
+  container.addEventListener('keydown', function(e){
+    const el = e.target;
+    if (el && el.classList && el.classList.contains('rh-no') && e.key === 'Enter') {
+      e.preventDefault();
+      el.blur();
+    }
+  });
+  // D153b: focus 取得後の最初の input で「最後の 1 文字」だけ残す
+  // 最も確実な根本対処。既存値「1」のセルに「2」を入れると textContent は「12」になるが、
+  // input イベントで即座に「2」（最後の 1 文字）に圧縮する。
+  // 2 桁入力（「22」）は OK：最初の「2」で 1 文字化、次の「2」は __rhFirstInput が false なので
+  // 通常通り追記され「22」になる。
   container.addEventListener('focusin', function(e){
     const el = e.target;
     if (el && el.classList && el.classList.contains('rh-no')) {
-      __rhPendingClear = true;
+      __rhFirstInput = true;
     }
   });
-  container.addEventListener('keydown', function(e){
+  container.addEventListener('input', function(e){
     const el = e.target;
     if (!el || !el.classList || !el.classList.contains('rh-no')) return;
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      el.blur();
-      __rhPendingClear = false;
-      return;
-    }
-    // 数字キー（0-9）押下時、フォーカス直後の最初の 1 撃なら既存値をクリア
-    if (__rhPendingClear && /^[0-9]$/.test(e.key)) {
-      __rhPendingClear = false;
-      el.textContent = '';
-      // ブラウザがキー入力を処理する → 新しい数字だけが入る
-    } else {
-      __rhPendingClear = false;
+    if (__rhFirstInput) {
+      __rhFirstInput = false;
+      const v = el.textContent || '';
+      if (v.length > 1) {
+        // 最後に入力された文字だけ残す
+        el.textContent = v.slice(-1);
+        // カーソルを末尾へ
+        try {
+          const range = document.createRange();
+          range.selectNodeContents(el);
+          range.collapse(false);
+          const sel = window.getSelection();
+          sel.removeAllRanges();
+          sel.addRange(range);
+        } catch (err) {}
+      }
     }
   });
 
