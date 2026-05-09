@@ -51,10 +51,19 @@
   .r70-pill .lbl { font-family: 'Inter', sans-serif; font-size: 8px; letter-spacing: 0.28em; font-weight: 700; text-transform: uppercase; }
   .r70-pill .val { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; letter-spacing: 0.04em; }
   .r69-foot { margin-top: 4px; padding-top: 3px; border-top: 0.5px solid #ececec; display: flex; justify-content: space-between; font-family: 'JetBrains Mono', monospace; font-size: 7px; color: #b0b0b0; letter-spacing: 0.24em; text-transform: uppercase; font-weight: 300; }
+  /* R70 Phase B-1c: セトリ順 / リハ順 トグル（screen のみ表示、印刷時は隠す） */
+  .r70-mode-toggle { max-width: 210mm; margin: 0 auto 8px; display: flex; justify-content: flex-end; gap: 6px; }
+  @media print { .r70-mode-toggle { display: none !important; } }
+  .r70-mode-btn { background: #ffffff; border: 1px solid #d0d0d0; color: #6a6a6a; padding: 6px 14px; font-family: 'Inter', sans-serif; font-size: 10px; letter-spacing: 0.18em; font-weight: 600; text-transform: uppercase; cursor: pointer; border-radius: 2px; }
+  .r70-mode-btn.active { background: #1a1a1a; color: #ffffff; border-color: #1a1a1a; }
 </style>
 </head>
 <body>
 <div class="r69-toolbar"><button class="r69-print-btn" onclick="window.print()">Print</button></div>
+<div class="r70-mode-toggle">
+  <button class="r70-mode-btn active" id="mode-set" onclick="setMode('set')">セトリ順</button>
+  <button class="r70-mode-btn" id="mode-rh" onclick="setMode('rh')">リハ順</button>
+</div>
 <div class="r69-page">
   <div class="r69-mast">
     <div class="r69-mast-l">
@@ -161,7 +170,31 @@
       '<td class="col-memo">' + escHtml(memo) + '</td>' +
     '</tr>';
   }
-  document.getElementById('rows-body').innerHTML = SONGS.map(buildRow).join('');
+  /* R70 Phase B-1c: セトリ順 / リハ順 トグル */
+  var currentMode = 'set';
+  function renderRows() {
+    var list = SONGS;
+    if (currentMode === 'rh') {
+      /* リハ順：rhNo が null/undefined/空文字 の行は除外 */
+      list = SONGS.filter(function(s){
+        return s.rhNo !== null && s.rhNo !== undefined && s.rhNo !== '';
+      });
+      /* rhNo の昇順でソート（'EN' は末尾に） */
+      list = list.slice().sort(function(a, b){
+        var av = (a.rhNo === 'EN') ? 9999 : Number(a.rhNo);
+        var bv = (b.rhNo === 'EN') ? 9999 : Number(b.rhNo);
+        return av - bv;
+      });
+    }
+    document.getElementById('rows-body').innerHTML = list.map(buildRow).join('');
+  }
+  function setMode(mode) {
+    currentMode = mode;
+    document.getElementById('mode-set').classList.toggle('active', mode === 'set');
+    document.getElementById('mode-rh').classList.toggle('active', mode === 'rh');
+    renderRows();
+  }
+  renderRows();
 </script>
 </body>
 </html>
