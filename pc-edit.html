@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260510.010500">
+<meta name="build-version" content="20260510.012000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -6376,14 +6376,18 @@ function show(id) {
     var songList;
     var modeLabel;
     if (mode === 'tekuriha') {
-      /* リハ順：rhNo が空でないもの、rhNo 昇順、EN は末尾 */
-      songList = allSongs.filter(function(s){
+      /* R82: テクリハ順 = rh# 付き曲を昇順、rh# 無し（×）はセトリ順で末尾に続ける（全曲必ず出す） */
+      var _withRh = allSongs.filter(function(s){
         return s.rhNo !== null && s.rhNo !== undefined && s.rhNo !== '';
       }).slice().sort(function(a, b){
         var av = (a.rhNo === 'EN') ? 9999 : Number(a.rhNo);
         var bv = (b.rhNo === 'EN') ? 9999 : Number(b.rhNo);
         return av - bv;
       });
+      var _withoutRh = allSongs.filter(function(s){
+        return s.rhNo === null || s.rhNo === undefined || s.rhNo === '';
+      });
+      songList = _withRh.concat(_withoutRh);
       modeLabel = 'tekuriha';
     } else {
       /* セトリ順：全曲 */
