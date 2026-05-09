@@ -9,182 +9,205 @@
 <title>SCHEDULE STUDIO</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; }
   body {
-    margin: 0;
     background: #1a1918;
     color: #e8e8e2;
     font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
     min-height: 100vh;
-    padding: 48px 20px 60px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    padding: 60px 24px;
   }
+
   .wrap {
-    max-width: 460px;
     width: 100%;
+    max-width: 420px;
     text-align: center;
   }
+
+  /* ── ブランド帯 ────────────────── */
   .brand {
-    font-size: 11px;
-    letter-spacing: 0.4em;
-    color: rgba(232,154,74,0.85);
-    font-weight: 800;
-    margin-bottom: 20px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.5em;
+    color: rgba(232,154,74,0.7);
+    font-weight: 500;
+    text-transform: uppercase;
+    margin-bottom: 36px;
+    padding-left: 0.5em; /* letter-spacing の分の中央寄せ補正 */
   }
+
+  /* ── CONCERT TITLE（master-date-main と同じ系統のクリーム & 細フォント）── */
   .concert-title {
-    font-size: 26px;
-    font-weight: 700;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 30px;
+    font-weight: 300;
     color: #f0e0c8;
-    line-height: 1.4;
+    line-height: 1.45;
     letter-spacing: 0.04em;
-    margin: 0 0 8px;
+    margin: 0 0 12px;
     word-break: break-word;
   }
   .concert-sub {
-    color: #76766f;
-    font-size: 12px;
-    margin-bottom: 44px;
-    letter-spacing: 0.05em;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: #5a5a54;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    margin-bottom: 56px;
   }
-  .role-row {
+
+  /* ── ROLE ボタン（縦に2つ、極シンプル） ── */
+  .role-list {
     display: flex;
-    gap: 14px;
-    flex-wrap: wrap;
-    justify-content: center;
-    margin-bottom: 28px;
+    flex-direction: column;
+    gap: 10px;
   }
   .role-btn {
-    flex: 1;
-    min-width: 140px;
-    background: #242320;
+    display: block;
+    width: 100%;
+    background: transparent;
     border: 1px solid #2c2a27;
-    border-radius: 12px;
-    padding: 22px 16px;
-    color: #e8e8e2;
+    border-radius: 6px;
+    padding: 22px 0;
+    color: #f0e0c8;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.4em;
+    text-align: center;
     text-decoration: none;
     cursor: pointer;
-    font-family: inherit;
-    transition: all 0.15s;
-    text-align: center;
-  }
-  .role-btn:hover { border-color: #e89a4a; background: #2a2018; }
-  .role-btn:active { transform: scale(0.98); }
-  .role-icon {
-    font-size: 30px;
-    line-height: 1;
-    margin-bottom: 8px;
-  }
-  .role-label {
-    font-size: 13px;
-    letter-spacing: 0.2em;
-    font-weight: 700;
-    color: #f0e0c8;
     text-transform: uppercase;
-    margin-bottom: 4px;
+    transition: border-color 0.18s, background 0.18s, color 0.18s;
   }
-  .role-desc {
-    font-size: 11px;
-    color: #76766f;
-    letter-spacing: 0.05em;
+  .role-btn:hover {
+    border-color: rgba(232,154,74,0.55);
+    background: rgba(232,154,74,0.04);
+    color: #f5d4a8;
   }
-  .role-btn.artist .role-label { color: #f5d4a8; }
-  .footer {
-    margin-top: 24px;
+  .role-btn:active { transform: scale(0.99); }
+  .role-btn .role-hint {
+    display: block;
+    margin-top: 6px;
+    font-size: 9px;
     color: #5a5a54;
-    font-size: 10px;
-    letter-spacing: 0.2em;
+    letter-spacing: 0.25em;
+    font-weight: 400;
+    text-transform: none;
+  }
+
+  /* ── フッター ── */
+  .footer {
+    margin-top: 60px;
+    color: #3a3a37;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.25em;
     text-transform: uppercase;
   }
 
-  /* ARTIST パスワード入力モーダル */
+  /* ── ARTIST パスワード入力モーダル ── */
   .pass-modal {
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.75);
+    background: rgba(10,10,8,0.85);
     z-index: 9999;
     align-items: center;
     justify-content: center;
-    padding: 20px;
+    padding: 24px;
   }
   .pass-modal.show { display: flex; }
   .pass-modal-body {
-    background: #242320;
+    background: #14130f;
     border: 1px solid #2c2a27;
-    border-radius: 12px;
-    padding: 28px 24px;
+    border-radius: 10px;
+    padding: 32px 28px;
     width: 100%;
     max-width: 320px;
     text-align: center;
   }
   .pass-modal-title {
-    font-size: 13px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
     color: #d8d8d4;
-    letter-spacing: 0.4em;
-    font-weight: 600;
-    margin-bottom: 20px;
+    letter-spacing: 0.45em;
+    font-weight: 500;
+    margin-bottom: 24px;
+    text-transform: uppercase;
   }
   .pass-modal-input {
     width: 100%;
-    background: #14130f;
-    border: 1px solid #2c2a27;
-    color: #f5d4a8;
-    font-size: 24px;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid #2c2a27;
+    color: #f0e0c8;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 28px;
     text-align: center;
-    letter-spacing: 0.5em;
-    padding: 14px 0;
-    border-radius: 8px;
-    margin-bottom: 16px;
-    font-family: inherit;
+    letter-spacing: 0.6em;
+    padding: 12px 0;
+    margin-bottom: 24px;
+    font-weight: 300;
   }
-  .pass-modal-input:focus { outline: none; border-color: rgba(232,154,74,0.55); }
+  .pass-modal-input:focus { outline: none; border-bottom-color: rgba(232,154,74,0.65); }
   .pass-modal-row { display: flex; gap: 10px; }
   .pass-modal-btn {
     flex: 1;
     padding: 12px 0;
-    border-radius: 8px;
-    font-size: 13px;
-    letter-spacing: 0.2em;
-    font-weight: 600;
-    cursor: pointer;
+    border-radius: 6px;
     font-family: inherit;
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    font-weight: 500;
+    cursor: pointer;
     border: 1px solid #2c2a27;
     background: transparent;
-    color: #a8a8a0;
+    color: #76766f;
+    text-transform: uppercase;
+    transition: border-color 0.15s, background 0.15s, color 0.15s;
   }
+  .pass-modal-btn:hover { border-color: #5a5a53; color: #d8d8d4; }
   .pass-modal-btn.primary {
-    background: #e89a4a;
+    border-color: rgba(232,154,74,0.55);
+    background: rgba(232,154,74,0.10);
+    color: #f5d4a8;
+  }
+  .pass-modal-btn.primary:hover {
     border-color: #e89a4a;
-    color: #1a1108;
+    background: rgba(232,154,74,0.18);
+    color: #ffd9a8;
   }
   .pass-modal-err {
     color: #d08888;
-    font-size: 11px;
-    margin-top: 10px;
-    min-height: 14px;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    margin-top: 14px;
+    min-height: 13px;
+    font-weight: 400;
   }
 </style>
 
 <div class="wrap">
   <div class="brand">SCHEDULE STUDIO</div>
   <h1 class="concert-title" id="concert-title">CONCERT</h1>
-  <div class="concert-sub" id="concert-sub">スマホでご覧ください</div>
+  <div class="concert-sub" id="concert-sub">Tap your role to enter</div>
 
-  <div class="role-row">
-    <a class="role-btn staff" href="phone-staff.html">
-      <div class="role-icon">📱</div>
-      <div class="role-label">STAFF</div>
-      <div class="role-desc">そのまま入れます</div>
+  <div class="role-list">
+    <a class="role-btn" href="phone-staff.html">
+      STAFF
+      <span class="role-hint">パスワード不要</span>
     </a>
-    <button type="button" class="role-btn artist" onclick="openArtistPass()">
-      <div class="role-icon">🎤</div>
-      <div class="role-label">ARTIST</div>
-      <div class="role-desc">パスワードが必要</div>
+    <button type="button" class="role-btn" onclick="openArtistPass()">
+      ARTIST
+      <span class="role-hint">パスワードが必要です</span>
     </button>
   </div>
 
@@ -197,24 +220,19 @@
     <div class="pass-modal-title">ARTIST PASSWORD</div>
     <input type="password" inputmode="numeric" maxlength="8" class="pass-modal-input" id="artist-pass-input" placeholder="••••" />
     <div class="pass-modal-row">
-      <button type="button" class="pass-modal-btn" onclick="closeArtistPass()">キャンセル</button>
-      <button type="button" class="pass-modal-btn primary" onclick="checkArtistPass()">入る</button>
+      <button type="button" class="pass-modal-btn" onclick="closeArtistPass()">Cancel</button>
+      <button type="button" class="pass-modal-btn primary" onclick="checkArtistPass()">Enter</button>
     </div>
     <div class="pass-modal-err" id="artist-pass-err"></div>
   </div>
 </div>
 
 <script>
-  /* R66: index.html を「CONCERT TITLE + STAFF/ARTIST ボタン」入口に改修
-     - CONCERT TITLE は localStorage から（無ければ仮 "CONCERT"）
-     - STAFF: そのまま phone-staff.html へ
-     - ARTIST: モーダルでパスワード入力 → 正しければ phone-artist.html?authed=1 へ
-     - PC EDITOR / PC HOTEL のカードは撤去（会社の人は別途 URL でアクセス） */
+  /* R66b: アイコン撤去、フォント・余白をアプリ全体（pc-edit / phone-staff）と統一感あるトーンに */
 
-  // 1. CONCERT TITLE の取得（localStorage の "schedule-studio:current-concert" 等から）
+  // CONCERT TITLE 動的取得
   (function loadConcertTitle(){
     try {
-      // pc-edit.html が保存してる「現在のコンサート」情報を読む（後方互換で複数のキーを試す）
       var keys = [
         'schedule-studio:current-concert-title',
         'schedule-studio:concert-title',
@@ -227,18 +245,14 @@
           return;
         }
       }
-      // URL パラメータ ?title=... も試す
       var m = location.search.match(/[?&]title=([^&]+)/);
       if (m) {
         document.getElementById('concert-title').textContent = decodeURIComponent(m[1]);
       }
-      // どれも無ければデフォルトの "CONCERT" が表示される
     } catch(e) {}
   })();
 
-  // 2. ARTIST パスワード判定
-  // 現状は仮で "2222"（後方互換）。
-  // 本番では pc-edit.html で設定した「ARTIST パスワード」を localStorage から読む。
+  // ARTIST パスワード判定
   function getArtistPassword(){
     try {
       var keys = [
@@ -250,7 +264,7 @@
         if (v && v.length > 0) return v;
       }
     } catch(e) {}
-    return '2222'; // デフォルト
+    return '2222';
   }
 
   function openArtistPass(){
@@ -266,7 +280,6 @@
     var v = document.getElementById('artist-pass-input').value;
     var ok = getArtistPassword();
     if (v === ok) {
-      // 正しければ ARTIST ページへ。?authed=1 で自動 unlock
       location.href = 'phone-artist.html?authed=1';
     } else {
       document.getElementById('artist-pass-err').textContent = 'パスワードが違います';
@@ -274,7 +287,6 @@
       document.getElementById('artist-pass-input').focus();
     }
   }
-  // Enter キーでも認証
   document.getElementById('artist-pass-input').addEventListener('keydown', function(e){
     if (e.key === 'Enter') { e.preventDefault(); checkArtistPass(); }
   });
