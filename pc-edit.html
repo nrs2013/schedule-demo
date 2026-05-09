@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260509.300000">
+<meta name="build-version" content="20260509.310000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -5159,8 +5159,8 @@ function show(id) {
     btnSet.classList.toggle('primary', state.viewMode==='set');
     btnRh.classList.toggle('primary',  state.viewMode==='rh');
 
-    // D20: 曲順入れ替え（セトリ順モードのみ。ハンドル⋮⋮ をドラッグ）
-    if (state.viewMode === 'set') {
+    // D154: 曲順入れ替えを両モードで有効化（セトリ順 / リハ順 どちらからでも並び替え可能）
+    {
       let draggingId = null;
       container.querySelectorAll('.pc-row').forEach(function(row){
         row.setAttribute('draggable', 'true');
