@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260509.370000">
+<meta name="build-version" content="20260509.380000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -3674,7 +3674,7 @@
     border-color: rgba(232,154,74,0.55);
   }
   /* R51 B1: カレンダー編集UI ── ここまで ── */
-  /* RH番号: メインアクセント（オレンジを残す唯一のID系・直接入力可） */
+  /* RH番号: D158b — <input type="text"> に変更。ブラウザ標準の form 動作で 22 バグ解消 */
   .pc-row .rh-no {
     font-family: 'JetBrains Mono', 'Noto Sans JP', monospace;
     font-weight: 500;
@@ -3687,8 +3687,15 @@
     border-radius: 4px;
     padding: 2px 0;
     transition: background 0.12s, box-shadow 0.12s, color 0.12s;
-    -webkit-user-modify: read-write-plaintext-only;
+    /* input 要素の標準スタイルを打ち消す */
+    background: transparent;
+    border: 1px solid transparent;
+    width: 100%;
+    box-sizing: border-box;
+    appearance: none;
+    -webkit-appearance: none;
   }
+  .pc-row input.rh-no::placeholder { color: #5a5a54; font-weight: 400; }
   .pc-row .rh-no:hover { background: rgba(232,154,74,0.06); }
   .pc-row .rh-no:focus { background: rgba(232,154,74,0.14); box-shadow: 0 0 0 1px rgba(232,154,74,0.5); }
   .pc-row .rh-no.rh-none { color: #5a5a54; font-weight: 400; }
@@ -5213,7 +5220,7 @@ function show(id) {
       +   '<div class="m-no">' + escHtml(mNo) + '</div>'
       +   '<div class="title-cell" contenteditable="true" data-field="title" data-id="' + song.id + '" title="クリックで曲名編集">' + escHtml(song.title) + '</div>'
       +   '<div class="time-cell">' + escHtml(time) + '</div>'
-      +   '<div class="rh-no' + rhCls + '" contenteditable="true" data-id="' + song.id + '" data-field="rhNo" title="数字を入力 ／ 空欄＝リハなし ／ Enterで確定">' + rhDisp + '</div>'
+      +   '<input class="rh-no' + rhCls + '" type="text" inputmode="numeric" maxlength="3" data-id="' + song.id + '" data-field="rhNo" value="' + (reh.rhNo === null ? '' : escHtml(String(reh.rhNo))) + '" placeholder="×" title="数字を入力 ／ 空欄＝リハなし ／ Enterで確定">'
       +   '<div class="tag-cell">' + tagsHtml + '</div>'
       +   '<div class="memo" contenteditable="true" data-field="memo" data-id="' + song.id + '">' + escHtml(reh.memo) + '</div>'
       +   '<div class="row-action" data-action="del-song" data-id="' + song.id + '" title="この曲を削除">×</div>'
@@ -5359,8 +5366,10 @@ function show(id) {
     }
   });
 
-  // rh-no で Enter キーを押したら確定（改行を入れない）
-  let __rhJustFocused = false;
+  // D158b: rh-no を <input> に変えたので、ブラウザ標準の form 動作で完結
+  // - Enter で blur（confirm）
+  // - focus で el.select() — 中身全選択 → 次のキー入力で上書き（標準動作）
+  // - 数字以外を即除去
   container.addEventListener('keydown', function(e){
     const el = e.target;
     if (el && el.classList && el.classList.contains('rh-no') && e.key === 'Enter') {
@@ -5368,78 +5377,22 @@ function show(id) {
       el.blur();
     }
   });
-  // D158: RH# 22 バグの絶対対処 — 三段構え
-  // 1) focusin → フラグセット
-  // 2) beforeinput → フラグが立ってれば、新しい文字を入れる前に既存値を空にする
-  // 3) input → 念のための保険：1 桁を超えてたら最後の 1 文字に圧縮
   container.addEventListener('focusin', function(e){
     const el = e.target;
     if (el && el.classList && el.classList.contains('rh-no')) {
-      __rhJustFocused = true;
-    }
-  });
-  container.addEventListener('beforeinput', function(e){
-    const el = e.target;
-    if (!el || !el.classList || !el.classList.contains('rh-no')) return;
-    if (__rhJustFocused) {
-      __rhJustFocused = false;
-      // beforeinput では textContent を空にする → ブラウザがその後の input でデータを追記
-      el.textContent = '';
-    }
-  });
-  // 保険：input イベントで 1 文字超なら最後の文字だけ残す（フォーカス後初の入力時のみ）
-  let __rhLastFocusKey = 0;
-  container.addEventListener('focusin', function(e){
-    if (e.target && e.target.classList && e.target.classList.contains('rh-no')) {
-      __rhLastFocusKey = Date.now();
+      // <input> の標準：全選択 → 次の入力でブラウザが自動で置換
+      try { el.select(); } catch(err) {}
     }
   });
   container.addEventListener('input', function(e){
     const el = e.target;
     if (!el || !el.classList || !el.classList.contains('rh-no')) return;
-    // フォーカスから 500ms 以内の最初の入力で 2 文字以上なら、末尾 1 文字に切り詰める
-    if (__rhLastFocusKey && Date.now() - __rhLastFocusKey < 500) {
-      __rhLastFocusKey = 0;
-      const v = el.textContent || '';
-      if (v.length > 1) {
-        el.textContent = v.slice(-1);
-        try {
-          const range = document.createRange();
-          range.selectNodeContents(el);
-          range.collapse(false);
-          const sel = window.getSelection();
-          sel.removeAllRanges();
-          sel.addRange(range);
-        } catch (err) {}
-      }
-    }
-  });
-
-  // D133: rh-no にフォーカスが入った瞬間、中身を全選択（即上書きできるように）
-  // 旧コード：requestAnimationFrame で次のフレームを待っていたが、その間にユーザーの
-  // キー入力（例：「1」）が先に届いてしまい、既存値「1」+「1」=「11」になるバグ。
-  // mousedown で先に select all を仕込み、focus は通常通り進ませる二段構え。
-  container.addEventListener('mousedown', function(e){
-    const el = e.target;
-    if (el && el.classList && el.classList.contains('rh-no') && document.activeElement !== el) {
-      e.preventDefault();
-      el.focus();
-      const range = document.createRange();
-      range.selectNodeContents(el);
-      const sel = window.getSelection();
-      sel.removeAllRanges();
-      sel.addRange(range);
-    }
-  });
-  // キーボードで Tab フォーカスした場合の保険（mousedown を経由しないケース）
-  container.addEventListener('focusin', function(e){
-    const el = e.target;
-    if (el && el.classList && el.classList.contains('rh-no')) {
-      const range = document.createRange();
-      range.selectNodeContents(el);
-      const sel = window.getSelection();
-      sel.removeAllRanges();
-      sel.addRange(range);
+    // 数字以外を即時除去（× は blur 時に空扱いに変換）
+    const cleaned = (el.value || '').replace(/[^0-9]/g, '');
+    if (cleaned !== el.value) {
+      const pos = el.selectionStart;
+      el.value = cleaned;
+      try { el.setSelectionRange(pos, pos); } catch(err) {}
     }
   });
 
@@ -5468,21 +5421,21 @@ function show(id) {
     if (!song) return;
     if (field === 'rhNo') {
       const reh = getRehearsalData(id);
-      const t = el.innerText.trim();
+      // D158b: <input> 化したので value プロパティから取得
+      const t = (el.value || '').trim();
       let newVal;
       if (t === '' || t === '×' || t === 'x' || t === 'X') newVal = null;
       else { const n = parseInt(t, 10); newVal = isNaN(n) ? reh.rhNo : n; }
       if (newVal !== reh.rhNo) {
         reh.rhNo = newVal;
-        // リハ順表示中は順序が変わるので再レンダー、セトリ順はその場だけ更新
         if (state.viewMode === 'rh') {
           render();
         } else {
-          el.innerText = newVal === null ? '×' : String(newVal);
+          el.value = newVal === null ? '' : String(newVal);
           el.classList.toggle('rh-none', newVal === null);
         }
       } else {
-        el.innerText = newVal === null ? '×' : String(newVal);
+        el.value = newVal === null ? '' : String(newVal);
       }
     } else if (field === 'memo') {
       const reh = getRehearsalData(id);
@@ -7000,7 +6953,7 @@ function show(id) {
 
   // ── マスター日付バー：全タブの日付がここに紐付く ──
   const masterDateState = {
-    current: new Date(2026, 3, 29) // 2026/4/29 (水) 初期値
+    current: (function(){ const d = new Date(); d.setHours(0,0,0,0); return d; })() // D158: 実日付の今日
   };
   // 別 IIFE（曲データ管理）から参照できるよう window にエクスポート
   window.__masterDateState = masterDateState;
