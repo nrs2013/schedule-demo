@@ -11,38 +11,38 @@
 <style>
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; background: #ffffff; color: #1a1a1a; font-family: 'Inter', 'Noto Sans JP', sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .r69-page { padding: 18mm 16mm 14mm; max-width: 210mm; margin: 0 auto; }
+  .r69-page { padding: 10mm 12mm 8mm; max-width: 210mm; margin: 0 auto; }
   @media screen { body { padding: 24px; background: #f3f3f0; } .r69-page { background: #ffffff; box-shadow: 0 0 0 1px #e8e8e8, 0 14px 36px rgba(0,0,0,0.08); margin-bottom: 12px; } }
   @media print { @page { size: A4 portrait; margin: 0; } body { background: #ffffff; padding: 0; } .r69-page { box-shadow: none; max-width: none; margin: 0 auto; } .r69-toolbar { display: none !important; } }
   .r69-toolbar { max-width: 210mm; margin: 0 auto 12px; display: flex; gap: 10px; }
   .r69-print-btn { background: #1a1a1a; color: #ffffff; border: none; padding: 9px 22px; font-family: inherit; font-size: 11px; letter-spacing: 0.3em; font-weight: 500; cursor: pointer; text-transform: uppercase; border-radius: 2px; }
   .r69-print-btn:hover { background: #2a2a2a; }
-  .r69-mast { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 0.5px solid #1a1a1a; padding-bottom: 8px; margin-bottom: 14px; }
+  .r69-mast { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 0.5px solid #1a1a1a; padding-bottom: 4px; margin-bottom: 6px; }
   .r69-mast-l { display: flex; flex-direction: column; gap: 4px; }
   .r69-eyebrow { font-family: 'Inter', sans-serif; font-size: 7px; letter-spacing: 0.4em; color: #b0b0b0; font-weight: 500; text-transform: uppercase; }
-  .r69-title { font-family: 'Inter', sans-serif; font-size: 22px; letter-spacing: 0.16em; color: #1a1a1a; font-weight: 200; text-transform: uppercase; margin: 0; line-height: 1; }
+  .r69-title { font-family: 'Inter', sans-serif; font-size: 16px; letter-spacing: 0.16em; color: #1a1a1a; font-weight: 200; text-transform: uppercase; margin: 0; line-height: 1; }
   .r69-mast-r { text-align: right; display: flex; flex-direction: column; gap: 4px; align-items: flex-end; padding-bottom: 2px; }
-  .r69-date { font-family: 'JetBrains Mono', monospace; font-size: 13px; letter-spacing: 0.06em; color: #1a1a1a; font-weight: 300; }
+  .r69-date { font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.06em; color: #1a1a1a; font-weight: 300; }
   .r69-dow { font-family: 'Inter', sans-serif; font-size: 7px; letter-spacing: 0.32em; color: #b0b0b0; font-weight: 500; text-transform: uppercase; }
   table.r69-tbl { width: 100%; border-collapse: collapse; font-family: 'Noto Sans JP', 'Inter', sans-serif; font-size: 9px; table-layout: fixed; }
-  .r69-tbl thead th { font-family: 'Inter', sans-serif; font-size: 7px; letter-spacing: 0.36em; font-weight: 400; color: #b0b0b0; text-transform: uppercase; text-align: left; padding: 0 8px 8px; border: none; border-bottom: 0.5px solid #1a1a1a; }
-  .r69-tbl tbody td { padding: 3px 8px; border: none; border-bottom: 0.5px solid #f2f2f2; vertical-align: baseline; line-height: 1.3; }
+  .r69-tbl thead th { font-family: 'Inter', sans-serif; font-size: 6.5px; letter-spacing: 0.36em; font-weight: 400; color: #b0b0b0; text-transform: uppercase; text-align: left; padding: 0 8px 3px; border: none; border-bottom: 0.5px solid #1a1a1a; }
+  .r69-tbl tbody td { padding: 1.5px 8px; border: none; border-bottom: 0.5px solid #f2f2f2; vertical-align: baseline; line-height: 1.15; }
   .r69-tbl tbody tr:last-child td { border-bottom: 0.5px solid #1a1a1a; }
   .r69-tbl tbody tr.is-section .col-title { color: #555; font-weight: 400; letter-spacing: 0.04em; }
   .r69-tbl tbody tr { /* R69g: A4 fit モードでは page-break 制約を解除 */ }
   .r69-tbl thead { display: table-header-group; }
-  .r69-tbl .col-mno { width: 42px; font-family: 'JetBrains Mono', monospace; font-size: 7.5px; color: #1a1a1a; letter-spacing: 0.1em; text-align: left; font-weight: 500; }
-  .r69-tbl .col-title { font-family: 'Noto Sans JP', sans-serif; font-weight: 500; font-size: 9.5px; color: #1a1a1a; letter-spacing: 0.005em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .r69-tbl .col-time { width: 50px; font-family: 'JetBrains Mono', monospace; font-size: 8.5px; color: #1a1a1a; letter-spacing: 0.04em; text-align: right; font-weight: 300; }
-  .r69-tbl .col-rh { width: 36px; font-family: 'JetBrains Mono', monospace; font-size: 7.5px; text-align: center; color: #1a1a1a; font-weight: 500; }
+  .r69-tbl .col-mno { width: 42px; font-family: 'JetBrains Mono', monospace; font-size: 7px; color: #1a1a1a; letter-spacing: 0.1em; text-align: left; font-weight: 500; }
+  .r69-tbl .col-title { font-family: 'Noto Sans JP', sans-serif; font-weight: 500; font-size: 8.5px; color: #1a1a1a; letter-spacing: 0.005em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .r69-tbl .col-time { width: 50px; font-family: 'JetBrains Mono', monospace; font-size: 8px; color: #1a1a1a; letter-spacing: 0.04em; text-align: right; font-weight: 300; }
+  .r69-tbl .col-rh { width: 36px; font-family: 'JetBrains Mono', monospace; font-size: 7px; text-align: center; color: #1a1a1a; font-weight: 500; }
   .r69-tbl .col-tags { width: 200px; }
-  .r69-tbl .col-memo { font-family: 'Noto Sans JP', sans-serif; color: #888; font-size: 7.5px; line-height: 1.3; font-weight: 300; letter-spacing: 0.02em; }
+  .r69-tbl .col-memo { font-family: 'Noto Sans JP', sans-serif; color: #888; font-size: 7px; line-height: 1.15; font-weight: 300; letter-spacing: 0.02em; }
   .r69-tags-list { display: flex; flex-wrap: wrap; gap: 0; align-items: baseline; }
-  .r69-tag { font-family: 'Noto Sans JP', sans-serif; font-size: 7.5px; color: #6a6a6a; font-weight: 300; letter-spacing: 0.06em; margin-right: 6px; }
+  .r69-tag { font-family: 'Noto Sans JP', sans-serif; font-size: 7px; color: #6a6a6a; font-weight: 300; letter-spacing: 0.06em; margin-right: 6px; }
   .r69-tag.solid { color: #1a1a1a; font-weight: 500; }
   .r69-tag::after { content: "/"; margin-left: 6px; color: #d0d0d0; font-weight: 300; }
   .r69-tag:last-child::after { content: ""; }
-  .r69-foot { margin-top: 10px; padding-top: 8px; border-top: 0.5px solid #ececec; display: flex; justify-content: space-between; font-family: 'JetBrains Mono', monospace; font-size: 7px; color: #b0b0b0; letter-spacing: 0.24em; text-transform: uppercase; font-weight: 300; }
+  .r69-foot { margin-top: 4px; padding-top: 3px; border-top: 0.5px solid #ececec; display: flex; justify-content: space-between; font-family: 'JetBrains Mono', monospace; font-size: 7px; color: #b0b0b0; letter-spacing: 0.24em; text-transform: uppercase; font-weight: 300; }
 </style>
 </head>
 <body>
