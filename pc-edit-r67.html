@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260509.133650">
+<meta name="build-version" content="20260509.120830">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -4652,9 +4652,9 @@
       <div class="lock-card">
         <div class="lock-icon">＋</div>
         <div class="lock-mode-label">新しいコンサート</div>
-        <div class="lock-form-sub">名前と 2 つのパスワードを決めてください</div>
+        <div class="lock-form-sub">名前と 3 つのパスワードを決めてください</div>
         <input type="text" class="lock-input" placeholder="コンサート名" id="lock-add-title" autocomplete="off">
-        <!-- R67: CONCERT パスワード入力欄を撤去（STAFF は passless で入る仕様に変更） -->
+        <input type="password" class="lock-input" placeholder="CONCERT パスワード" id="lock-add-concert" autocomplete="new-password">
         <input type="password" class="lock-input" placeholder="ARTIST パスワード" id="lock-add-artist" autocomplete="new-password">
         <input type="password" class="lock-input" placeholder="編集パスワード" id="lock-add-edit" autocomplete="new-password">
         <button class="lock-btn" id="lock-add-btn" type="button">追加して入る</button>
@@ -4681,7 +4681,7 @@
         <div class="lock-icon">🔒</div>
         <div class="lock-mode-label">PC 編集版</div>
         <div class="lock-tour-display" id="lock-login-concert-title"></div>
-        <div class="lock-form-sub">編集パスワードを入力してください</div>
+        <div class="lock-form-sub">CONCERT パスワードを入力してください</div>
         <input type="password" class="lock-input" placeholder="••••" id="lock-login-pass" autocomplete="current-password">
         <button class="lock-btn" id="lock-login-btn" type="button">認証する</button>
         <div class="lock-error" id="lock-login-error"></div>
@@ -9261,12 +9261,7 @@ function show(id) {
     showMode(modeLogin);
     setTimeout(function(){ passInp.focus(); }, 100);
     function tryLogin(){
-      /* R67: CONCERT パスワード撤去 → 編集パスワードで認証。
-         後方互換: 既存データに concert フィールドがあっても、それも有効として受け付ける */
-      var pw = passInp.value;
-      var ok = (pw === concert.passwords.edit) ||
-               (concert.passwords.concert && pw === concert.passwords.concert);
-      if (ok) {
+      if (passInp.value === concert.passwords.concert) {
         gotoApp(concert);
       } else {
         document.getElementById('lock-login-error').textContent = 'パスワードが違います';
@@ -9293,7 +9288,7 @@ function show(id) {
   function enterAddMode(){
     showMode(modeAdd);
     document.getElementById('lock-add-title').value = '';
-    /* R67: lock-add-concert は撤去済み */
+    document.getElementById('lock-add-concert').value = '';
     document.getElementById('lock-add-artist').value = '';
     document.getElementById('lock-add-edit').value = '';
     setTimeout(function(){ document.getElementById('lock-add-title').focus(); }, 100);
@@ -9325,7 +9320,7 @@ function show(id) {
 
   function tryAdd(){
     const title = (document.getElementById('lock-add-title').value || '').trim();
-    /* R67: concert パスワードは撤去（const concert = ... を削除） */
+    const concert = document.getElementById('lock-add-concert').value;
     const artist = document.getElementById('lock-add-artist').value;
     const edit = document.getElementById('lock-add-edit').value;
     if (!title) { alert('コンサート名を入力してください'); return; }
@@ -9333,7 +9328,7 @@ function show(id) {
     const newC = {
       id: 'concert-' + Date.now(),
       title: title,
-      passwords: { artist: artist, edit: edit }, /* R67: concert 撤去 */
+      passwords: { concert: concert, artist: artist, edit: edit },
       createdAt: new Date().toISOString()
     };
     concerts.push(newC);
