@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260509.330000">
+<meta name="build-version" content="20260509.340000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -1205,30 +1205,17 @@
     letter-spacing: 0.02em;
     cursor: default;
   }
-  /* 特殊行のM#セルをCDS（song-row.tsx）と完全に同じバッジ仕様に揃える */
-  /*  MC=青／EN=暗緑／VCR=茶ゴールド／END=オレンジゴールド */
+  /* D154 Phase 3 後始末: 種別バッジ色を全廃。全行が普通の M# 表示で統一 */
   .pc-row.special-mc .m-no,
   .pc-row.special-en .m-no,
   .pc-row.special-vcr .m-no,
   .pc-row.special-end .m-no {
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 0.05em;
-    padding: 4px 0;
-    line-height: 1;
-    border-radius: 3px;
-    border: 1px solid transparent;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    color: inherit !important;
+    background: transparent !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
   }
-  .pc-row.special-mc  .m-no { color: #a8d4e8; background: rgba(106,150,184,0.32); border-color: rgba(106,150,184,0.7); }
-  .pc-row.special-en  .m-no { color: #b8d9b0; background: rgba(106,138,102,0.32); border-color: rgba(106,138,102,0.7); }
-  .pc-row.special-vcr .m-no { color: #e8c890; background: rgba(184,149,88,0.32); border-color: rgba(184,149,88,0.7); }
-  .pc-row.special-end .m-no { color: #f0c77a; background: rgba(232,176,74,0.38); border-color: rgba(232,176,74,0.8); }
-  /* R50 Phase A2: 種別ごとに左アクセント縦線の色を変える */
-  /* D29b: 特殊行の左色付き線（MC=青／EN=緑／VCR=琥珀／END=オレンジ）も撤去。
-     行ごとの種別は M# バッジ（.m-no）の色で識別する。 */
-  /* MC 行のタイトルは少し控えめに（リハ対象外感） */
-  .pc-row.special-mc .title-cell { color: #a8a8a0; }
+  .pc-row.special-mc .title-cell { color: inherit !important; }
   /* タイトル：編集可・hover/focusで枠 */
   .pc-row .title-cell {
     cursor: text;
@@ -1363,6 +1350,30 @@
     background: rgba(255,255,255,0.06);
     border-color: rgba(216,184,120,0.5);
     color: #f0f0ec;
+  }
+  /* D155: セトリ順 / リハ順 のハイライト色を区別（テクリハ系＝ゴールド、こちら＝青系） */
+  #pc-btn-set.primary,
+  #pc-btn-rh.primary {
+    background: rgba(91,155,213,0.10) !important;
+    border-color: rgba(91,155,213,0.55) !important;
+    color: #c8e0f0 !important;
+  }
+  #pc-btn-set.primary:hover,
+  #pc-btn-rh.primary:hover {
+    background: rgba(91,155,213,0.18) !important;
+    border-color: rgba(91,155,213,0.75) !important;
+  }
+  /* D155: 「+ 行を追加」ボタンを目立たせる */
+  .pc-btn.pc-add-row {
+    background: rgba(232,154,74,0.18) !important;
+    border: 1px solid #e89a4a !important;
+    color: #f5d4a8 !important;
+    font-weight: 600 !important;
+    padding: 8px 22px !important;
+  }
+  .pc-btn.pc-add-row:hover {
+    background: rgba(232,154,74,0.30) !important;
+    color: #ffffff !important;
   }
   /* tab-bar 内のLINEボタンは廃止（タブ整理で削除） */
   /* 子タブ帯：A案モック準拠（margin-top -1px で親タブに重ねる／左右マージン無し→tab-bar padding を活用） */
