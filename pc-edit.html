@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260509.360000">
+<meta name="build-version" content="20260509.370000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -5360,7 +5360,7 @@ function show(id) {
   });
 
   // rh-no で Enter キーを押したら確定（改行を入れない）
-  let __rhFirstInput = false;
+  let __rhJustFocused = false;
   container.addEventListener('keydown', function(e){
     const el = e.target;
     if (el && el.classList && el.classList.contains('rh-no') && e.key === 'Enter') {
@@ -5368,27 +5368,41 @@ function show(id) {
       el.blur();
     }
   });
-  // D153b: focus 取得後の最初の input で「最後の 1 文字」だけ残す
-  // 最も確実な根本対処。既存値「1」のセルに「2」を入れると textContent は「12」になるが、
-  // input イベントで即座に「2」（最後の 1 文字）に圧縮する。
-  // 2 桁入力（「22」）は OK：最初の「2」で 1 文字化、次の「2」は __rhFirstInput が false なので
-  // 通常通り追記され「22」になる。
+  // D158: RH# 22 バグの絶対対処 — 三段構え
+  // 1) focusin → フラグセット
+  // 2) beforeinput → フラグが立ってれば、新しい文字を入れる前に既存値を空にする
+  // 3) input → 念のための保険：1 桁を超えてたら最後の 1 文字に圧縮
   container.addEventListener('focusin', function(e){
     const el = e.target;
     if (el && el.classList && el.classList.contains('rh-no')) {
-      __rhFirstInput = true;
+      __rhJustFocused = true;
+    }
+  });
+  container.addEventListener('beforeinput', function(e){
+    const el = e.target;
+    if (!el || !el.classList || !el.classList.contains('rh-no')) return;
+    if (__rhJustFocused) {
+      __rhJustFocused = false;
+      // beforeinput では textContent を空にする → ブラウザがその後の input でデータを追記
+      el.textContent = '';
+    }
+  });
+  // 保険：input イベントで 1 文字超なら最後の文字だけ残す（フォーカス後初の入力時のみ）
+  let __rhLastFocusKey = 0;
+  container.addEventListener('focusin', function(e){
+    if (e.target && e.target.classList && e.target.classList.contains('rh-no')) {
+      __rhLastFocusKey = Date.now();
     }
   });
   container.addEventListener('input', function(e){
     const el = e.target;
     if (!el || !el.classList || !el.classList.contains('rh-no')) return;
-    if (__rhFirstInput) {
-      __rhFirstInput = false;
+    // フォーカスから 500ms 以内の最初の入力で 2 文字以上なら、末尾 1 文字に切り詰める
+    if (__rhLastFocusKey && Date.now() - __rhLastFocusKey < 500) {
+      __rhLastFocusKey = 0;
       const v = el.textContent || '';
       if (v.length > 1) {
-        // 最後に入力された文字だけ残す
         el.textContent = v.slice(-1);
-        // カーソルを末尾へ
         try {
           const range = document.createRange();
           range.selectNodeContents(el);
