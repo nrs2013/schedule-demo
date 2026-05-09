@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260509.580000">
+<meta name="build-version" content="20260509.590000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -1477,7 +1477,7 @@
     text-align: center;
     background: transparent;
     border: none;
-    color: rgba(180,220,180,0.45);
+    color: #76766f; /* D172: 緑撤去 → グレー */
     font-size: 14px;
     font-weight: 400;
     cursor: pointer;
@@ -1486,11 +1486,12 @@
     transition: background 0.12s, color 0.12s;
   }
   .setlist-tab-x:hover { background: rgba(224,122,95,0.20); color: #ffb09b; }
-  .setlist-tab.is-only .setlist-tab-x { display: none; } /* 最後の1個は削除不可 */
+  .setlist-tab.is-only .setlist-tab-x { display: none; }
+  /* D172: + セトリ追加 — 文字も背景も緑撤去（border の dashed 緑だけ残して差別化キープ） */
   .setlist-add-btn {
     background: transparent;
     border: 1px dashed rgba(110,194,126,0.45);
-    color: rgba(180,220,180,0.85);
+    color: #76766f; /* グレー */
     padding: 5px 14px;
     border-radius: 6px;
     font-family: inherit;
@@ -1501,9 +1502,9 @@
     transition: background 0.12s, color 0.12s, border-color 0.12s;
   }
   .setlist-add-btn:hover {
-    background: rgba(110,194,126,0.10);
-    color: #d8f0d8;
-    border-color: rgba(110,194,126,0.75);
+    background: rgba(255,255,255,0.04); /* ニュートラル */
+    color: #fff5e8; /* テーマ準拠の暖色白 */
+    border-color: rgba(110,194,126,0.65);
   }
   /* D164: 「+ 行を追加」ボタン — border 濃さを他のボタンと統一（線が太く見えてた問題対処） */
   .pc-btn.pc-add-row {
