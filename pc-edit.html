@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260509.520000">
+<meta name="build-version" content="20260509.530000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -1440,10 +1440,12 @@
     flex-wrap: wrap;
     align-items: center;
   }
+  /* D163: 線の太さ・濃さを active/非active で完全に同じにする
+     強調は「背景の濃さ」と「文字の明るさ」だけで表現する */
   .setlist-tab {
     position: relative;
     background: rgba(110,194,126,0.06);
-    border: 1px solid rgba(110,194,126,0.28);
+    border: 1px solid rgba(110,194,126,0.40); /* 全タブ共通の濃さ */
     color: #8fb89a;
     padding: 6px 28px 5px 14px; /* 右側に ✕ ぶん余白 */
     border-radius: 6px;
@@ -1452,14 +1454,13 @@
     letter-spacing: 0.12em;
     font-weight: 600;
     cursor: pointer;
-    transition: background 0.12s, border-color 0.12s, color 0.12s;
+    transition: background 0.12s, color 0.12s;
   }
-  .setlist-tab:hover { color: #d8f0d8; background: rgba(110,194,126,0.12); border-color: rgba(110,194,126,0.50); }
+  .setlist-tab:hover { color: #d8f0d8; background: rgba(110,194,126,0.14); }
   .setlist-tab.active {
-    background: rgba(110,194,126,0.18);
-    border-color: #6ec27e;
-    color: #e8f7e8;
-    box-shadow: 0 0 0 1px rgba(110,194,126,0.35);
+    background: rgba(110,194,126,0.22);
+    border-color: rgba(110,194,126,0.40); /* 非activeと同じ濃さ */
+    color: #ffffff;
   }
   /* タブ内 ✕ ボタン（削除） */
   .setlist-tab-x {
