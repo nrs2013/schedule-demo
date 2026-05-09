@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260509.224626">
+<meta name="build-version" content="20260509.225105">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -936,11 +936,21 @@
     line-height: 1.5;
   }
   /* D84: ステージ照明テーマに合わせてチップも更新（DAY=Apple Green, 会場=Gold） */
-  .master-chip-day   { background: rgba(126,216,72,0.22); color: #d8f0bc; border: 1px solid rgba(126,216,72,0.45); }
-  .master-chip-venue { background: rgba(216,184,120,0.22); color: #f0d8a0; border: 1px solid rgba(216,184,120,0.55); }
-  /* R73-1: マスター日付バーの DOOR / SHOW チップ */
-  .master-chip-door { background: rgba(232,154,74,0.10); color: #ffd9a8; border: 1px solid rgba(232,154,74,0.45); font-family: 'JetBrains Mono', monospace; letter-spacing: 0.08em; }
-  .master-chip-show { background: rgba(224,122,95,0.16); color: #ffb09b; border: 1px solid rgba(224,122,95,0.55); font-family: 'JetBrains Mono', monospace; letter-spacing: 0.08em; font-weight: 600; }
+  /* R74: 4 チップ（venue / day / door / show）の色をテクリハタブ active と同系（ベージュ枠+クリーム文字）に統一 */
+  .master-chip-day,
+  .master-chip-venue,
+  .master-chip-door,
+  .master-chip-show {
+    background: rgba(255,255,255,0.06);
+    color: #f0e0c8;
+    border: 1px solid rgba(216,184,120,0.5);
+  }
+  /* DOOR / SHOW は数字なので mono フォント維持 */
+  .master-chip-door,
+  .master-chip-show {
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.08em;
+  }
   .master-chip:empty,
   .master-chip[data-empty="1"] {
     background: transparent;
