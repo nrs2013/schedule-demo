@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260510.012000">
+<meta name="build-version" content="20260510.013500">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -9989,7 +9989,8 @@ function show(id) {
     const artist = document.getElementById('lock-add-artist').value;
     const edit = document.getElementById('lock-add-edit').value;
     if (!title) { alert('コンサート名を入力してください'); return; }
-    if (!concert || !artist || !edit) { alert('3 つのパスワードを全部入力してください'); return; }
+    /* R83: R67 で concert パスワードを撤去したのに条件に残ってた → !artist || !edit のみに修正 */
+    if (!artist || !edit) { alert('2 つのパスワード（ARTIST と EDIT）を両方入力してください'); return; }
     const newC = {
       id: 'concert-' + Date.now(),
       title: title,
