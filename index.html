@@ -252,17 +252,13 @@
     } catch(e) {}
   })();
 
-  // ARTIST パスワード判定
+  // R114: ARTIST パスワード判定 - concerts:v1 の active concert から取得
   function getArtistPassword(){
     try {
-      var keys = [
-        'schedule-studio:current-artist-password',
-        'schedule-studio:artist-password'
-      ];
-      for (var i = 0; i < keys.length; i++) {
-        var v = localStorage.getItem(keys[i]);
-        if (v && v.length > 0) return v;
-      }
+      var concerts = JSON.parse(localStorage.getItem('schedule-studio:concerts:v1')||'[]');
+      var activeId = localStorage.getItem('schedule-studio:active-concert-id');
+      var c = (activeId && concerts.find(function(x){return x.id===activeId;})) || concerts[0];
+      if (c && c.passwords && c.passwords.artist) return c.passwords.artist;
     } catch(e) {}
     return '2222';
   }
@@ -280,7 +276,9 @@
     var v = document.getElementById('artist-pass-input').value;
     var ok = getArtistPassword();
     if (v === ok) {
-      location.href = 'phone-artist.html?authed=1';
+      /* R114: ?authed=1 URL バイパスを撤廃。sessionStorage 経由で安全に渡す */
+      sessionStorage.setItem('schedule-studio:artist-authed-via-index', '1');
+      location.href = 'phone-artist.html';
     } else {
       document.getElementById('artist-pass-err').textContent = 'パスワードが違います';
       document.getElementById('artist-pass-input').value = '';

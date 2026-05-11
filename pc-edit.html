@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260511.340000">
+<meta name="build-version" content="20260511.350000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -4828,8 +4828,9 @@
         <div class="lock-form-sub">名前と 2 つのパスワードを決めてください</div>
         <input type="text" class="lock-input" placeholder="コンサート名" id="lock-add-title" autocomplete="off">
         <!-- R67: CONCERT パスワード入力欄を撤去（STAFF は passless で入る仕様に変更） -->
-        <input type="password" class="lock-input" placeholder="ARTIST パスワード" id="lock-add-artist" autocomplete="new-password">
-        <input type="password" class="lock-input" placeholder="編集パスワード" id="lock-add-edit" autocomplete="new-password">
+        <input type="password" class="lock-input" placeholder="STAFF パスワード（4桁数字）" id="lock-add-staff" autocomplete="new-password">
+        <input type="password" class="lock-input" placeholder="ARTIST パスワード（4桁数字）" id="lock-add-artist" autocomplete="new-password">
+        <input type="password" class="lock-input" placeholder="編集パスワード（4桁数字）" id="lock-add-edit" autocomplete="new-password">
         <button class="lock-btn" id="lock-add-btn" type="button">追加して入る</button>
         <button class="lock-back-link" id="lock-add-back" type="button">← 一覧に戻る</button>
       </div>
@@ -10046,7 +10047,8 @@ function show(id) {
     if (modeEl) modeEl.classList.add('active');
   }
   // D139: グランドパスワード（新規 CONCERT 作成時のみ要求）
-  const GRAND_PASS = 'Nrs20132525';
+  /* R114: GRAND パスを localStorage から取得可能に。未設定なら デフォルト 'Nrs20132525' */
+  const GRAND_PASS = localStorage.getItem('schedule-studio:grand-password') || 'Nrs20132525';
   const SS_GRAND_AUTHED = 'schedule-studio:grand-authed';
 
   // ロック画面に切替
@@ -10163,6 +10165,7 @@ function show(id) {
     showMode(modeAdd);
     document.getElementById('lock-add-title').value = '';
     /* R67: lock-add-concert は撤去済み */
+    document.getElementById('lock-add-staff').value = '';
     document.getElementById('lock-add-artist').value = '';
     document.getElementById('lock-add-edit').value = '';
     setTimeout(function(){ document.getElementById('lock-add-title').focus(); }, 100);
@@ -10194,16 +10197,17 @@ function show(id) {
 
   function tryAdd(){
     const title = (document.getElementById('lock-add-title').value || '').trim();
-    /* R67: concert パスワードは撤去（const concert = ... を削除） */
+    const staff = document.getElementById('lock-add-staff').value;
     const artist = document.getElementById('lock-add-artist').value;
     const edit = document.getElementById('lock-add-edit').value;
     if (!title) { alert('コンサート名を入力してください'); return; }
-    /* R83: R67 で concert パスワードを撤去したのに条件に残ってた → !artist || !edit のみに修正 */
-    if (!artist || !edit) { alert('2 つのパスワード（ARTIST と EDIT）を両方入力してください'); return; }
+    /* R114: STAFF / ARTIST / EDIT 3つとも必須に（スマホ側で参照される） */
+    if (!staff || !artist || !edit) { alert('3 つのパスワード（STAFF / ARTIST / EDIT）を全部入力してください'); return; }
+    if (staff === artist || artist === edit || staff === edit) { alert('STAFF / ARTIST / EDIT は別々の値にしてください'); return; }
     const newC = {
       id: 'concert-' + Date.now(),
       title: title,
-      passwords: { artist: artist, edit: edit }, /* R67: concert 撤去 */
+      passwords: { staff: staff, artist: artist, edit: edit }, /* R114: staff 追加 */
       createdAt: new Date().toISOString()
     };
     concerts.push(newC);
