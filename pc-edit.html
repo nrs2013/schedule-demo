@@ -8097,6 +8097,7 @@ function show(id) {
     } catch(e) { return ''; }
   }
 
+  window.__renderDaySchedule = renderDaySchedule;
   function renderDaySchedule(){
     const list = document.getElementById('day-event-list');
     if (!list) return;
@@ -8500,6 +8501,7 @@ function show(id) {
       + '</div>';
   }
 
+  window.__renderArrivals = renderArrivals;
   function renderArrivals(){
     const wrap = document.getElementById('arrival-list-wrap');
     if (!wrap) return;
@@ -8666,6 +8668,7 @@ function show(id) {
       + '</div>';
   }
 
+  window.__renderHotels = renderHotels;
   function renderHotels(){
     const wrap = document.getElementById('hotel-list-wrap');
     if (!wrap) return;
