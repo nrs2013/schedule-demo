@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260511.360000">
+<meta name="build-version" content="20260511.380000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="apple-touch-icon" href="favicon.svg">
 <title>SCHEDULE STUDIO — STAFF</title>
@@ -2390,7 +2390,8 @@ function tryUnlock() {
   var _r114Concerts = JSON.parse(localStorage.getItem('schedule-studio:concerts:v1')||'[]');
   var _r114ActiveId = localStorage.getItem('schedule-studio:active-concert-id');
   var _r114Concert = (_r114ActiveId && _r114Concerts.find(function(c){return c.id===_r114ActiveId;})) || _r114Concerts[0];
-  var _r114Expected = (_r114Concert && _r114Concert.passwords && _r114Concert.passwords.staff) || '1111';
+  /* R118: STAFF パスワード = 編集パスワード（passwords.edit）を参照。fallback は '1111' */
+  var _r114Expected = (_r114Concert && _r114Concert.passwords && (_r114Concert.passwords.edit || _r114Concert.passwords.staff)) || '1111';
   if (v === _r114Expected) {
     authed = true;
     document.getElementById('pass-input-view').style.display = 'none';
