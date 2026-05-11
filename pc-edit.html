@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260511.300000">
+<meta name="build-version" content="20260511.310000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -171,13 +171,18 @@
       if (item.k === 'schedule-studio:arrivalSectionsByDate:v1' && typeof window.__reloadArrivals === 'function') window.__reloadArrivals();
       if (item.k === 'schedule-studio:dayEvents:v1' && typeof window.__reloadDailyEvents === 'function') window.__reloadDailyEvents();
       if (item.k === 'schedule-studio:hotels:v1' && typeof window.__reloadHotels === 'function') window.__reloadHotels();
+      // R109: render 前に renderMonth のキャッシュフラグを無効化（強制完全再描画）
+      try {
+        const monthEl = document.getElementById('pc-cal-month');
+        if (monthEl) monthEl._d71Initialized = false;
+      } catch(e) {}
       // 再描画
       if (typeof window.__renderMonth === 'function') window.__renderMonth();
       if (typeof window.__refreshMasterDateBar === 'function') window.__refreshMasterDateBar();
       if (typeof window.__rehearsalRender === 'function') window.__rehearsalRender();
-      if (typeof renderArrivals === 'function') renderArrivals();
-      if (typeof renderHotels === 'function') renderHotels();
-      if (typeof renderDaySchedule === 'function') renderDaySchedule();
+      if (typeof window.__renderArrivals === 'function') window.__renderArrivals();
+      if (typeof window.__renderHotels === 'function') window.__renderHotels();
+      if (typeof window.__renderDaySchedule === 'function') window.__renderDaySchedule();
     }
     window.__db.ref(FB_ROOT).on('child_changed', function(snap2){ applyFbItem(snap2.val()); });
     window.__db.ref(FB_ROOT).on('child_added',   function(snap2){ applyFbItem(snap2.val()); });
