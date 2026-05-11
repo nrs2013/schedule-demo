@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260511.260000">
+<meta name="build-version" content="20260511.270000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -5558,7 +5558,15 @@ function show(id) {
   // songs を active セトリの songs 配列の参照に切替
   songs = setlists.find(function(s){ return s.id === activeSetlistId; }).songs;
   function saveSetlists(){
-    localStorage.setItem(LS_KEY_SETLISTS, JSON.stringify(setlists));
+    const s = JSON.stringify(setlists);
+    localStorage.setItem(LS_KEY_SETLISTS, s);
+    if (window.__db) {
+      try {
+        const encKey = LS_KEY_SETLISTS.replace(/[.#$/\[\]]/g, '_');
+        window.__db.ref('ls/' + encKey).set({ k: LS_KEY_SETLISTS, v: s, t: Date.now() });
+        window.__lastFbWrite = { time: Date.now(), key: LS_KEY_SETLISTS };
+      } catch(e) {}
+    }
   }
   function setActiveSetlist(id){
     const sl = setlists.find(function(s){ return s.id === id; });
@@ -5645,7 +5653,16 @@ function show(id) {
     if (r && typeof r === 'object') rehearsalByDate = r;
   } catch(e) {}
   function saveRehearsals(){
-    try { localStorage.setItem(LS_KEY_REHEARSAL, JSON.stringify(rehearsalByDate)); } catch(e) {}
+    const s = JSON.stringify(rehearsalByDate);
+    try { localStorage.setItem(LS_KEY_REHEARSAL, s); } catch(e) {}
+    // R104: Firebase 直接書き込み (setItem hook に頼らない)
+    if (window.__db) {
+      try {
+        const encKey = LS_KEY_REHEARSAL.replace(/[.#$/\[\]]/g, '_');
+        window.__db.ref('ls/' + encKey).set({ k: LS_KEY_REHEARSAL, v: s, t: Date.now() });
+        window.__lastFbWrite = { time: Date.now(), key: LS_KEY_REHEARSAL };
+      } catch(e) {}
+    }
   }
   function getCurrentDateKey(){
     const ms = window.__masterDateState;
@@ -6768,12 +6785,20 @@ function show(id) {
     }
   }
   function saveJSON(key, val) {
+    const s = JSON.stringify(val);
     try {
-      localStorage.setItem(key, JSON.stringify(val));
+      localStorage.setItem(key, s);
     } catch (e) {
       console.warn('[SCHEDULE STUDIO] localStorage 保存失敗:', key, e);
     }
-    // D107: save = 何か変更された → undo 履歴を更新（pushUndo は IIFE #2 末尾で expose されるので、それ以降に呼ばれた時のみ動作）
+    // R104: setItem hook に頼らず Firebase に直接書き込み（CALENDAR/setlists/全データを確実に同期）
+    if (typeof key === 'string' && key.indexOf('schedule-studio:') === 0 && window.__db) {
+      try {
+        const encKey = key.replace(/[.#$/\[\]]/g, '_');
+        window.__db.ref('ls/' + encKey).set({ k: key, v: s, t: Date.now() });
+        window.__lastFbWrite = { time: Date.now(), key: key };
+      } catch (e) { console.warn('[R104] direct FB write fail', key, e); }
+    }
     if (typeof window.__pushUndo === 'function') window.__pushUndo();
   }
 
