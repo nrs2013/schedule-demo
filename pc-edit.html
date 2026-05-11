@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260511.180000">
+<meta name="build-version" content="20260511.190000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -137,40 +137,29 @@
       // 注：起動時のフラッシュを避けるため、次の navigation で適用される
     }
     // リアルタイム購読：他デバイスの変更を反映
-    window.__db.ref(FB_ROOT).on('child_changed', function(snap2){
-      const item = snap2.val();
-      if (item && item.k && typeof item.v === 'string') {
-        const localVal = localStorage.getItem(item.k);
-        if (localVal !== item.v) {
-          suppressFbWrite = true;
-          _setItem(item.k, item.v);
-          suppressFbWrite = false;
-          console.log('[FB] sync', item.k);
-          // R94: in-memory 変数を localStorage から再読込してから再描画
-          if (item.k === 'schedule-studio:rehearsalByDate:v1' && typeof window.__reloadRehearsalByDate === 'function') {
-            window.__reloadRehearsalByDate();
-          }
-          if (item.k === 'schedule-studio:setlists:v1' && typeof window.__reloadSetlists === 'function') {
-            window.__reloadSetlists();
-          }
-          // 再描画
-          if (typeof window.__renderMonth === 'function') window.__renderMonth();
-          if (typeof window.__refreshMasterDateBar === 'function') window.__refreshMasterDateBar();
-          if (typeof window.__rehearsalRender === 'function') window.__rehearsalRender();
-        }
+    // R95: child_changed と child_added を統一処理（初回書き込みも反映するため）
+    function applyFbItem(item) {
+      if (!item || !item.k || typeof item.v !== 'string') return;
+      const localVal = localStorage.getItem(item.k);
+      if (localVal === item.v) return; // 既に同じ値なら何もしない
+      suppressFbWrite = true;
+      _setItem(item.k, item.v);
+      suppressFbWrite = false;
+      console.log('[FB] sync', item.k);
+      // in-memory 変数を localStorage から再読込
+      if (item.k === 'schedule-studio:rehearsalByDate:v1' && typeof window.__reloadRehearsalByDate === 'function') {
+        window.__reloadRehearsalByDate();
       }
-    });
-    window.__db.ref(FB_ROOT).on('child_added', function(snap2){
-      const item = snap2.val();
-      if (item && item.k && typeof item.v === 'string') {
-        const localVal = localStorage.getItem(item.k);
-        if (localVal === null) {
-          suppressFbWrite = true;
-          _setItem(item.k, item.v);
-          suppressFbWrite = false;
-        }
+      if (item.k === 'schedule-studio:setlists:v1' && typeof window.__reloadSetlists === 'function') {
+        window.__reloadSetlists();
       }
-    });
+      // 再描画
+      if (typeof window.__renderMonth === 'function') window.__renderMonth();
+      if (typeof window.__refreshMasterDateBar === 'function') window.__refreshMasterDateBar();
+      if (typeof window.__rehearsalRender === 'function') window.__rehearsalRender();
+    }
+    window.__db.ref(FB_ROOT).on('child_changed', function(snap2){ applyFbItem(snap2.val()); });
+    window.__db.ref(FB_ROOT).on('child_added',   function(snap2){ applyFbItem(snap2.val()); });
     window.__db.ref(FB_ROOT).on('child_removed', function(snap2){
       const item = snap2.val();
       if (item && item.k) {

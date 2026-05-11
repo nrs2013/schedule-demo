@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260511.150000">
+<meta name="build-version" content="20260511.190000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="apple-touch-icon" href="favicon.svg">
 <title>SCHEDULE STUDIO — STAFF</title>
@@ -82,22 +82,16 @@
     });
     suppress = false;
     console.log('[FB] pull keys=' + Object.keys(all).length);
-    // リアルタイム購読
-    window.__db.ref(FB_ROOT).on('child_changed', function(s){
-      const it = s.val();
-      if (it && it.k && typeof it.v === 'string' && localStorage.getItem(it.k) !== it.v) {
-        suppress = true; _setItem(it.k, it.v); suppress = false;
-        console.log('[FB] sync', it.k);
-        // 簡易再描画：ページ全体の sync は state リフレッシュ系の関数を呼ぶ
-        if (typeof window.__phoneRefreshAll === 'function') window.__phoneRefreshAll();
-      }
-    });
-    window.__db.ref(FB_ROOT).on('child_added', function(s){
-      const it = s.val();
-      if (it && it.k && typeof it.v === 'string' && localStorage.getItem(it.k) === null) {
-        suppress = true; _setItem(it.k, it.v); suppress = false;
-      }
-    });
+    // R95: child_changed と child_added を統一処理（初回書き込みも反映するため）
+    function applyFbItem(it) {
+      if (!it || !it.k || typeof it.v !== 'string') return;
+      if (localStorage.getItem(it.k) === it.v) return;
+      suppress = true; _setItem(it.k, it.v); suppress = false;
+      console.log('[FB] sync', it.k);
+      if (typeof window.__phoneRefreshAll === 'function') window.__phoneRefreshAll();
+    }
+    window.__db.ref(FB_ROOT).on('child_changed', function(s){ applyFbItem(s.val()); });
+    window.__db.ref(FB_ROOT).on('child_added',   function(s){ applyFbItem(s.val()); });
   }).catch(function(e){ console.error('[FB] pull err', e); });
 })();
 </script>
