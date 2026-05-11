@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260511.240000">
+<meta name="build-version" content="20260511.260000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -5865,6 +5865,9 @@ function show(id) {
   container.addEventListener('click', function(e){
     const tagEl = e.target.closest && e.target.closest('.tag-btn');
     if (tagEl) {
+      // R103: クリック直前に必ず localStorage から in-memory をリロード
+      // これでスマホからの最新データを上書きしない
+      if (typeof window.__reloadRehearsalByDate === 'function') window.__reloadRehearsalByDate();
       const id = +tagEl.getAttribute('data-id');
       const tag = tagEl.getAttribute('data-tag');
       const reh = getRehearsalData(id);
@@ -5964,6 +5967,8 @@ function show(id) {
   container.addEventListener('blur', function(e){
     const el = e.target;
     if (!el || !el.dataset || !el.dataset.field) return;
+    // R103: 編集確定直前に localStorage から reload
+    if (typeof window.__reloadRehearsalByDate === 'function') window.__reloadRehearsalByDate();
     const id = +el.getAttribute('data-id');
     const field = el.getAttribute('data-field');
     const song = songs.find(function(s){return s.id===id;});
