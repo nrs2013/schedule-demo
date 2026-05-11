@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260511.350000">
+<meta name="build-version" content="20260511.360000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="apple-touch-icon" href="favicon.svg">
 <title>SCHEDULE STUDIO — STAFF</title>
@@ -2419,11 +2419,8 @@ function resetAuth() {
 
 // 終了ボタン トグル動作: 認証済みなら done のオン/オフを切り替え
 function toggleFinish(cardId) {
-  if (!authed) {
-    alert('終了ボタンは PASS タブで認証してから押せます');
-    show('pass');
-    return;
-  }
+  /* R115: 未認証時はサイレントに無視（PASS タブを押した時だけ認証画面が出る） */
+  if (!authed) return;
   const card = document.getElementById(cardId);
   if (!card) return;
   const btn = card.querySelector('.finish-btn');
@@ -2548,7 +2545,8 @@ let activeRhBtn = null;
 let pickerScrollTimeout = null;
 
 function openRhPicker(btn) {
-  if (!authed) { show('pass'); return; }
+  /* R115: 未認証時はサイレント無視 */
+  if (!authed) return;
   activeRhBtn = btn;
   const wheel = document.getElementById('rh-picker-wheel');
   // アイテム生成: ×（リハなし）+ 1〜14
@@ -3061,7 +3059,7 @@ function renderRhCards() {
         '<button class="finish-btn ' + ((typeof authed !== "undefined" && authed) ? '' : 'disabled') + '" onclick="toggleFinish(\'card-' + song.id + '\')"><span>終了</span></button>' +
       '</div>' +
       '<div class="rh-line2">' + tagHtml + '</div>' +
-      '<div class="rh-line3" contenteditable="true" data-song-id="' + song.id + '" data-field="memo">' + escHtmlPhone(reh.memo || '') + '</div>' +
+      '<div class="rh-line3" contenteditable="' + (typeof authed !== "undefined" && authed ? "true" : "false") + '" data-song-id="' + song.id + '" data-field="memo">' + escHtmlPhone(reh.memo || '') + '</div>' +
     '</div>';
   });
   list.innerHTML = html;
