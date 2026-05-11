@@ -3734,5 +3734,78 @@ renderHotelListPhone();
   setInterval(update, 2000); // Firebase 同期で concerts が arrived した時にも追従
 })();
 </script>
+
+<script>
+/* R138: LINE リッチメニュー URL ハッシュ ルーティング
+ * 前任 R126/R128/R133 が失敗。今度こそ確実に動かす。守るルール：
+ *  - show() を絶対にラップしない（CSS の .active を直接操作）
+ *  - hash がない時は何もしない（既存動作にゼロ影響）
+ *  - MutationObserver で 5 秒だけガード（他のコードに勝つ）
+ *  - 下タブクリックで hash 解除（通常モードに戻る）
+ */
+(function r138HashRouter(){
+  var HASH_TO_SCREEN = {
+    'today': 'schedule', 'schedule': 'schedule', 'day-schedule': 'schedule',
+    'calendar': 'tour-calendar', 'tour-calendar': 'tour-calendar',
+    'rehearsal': 'rh', 'rh': 'rh', 'tekuriha': 'tekuriha',
+    'info': 'info', 'arrival': 'arrival', 'hotel': 'hotel', 'pass': 'pass'
+  };
+  var SCREEN_TO_BOTTOM_TAB = {
+    'schedule': 'schedule',
+    'arrival': 'schedule',
+    'tour-calendar': 'tour-calendar',
+    'rh': 'rehearsal',
+    'tekuriha': 'rehearsal',
+    'info': 'info',
+    'hotel': 'hotel',
+    'pass': 'pass'
+  };
+  function getHashScreen() {
+    var h = (location.hash || '').replace(/^#/, '').toLowerCase().trim();
+    return HASH_TO_SCREEN[h] || null;
+  }
+  function force() {
+    var target = getHashScreen();
+    if (!target) return;
+    var el = document.getElementById('screen-' + target);
+    if (!el) return;
+    document.querySelectorAll('.screen.active').forEach(function(s){ s.classList.remove('active'); });
+    el.classList.add('active');
+    var bottomTarget = SCREEN_TO_BOTTOM_TAB[target] || target;
+    document.querySelectorAll('#bottom-tabs button').forEach(function(b){
+      b.classList.remove('active');
+      var oc = b.getAttribute('onclick') || '';
+      var m = oc.match(/show\(['"]([^'"]+)['"]\)/);
+      if (m && m[1] === bottomTarget) b.classList.add('active');
+    });
+  }
+  function init() {
+    if (!getHashScreen()) return;
+    force();
+    var deadline = Date.now() + 5000;
+    var observer = new MutationObserver(function(){
+      if (Date.now() > deadline) { observer.disconnect(); return; }
+      var t = getHashScreen();
+      if (!t) { observer.disconnect(); return; }
+      var expected = 'screen-' + t;
+      var active = document.querySelector('.screen.active');
+      if (!active || active.id !== expected) force();
+    });
+    observer.observe(document.body, { attributes: true, subtree: true, attributeFilter: ['class'] });
+    document.querySelectorAll('#bottom-tabs button').forEach(function(b){
+      b.addEventListener('click', function(){
+        if (location.hash) history.replaceState(null, '', location.pathname + location.search);
+      });
+    });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+  window.addEventListener('hashchange', force);
+  console.log('[R138] hash router loaded. current hash:', location.hash);
+})();
+</script>
 </body>
 </html>
