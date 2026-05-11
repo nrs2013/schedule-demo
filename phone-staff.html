@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260511.220000">
+<meta name="build-version" content="20260511.230000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="apple-touch-icon" href="favicon.svg">
 <title>SCHEDULE STUDIO — STAFF</title>
@@ -3073,6 +3073,15 @@ setInterval(function() {
 
 // R88b: Firebase 同期 hook が呼ぶグローバル関数（即時再描画）
 window.__phoneRenderRh = renderRhCards;
+
+// R100: storage イベント
+window.addEventListener('storage', function(e){
+  if (!e || !e.key) return;
+  if (e.key === LS_KEY_REH_BY_DATE || e.key === LS_KEY_SETLISTS) {
+    if (typeof renderRhCards === 'function') renderRhCards();
+  }
+});
+
 window.__phoneRefreshAll = function() {
   if (typeof renderRhCards === 'function') renderRhCards();
   if (typeof renderDateBar === 'function') renderDateBar();

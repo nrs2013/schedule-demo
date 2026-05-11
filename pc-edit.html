@@ -6138,6 +6138,38 @@ function show(id) {
   // 今後スマホ側から setlists を編集する機能が出来た時に実装する。
   window.__reloadSetlists = function() { /* no-op for now */ };
 
+  // R100: storage イベント = 他タブ/他デバイス（一部ブラウザ）からの localStorage 変更を検知
+  // Firebase 経由で別ソースから localStorage が書き換わった場合の保険
+  window.addEventListener('storage', function(e){
+    if (!e || !e.key) return;
+    if (e.key === 'schedule-studio:rehearsalByDate:v1') {
+      console.log('[R100] storage event - rehearsalByDate changed, reload+render');
+      try { window.__reloadRehearsalByDate(); } catch(err){}
+      try { window.__rehearsalRender(); } catch(err){}
+    }
+    if (e.key === 'schedule-studio:setlists:v1') {
+      console.log('[R100] storage event - setlists changed');
+      try { window.__rehearsalRender(); } catch(err){}
+    }
+  });
+
+  // R100: applyFbItem の "localVal === item.v スキップ" による未再描画問題の保険
+  // 1秒おきに in-memory rehearsalByDate と localStorage を比較、ズレてたら強制 reload + render
+  setInterval(function(){
+    try {
+      const v = localStorage.getItem('schedule-studio:rehearsalByDate:v1');
+      const lsObj = v ? JSON.parse(v) : {};
+      const memObj = rehearsalByDate;
+      const lsStr = JSON.stringify(lsObj);
+      const memStr = JSON.stringify(memObj);
+      if (lsStr !== memStr) {
+        console.log('[R100] in-memory drift detected → reload+render');
+        window.__reloadRehearsalByDate();
+        window.__rehearsalRender();
+      }
+    } catch(e){}
+  }, 1000);
+
   /* ========================================================
      R69: REHEARSAL 印刷ビュー (v7 レイアウト)
      - 「PRINT」ボタンから呼び出される
