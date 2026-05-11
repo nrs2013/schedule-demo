@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260511.200000">
+<meta name="build-version" content="20260511.210000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -5648,10 +5648,8 @@ function show(id) {
   }
   function getRehearsalData(songId){
     const k = getCurrentDateKey();
-    let dirty = false;
     if (!rehearsalByDate[k]) {
       rehearsalByDate[k] = {};
-      dirty = true;
       // 4/29 のみ初期サンプルとして songs の値をコピー、それ以外の日は空（rhNo=null/tags=[]/memo='')
       if (k === '2026-04-29') {
         songs.forEach(function(s){
@@ -5665,9 +5663,10 @@ function show(id) {
     }
     if (!rehearsalByDate[k][songId]) {
       rehearsalByDate[k][songId] = { rhNo: null, tags: [], memo: '' };
-      dirty = true;
     }
-    if (dirty) saveRehearsals();
+    /* R98: dirty/saveRehearsals 副作用を撤廃。
+       render 中の getRehearsalData が毎回 saveRehearsals を呼んで Firebase 書き込みストームを起こしていた。
+       保存は実際の編集アクション側に任せる。*/
     return rehearsalByDate[k][songId];
   }
 
