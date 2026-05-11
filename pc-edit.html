@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260511.390000">
+<meta name="build-version" content="20260511.400000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -10167,13 +10167,11 @@ function show(id) {
     };
   }
 
-  // D139: 既にグランドパス済みなら即追加モード、未認証なら grand-mode を出す
+  // R120: GRAND パスは「新規追加のたびに必ず」聞く（セッションキャッシュ撤廃）
   function startAdd(){
-    if (sessionStorage.getItem(SS_GRAND_AUTHED) === '1') {
-      enterAddMode();
-    } else {
-      startGrand();
-    }
+    // 念のためセッションフラグも消す（旧挙動の残骸対策）
+    sessionStorage.removeItem(SS_GRAND_AUTHED);
+    startGrand();
   }
   function enterAddMode(){
     showMode(modeAdd);
@@ -10192,7 +10190,7 @@ function show(id) {
     setTimeout(function(){ inp.focus(); }, 100);
     function tryGrand(){
       if (inp.value === GRAND_PASS) {
-        sessionStorage.setItem(SS_GRAND_AUTHED, '1');
+        /* R120: SS_GRAND_AUTHED への sessionStorage 保存は撤廃。次回追加時もまた GRAND 聞く */
         enterAddMode();
       } else {
         errEl.textContent = 'GRAND PASSWORD が違います';
