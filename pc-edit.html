@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260510.015000">
+<meta name="build-version" content="20260511.090000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -5526,6 +5526,8 @@ function show(id) {
   const __LS_PREFIX_SL = (typeof __LS_PREFIX !== 'undefined') ? __LS_PREFIX : 'schedule-studio:';
   const LS_KEY_SETLISTS = __LS_PREFIX_SL + 'setlists:v1';
   const LS_KEY_ACTIVE_SL = __LS_PREFIX_SL + 'activeSetlistId';
+  // R86: REHEARSAL タブの日付別データ（rhNo/tags/memo）を localStorage に永続化
+  const LS_KEY_REHEARSAL = __LS_PREFIX_SL + 'rehearsalByDate:v1';
   let setlists = [];
   let activeSetlistId = null;
   try {
@@ -5629,7 +5631,15 @@ function show(id) {
   // ── 日付別リハーサル計画（rhNo/tags/memo を日付ごとに保持） ──
   // 曲データ（title/M#/time/種別）は CDS が源で日付関係なく共通
   // リハ計画（rhNo/tags/memo）は SCHEDULE STUDIO が日付ごとに保持
-  const rehearsalByDate = {};
+  // R86: localStorage から復元（無ければ {}）
+  let rehearsalByDate = {};
+  try {
+    const r = JSON.parse(localStorage.getItem(LS_KEY_REHEARSAL) || 'null');
+    if (r && typeof r === 'object') rehearsalByDate = r;
+  } catch(e) {}
+  function saveRehearsals(){
+    try { localStorage.setItem(LS_KEY_REHEARSAL, JSON.stringify(rehearsalByDate)); } catch(e) {}
+  }
   function getCurrentDateKey(){
     const ms = window.__masterDateState;
     if (ms && ms.current) {
@@ -5640,8 +5650,10 @@ function show(id) {
   }
   function getRehearsalData(songId){
     const k = getCurrentDateKey();
+    let dirty = false;
     if (!rehearsalByDate[k]) {
       rehearsalByDate[k] = {};
+      dirty = true;
       // 4/29 のみ初期サンプルとして songs の値をコピー、それ以外の日は空（rhNo=null/tags=[]/memo='')
       if (k === '2026-04-29') {
         songs.forEach(function(s){
@@ -5655,7 +5667,9 @@ function show(id) {
     }
     if (!rehearsalByDate[k][songId]) {
       rehearsalByDate[k][songId] = { rhNo: null, tags: [], memo: '' };
+      dirty = true;
     }
+    if (dirty) saveRehearsals();
     return rehearsalByDate[k][songId];
   }
 
@@ -5850,6 +5864,7 @@ function show(id) {
       const reh = getRehearsalData(id);
       if (reh.tags.indexOf(tag) >= 0) reh.tags = reh.tags.filter(function(t){return t!==tag;});
       else reh.tags.push(tag);
+      saveRehearsals();
       render();
       return;
     }
@@ -5867,6 +5882,7 @@ function show(id) {
           Object.keys(rehearsalByDate).forEach(function(k){
             if (rehearsalByDate[k]) delete rehearsalByDate[k][id];
           });
+          saveRehearsals();
           render();
         }
       }
@@ -5931,6 +5947,7 @@ function show(id) {
     if (field === 'memo') {
       const reh = getRehearsalData(id);
       reh.memo = el.innerText;
+      saveRehearsals();
     } else if (field === 'title') {
       const song = songs.find(function(s){return s.id===id;});
       if (song) song.title = el.innerText;
@@ -5954,6 +5971,7 @@ function show(id) {
       else { const n = parseInt(t, 10); newVal = isNaN(n) ? reh.rhNo : n; }
       if (newVal !== reh.rhNo) {
         reh.rhNo = newVal;
+        saveRehearsals();
         if (state.viewMode === 'rh') {
           render();
         } else {
@@ -5974,6 +5992,7 @@ function show(id) {
     } else if (field === 'memo') {
       const reh = getRehearsalData(id);
       reh.memo = el.innerText;
+      saveRehearsals();
     } else if (field === 'title') {
       song.title = el.innerText; // タイトルは曲データ（日付関係なし）
     }
@@ -6541,9 +6560,11 @@ function show(id) {
       if (t === '' || t === '×' || t === 'x' || t === 'X') newVal = null;
       else { const n = parseInt(t, 10); newVal = isNaN(n) ? reh.rhNo : n; }
       reh.rhNo = newVal;
+      saveRehearsals();
     } else if (field === 'memo') {
       const reh = getRehearsalData(id);
       reh.memo = val || '';
+      saveRehearsals();
     } else if (field === 'title') {
       const song = songs.find(function(s){return s.id===id;});
       if (song) song.title = val || '';
