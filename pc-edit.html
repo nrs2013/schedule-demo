@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260511.290000">
+<meta name="build-version" content="20260511.300000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -164,36 +164,13 @@
       if (item.k === 'schedule-studio:setlists:v1' && typeof window.__reloadSetlists === 'function') {
         window.__reloadSetlists();
       }
-      // R106: 全 in-memory 変数を再読込
-      try {
-        const v = item.v;
-        if (item.k === 'schedule-studio:calEvents:v1') {
-          const parsed = JSON.parse(v);
-          if (Array.isArray(parsed) && typeof calEvents !== 'undefined') {
-            calEvents.length = 0; parsed.forEach(x => calEvents.push(x));
-          }
-        }
-        if (item.k === 'schedule-studio:calMemos:v1' && typeof calMemos !== 'undefined') {
-          Object.keys(calMemos).forEach(k => delete calMemos[k]);
-          Object.assign(calMemos, JSON.parse(v));
-        }
-        if (item.k === 'schedule-studio:showTimes:v1' && typeof showTimes !== 'undefined') {
-          Object.keys(showTimes).forEach(k => delete showTimes[k]);
-          Object.assign(showTimes, JSON.parse(v));
-        }
-        if (item.k === 'schedule-studio:arrivalSectionsByDate:v1' && typeof arrivalSectionsByDate !== 'undefined') {
-          Object.keys(arrivalSectionsByDate).forEach(k => delete arrivalSectionsByDate[k]);
-          Object.assign(arrivalSectionsByDate, JSON.parse(v));
-        }
-        if (item.k === 'schedule-studio:dayEvents:v1' && typeof dailyEvents !== 'undefined') {
-          Object.keys(dailyEvents).forEach(k => delete dailyEvents[k]);
-          Object.assign(dailyEvents, JSON.parse(v));
-        }
-        if (item.k === 'schedule-studio:hotels:v1' && typeof hotels !== 'undefined') {
-          const parsed = JSON.parse(v);
-          if (Array.isArray(parsed)) { hotels.length = 0; parsed.forEach(x => hotels.push(x)); }
-        }
-      } catch(e) { console.warn('[R106] PC inmem reload fail', item.k, e); }
+      // R108: window export 経由で各 in-memory 変数を再読込
+      if (item.k === 'schedule-studio:calEvents:v1' && typeof window.__reloadCalEvents === 'function') window.__reloadCalEvents();
+      if (item.k === 'schedule-studio:calMemos:v1' && typeof window.__reloadCalMemos === 'function') window.__reloadCalMemos();
+      if (item.k === 'schedule-studio:showTimes:v1' && typeof window.__reloadShowTimes === 'function') window.__reloadShowTimes();
+      if (item.k === 'schedule-studio:arrivalSectionsByDate:v1' && typeof window.__reloadArrivals === 'function') window.__reloadArrivals();
+      if (item.k === 'schedule-studio:dayEvents:v1' && typeof window.__reloadDailyEvents === 'function') window.__reloadDailyEvents();
+      if (item.k === 'schedule-studio:hotels:v1' && typeof window.__reloadHotels === 'function') window.__reloadHotels();
       // 再描画
       if (typeof window.__renderMonth === 'function') window.__renderMonth();
       if (typeof window.__refreshMasterDateBar === 'function') window.__refreshMasterDateBar();
@@ -6839,6 +6816,37 @@ function show(id) {
   let calEvents = loadJSON(LS_KEY_EVENTS, JSON.parse(JSON.stringify(DEFAULT_CAL_EVENTS)));
   let showTimes = loadJSON(LS_KEY_SHOW_TIMES, JSON.parse(JSON.stringify(DEFAULT_SHOW_TIMES)));
   let calMemos  = loadJSON(LS_KEY_MEMOS, {});
+  // R108: reload helpers を window に export（fbSync IIFE から呼ばれる）
+  window.__reloadCalEvents = function() {
+    try {
+      const v = localStorage.getItem(LS_KEY_EVENTS);
+      const parsed = v ? JSON.parse(v) : null;
+      if (Array.isArray(parsed)) {
+        calEvents.length = 0;
+        parsed.forEach(x => calEvents.push(x));
+      }
+    } catch(e) { console.warn('[R108] reload calEvents fail', e); }
+  };
+  window.__reloadShowTimes = function() {
+    try {
+      const v = localStorage.getItem(LS_KEY_SHOW_TIMES);
+      const parsed = v ? JSON.parse(v) : null;
+      if (parsed && typeof parsed === 'object') {
+        Object.keys(showTimes).forEach(k => delete showTimes[k]);
+        Object.assign(showTimes, parsed);
+      }
+    } catch(e) { console.warn('[R108] reload showTimes fail', e); }
+  };
+  window.__reloadCalMemos = function() {
+    try {
+      const v = localStorage.getItem(LS_KEY_MEMOS);
+      const parsed = v ? JSON.parse(v) : null;
+      if (parsed && typeof parsed === 'object') {
+        Object.keys(calMemos).forEach(k => delete calMemos[k]);
+        Object.assign(calMemos, parsed);
+      }
+    } catch(e) { console.warn('[R108] reload calMemos fail', e); }
+  };
   // D39: 会場グループ（venue band の元データ）
   const LS_KEY_VENUE_GROUPS = __LS_PREFIX + 'venueGroups:v1';
   let venueGroups = loadJSON(LS_KEY_VENUE_GROUPS, []);
@@ -7967,6 +7975,17 @@ function show(id) {
     { startTime:'18:30', endTime:'',      label:'SHOW TIME' }
   ];
   const dailyEvents = loadJSON(LS_KEY_DAY_EVENTS, {});
+  // R108: reload helper
+  window.__reloadDailyEvents = function() {
+    try {
+      const v = localStorage.getItem(LS_KEY_DAY_EVENTS);
+      const parsed = v ? JSON.parse(v) : null;
+      if (parsed && typeof parsed === 'object') {
+        Object.keys(dailyEvents).forEach(k => delete dailyEvents[k]);
+        Object.assign(dailyEvents, parsed);
+      }
+    } catch(e) { console.warn('[R108] reload dailyEvents fail', e); }
+  };
   function saveDayEvents() { saveJSON(LS_KEY_DAY_EVENTS, dailyEvents); }
   let nextDayEventId = 100;
   // 既存データから max(id)+1 を計算
@@ -8394,6 +8413,17 @@ function show(id) {
   // R61 M3: localStorage に永続化（phone.html と共有）
   const LS_KEY_ARRIVALS = __LS_PREFIX + 'arrivalSectionsByDate:v1';
   let arrivalSectionsByDate = loadJSON(LS_KEY_ARRIVALS, {});
+  // R108: reload helper
+  window.__reloadArrivals = function() {
+    try {
+      const v = localStorage.getItem(LS_KEY_ARRIVALS);
+      const parsed = v ? JSON.parse(v) : null;
+      if (parsed && typeof parsed === 'object') {
+        Object.keys(arrivalSectionsByDate).forEach(k => delete arrivalSectionsByDate[k]);
+        Object.assign(arrivalSectionsByDate, parsed);
+      }
+    } catch(e) { console.warn('[R108] reload arrivals fail', e); }
+  };
   function saveArrivals() { saveJSON(LS_KEY_ARRIVALS, arrivalSectionsByDate); }
   function fmtMKey_arrival(d){
     return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
@@ -8553,6 +8583,17 @@ function show(id) {
   // D103: デモホテル撤去（空状態 + 手入力で追加するワークフロー）
   const DEFAULT_HOTELS = [];
   let hotels = loadJSON(LS_KEY_HOTELS, JSON.parse(JSON.stringify(DEFAULT_HOTELS)));
+  // R108: reload helper
+  window.__reloadHotels = function() {
+    try {
+      const v = localStorage.getItem(LS_KEY_HOTELS);
+      const parsed = v ? JSON.parse(v) : null;
+      if (Array.isArray(parsed)) {
+        hotels.length = 0;
+        parsed.forEach(x => hotels.push(x));
+      }
+    } catch(e) { console.warn('[R108] reload hotels fail', e); }
+  };
   // D100: localStorage が壊れて配列じゃないケースをフォールバック
   if (!Array.isArray(hotels)) hotels = JSON.parse(JSON.stringify(DEFAULT_HOTELS));
   // D103: マイグレーション — 過去のデモホテル（id 1-4）を 1 度だけ掃除
