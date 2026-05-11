@@ -131,6 +131,14 @@
     });
     suppressFbWrite = false;
     console.log('[FB] pull 完了 / keys=' + Object.keys(all).length);
+    setTimeout(function(){
+      if (typeof window.__reloadRehearsalByDate === 'function') {
+        try { window.__reloadRehearsalByDate(); console.log('[R101] startup reload OK'); } catch(e){}
+      }
+      if (typeof window.__rehearsalRender === 'function') {
+        try { window.__rehearsalRender(); } catch(e){}
+      }
+    }, 100);
     // pull 後、reload で全タブ再描画（最も確実）
     if (Object.keys(all).length > 0 && !window.__fbPulledOnce) {
       window.__fbPulledOnce = true;
@@ -142,13 +150,14 @@
     function applyFbItem(item) {
       if (!item || !item.k || typeof item.v !== 'string') return;
       const localVal = localStorage.getItem(item.k);
-      if (localVal === item.v) return; // 既に同じ値なら何もしない
-      suppressFbWrite = true;
-      _setItem(item.k, item.v);
-      suppressFbWrite = false;
-      console.log('[FB] sync', item.k);
+      // R101: localStorage 書き込みだけ skip、reload+render は in-memory ステイル防止のため必ず実行
+      if (localVal !== item.v) {
+        suppressFbWrite = true;
+        _setItem(item.k, item.v);
+        suppressFbWrite = false;
+      }
       window.__lastFbReceive = { time: Date.now(), key: item.k };
-      // in-memory 変数を localStorage から再読込
+      // in-memory 変数を localStorage から「必ず」再読込（skip 経路でも実行）
       if (item.k === 'schedule-studio:rehearsalByDate:v1' && typeof window.__reloadRehearsalByDate === 'function') {
         window.__reloadRehearsalByDate();
       }
