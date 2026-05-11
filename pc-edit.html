@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260511.420000">
+<meta name="build-version" content="20260511.450000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -5068,6 +5068,19 @@
         <span class="info-login-hint">無記入だと「匿名」として記録されます</span>
       </div>
       <div class="info-form" id="info-form">
+        <details style="margin-bottom:16px;background:rgba(255,255,255,0.03);padding:12px 16px;border-radius:6px;border:1px solid rgba(255,255,255,0.08);">
+          <summary style="cursor:pointer;color:#a8a8a0;font-size:12px;letter-spacing:0.06em;">⚙ LINE 連携 設定（初回のみ）</summary>
+          <div style="margin-top:10px;font-size:11px;color:#888;line-height:1.6;">
+            Google Apps Script のウェブアプリ URL を貼り付けてください。<br>
+            設定方法は <a href="line-setup-guide.html" target="_blank" style="color:#6ec6c8;">セットアップ手順</a> 参照。
+          </div>
+          <input type="text" id="info-line-gas-url" class="info-input" placeholder="https://script.google.com/macros/s/.../exec" style="margin-top:8px;font-family:'JetBrains Mono',monospace;font-size:11px;">
+          <div style="display:flex;gap:8px;margin-top:8px;">
+            <button type="button" class="info-push-btn" style="background:#444;border-color:#666;font-size:12px;padding:6px 14px;" onclick="window.__r125SaveLineUrl()">保存</button>
+            <button type="button" class="info-push-btn" style="background:#444;border-color:#666;font-size:12px;padding:6px 14px;" onclick="window.__r125TestLine()">テスト送信</button>
+            <span id="info-line-status" style="color:#888;font-size:11px;align-self:center;"></span>
+          </div>
+        </details>
         <div class="info-field">
           <label class="info-label">件名（タイトル）</label>
           <input type="text" id="info-subject" class="info-input">
@@ -5078,7 +5091,7 @@
         </div>
         <div class="info-actions">
           <button class="info-push-btn" data-action="info-push">📱 LINE プッシュ送信</button>
-          <span class="info-push-hint">スタッフ全員の LINE に通知</span>
+          <span class="info-push-hint">設定済みなら友だち追加した全員に配信</span>
         </div>
       </div>
       <div class="info-history">
@@ -8844,7 +8857,6 @@ function show(id) {
   }
 
   function handleInfoPush(){
-    // D123: パスワード認証撤去 — 名前を任意入力、誰でも送信可能
     const subjEl = document.getElementById('info-subject');
     const bodyEl = document.getElementById('info-body');
     const nameEl = document.getElementById('info-login-name');
@@ -8857,17 +8869,22 @@ function show(id) {
       return;
     }
     const previewBody = body.length > 80 ? body.substring(0, 80) + '...' : body;
+    const lineUrl = localStorage.getItem('schedule-studio:line-gas-url') || '';
+    const willSendLine = lineUrl && /^https:\/\/script\.google\.com\/macros\//.test(lineUrl);
+    const lineNote = willSendLine ? '\n\n→ スタッフ全員の LINE に配信されます。' : '\n\n→ LINE 設定が未完了のため、INFO 履歴のみに保存されます。';
     const ok = confirm(
       'LINE プッシュ送信\n\n' +
       '件名：' + (subj || '（無題）') + '\n' +
       '本文：' + (previewBody || '（空）') + '\n' +
-      '送信者：' + (senderName || '匿名') + '\n\n' +
-      'スタッフ全員の LINE に通知します。送信しますか？'
+      '送信者：' + (senderName || '匿名') + lineNote + '\n\n送信しますか？'
     );
     if (!ok) return;
+
     const now = new Date();
     const ts = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0')
              + ' ' + String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+
+    // 履歴に追加（先に画面更新）
     infoHistory.push({
       id: nextInfoId++,
       sentAt: ts,
@@ -8878,8 +8895,84 @@ function show(id) {
     renderInfoHistory();
     subjEl.value = '';
     bodyEl.value = '';
-    alert('送信しました。');
+
+    // R125: 実際の LINE 配信
+    if (willSendLine) {
+      const concertTitle = (function(){
+        try {
+          const concerts = JSON.parse(localStorage.getItem('schedule-studio:concerts:v1')||'[]');
+          const id = localStorage.getItem('schedule-studio:active-concert-id');
+          const c = (id && concerts.find(x=>x.id===id)) || concerts[0];
+          return c && c.title ? c.title : '';
+        } catch(e){ return ''; }
+      })();
+      const linePayload = {
+        type: 'info',
+        concert: concertTitle,
+        subject: subj || '（無題）',
+        body: body,
+        sender: senderName || '匿名',
+        sentAt: ts
+      };
+      // GAS は CORS preflight 不可なので、text/plain で送る（GAS 側で JSON.parse）
+      fetch(lineUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(linePayload)
+      }).then(function(){
+        // mode:no-cors のためレスポンス読めない。送信成功とみなす
+        alert('送信しました（INFO 履歴 + LINE 配信）');
+      }).catch(function(err){
+        alert('LINE 配信に失敗しました：' + err.message + '\n\nINFO 履歴には保存されています。');
+      });
+    } else {
+      alert('送信しました（INFO 履歴のみ）');
+    }
   }
+
+  // R125: LINE GAS URL の保存・テスト送信
+  window.__r125SaveLineUrl = function(){
+    const inp = document.getElementById('info-line-gas-url');
+    const status = document.getElementById('info-line-status');
+    if (!inp) return;
+    const url = inp.value.trim();
+    if (!url) {
+      localStorage.removeItem('schedule-studio:line-gas-url');
+      if (status) { status.textContent = '✓ クリアしました'; status.style.color = '#888'; }
+      return;
+    }
+    if (!/^https:\/\/script\.google\.com\/macros\//.test(url)) {
+      if (status) { status.textContent = '✗ GAS の URL ではないようです'; status.style.color = '#e07a5f'; }
+      return;
+    }
+    localStorage.setItem('schedule-studio:line-gas-url', url);
+    if (status) { status.textContent = '✓ 保存しました'; status.style.color = '#7ec27a'; }
+  };
+  window.__r125TestLine = function(){
+    const url = localStorage.getItem('schedule-studio:line-gas-url') || '';
+    const status = document.getElementById('info-line-status');
+    if (!url) {
+      if (status) { status.textContent = '✗ 先に URL を保存してください'; status.style.color = '#e07a5f'; }
+      return;
+    }
+    if (status) { status.textContent = '送信中…'; status.style.color = '#888'; }
+    fetch(url, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({type:'test', subject:'テスト送信', body:'SCHEDULE STUDIO からのテスト配信です。', sender:'system', sentAt: new Date().toLocaleString('ja-JP')})
+    }).then(function(){
+      if (status) { status.textContent = '✓ テスト送信しました（LINE 確認してください）'; status.style.color = '#7ec27a'; }
+    }).catch(function(err){
+      if (status) { status.textContent = '✗ 失敗: ' + err.message; status.style.color = '#e07a5f'; }
+    });
+  };
+  // 起動時に保存済み URL をフォームに反映
+  setTimeout(function(){
+    const inp = document.getElementById('info-line-gas-url');
+    if (inp) inp.value = localStorage.getItem('schedule-studio:line-gas-url') || '';
+  }, 500);
 
   // 入り時間 input change（D169: J案「1つの窓」— H/M どちらが変わっても "HH:MM" 再構築）
   document.addEventListener('change', function(e){

@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LINE 連携 セットアップ手順 — SCHEDULE STUDIO</title>
+<style>
+body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Noto Sans JP',sans-serif;background:#1a1a1a;color:#e8e8e2;max-width:760px;margin:0 auto;padding:24px;line-height:1.7;font-size:14px;}
+h1{font-size:20px;color:#e89a4a;border-bottom:1px solid #2c2a27;padding-bottom:10px;}
+h2{font-size:16px;color:#7ec27a;margin-top:32px;border-left:3px solid #7ec27a;padding-left:10px;}
+h3{font-size:14px;color:#d8b878;margin-top:20px;}
+ol,ul{padding-left:24px;}
+li{margin-bottom:8px;}
+code{background:#2c2a27;padding:2px 6px;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:12px;color:#f0d8a0;}
+pre{background:#0e0e0c;padding:14px;border-radius:6px;border:1px solid #2c2a27;overflow:auto;font-family:'JetBrains Mono',monospace;font-size:12px;color:#e8e8e2;line-height:1.5;white-space:pre-wrap;word-break:break-all;}
+.warn{background:#3a1f1f;border:1px solid #c75d5d;padding:10px 14px;border-radius:4px;color:#f0a8a8;margin:14px 0;font-size:13px;}
+.info{background:#1f2a3a;border:1px solid #5b9bd5;padding:10px 14px;border-radius:4px;color:#a8d4e8;margin:14px 0;font-size:13px;}
+.step{background:#222;border-radius:6px;padding:14px 18px;margin:12px 0;border-left:4px solid #e89a4a;}
+.step-num{display:inline-block;background:#e89a4a;color:#0a0a08;font-weight:800;border-radius:50%;width:22px;height:22px;text-align:center;line-height:22px;margin-right:8px;font-size:12px;}
+a{color:#6ec6c8;}
+button.copy{background:#444;color:#fff;border:none;padding:4px 10px;border-radius:3px;font-size:11px;cursor:pointer;float:right;}
+table{border-collapse:collapse;width:100%;margin:10px 0;font-size:13px;}
+td,th{border:1px solid #444;padding:6px 10px;text-align:left;}
+th{background:#2c2a27;color:#d8b878;}
+</style>
+</head>
+<body>
+
+<h1>📱 LINE プッシュ連携 セットアップ手順</h1>
+<p>SCHEDULE STUDIO の INFO 投稿を、スタッフの LINE に自動配信できるようにする手順です。<br>
+所要時間：<strong>約 30 分</strong>（初回のみ）。</p>
+
+<div class="info">
+全体像：<br>
+<code>PC アプリ → Google Apps Script (中継) → LINE Messaging API → スタッフの LINE</code>
+</div>
+
+<h2>Phase 1：LINE Bot を作る（10分）</h2>
+
+<div class="step">
+<span class="step-num">1</span><strong><a href="https://developers.line.biz/console/" target="_blank">LINE Developers Console</a></strong> を開く<br>
+<small>のむさんの LINE アカウントでログインしてください</small>
+</div>
+
+<div class="step">
+<span class="step-num">2</span><strong>プロバイダー新規作成</strong><br>
+名前は何でも OK（例：「Schedule Studio」）
+</div>
+
+<div class="step">
+<span class="step-num">3</span><strong>Messaging API チャネル新規作成</strong><br>
+<ul>
+<li>Channel name：例「Schedule Studio Bot」</li>
+<li>Channel description：例「ツアー進行通知」</li>
+<li>Category / Subcategory：エンタメ系を選択</li>
+<li>規約に同意 → 作成</li>
+</ul>
+</div>
+
+<div class="step">
+<span class="step-num">4</span><strong>Channel access token (long-lived) を発行</strong><br>
+チャネル設定 → 「Messaging API」タブ → 一番下「Channel access token」→ <strong>Issue</strong> ボタン<br>
+発行された長い文字列をコピー（あとで使う）
+</div>
+
+<div class="step">
+<span class="step-num">5</span><strong>応答メッセージを OFF に</strong><br>
+「Messaging API」タブ → LINE Official Account features →「応答メッセージ」を <strong>無効</strong> に<br>
+（Bot が自動返信しないようにするため）
+</div>
+
+<div class="step">
+<span class="step-num">6</span><strong>QR コードを取得</strong><br>
+同じ「Messaging API」タブの上部にある QR コードを保存<br>
+→ <strong>スタッフ全員</strong> にこの QR を配って、Bot を友だち追加してもらう
+</div>
+
+<h2>Phase 2：Google Apps Script で中継を作る（10分）</h2>
+
+<div class="step">
+<span class="step-num">1</span><a href="https://script.google.com/" target="_blank"><strong>Google Apps Script</strong></a> を開く<br>
+<small>のむさんの Google アカウントでログイン</small>
+</div>
+
+<div class="step">
+<span class="step-num">2</span><strong>「新しいプロジェクト」</strong> をクリック
+</div>
+
+<div class="step">
+<span class="step-num">3</span>左の <code>コード.gs</code> の中身を全部消して、<strong>下のコードを貼り付け</strong>：
+
+<pre id="gas-code">// SCHEDULE STUDIO — LINE 中継 (Google Apps Script)
+// 1. LINE_TOKEN に Phase 1 で発行した Channel access token を貼る
+// 2. デプロイ → ウェブアプリ → アクセス：全員 → デプロイ
+// 3. URL を SCHEDULE STUDIO の INFO タブの「LINE 連携 設定」に貼る
+
+const LINE_TOKEN = 'ここに Phase 1-4 で取得した Channel access token を貼る';
+
+function doPost(e) {
+  try {
+    const data = JSON.parse(e.postData.contents);
+    const lines = [];
+    if (data.concert) lines.push('🎤 ' + data.concert);
+    if (data.subject) lines.push('【' + data.subject + '】');
+    if (data.body)    lines.push(data.body);
+    if (data.sender)  lines.push('— ' + data.sender);
+    if (data.sentAt)  lines.push(data.sentAt);
+    const text = lines.join('\n');
+
+    const res = UrlFetchApp.fetch('https://api.line.me/v2/bot/message/broadcast', {
+      method: 'post',
+      contentType: 'application/json',
+      headers: { Authorization: 'Bearer ' + LINE_TOKEN },
+      payload: JSON.stringify({
+        messages: [{ type: 'text', text: text }]
+      }),
+      muteHttpExceptions: true
+    });
+    return ContentService.createTextOutput(JSON.stringify({
+      ok: res.getResponseCode() === 200,
+      code: res.getResponseCode(),
+      response: res.getContentText()
+    })).setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({
+      ok: false, error: err.message
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function doGet() {
+  return ContentService.createTextOutput('SCHEDULE STUDIO LINE 中継：稼働中');
+}</pre>
+</div>
+
+<div class="step">
+<span class="step-num">4</span><strong>LINE_TOKEN の行を編集</strong><br>
+<code>'ここに Phase 1-4 で取得した Channel access token を貼る'</code> の中身を、Phase 1-4 で取得した token に置き換え
+</div>
+
+<div class="step">
+<span class="step-num">5</span><strong>右上「保存」</strong>（フロッピーディスクアイコン）→ プロジェクト名を入力（例「Schedule Studio LINE 中継」）
+</div>
+
+<div class="step">
+<span class="step-num">6</span><strong>右上「デプロイ」→「新しいデプロイ」</strong><br>
+<ul>
+<li>左の歯車アイコン →「ウェブアプリ」を選択</li>
+<li>「次のユーザーとして実行」：<strong>自分</strong></li>
+<li>「アクセスできるユーザー」：<strong>全員</strong>（重要！「自分のみ」だと動きません）</li>
+<li>「デプロイ」をクリック</li>
+<li>初回は権限承認画面が出る → 進めて承認</li>
+</ul>
+</div>
+
+<div class="step">
+<span class="step-num">7</span><strong>デプロイ後の URL をコピー</strong><br>
+<code>https://script.google.com/macros/s/AKfy.../exec</code> という形の URL が表示される → コピー
+</div>
+
+<h2>Phase 3：SCHEDULE STUDIO に URL を貼る（1分）</h2>
+
+<div class="step">
+<span class="step-num">1</span>PC で <a href="pc-edit.html" target="_blank">pc-edit.html</a> を開く → INFO タブ
+</div>
+
+<div class="step">
+<span class="step-num">2</span>「⚙ LINE 連携 設定（初回のみ）」を開く<br>
+URL 欄に Phase 2-7 でコピーした GAS の URL を貼り付け → <strong>「保存」</strong>
+</div>
+
+<div class="step">
+<span class="step-num">3</span><strong>「テスト送信」</strong> をクリック<br>
+友だち追加してる LINE に「SCHEDULE STUDIO からのテスト配信です。」が届けば成功
+</div>
+
+<h2>本番運用</h2>
+
+<p>あとは INFO タブで件名・本文を入れて <strong>📱 LINE プッシュ送信</strong> を押すだけで、Bot を友だち追加した全員に配信されます。</p>
+
+<h2>困ったとき</h2>
+
+<table>
+<tr><th>症状</th><th>原因と対処</th></tr>
+<tr><td>テスト送信したのに LINE 来ない</td><td>(1) Bot を友だち追加してない (2) GAS の LINE_TOKEN が間違ってる (3) GAS デプロイ時「アクセス：全員」になってない</td></tr>
+<tr><td>「LINE 配信に失敗」と出る</td><td>GAS URL が間違ってる、または GAS が削除されてる</td></tr>
+<tr><td>応答メッセージが届く</td><td>Phase 1-5 の「応答メッセージを OFF」を忘れてる</td></tr>
+<tr><td>broadcast の月間制限が来た</td><td>無料プランは月 200 通まで。超過したら 200 名以下のグループ運用なら問題ない</td></tr>
+</table>
+
+<div class="warn">
+<strong>セキュリティ注意</strong>：GAS URL を知ってる人なら誰でも LINE に送信できます。SNS や公開リポジトリには貼らないでください。
+</div>
+
+<p style="text-align:center;margin-top:40px;color:#666;font-size:11px;">SCHEDULE STUDIO — LINE Setup Guide v1</p>
+</body>
+</html>
