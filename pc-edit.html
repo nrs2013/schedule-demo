@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260511.140000">
+<meta name="build-version" content="20260511.165000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -146,7 +146,14 @@
           _setItem(item.k, item.v);
           suppressFbWrite = false;
           console.log('[FB] sync', item.k);
-          // 再描画：最低限の API を呼ぶ
+          // R94: in-memory 変数を localStorage から再読込してから再描画
+          if (item.k === 'schedule-studio:rehearsalByDate:v1' && typeof window.__reloadRehearsalByDate === 'function') {
+            window.__reloadRehearsalByDate();
+          }
+          if (item.k === 'schedule-studio:setlists:v1' && typeof window.__reloadSetlists === 'function') {
+            window.__reloadSetlists();
+          }
+          // 再描画
           if (typeof window.__renderMonth === 'function') window.__renderMonth();
           if (typeof window.__refreshMasterDateBar === 'function') window.__refreshMasterDateBar();
           if (typeof window.__rehearsalRender === 'function') window.__rehearsalRender();
@@ -6125,6 +6132,36 @@ function show(id) {
 
   // マスター日付バーから呼ばれる：日付変更時にリハ計画を再レンダー
   window.__rehearsalRender = render;
+
+  // R94: Firebase で localStorage が更新された時、in-memory も再読込するヘルパー
+  window.__reloadRehearsalByDate = function() {
+    try {
+      const v = localStorage.getItem(LS_KEY_REH || 'schedule-studio:rehearsalByDate:v1');
+      const parsed = v ? JSON.parse(v) : {};
+      // rehearsalByDate を中身ごと差し替え（参照は維持）
+      Object.keys(rehearsalByDate).forEach(k => delete rehearsalByDate[k]);
+      Object.keys(parsed).forEach(k => rehearsalByDate[k] = parsed[k]);
+      console.log('[R94] rehearsalByDate reloaded from localStorage, dates=' + Object.keys(rehearsalByDate).length);
+    } catch(e) { console.warn('[R94] reload reh err', e); }
+  };
+  window.__reloadSetlists = function() {
+    try {
+      const v = localStorage.getItem(LS_KEY_SETLISTS);
+      const parsed = v ? JSON.parse(v) : [];
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        // setlists 配列の中身を差し替え
+        setlists.length = 0;
+        parsed.forEach(s => setlists.push(s));
+        // active setlist の songs を再取得
+        const sl = setlists.find(s => s.id === activeSetlistId) || setlists[0];
+        if (sl) {
+          songs.length = 0;
+          (sl.songs || []).forEach(s => songs.push(s));
+        }
+        console.log('[R94] setlists reloaded, count=' + setlists.length + ' songs=' + songs.length);
+      }
+    } catch(e) { console.warn('[R94] reload setlists err', e); }
+  };
 
   /* ========================================================
      R69: REHEARSAL 印刷ビュー (v7 レイアウト)
