@@ -2950,7 +2950,16 @@ function loadJSON(key, def) {
   } catch (e) { return def; }
 }
 function saveJSON(key, val) {
-  try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) {}
+  const s = JSON.stringify(val);
+  try { localStorage.setItem(key, s); } catch (e) {}
+  // R102: setItem hook が iOS Safari で動かない場合の保険として Firebase に直接書き込み
+  if (typeof key === 'string' && key.indexOf('schedule-studio:') === 0 && window.__db) {
+    try {
+      const encKey = key.replace(/[.#$/\[\]]/g, '_');
+      window.__db.ref('ls/' + encKey).set({ k: key, v: s, t: Date.now() });
+      window.__lastFbWrite = { time: Date.now(), key: key };
+    } catch (e) { console.warn('[R102] direct FB write fail', key, e); }
+  }
 }
 
 // ── R93: PC ↔ ARTIST 完全リアルタイム同期 ──
