@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260511.280000">
+<meta name="build-version" content="20260511.290000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="apple-touch-icon" href="favicon.svg">
 <title>SCHEDULE STUDIO — STAFF</title>
@@ -2326,7 +2326,7 @@
 
 <script>
 // D152 STAFF: 常に認証済み（PASS タブ撤去 + パスワードプロンプト一切なし）
-let authed = true;
+let authed = false; /* R107: 起動時は未認証。PASS で 1111 (STAFF) または 2222 (ARTIST) を入れて初めて編集可 */
 const topTabsHiddenScreens = ['schedule','info','arrival','hotel','pass'];
 
 // R67 P1: 「リハーサル」下タブが「テクリハ」「全体リハ」両方を内包する
@@ -3053,7 +3053,7 @@ function renderRhCards() {
         '<div class="rh-mno">' + mNo + '</div>' +
         '<div class="rh-title">' + escHtmlPhone(song.title || '') + '</div>' +
         '<div class="rh-time">' + escHtmlPhone(time) + '</div>' +
-        '<button class="finish-btn disabled" onclick="toggleFinish(\'card-' + song.id + '\')"><span>終了</span></button>' +
+        '<button class="finish-btn ' + ((typeof authed !== "undefined" && authed) ? '' : 'disabled') + '" onclick="toggleFinish(\'card-' + song.id + '\')"><span>終了</span></button>' +
       '</div>' +
       '<div class="rh-line2">' + tagHtml + '</div>' +
       '<div class="rh-line3" contenteditable="true" data-song-id="' + song.id + '" data-field="memo">' + escHtmlPhone(reh.memo || '') + '</div>' +
