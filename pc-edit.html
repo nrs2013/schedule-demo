@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260511.330000">
+<meta name="build-version" content="20260511.340000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -6740,10 +6740,27 @@ function show(id) {
   };
 
   // R51 B1: localStorage 読み書きヘルパー
-  // D120 Phase A2 + D120b: コンサート別データ分離 — LS_KEY を active concert ID で名前空間化
-  // 注: concert id は既に 'concert-' プレフィックス付きで保存されてるので、LS_PREFIX には付けない
+  // R112: concert namespace を撤廃。スマホ側が namespace を知らないため Firebase パス不一致が発生していた。
+  // 旧データ ('schedule-studio:concert-XXX:KEY') を生キー ('schedule-studio:KEY') にマイグレーション。
   const __activeConcertId = localStorage.getItem('schedule-studio:active-concert-id') || 'concert-default';
-  const __LS_PREFIX = 'schedule-studio:' + __activeConcertId + ':';
+  // R112 migration: 既存の namespace 付きデータを生キーにコピー（既に生キーがあれば上書きしない）
+  (function r112Migrate(){
+    const oldPrefix = 'schedule-studio:' + __activeConcertId + ':';
+    const newPrefix = 'schedule-studio:';
+    const suffixes = ['calEvents:v1','calMemos:v1','showTimes:v1','hotels:v1','arrivalSectionsByDate:v1','dayEvents:v1','venueGroups:v1','venueDefinitions:v1'];
+    let migrated = 0;
+    suffixes.forEach(function(suffix){
+      const oldKey = oldPrefix + suffix;
+      const newKey = newPrefix + suffix;
+      const oldVal = localStorage.getItem(oldKey);
+      if (oldVal !== null && localStorage.getItem(newKey) === null) {
+        localStorage.setItem(newKey, oldVal);
+        migrated++;
+      }
+    });
+    if (migrated > 0) console.log('[R112] migrated ' + migrated + ' keys from namespace to plain');
+  })();
+  const __LS_PREFIX = 'schedule-studio:'; /* R112: concert namespace 撤廃 */
   // D120c: 旧データ移行先 concert id を動的に決定（concerts 配列の最初のコンサートが優先）
   (function migrateToConcertNamespace(){
     const MIG_KEY = 'schedule-studio:migration:concert-namespace:v3';
