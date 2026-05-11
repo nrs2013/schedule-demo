@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260511.250000">
+<meta name="build-version" content="20260511.280000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="apple-touch-icon" href="favicon.svg">
 <title>SCHEDULE STUDIO — STAFF</title>
@@ -88,10 +88,32 @@
     // R95: child_changed と child_added を統一処理（初回書き込みも反映するため）
     function applyFbItem(it) {
       if (!it || !it.k || typeof it.v !== 'string') return;
-      if (localStorage.getItem(it.k) === it.v) return;
-      suppress = true; _setItem(it.k, it.v); suppress = false;
-      console.log('[FB] sync', it.k);
+      // R101 + R105: localStorage 書き込みだけ skip、reload+render は in-memory ステイル防止のため必ず実行
+      if (localStorage.getItem(it.k) !== it.v) {
+        suppress = true; _setItem(it.k, it.v); suppress = false;
+      }
       window.__lastFbReceive = { time: Date.now(), key: it.k };
+      // R105: キーに応じて in-memory 変数を再読込
+      try {
+        if (it.k === 'schedule-studio:calEvents:v1' && typeof calEvents !== 'undefined') {
+          const v = JSON.parse(it.v); if (Array.isArray(v)) { calEvents.length = 0; v.forEach(x => calEvents.push(x)); }
+        }
+        if (it.k === 'schedule-studio:calMemos:v1' && typeof calMemos !== 'undefined') {
+          Object.keys(calMemos).forEach(k => delete calMemos[k]); Object.assign(calMemos, JSON.parse(it.v));
+        }
+        if (it.k === 'schedule-studio:showTimes:v1' && typeof showTimes !== 'undefined') {
+          Object.keys(showTimes).forEach(k => delete showTimes[k]); Object.assign(showTimes, JSON.parse(it.v));
+        }
+        if (it.k === 'schedule-studio:arrivalSectionsByDate:v1' && typeof arrivalSectionsByDate !== 'undefined') {
+          Object.keys(arrivalSectionsByDate).forEach(k => delete arrivalSectionsByDate[k]); Object.assign(arrivalSectionsByDate, JSON.parse(it.v));
+        }
+        if (it.k === 'schedule-studio:dayEvents:v1' && typeof dailyEventsPhone !== 'undefined') {
+          Object.keys(dailyEventsPhone).forEach(k => delete dailyEventsPhone[k]); Object.assign(dailyEventsPhone, JSON.parse(it.v));
+        }
+        if (it.k === 'schedule-studio:hotels:v1' && typeof hotels !== 'undefined') {
+          const v = JSON.parse(it.v); if (Array.isArray(v)) { hotels.length = 0; v.forEach(x => hotels.push(x)); }
+        }
+      } catch(e) { console.warn('[R105] inmem reload fail', it.k, e); }
       if (typeof window.__phoneRefreshAll === 'function') window.__phoneRefreshAll();
     }
     window.__db.ref(FB_ROOT).on('child_changed', function(s){ applyFbItem(s.val()); });
