@@ -35,6 +35,43 @@ button:active{opacity:0.7;}
 <button onclick="testReadAgain()">↻ 読み直し</button>
 <button onclick="document.getElementById('log').innerHTML=''">ログクリア</button>
 
+<div style="margin-top:24px;padding:14px;background:#3a1f1f;border:1px solid #c75d5d;border-radius:6px;">
+  <div style="font-weight:700;color:#e8a8a8;margin-bottom:8px;">⚠ リハ計画リセット</div>
+  <div style="font-size:12px;color:#d8b89c;margin-bottom:10px;line-height:1.5;">
+    rh# / タグ / メモ の <b>全日付分のデータ</b> を Firebase + このスマホ/PC から削除します。<br>
+    曲名や HOTEL や CALENDAR のデータは消えません。<br>
+    実行後、PC とスマホの両方を再読み込みしてください。
+  </div>
+  <button onclick="resetRehearsalData()" style="background:#c75d5d;color:#fff;font-weight:700;">リハ計画を全消去（要 2 段確認）</button>
+</div>
+
+<script>
+function resetRehearsalData() {
+  if (!confirm('本当に rh# / タグ / メモ の全データを削除しますか？\nこの操作は取り消せません。')) return;
+  if (!confirm('もう一度確認します。\n本当によろしいですか？\n（OK で削除実行）')) return;
+  if (!db) { alert('Firebase 未接続'); return; }
+  log('info', 'リハ計画リセット 開始');
+  // 1. Firebase から削除
+  db.ref('ls/schedule-studio:rehearsalByDate:v1').remove()
+    .then(function(){
+      log('ok', 'Firebase から削除 OK');
+      // 2. このデバイスの localStorage からも削除
+      try {
+        localStorage.removeItem('schedule-studio:rehearsalByDate:v1');
+        log('ok', 'localStorage 削除 OK');
+      } catch(e) {
+        log('err', 'localStorage 削除失敗: ' + e.message);
+      }
+      alert('削除しました。\nPC と スマホの両方を再読み込みしてください。\n（PC は Cmd+Shift+R / スマホは URL に ?v=99 を付けて開き直し）');
+      testRead();
+    })
+    .catch(function(err){
+      log('err', 'Firebase 削除失敗: ' + err.message);
+      alert('Firebase 削除失敗: ' + err.message);
+    });
+}
+</script>
+
 <div id="log"></div>
 
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
