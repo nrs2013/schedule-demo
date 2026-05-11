@@ -2591,7 +2591,8 @@ function toggleTaxiForm(id) {
 document.addEventListener('click', (e) => {
   const t = e.target;
   if (t && t.classList && t.classList.contains('tag-pill')) {
-    if (!authed) { show('pass'); return; }
+    /* R115b: 未認証時はサイレント無視 */
+    if (!authed) return;
     t.classList.toggle('on');
     const card = t.closest('.rh-card');
     if (!card) return;
