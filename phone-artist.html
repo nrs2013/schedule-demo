@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260511.410000">
+<meta name="build-version" content="20260511.430000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="apple-touch-icon" href="favicon.svg">
 <title>SCHEDULE STUDIO — ARTIST</title>
@@ -1958,7 +1958,7 @@
 <div class="phone-header" id="header" style="display:none;">
   <div class="phone-header-row">
     <div class="phone-brand-mini">SCH</div>
-    <div class="phone-concert-title">櫻坂46 5th Anniversary Live</div>
+    <div class="phone-concert-title" id="phone-concert-title-el">—</div>
     <div class="progress-mini" id="progress-mini">1 / 5</div>
   </div>
 </div>
@@ -2192,49 +2192,8 @@
       <button class="info-compose-btn">＋ NEW POST</button>
     </div>
 
-    <div class="info-item urgent unread">
-      <div class="info-item-head">
-        <span class="info-tag urg">URGENT</span>
-        <span class="info-time">11:23</span>
-      </div>
-      <div class="info-body">
-        照明卓のフェーダ8Ch不調。サウンドチェック前に交換予定。15分遅れる可能性あり。
-      </div>
-      <div class="info-author">— のむ</div>
-    </div>
-
-    <div class="info-item unread">
-      <div class="info-item-head">
-        <span class="info-tag norm">UPDATE</span>
-        <span class="info-time">10:48</span>
-      </div>
-      <div class="info-body">
-        M5「流れ弾」のセリ Q番号を Q15 → Q17 に変更しました。機構卓のキューシート修正お願いします。
-      </div>
-      <div class="info-author">— のむ</div>
-    </div>
-
-    <div class="info-item unread">
-      <div class="info-item-head">
-        <span class="info-tag norm">NOTICE</span>
-        <span class="info-time">10:15</span>
-      </div>
-      <div class="info-body">
-        楽屋仕出し弁当12時着予定。各自取りに来てください。アレルギー対応3名分は別ラベル。
-      </div>
-      <div class="info-author">— 制作 田中</div>
-    </div>
-
-    <div class="info-item">
-      <div class="info-item-head">
-        <span class="info-tag norm">NOTICE</span>
-        <span class="info-time">09:30</span>
-      </div>
-      <div class="info-body">
-        本日リハ進行表配信しました。
-      </div>
-      <div class="info-author">— のむ</div>
-    </div>
+    <!-- R123: INFO の静的デモ 4 件を撤去。新規はまだ無い旨を表示 -->
+    <div style="padding:40px 20px; text-align:center; color:#888; font-size:13px;">まだお知らせはありません<br><span style="font-size:11px; color:#666;">「＋ NEW POST」から投稿できます</span></div>
 
     <div style="height:20px"></div>
   </div>
@@ -3832,6 +3791,25 @@ renderHotelListPhone();
     });
   }
   subscribeHb();
+})();
+</script>
+
+<script>
+(function r123Title(){
+  function update() {
+    var el = document.getElementById('phone-concert-title-el');
+    if (!el) return;
+    try {
+      var concerts = JSON.parse(localStorage.getItem('schedule-studio:concerts:v1') || '[]');
+      var activeId = localStorage.getItem('schedule-studio:active-concert-id');
+      var c = (activeId && concerts.find(function(x){return x.id===activeId;})) || concerts[0];
+      if (c && c.title) el.textContent = c.title;
+      else el.textContent = '—';
+    } catch(e) {}
+  }
+  update();
+  document.addEventListener('DOMContentLoaded', update);
+  setInterval(update, 2000); // Firebase 同期で concerts が arrived した時にも追従
 })();
 </script>
 </body>
