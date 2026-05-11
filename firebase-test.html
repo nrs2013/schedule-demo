@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Firebase 同期診断</title>
+<style>
+body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#1a1a1a;color:#e8e8e2;padding:16px;margin:0;font-size:14px;line-height:1.6;}
+h1{font-size:16px;margin:0 0 12px;color:#e89a4a;}
+.row{padding:10px 12px;margin-bottom:6px;background:#252521;border-left:3px solid #555;border-radius:4px;}
+.row.ok{border-left-color:#7ec27a;}
+.row.err{border-left-color:#e07a5f;}
+.row.pending{border-left-color:#e6c870;}
+.label{font-weight:600;font-size:12px;color:#a8a8a0;text-transform:uppercase;letter-spacing:0.1em;}
+.value{font-family:'JetBrains Mono',monospace;font-size:12px;word-break:break-all;color:#e8e8e2;margin-top:4px;}
+button{background:#e89a4a;color:#0a0a08;border:none;padding:10px 18px;border-radius:4px;font-weight:700;font-size:13px;cursor:pointer;margin:8px 4px 0 0;}
+button:active{opacity:0.7;}
+#log{background:#0e0e0c;padding:10px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:11px;max-height:240px;overflow:auto;margin-top:12px;border:1px solid #2c2a27;}
+#log .line{padding:2px 0;}
+#log .err{color:#e07a5f;}
+#log .ok{color:#7ec27a;}
+#log .info{color:#a8a8a0;}
+</style>
+</head>
+<body>
+<h1>📡 Firebase 同期 診断（v1）</h1>
+
+<div id="auth-row" class="row pending"><span class="label">1. 認証 (Auth)</span><div class="value" id="auth-val">確認中…</div></div>
+<div id="conn-row" class="row pending"><span class="label">2. 接続 (Connected)</span><div class="value" id="conn-val">確認中…</div></div>
+<div id="read-row" class="row pending"><span class="label">3. 読み込み (Read)</span><div class="value" id="read-val">確認中…</div></div>
+<div id="write-row" class="row pending"><span class="label">4. 書き込み (Write)</span><div class="value" id="write-val">確認中…</div></div>
+<div id="setlist-row" class="row pending"><span class="label">5. 現在のセトリデータ</span><div class="value" id="setlist-val">確認中…</div></div>
+
+<button onclick="testWrite()">▶︎ 書き込みテスト（時刻を Firebase に送信）</button>
+<button onclick="testReadAgain()">↻ 読み直し</button>
+<button onclick="document.getElementById('log').innerHTML=''">ログクリア</button>
+
+<div id="log"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script>
+const cfg = {
+  apiKey: "AIzaSyB0g9NU2jHWLgHSpgxyvWjizdloLbkJ_aM",
+  authDomain: "schedule-studio-2b14f.firebaseapp.com",
+  databaseURL: "https://schedule-studio-2b14f-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "schedule-studio-2b14f",
+  storageBucket: "schedule-studio-2b14f.firebasestorage.app",
+  messagingSenderId: "480145267674",
+  appId: "1:480145267674:web:8d1a8e9b11d3ee69613ee3"
+};
+
+const log = (cls, msg) => {
+  const el = document.getElementById('log');
+  const line = document.createElement('div');
+  line.className = 'line ' + cls;
+  line.textContent = '[' + new Date().toLocaleTimeString() + '] ' + msg;
+  el.insertBefore(line, el.firstChild);
+};
+const setRow = (id, status, text) => {
+  const row = document.getElementById(id + '-row');
+  row.className = 'row ' + status;
+  document.getElementById(id + '-val').textContent = text;
+};
+
+let db = null;
+
+try {
+  firebase.initializeApp(cfg);
+  log('info', 'firebase.initializeApp OK');
+  db = firebase.database();
+
+  firebase.auth().signInAnonymously()
+    .then(u => {
+      setRow('auth', 'ok', '匿名認証 成功 / uid=' + (u.user ? u.user.uid.substring(0,8) : '?'));
+      log('ok', '匿名認証 成功');
+    })
+    .catch(err => {
+      setRow('auth', 'err', '失敗: ' + (err.code || '') + ' ' + (err.message || ''));
+      log('err', '匿名認証 失敗: ' + err.message);
+    });
+
+  db.ref('.info/connected').on('value', snap => {
+    const ok = snap.val() === true;
+    setRow('conn', ok ? 'ok' : 'err', ok ? '接続中' : '切断');
+    log(ok ? 'ok' : 'err', '接続状態: ' + ok);
+  });
+
+  testRead();
+} catch (e) {
+  log('err', 'init err: ' + e.message);
+  setRow('auth', 'err', 'init失敗: ' + e.message);
+}
+
+function testRead() {
+  if (!db) return;
+  setRow('read', 'pending', '読み込み中…');
+  db.ref('ls').once('value')
+    .then(snap => {
+      const all = snap.val() || {};
+      const keys = Object.keys(all);
+      setRow('read', 'ok', '成功 / ' + keys.length + ' キー');
+      log('ok', '読み込み 成功 / keys=' + keys.length);
+      keys.forEach(k => log('info', '  ' + k));
+
+      // setlists を探す
+      const setlistKey = keys.find(k => k.indexOf('setlists') >= 0);
+      if (setlistKey) {
+        try {
+          const item = all[setlistKey];
+          const v = JSON.parse(item.v);
+          if (Array.isArray(v) && v.length > 0 && v[0].songs) {
+            const titles = v[0].songs.slice(0, 3).map(s => s.title || '?').join(' / ');
+            setRow('setlist', 'ok', 'セトリ A の最初の 3 曲: ' + titles);
+          } else {
+            setRow('setlist', 'err', '形式が想定外');
+          }
+        } catch (e) {
+          setRow('setlist', 'err', 'パース失敗: ' + e.message);
+        }
+      } else {
+        setRow('setlist', 'err', 'setlists キーが Firebase にない');
+      }
+    })
+    .catch(err => {
+      setRow('read', 'err', '失敗: ' + (err.code || '') + ' ' + (err.message || ''));
+      log('err', '読み込み 失敗: ' + err.message);
+    });
+}
+function testReadAgain() { testRead(); }
+
+function testWrite() {
+  if (!db) { log('err', 'db 未初期化'); return; }
+  setRow('write', 'pending', '書き込み中…');
+  const ts = Date.now();
+  db.ref('ls/__diag__').set({ k: '__diag__', v: 'test ' + new Date().toLocaleString(), t: ts })
+    .then(() => {
+      setRow('write', 'ok', '成功 (' + ts + ')');
+      log('ok', '書き込み 成功');
+    })
+    .catch(err => {
+      setRow('write', 'err', '失敗: ' + (err.code || '') + ' ' + (err.message || ''));
+      log('err', '書き込み 失敗: ' + err.message);
+    });
+}
+</script>
+</body>
+</html>
