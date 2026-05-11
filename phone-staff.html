@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260511.190000">
+<meta name="build-version" content="20260511.200000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="apple-touch-icon" href="favicon.svg">
 <title>SCHEDULE STUDIO — STAFF</title>
@@ -62,7 +62,10 @@
     _setItem(key, value);
     if (suppress) return;
     if (typeof key === 'string' && key.indexOf('schedule-studio:') === 0) {
-      try { window.__db.ref(FB_ROOT + '/' + encKey(key)).set({ k: key, v: String(value), t: Date.now() }); } catch(e){}
+      try {
+        window.__db.ref(FB_ROOT + '/' + encKey(key)).set({ k: key, v: String(value), t: Date.now() });
+        window.__lastFbWrite = { time: Date.now(), key: key };
+      } catch(e){}
     }
   };
   localStorage.removeItem = function(key){
@@ -88,6 +91,7 @@
       if (localStorage.getItem(it.k) === it.v) return;
       suppress = true; _setItem(it.k, it.v); suppress = false;
       console.log('[FB] sync', it.k);
+      window.__lastFbReceive = { time: Date.now(), key: it.k };
       if (typeof window.__phoneRefreshAll === 'function') window.__phoneRefreshAll();
     }
     window.__db.ref(FB_ROOT).on('child_changed', function(s){ applyFbItem(s.val()); });
@@ -3789,6 +3793,42 @@ renderHotelListPhone();
     .catch(function(err){
       console.warn('[LIFF] init failed:', err);
     });
+})();
+</script>
+<!-- R96: 同期診断バー (STAFF) -->
+<div id="r96-bar" style="position:fixed;top:0;left:0;right:0;z-index:99999;background:rgba(20,19,15,0.94);backdrop-filter:blur(10px);color:#e8e8e2;font-family:'JetBrains Mono',monospace;font-size:10px;padding:5px 10px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #2c2a27;letter-spacing:0.04em;pointer-events:none;">
+  <span><span style="color:#888">STAFF</span> <span id="r96-build">?</span></span>
+  <span><span style="color:#888">FB </span><span id="r96-fb">?</span></span>
+  <span><span style="color:#888">送 </span><span id="r96-tx">--:--:--</span></span>
+  <span><span style="color:#888">受 </span><span id="r96-rx">--:--:--</span></span>
+  <span><span style="color:#888">PC-HB </span><span id="r96-hb">--</span></span>
+</div>
+<style>
+#screen-rh, #screen-info, #screen-arrival, #screen-hotel, #screen-pass, #screen-schedule { padding-top: 26px !important; }
+.phone-concert-title, .tour-date-bar { padding-top: 26px !important; }
+</style>
+<script>
+(function r96Bar(){
+  function fmt(t){ if(!t) return "--:--:--"; const d=new Date(t); return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0")+":"+String(d.getSeconds()).padStart(2,"0"); }
+  function tick(){
+    var be=document.getElementById("r96-build"); if(be){var m=document.querySelector("meta[name=build-version]"); be.textContent=m?m.content.slice(8):"?";}
+    var fe=document.getElementById("r96-fb"); if(fe){var ok=window.__fbConnected===true; fe.textContent=ok?"OK":"OFF"; fe.style.color=ok?"#7ec27a":"#e07a5f";}
+    var te=document.getElementById("r96-tx"); if(te&&window.__lastFbWrite){te.textContent=fmt(window.__lastFbWrite.time); te.style.color=(Date.now()-window.__lastFbWrite.time<5000)?"#7ec27a":"#888";}
+    var re=document.getElementById("r96-rx"); if(re&&window.__lastFbReceive){re.textContent=fmt(window.__lastFbReceive.time); re.style.color=(Date.now()-window.__lastFbReceive.time<5000)?"#7ec27a":"#888";}
+    var he=document.getElementById("r96-hb"); if(he){he.textContent=String(window.__r96HbReceived||0);}
+  }
+  setInterval(tick, 500);
+
+  // PC からの heartbeat を購読
+  window.__r96HbReceived = 0;
+  function subscribeHb(){
+    if (!window.__db) { setTimeout(subscribeHb, 500); return; }
+    window.__db.ref("hb/pc").on("value", function(snap){
+      var v = snap.val();
+      if (v && v.n) window.__r96HbReceived = v.n;
+    });
+  }
+  subscribeHb();
 })();
 </script>
 </body>
