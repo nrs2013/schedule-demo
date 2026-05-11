@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260511.320000">
+<meta name="build-version" content="20260511.330000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -6826,15 +6826,17 @@ function show(id) {
   window.__getCalEventsHas = function(label){ return calEvents.some(function(e){ return e.label === label; }); };
   // R108: reload helpers を window に export（fbSync IIFE から呼ばれる）
   window.__reloadCalEvents = function() {
-    try {
-      const v = localStorage.getItem(LS_KEY_EVENTS);
-      const parsed = v ? JSON.parse(v) : null;
-      if (Array.isArray(parsed)) {
-        calEvents.length = 0;
-        parsed.forEach(x => calEvents.push(x));
-      }
-    } catch(e) { console.warn('[R108] reload calEvents fail', e); }
+    const v = localStorage.getItem(LS_KEY_EVENTS);
+    let parsed;
+    try { parsed = v ? JSON.parse(v) : null; } catch(e) { console.warn('[R111] calEvents JSON parse fail', e); return; }
+    if (!Array.isArray(parsed)) { console.warn('[R111] calEvents not array', typeof parsed); return; }
+    // R111: 再代入方式で確実に更新
+    calEvents = parsed;
+    console.log('[R111] calEvents reassigned, len=' + calEvents.length);
   };
+  // R111: setlists / songs と同様に、reload 後に in-memory を読む関数も再エクスポートして
+  // 古い array reference を捕まえてしまった他の closure 用に safety
+  window.__getCalEventsRef = function(){ return calEvents; };
   window.__reloadShowTimes = function() {
     try {
       const v = localStorage.getItem(LS_KEY_SHOW_TIMES);
