@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260511.380000">
+<meta name="build-version" content="20260511.410000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="apple-touch-icon" href="favicon.svg">
 <title>SCHEDULE STUDIO — STAFF</title>
@@ -2875,42 +2875,10 @@ const LS_KEY_EVENTS    = 'schedule-studio:calEvents:v1';
 const LS_KEY_SHOW_TIMES = 'schedule-studio:showTimes:v1';
 const LS_KEY_MEMOS     = 'schedule-studio:calMemos:v1';
 
-const DEFAULT_CAL_EVENTS = [
-  { date:'2026-04-28', type:'setup', label:'仕込み',   venue:'横浜アリーナ' },
-  { date:'2026-04-29', type:'tek',   label:'テクリハ', venue:'横浜アリーナ' },
-  { date:'2026-04-29', type:'rh',    label:'リハ',     venue:'横浜アリーナ' },
-  { date:'2026-04-29', type:'show',  label:'Day1',     venue:'横浜アリーナ' },
-  { date:'2026-04-30', type:'rh',    label:'リハ',     venue:'横浜アリーナ' },
-  { date:'2026-04-30', type:'show',  label:'Day2',     venue:'横浜アリーナ' },
-  { date:'2026-05-01', type:'stay',  label:'移動',     venue:'→ 東京' },
-  { date:'2026-05-02', type:'setup', label:'仕込み',   venue:'東京ドーム' },
-  { date:'2026-05-03', type:'tek',   label:'テクリハ', venue:'東京ドーム' },
-  { date:'2026-05-03', type:'rh',    label:'リハ',     venue:'東京ドーム' },
-  { date:'2026-05-03', type:'show',  label:'Day1',     venue:'東京ドーム' },
-  { date:'2026-05-04', type:'rh',    label:'リハ',     venue:'東京ドーム' },
-  { date:'2026-05-04', type:'show',  label:'Day2',     venue:'東京ドーム' },
-  { date:'2026-05-05', type:'stay',  label:'移動',     venue:'→ 大阪' },
-  { date:'2026-05-06', type:'stay',  label:'休',       venue:'大阪滞在' },
-  { date:'2026-05-07', type:'stay',  label:'休',       venue:'大阪滞在' },
-  { date:'2026-05-08', type:'setup', label:'仕込み',   venue:'京セラドーム' },
-  { date:'2026-05-09', type:'rh',    label:'リハ',     venue:'京セラドーム' },
-  { date:'2026-05-09', type:'show',  label:'Day1',     venue:'京セラドーム' },
-  { date:'2026-05-10', type:'show',  label:'Day2',     venue:'京セラドーム' },
-  { date:'2026-05-11', type:'stay',  label:'移動',     venue:'→ 福岡' },
-  { date:'2026-05-12', type:'stay',  label:'休',       venue:'福岡滞在' },
-  { date:'2026-05-13', type:'stay',  label:'休',       venue:'福岡滞在' },
-  { date:'2026-05-14', type:'stay',  label:'休',       venue:'福岡滞在' },
-  { date:'2026-05-15', type:'setup', label:'仕込み',   venue:'PayPayドーム' },
-  { date:'2026-05-16', type:'rh',    label:'リハ',     venue:'PayPayドーム' },
-  { date:'2026-05-16', type:'show',  label:'Day1',     venue:'PayPayドーム' },
-  { date:'2026-05-17', type:'show',  label:'千秋楽',   venue:'PayPayドーム' }
-];
-const DEFAULT_SHOW_TIMES = {
-  '横浜アリーナ':    { door:'17:30', show:'18:30' },
-  '東京ドーム':      { door:'16:30', show:'17:30' },
-  '京セラドーム':    { door:'17:00', show:'18:00' },
-  'PayPayドーム':    { door:'17:00', show:'18:00' }
-};
+/* R121: デモデータ撤去 */
+const DEFAULT_CAL_EVENTS = [];
+/* R121: デモデータ撤去 */
+const DEFAULT_SHOW_TIMES = {};
 function loadJSON(key, def) {
   try {
     const v = localStorage.getItem(key);
@@ -3423,18 +3391,8 @@ updateScheduleTabFromCalEvents();
 // R61 M3: 入り時間（arrival）を pc-edit.html と localStorage 共有
 // ════════════════════════════════════════════════════════════
 const LS_KEY_ARRIVALS = 'schedule-studio:arrivalSectionsByDate:v1';
-const DEFAULT_ARRIVALS_BY_DATE = {
-  '2026-04-29': [
-    { id: 1001, section:'演出',       time:'08:30' },
-    { id: 1002, section:'PA',         time:'09:00' },
-    { id: 1003, section:'照明',       time:'09:30' },
-    { id: 1004, section:'VJ',         time:'10:00' },
-    { id: 1005, section:'機構',       time:'10:30' },
-    { id: 1006, section:'特効',       time:'11:00' },
-    { id: 1007, section:'早替え',     time:'11:30' },
-    { id: 1008, section:'ヘアメイク', time:'12:00' }
-  ]
-};
+/* R121: デモデータ撤去 */
+const DEFAULT_ARRIVALS_BY_DATE = {};
 let arrivalSectionsByDate = loadJSON(LS_KEY_ARRIVALS, JSON.parse(JSON.stringify(DEFAULT_ARRIVALS_BY_DATE)));
 function saveArrivals() { saveJSON(LS_KEY_ARRIVALS, arrivalSectionsByDate); }
 
@@ -3652,27 +3610,8 @@ renderScheduleDayListPhone();
 // R62 M4: HOTEL を pc-edit.html と localStorage 共有
 // ════════════════════════════════════════════════════════════
 const LS_KEY_HOTELS = 'schedule-studio:hotels:v1';
-const DEFAULT_HOTELS = [
-  {
-    id:1, venue:'横浜アリーナ',
-    name:'横浜ロイヤルパークホテル',
-    address:'神奈川県横浜市西区みなとみらい2-2-1-3',
-    tel:'045-221-1111',
-    url:'https://www.yrph.com',
-    taxis:[
-      {id:1, time:'07:00', section:'PA',     count:3},
-      {id:2, time:'07:30', section:'照明',   count:2},
-      {id:3, time:'08:00', section:'演出',   count:1}
-    ],
-    members:[
-      {id:1, section:'演出', name:'のむ'},
-      {id:2, section:'制作', name:'田中'},
-      {id:3, section:'舞監', name:'佐藤'},
-      {id:4, section:'PA',   name:'山田'},
-      {id:5, section:'照明', name:'鈴木'}
-    ]
-  }
-];
+/* R121: デモデータ撤去 */
+const DEFAULT_HOTELS = [];
 let hotels = loadJSON(LS_KEY_HOTELS, JSON.parse(JSON.stringify(DEFAULT_HOTELS)));
 function saveHotels() { saveJSON(LS_KEY_HOTELS, hotels); }
 

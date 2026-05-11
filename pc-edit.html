@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260511.400000">
+<meta name="build-version" content="20260511.410000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -5537,23 +5537,8 @@ function show(id) {
   if (!window.__diag) window.__diag = { click:0, shift:0, change:0, sync:0, render:0 };
   // CDS の LocalSong 形式に揃える（曲データのマスターは CDS、SCHEDULE は rhNo/tags/memo を被せるだけ）
   // D157: songs を let に変更（setlists 切替で参照を差し替えるため）
-  let songs = [
-    {id:1,  orderIndex:1,  title:'OPENING VCR',                    durationSeconds:222, isEvent:true,  isMC:false, isEncore:false, isEnd:false, rhNo:1,    tags:['bagari','shoumei','kikou','block'], memo:'場当たり込み・銀テのタイミング確認'},
-    {id:2,  orderIndex:2,  title:'BAN',                              durationSeconds:245, isEvent:false, isMC:false, isEncore:false, isEnd:false, rhNo:null, tags:[],                                   memo:''},
-    {id:3,  orderIndex:3,  title:'Buddies',                          durationSeconds:258, isEvent:false, isMC:false, isEncore:false, isEnd:false, rhNo:2,    tags:['monitor','oto','kigae'],            memo:'Aメロ前ハケ動線確認'},
-    {id:4,  orderIndex:4,  title:'桜月',                              durationSeconds:270, isEvent:false, isMC:false, isEncore:false, isEnd:false, rhNo:null, tags:[],                                   memo:''},
-    {id:5,  orderIndex:5,  title:'流れ弾',                            durationSeconds:235, isEvent:false, isMC:false, isEncore:false, isEnd:false, rhNo:3,    tags:['bagari','shoumei','kikou'],         memo:'セリ上昇 Q→17 / 振付確認'},
-    {id:6,  orderIndex:6,  title:'なぜ 恋をして来なかったんだろう？', durationSeconds:252, isEvent:false, isMC:false, isEncore:false, isEnd:false, rhNo:4,    tags:['monitor','oto'],                    memo:'2A後の段差注意'},
-    {id:7,  orderIndex:7,  title:'ドローン',                          durationSeconds:240, isEvent:false, isMC:false, isEncore:false, isEnd:false, rhNo:5,    tags:['bagari','shoumei','kikou','block'], memo:'ドローン Q合わせ・LED連動'},
-    {id:8,  orderIndex:8,  title:'MC',                                durationSeconds:300, isEvent:false, isMC:true,  isEncore:false, isEnd:false, rhNo:null, tags:[],                                   memo:''},
-    {id:9,  orderIndex:9,  title:'承認欲求',                          durationSeconds:210, isEvent:false, isMC:false, isEncore:false, isEnd:false, rhNo:6,    tags:['koutou'],                           memo:'MC前後の口答合わせ'},
-    {id:10, orderIndex:10, title:'One-Way Street',                   durationSeconds:228, isEvent:false, isMC:false, isEncore:false, isEnd:false, rhNo:null, tags:[],                                   memo:''},
-    {id:11, orderIndex:11, title:'Cool',                              durationSeconds:202, isEvent:false, isMC:false, isEncore:false, isEnd:false, rhNo:null, tags:[],                                   memo:''},
-    {id:12, orderIndex:12, title:'桜月（リプライズ）',                  durationSeconds:150, isEvent:false, isMC:false, isEncore:false, isEnd:false, rhNo:null, tags:[],                                   memo:''},
-    {id:13, orderIndex:13, title:'桜の音',                            durationSeconds:255, isEvent:false, isMC:false, isEncore:false, isEnd:false, rhNo:null, tags:[],                                   memo:''},
-    {id:14, orderIndex:14, title:'Tokyo新景',                         durationSeconds:248, isEvent:false, isMC:false, isEncore:false, isEnd:false, rhNo:null, tags:[],                                   memo:''},
-    {id:15, orderIndex:15, title:'Start over!',                       durationSeconds:241, isEvent:false, isMC:false, isEncore:true,  isEnd:false, rhNo:7,    tags:['bagari','shoumei','kikou','block'], memo:'アンコール通し・銀テ2回目・退場まで'}
-  ];
+  // R121: デモデータ撤去（新規ユーザー混乱防止）
+  let songs = [];
 
   // ── D157 Phase 1: 複数セトリ管理 ──────────────────────────────
   // setlists = [{id, name, songs}]
@@ -6714,43 +6699,11 @@ function show(id) {
   // D69: TOUR_START/END は撤去。ツアー期間の概念は廃止し、カレンダー D&D が真の入力源。
 
   // R51 B1: カレンダーデータの初期値（localStorage に何も無いときのデフォルト）
-  const DEFAULT_CAL_EVENTS = [
-    { date:'2026-04-28', type:'setup', label:'仕込み',   venue:'横浜アリーナ' },
-    { date:'2026-04-29', type:'tek',   label:'テクリハ', venue:'横浜アリーナ' },
-    { date:'2026-04-29', type:'rh',    label:'リハ',     venue:'横浜アリーナ' },
-    { date:'2026-04-29', type:'show',  label:'Day1',     venue:'横浜アリーナ' },
-    { date:'2026-04-30', type:'rh',    label:'リハ',     venue:'横浜アリーナ' },
-    { date:'2026-04-30', type:'show',  label:'Day2',     venue:'横浜アリーナ' },
-    { date:'2026-05-01', type:'stay',  label:'移動',     venue:'→ 東京' },
-    { date:'2026-05-02', type:'setup', label:'仕込み',   venue:'東京ドーム' },
-    { date:'2026-05-03', type:'tek',   label:'テクリハ', venue:'東京ドーム' },
-    { date:'2026-05-03', type:'rh',    label:'リハ',     venue:'東京ドーム' },
-    { date:'2026-05-03', type:'show',  label:'Day1',     venue:'東京ドーム' },
-    { date:'2026-05-04', type:'rh',    label:'リハ',     venue:'東京ドーム' },
-    { date:'2026-05-04', type:'show',  label:'Day2',     venue:'東京ドーム' },
-    { date:'2026-05-05', type:'stay',  label:'移動',     venue:'→ 大阪' },
-    { date:'2026-05-06', type:'stay',  label:'休',       venue:'大阪滞在' },
-    { date:'2026-05-07', type:'stay',  label:'休',       venue:'大阪滞在' },
-    { date:'2026-05-08', type:'setup', label:'仕込み',   venue:'京セラドーム' },
-    { date:'2026-05-09', type:'rh',    label:'リハ',     venue:'京セラドーム' },
-    { date:'2026-05-09', type:'show',  label:'Day1',     venue:'京セラドーム' },
-    { date:'2026-05-10', type:'show',  label:'Day2',     venue:'京セラドーム' },
-    { date:'2026-05-11', type:'stay',  label:'移動',     venue:'→ 福岡' },
-    { date:'2026-05-12', type:'stay',  label:'休',       venue:'福岡滞在' },
-    { date:'2026-05-13', type:'stay',  label:'休',       venue:'福岡滞在' },
-    { date:'2026-05-14', type:'stay',  label:'休',       venue:'福岡滞在' },
-    { date:'2026-05-15', type:'setup', label:'仕込み',   venue:'PayPayドーム' },
-    { date:'2026-05-16', type:'rh',    label:'リハ',     venue:'PayPayドーム' },
-    { date:'2026-05-16', type:'show',  label:'Day1',     venue:'PayPayドーム' },
-    { date:'2026-05-17', type:'show',  label:'千秋楽',   venue:'PayPayドーム' }
-  ];
+  // R121: デモデータ撤去
+  const DEFAULT_CAL_EVENTS = [];
 
-  const DEFAULT_SHOW_TIMES = {
-    '横浜アリーナ':    { door:'17:30', show:'18:30' },
-    '東京ドーム':      { door:'16:30', show:'17:30' },
-    '京セラドーム':    { door:'17:00', show:'18:00' },
-    'PayPayドーム':    { door:'17:00', show:'18:00' }
-  };
+  // R121: デモデータ撤去
+  const DEFAULT_SHOW_TIMES = {};
 
   // R51 B1: localStorage 読み書きヘルパー
   // R112: concert namespace を撤廃。スマホ側が namespace を知らないため Firebase パス不一致が発生していた。
@@ -8006,14 +7959,8 @@ function show(id) {
   // ── DAY SCHEDULE：日付別の自由イベントリスト（開始〜終了 + ラベル） ──
   // R77 P2: localStorage 永続化＋スマホと共有
   const LS_KEY_DAY_EVENTS = __LS_PREFIX + 'dayEvents:v1';
-  const DEFAULT_DAY_EVENT_TEMPLATE = [
-    { startTime:'09:00', endTime:'10:00', label:'音響チェック' },
-    { startTime:'10:00', endTime:'13:00', label:'テクリハ' },
-    { startTime:'13:00', endTime:'14:00', label:'無音タイム / 楽屋準備' },
-    { startTime:'14:00', endTime:'16:30', label:'リハーサル' },
-    { startTime:'17:30', endTime:'',      label:'DOOR OPEN' },
-    { startTime:'18:30', endTime:'',      label:'SHOW TIME' }
-  ];
+  // R121: デモデータ撤去
+  const DEFAULT_DAY_EVENT_TEMPLATE = [];
   const dailyEvents = loadJSON(LS_KEY_DAY_EVENTS, {});
   // R108: reload helper
   window.__reloadDailyEvents = function() {
