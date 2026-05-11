@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260511.350000">
+<meta name="build-version" content="20260511.370000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -163,6 +163,19 @@
       }
       if (item.k === 'schedule-studio:setlists:v1' && typeof window.__reloadSetlists === 'function') {
         window.__reloadSetlists();
+      }
+      // R116: concerts:v1 が Firebase から到着 → 起動時に空だった場合 reload してリスト表示
+      if (item.k === 'schedule-studio:concerts:v1' && !window.__r116Reloaded) {
+        try {
+          const newData = JSON.parse(item.v);
+          const localBootstrapEmpty = window.__r116BootstrapWasEmpty;
+          if (Array.isArray(newData) && newData.length > 0 && localBootstrapEmpty) {
+            window.__r116Reloaded = true;
+            console.log('[R116] concerts arrived from FB, reloading to show list');
+            setTimeout(function(){ location.reload(); }, 200);
+            return;
+          }
+        } catch(e) {}
       }
       // R108: window export 経由で各 in-memory 変数を再読込
       if (item.k === 'schedule-studio:calEvents:v1' && typeof window.__reloadCalEvents === 'function') window.__reloadCalEvents();
@@ -9996,6 +10009,8 @@ function show(id) {
   // ── データロード（旧データから自動移行） ───────────
   let concerts = null;
   try { concerts = JSON.parse(localStorage.getItem(LS_CONCERTS) || 'null'); } catch (e) {}
+  // R116: 起動時の concerts 状態を記録（Firebase pull 後に空 → 入った場合 reload するため）
+  window.__r116BootstrapWasEmpty = !Array.isArray(concerts) || concerts.length === 0;
   if (!Array.isArray(concerts)) {
     const oldPws = localStorage.getItem(LS_OLD_PWS);
     const oldTitle = localStorage.getItem(LS_OLD_TITLE);
