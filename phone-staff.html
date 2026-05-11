@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260511.130000">
+<meta name="build-version" content="20260511.135000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="apple-touch-icon" href="favicon.svg">
 <title>SCHEDULE STUDIO — STAFF</title>
@@ -3057,23 +3057,34 @@ window.changeTourDay = function(delta) {
   renderRhCards();
 };
 
-// Firebase 経由で setlists / rehearsalByDate が変わったら自動再描画
-// （pc-edit.html の D142 同期コードが child_changed を発火させる → localStorage が更新される
-//   → ここでは storage イベントは別タブ用なので、setInterval で軽く監視）
-let _lastRehSig = '';
-let _lastSetlistSig = '';
+// R88b: Firebase 経由で setlists / rehearsalByDate が変わったら自動再描画
+// 監視を 500ms 間隔に短縮、デバッグログも追加
+let _lastRehSig = localStorage.getItem(LS_KEY_REH_BY_DATE) || '';
+let _lastSetlistSig = localStorage.getItem(LS_KEY_SETLISTS) || '';
+console.log('[R88b] polling start', { setlistLen: _lastSetlistSig.length, rehLen: _lastRehSig.length });
 setInterval(function() {
   const setSig = localStorage.getItem(LS_KEY_SETLISTS) || '';
   const rehSig = localStorage.getItem(LS_KEY_REH_BY_DATE) || '';
   if (setSig !== _lastSetlistSig || rehSig !== _lastRehSig) {
+    console.log('[R88b] data changed → re-render', { setChanged: setSig !== _lastSetlistSig, rehChanged: rehSig !== _lastRehSig });
     _lastSetlistSig = setSig;
     _lastRehSig = rehSig;
     if (document.getElementById('rh-card-list')) renderRhCards();
   }
-}, 1500);
+}, 500);
 
-// 外部公開（Firebase sync が呼べるように）
+// R88b: Firebase 同期 hook が呼ぶグローバル関数（即時再描画）
 window.__phoneRenderRh = renderRhCards;
+window.__phoneRefreshAll = function() {
+  if (typeof renderRhCards === 'function') renderRhCards();
+  if (typeof renderDateBar === 'function') renderDateBar();
+  if (typeof renderDateList === 'function') renderDateList();
+  if (typeof renderCalendarMonths === 'function') renderCalendarMonths();
+  if (typeof renderArrivalListPhone === 'function') renderArrivalListPhone();
+  if (typeof renderScheduleDayListPhone === 'function') renderScheduleDayListPhone();
+  if (typeof renderHotelListPhone === 'function') renderHotelListPhone();
+  console.log('[R88b] phoneRefreshAll triggered');
+};
 
 let calEvents = loadJSON(LS_KEY_EVENTS, JSON.parse(JSON.stringify(DEFAULT_CAL_EVENTS)));
 let showTimes = loadJSON(LS_KEY_SHOW_TIMES, JSON.parse(JSON.stringify(DEFAULT_SHOW_TIMES)));
