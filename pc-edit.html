@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260511.310000">
+<meta name="build-version" content="20260511.320000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -6821,6 +6821,9 @@ function show(id) {
   let calEvents = loadJSON(LS_KEY_EVENTS, JSON.parse(JSON.stringify(DEFAULT_CAL_EVENTS)));
   let showTimes = loadJSON(LS_KEY_SHOW_TIMES, JSON.parse(JSON.stringify(DEFAULT_SHOW_TIMES)));
   let calMemos  = loadJSON(LS_KEY_MEMOS, {});
+  // R110: デバッグ用 expose
+  window.__getCalEventsLen = function(){ return calEvents.length; };
+  window.__getCalEventsHas = function(label){ return calEvents.some(function(e){ return e.label === label; }); };
   // R108: reload helpers を window に export（fbSync IIFE から呼ばれる）
   window.__reloadCalEvents = function() {
     try {
