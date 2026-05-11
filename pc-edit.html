@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260511.380000">
+<meta name="build-version" content="20260511.390000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -10240,10 +10240,10 @@ function show(id) {
     renderList();
   };
 
-  // ── 起動：concerts が 0 個 → 追加モード、1+ 個 → 一覧モード ───────────
+  // ── 起動：concerts が 0 個 → 追加モード（GRAND 経由）、1+ 個 → 一覧モード ───────────
+  // R119: 0 件でも startAdd() 経由で GRAND パスを必ず通す
   if (concerts.length === 0) {
-    showMode(modeAdd);
-    setTimeout(function(){ document.getElementById('lock-add-title').focus(); }, 100);
+    startAdd();
   } else {
     showMode(modeList);
     renderList();
