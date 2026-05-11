@@ -78,19 +78,16 @@
     });
     suppress = false;
     console.log('[FB] pull keys=' + Object.keys(all).length);
-    window.__db.ref(FB_ROOT).on('child_changed', function(s){
-      const it = s.val();
-      if (it && it.k && typeof it.v === 'string' && localStorage.getItem(it.k) !== it.v) {
-        suppress = true; _setItem(it.k, it.v); suppress = false;
-        if (typeof window.__phoneRefreshAll === 'function') window.__phoneRefreshAll();
-      }
-    });
-    window.__db.ref(FB_ROOT).on('child_added', function(s){
-      const it = s.val();
-      if (it && it.k && typeof it.v === 'string' && localStorage.getItem(it.k) === null) {
-        suppress = true; _setItem(it.k, it.v); suppress = false;
-      }
-    });
+    // R95: child_changed と child_added を統一処理
+    function applyFbItem(it) {
+      if (!it || !it.k || typeof it.v !== 'string') return;
+      if (localStorage.getItem(it.k) === it.v) return;
+      suppress = true; _setItem(it.k, it.v); suppress = false;
+      console.log('[FB] sync', it.k);
+      if (typeof window.__phoneRefreshAll === 'function') window.__phoneRefreshAll();
+    }
+    window.__db.ref(FB_ROOT).on('child_changed', function(s){ applyFbItem(s.val()); });
+    window.__db.ref(FB_ROOT).on('child_added',   function(s){ applyFbItem(s.val()); });
   }).catch(function(e){ console.error('[FB] pull err', e); });
 })();
 </script>
