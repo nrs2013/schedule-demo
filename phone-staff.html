@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260511.430000">
+<meta name="build-version" content="20260511.111128">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="apple-touch-icon" href="favicon.svg">
 <title>SCHEDULE STUDIO — STAFF</title>
@@ -2020,10 +2020,10 @@
     <div class="rh-countdown-wrap">
       <div class="rh-countdown-card">
         <div class="rh-countdown-left">
-          <div class="rh-countdown-label">テクリハ終了まで</div>
-          <div class="rh-countdown-meta">予定 <strong>21:00</strong></div>
+          <div class="rh-countdown-label" id="tekuriha-cd-label">テクリハ</div>
+          <div class="rh-countdown-meta" id="tekuriha-cd-meta">DAY SCHEDULE に未登録</div>
         </div>
-        <div class="rh-countdown-time">02:34:18</div>
+        <div class="rh-countdown-time" id="tekuriha-cd">--:--:--</div>
       </div>
     </div>
 
@@ -2119,10 +2119,10 @@
     <div class="rh-countdown-wrap">
       <div class="rh-countdown-card">
         <div class="rh-countdown-left">
-          <div class="rh-countdown-label">リハ終了まで</div>
-          <div class="rh-countdown-meta">予定 <strong>16:00</strong></div>
+          <div class="rh-countdown-label" id="rh-cd-label">リハ</div>
+          <div class="rh-countdown-meta" id="rh-cd-meta">DAY SCHEDULE に未登録</div>
         </div>
-        <div class="rh-countdown-time" id="rh-cd">02:34:18</div>
+        <div class="rh-countdown-time" id="rh-cd">--:--:--</div>
       </div>
     </div>
 
@@ -2329,6 +2329,41 @@ function show(id) {
   if (body) body.scrollTop = 0;
 }
 
+// R126: URL ハッシュ ルーティング（LINE リッチメニューから直リンクで該当タブを開く）
+// 例: phone-staff.html#info → INFO 画面が直接開く
+// 既存の show() を呼び出すだけなので、既存機能は一切壊さない。
+(function r126HashRouter(){
+  var HASH_TO_SCREEN = {
+    'today':         'schedule',
+    'schedule':      'schedule',
+    'calendar':      'tour-calendar',
+    'tour-calendar': 'tour-calendar',
+    'rehearsal':     'rehearsal',
+    'rh':            'rh',
+    'tekuriha':      'tekuriha',
+    'info':          'info',
+    'arrival':       'arrival',
+    'hotel':         'hotel',
+    'pass':          'pass'
+  };
+  function applyHash(){
+    var h = (location.hash || '').replace(/^#/, '').toLowerCase().trim();
+    if (!h) return;
+    var screen = HASH_TO_SCREEN[h];
+    if (screen && typeof show === 'function') {
+      try { show(screen); } catch(e) { console.warn('[R126] show failed:', e); }
+    }
+  }
+  // 初回ロード時に適用（show() 定義後に走るよう DOMContentLoaded で）
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function(){ setTimeout(applyHash, 50); });
+  } else {
+    setTimeout(applyHash, 50);
+  }
+  // ハッシュ変化時にも切り替え（同一タブ内で別のリッチメニューボタンを押した時用）
+  window.addEventListener('hashchange', applyHash);
+})();
+
 // R67 P1: 上タブからのテクリハ／全体リハ切替
 function showRehearsalSub(sub) {
   show(sub); // 'rh' or 'tekuriha'
@@ -2410,17 +2445,102 @@ function updateProgress() {
   if (remainEl) remainEl.textContent = remain;
 }
 
-// リハーサル全体カウントダウン: 終了予定時刻まで
-// デモ用: 残り 2:34:18 から減算
-let rhSec = 2*3600 + 34*60 + 18;
-setInterval(() => {
-  rhSec = Math.max(0, rhSec - 1);
-  const h = String(Math.floor(rhSec / 3600)).padStart(2,'0');
-  const m = String(Math.floor((rhSec % 3600) / 60)).padStart(2,'0');
-  const s = String(rhSec % 60).padStart(2,'0');
-  const el = document.getElementById('rh-cd');
-  if (el) el.textContent = h + ':' + m + ':' + s;
-}, 1000);
+// R127: テクリハ／全体リハのカウントダウンを DAY SCHEDULE に紐付け（B 案・自動切替）
+// テクリハ画面 → DAY SCHEDULE の「テクリハ / TECH」イベントの時刻
+// 全体リハ画面 → 「全体リハ / 全リハ / ゲネ / ランスルー / リハ」（テクリハ除外）
+// 開始前 → 「開始まで」、開始後 → 「終了まで」、終了後 → 「終了済み」
+function r127ParseTimeOnIso(iso, hhmm) {
+  if (!iso || !hhmm) return null;
+  const m = String(hhmm).match(/^(\d{1,2}):(\d{2})$/);
+  if (!m) return null;
+  const [y, mo, d] = iso.split('-').map(Number);
+  return new Date(y, mo - 1, d, parseInt(m[1], 10), parseInt(m[2], 10), 0);
+}
+function r127FmtHMS(sec) {
+  const h = String(Math.floor(sec / 3600)).padStart(2, '0');
+  const m = String(Math.floor((sec % 3600) / 60)).padStart(2, '0');
+  const s = String(sec % 60).padStart(2, '0');
+  return h + ':' + m + ':' + s;
+}
+function r127ApplyCountdown(timeId, labelId, metaId, ev, kindLabel, iso) {
+  const tEl = document.getElementById(timeId);
+  const lEl = document.getElementById(labelId);
+  const mEl = document.getElementById(metaId);
+  if (!tEl) return;
+  if (!ev) {
+    if (lEl) lEl.textContent = kindLabel + '（未登録）';
+    if (mEl) mEl.innerHTML = 'DAY SCHEDULE に未登録';
+    tEl.textContent = '--:--:--';
+    tEl.style.color = '';
+    return;
+  }
+  const now = new Date();
+  const startStr = ev.startTime || '';
+  const endStr = ev.endTime || '';
+  const start = r127ParseTimeOnIso(iso, startStr);
+  const end = r127ParseTimeOnIso(iso, endStr);
+  if (!end) {
+    if (lEl) lEl.textContent = kindLabel + '（時刻未設定）';
+    if (mEl) mEl.innerHTML = '時刻を設定してください';
+    tEl.textContent = '--:--:--';
+    tEl.style.color = '';
+    return;
+  }
+  if (start && now < start) {
+    // 開始前 → 開始までカウントダウン
+    if (lEl) lEl.textContent = kindLabel + '開始まで';
+    if (mEl) mEl.innerHTML = '開始 <strong>' + startStr + '</strong> / 終了 <strong>' + endStr + '</strong>';
+    const remain = Math.max(0, Math.floor((start - now) / 1000));
+    tEl.textContent = r127FmtHMS(remain);
+    tEl.style.color = '';
+  } else if (now < end) {
+    // 開始後・終了前 → 終了までカウントダウン
+    if (lEl) lEl.textContent = kindLabel + '終了まで';
+    if (mEl) mEl.innerHTML = '予定 <strong>' + endStr + '</strong>';
+    const remain = Math.max(0, Math.floor((end - now) / 1000));
+    tEl.textContent = r127FmtHMS(remain);
+    tEl.style.color = '';
+  } else {
+    // 終了後
+    if (lEl) lEl.textContent = kindLabel + '終了済み';
+    if (mEl) mEl.innerHTML = '予定 <strong>' + endStr + '</strong>';
+    tEl.textContent = '00:00:00';
+    tEl.style.color = '#666';
+  }
+}
+function r127UpdateRhCountdowns() {
+  if (typeof dailyEventsPhone === 'undefined') return;
+  if (typeof getCurrentDateIso !== 'function') return;
+  const iso = getCurrentDateIso();
+  if (!iso) return;
+  // 最新の dailyEventsPhone を読み込む
+  if (typeof reloadDayEventsPhone === 'function') {
+    try { reloadDayEventsPhone(); } catch(e){}
+  }
+  const list = dailyEventsPhone[iso] || [];
+  // テクリハ: label に「テクリハ」または「TECH」を含む
+  const tekEvent = list.find(function(e){
+    return e && /テクリハ|TECH/i.test(e.label || '');
+  });
+  // 全体リハ: テクリハを除き、「全体リハ / 全リハ / ゲネ / ランスルー / リハ」を含む
+  const rhEvent = list.find(function(e){
+    if (!e) return false;
+    const lbl = e.label || '';
+    if (/テクリハ|TECH/i.test(lbl)) return false;
+    return /全体リハ|全リハ|ゲネ|ランスルー|リハ/i.test(lbl);
+  });
+  r127ApplyCountdown('tekuriha-cd', 'tekuriha-cd-label', 'tekuriha-cd-meta', tekEvent, 'テクリハ', iso);
+  r127ApplyCountdown('rh-cd',       'rh-cd-label',       'rh-cd-meta',       rhEvent,  'リハ',     iso);
+}
+setInterval(r127UpdateRhCountdowns, 1000);
+// 初回即座に走らせる（DOM が後でロードされる場合に備えて少し待つ）
+setTimeout(r127UpdateRhCountdowns, 200);
+// 日付切替時にも即更新
+const _r127OrigChange = window.changeTourDay;
+window.changeTourDay = function(d){
+  if (typeof _r127OrigChange === 'function') _r127OrigChange.call(this, d);
+  r127UpdateRhCountdowns();
+};
 
 updateProgress();
 
