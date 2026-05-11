@@ -1935,8 +1935,8 @@
 <div class="phone-body" id="body">
 
   <!-- ════ TOUR CALENDAR（月表示・カレンダーアプリ風）════ -->
+  <!-- R137: 下タブから直接アクセス。SCHEDULE に戻るボタン廃止（下タブで戻れるため） -->
   <div class="screen" id="screen-tour-calendar">
-    <button type="button" class="tour-cal-back" onclick="show('schedule')">‹ SCHEDULE に戻る</button>
     <div class="tour-cal-title">TOUR CALENDAR</div>
 
     <div class="cal-header">
@@ -1996,17 +1996,14 @@
     </div>
   </div>
 
-  <!-- ════ タイムスケジュール ════ -->
-  <div class="screen" id="screen-schedule">
-    <button type="button" class="tour-cal-btn" onclick="show('tour-calendar')">
-      <span class="tour-cal-btn-left">
-        <span class="tour-cal-btn-ico">▦</span>
-        <span>TOUR CALENDAR</span>
-      </span>
-      <span class="tour-cal-btn-arrow">›</span>
-    </button>
-    <!-- R77 P2: PC の DAY SCHEDULE と同期（自由項目・1行表示） -->
-    <div class="schedule-section-title" style="margin-top:6px;">DAY SCHEDULE</div>
+  <!-- ════ DAY SCHEDULE（タイムスケジュール）════ -->
+  <!-- R137: TOUR CALENDAR ボタン廃止（下タブからアクセス）／入り時間とサブタブで切替 -->
+  <div class="screen active" id="screen-schedule">
+    <!-- R137: 入り時間 ↔ DAY SCHEDULE サブタブ -->
+    <div class="phone-top-tabs" style="margin-bottom:12px;">
+      <button onclick="show('arrival')">入り時間</button>
+      <button class="active" onclick="show('schedule')">DAY SCHEDULE</button>
+    </div>
     <div id="schedule-day-list-host"></div>
 
     <div style="font-size:11px; color:#5a5a55; text-align:center; margin-top:18px; letter-spacing:0.08em;">
@@ -2037,7 +2034,7 @@
   </div>
 
   <!-- ════ RH ════ -->
-  <div class="screen active" id="screen-rh">
+  <div class="screen" id="screen-rh">
     <!-- リハーサル全体カウントダウン（sticky wrapper） -->
     <div class="rh-countdown-wrap">
       <div class="rh-countdown-card">
@@ -2070,8 +2067,13 @@
   </div>
 
   <!-- ════ 入り時間 ════ -->
+  <!-- R137: 下タブから ARRIVAL を撤去。DAY SCHEDULE 画面とサブタブで切替アクセス -->
   <div class="screen" id="screen-arrival">
-    <div style="height: 8px;"></div>
+    <!-- R137: 入り時間 ↔ DAY SCHEDULE サブタブ -->
+    <div class="phone-top-tabs" style="margin-bottom:12px;">
+      <button class="active" onclick="show('arrival')">入り時間</button>
+      <button onclick="show('schedule')">DAY SCHEDULE</button>
+    </div>
 
     <!-- 自分の入り時間を追加するエリア -->
     <div style="background:#242424; border:1px dashed #4a4a4a; border-radius:6px; padding:14px; margin-bottom:14px;">
@@ -2115,12 +2117,13 @@
 
 <!-- R65 Step 2: PASS タブを復活（passless 入場 + 編集パスワードでロック解除式） -->
 <!-- D150 STAFF: タブを全部英語化（PC 版と統一感） -->
+<!-- R137: 下タブ再構成。CALENDAR を先頭に新設、ARRIVAL 廃止、INFO と HOTEL を入れ替え -->
 <div class="phone-bottom-tabs" id="bottom-tabs">
-  <button onclick="show('schedule')"><span class="ico">▤</span>DAY SCHEDULE</button>
-  <button class="active rehearsal-btn" onclick="show('rehearsal')"><span class="ico">▶</span>REHEARSAL</button>
-  <button onclick="show('info')"><span class="ico">⚑</span>INFO</button>
-  <button onclick="show('arrival')"><span class="ico">◷</span>ARRIVAL</button>
+  <button onclick="show('tour-calendar')"><span class="ico">▦</span>CALENDAR</button>
+  <button class="active" onclick="show('schedule')"><span class="ico">▤</span>DAY SCHEDULE</button>
+  <button class="rehearsal-btn" onclick="show('rehearsal')"><span class="ico">▶</span>REHEARSAL</button>
   <button onclick="show('hotel')"><span class="ico">★</span>HOTEL</button>
+  <button onclick="show('info')"><span class="ico">⚑</span>INFO</button>
   <button data-pass onclick="show('pass')"><span class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;"><circle cx="9" cy="14" r="3"/><path d="M12 14h9"/><path d="M17 14v4"/><path d="M20 14v3"/></svg></span>PASS</button>
 </div>
 
