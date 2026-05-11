@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260511.165000">
+<meta name="build-version" content="20260511.180000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -6133,35 +6133,20 @@ function show(id) {
   // マスター日付バーから呼ばれる：日付変更時にリハ計画を再レンダー
   window.__rehearsalRender = render;
 
-  // R94: Firebase で localStorage が更新された時、in-memory も再読込するヘルパー
+  // R94c: Firebase で localStorage が更新された時、in-memory も再読込するヘルパー
+  // 文字列リテラル使用（LS_KEY_REH 未定義バグ回避）/ 参照は維持して破壊的変更を最小化
   window.__reloadRehearsalByDate = function() {
     try {
-      const v = localStorage.getItem(LS_KEY_REH || 'schedule-studio:rehearsalByDate:v1');
+      const v = localStorage.getItem('schedule-studio:rehearsalByDate:v1');
       const parsed = v ? JSON.parse(v) : {};
-      // rehearsalByDate を中身ごと差し替え（参照は維持）
-      Object.keys(rehearsalByDate).forEach(k => delete rehearsalByDate[k]);
-      Object.keys(parsed).forEach(k => rehearsalByDate[k] = parsed[k]);
-      console.log('[R94] rehearsalByDate reloaded from localStorage, dates=' + Object.keys(rehearsalByDate).length);
-    } catch(e) { console.warn('[R94] reload reh err', e); }
+      Object.keys(rehearsalByDate).forEach(function(k){ delete rehearsalByDate[k]; });
+      Object.keys(parsed).forEach(function(k){ rehearsalByDate[k] = parsed[k]; });
+      console.log('[R94c] rehearsalByDate reloaded, dates=' + Object.keys(rehearsalByDate).length);
+    } catch(e) { console.warn('[R94c] reload reh err', e && e.message); }
   };
-  window.__reloadSetlists = function() {
-    try {
-      const v = localStorage.getItem(LS_KEY_SETLISTS);
-      const parsed = v ? JSON.parse(v) : [];
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        // setlists 配列の中身を差し替え
-        setlists.length = 0;
-        parsed.forEach(s => setlists.push(s));
-        // active setlist の songs を再取得
-        const sl = setlists.find(s => s.id === activeSetlistId) || setlists[0];
-        if (sl) {
-          songs.length = 0;
-          (sl.songs || []).forEach(s => songs.push(s));
-        }
-        console.log('[R94] setlists reloaded, count=' + setlists.length + ' songs=' + songs.length);
-      }
-    } catch(e) { console.warn('[R94] reload setlists err', e); }
-  };
+  // setlists のリロードは PC 側ではほぼ不要（PC が曲名編集の主体）なので no-op に。
+  // 今後スマホ側から setlists を編集する機能が出来た時に実装する。
+  window.__reloadSetlists = function() { /* no-op for now */ };
 
   /* ========================================================
      R69: REHEARSAL 印刷ビュー (v7 レイアウト)
