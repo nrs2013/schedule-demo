@@ -2224,12 +2224,12 @@
 
 <!-- R65 Step 2: PASS タブを復活（passless 入場 + 編集パスワードでロック解除式） -->
 <!-- D150 STAFF: タブを全部英語化（PC 版と統一感） -->
-<!-- R137: 下タブ再構成。CALENDAR を先頭に新設、ARRIVAL 廃止、INFO と HOTEL を入れ替え -->
+<!-- R137: 下タブ再構成。R141: 6個並べると文字が切れるので英語短縮（CAL/DAY/REH/HTL/INFO/PASS） -->
 <div class="phone-bottom-tabs" id="bottom-tabs">
-  <button onclick="show('tour-calendar')"><span class="ico">▦</span>CALENDAR</button>
-  <button class="active" onclick="show('schedule')"><span class="ico">▤</span>DAY SCHEDULE</button>
-  <button class="rehearsal-btn" onclick="show('rehearsal')"><span class="ico">▶</span>REHEARSAL</button>
-  <button onclick="show('hotel')"><span class="ico">★</span>HOTEL</button>
+  <button onclick="show('tour-calendar')"><span class="ico">▦</span>CAL</button>
+  <button class="active" onclick="show('schedule')"><span class="ico">▤</span>DAY</button>
+  <button class="rehearsal-btn" onclick="show('rehearsal')"><span class="ico">▶</span>REH</button>
+  <button onclick="show('hotel')"><span class="ico">★</span>HTL</button>
   <button onclick="show('info')"><span class="ico">⚑</span>INFO</button>
   <button data-pass onclick="show('pass')"><span class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;"><circle cx="9" cy="14" r="3"/><path d="M12 14h9"/><path d="M17 14v4"/><path d="M20 14v3"/></svg></span>PASS</button>
 </div>
