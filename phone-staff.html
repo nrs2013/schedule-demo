@@ -2186,8 +2186,8 @@
     <div style="background:#242424; border:1px dashed #4a4a4a; border-radius:6px; padding:14px; margin-bottom:14px;">
       <div style="font-size: 14px; letter-spacing:0.2em; color:#a8a8a8; font-weight: 500; margin-bottom:10px;">＋ 入り時間を追加</div>
       <div style="display:flex; gap:8px;">
-        <input type="text" placeholder="セクション名 (例: PA)" style="flex:1; min-width:0; box-sizing:border-box; background:#1d1d1d; border:1px solid #2c2c2c; border-radius:4px; padding:9px 10px; color:#e8e8e8; font-size: 16px;" />
         <button class="sde-time" data-time="09:00" onclick="openTimePicker(this)" style="width:90px; flex-shrink:0; box-sizing:border-box; background:#1d1d1d; border:1px solid #2c2c2c; border-radius:4px; padding:9px 10px; color:#e8e8e8; font-size: 16px; cursor: pointer;">09:00</button>
+        <input type="text" placeholder="セクション名 (例: PA)" style="flex:1; min-width:0; box-sizing:border-box; background:#1d1d1d; border:1px solid #2c2c2c; border-radius:4px; padding:9px 10px; color:#e8e8e8; font-size: 16px;" />
       </div>
       <button style="width:100%; margin-top:8px; background:#e89a4a; color:#0a0a08; border:none; padding:9px; border-radius:4px; font-size: 15px; font-weight: 500; letter-spacing:0.2em; cursor:pointer;">登録する</button>
     </div>
@@ -2224,12 +2224,12 @@
 
 <!-- R65 Step 2: PASS タブを復活（passless 入場 + 編集パスワードでロック解除式） -->
 <!-- D150 STAFF: タブを全部英語化（PC 版と統一感） -->
-<!-- R137: 下タブ再構成。R141: 6個並べると文字が切れるので英語短縮（CAL/DAY/REH/HTL/INFO/PASS） -->
+<!-- R137: 下タブ再構成。R142: DAY SCHEDULE だけ DAY に短縮、他はフルスペル -->
 <div class="phone-bottom-tabs" id="bottom-tabs">
-  <button onclick="show('tour-calendar')"><span class="ico">▦</span>CAL</button>
+  <button onclick="show('tour-calendar')"><span class="ico">▦</span>CALENDAR</button>
   <button class="active" onclick="show('schedule')"><span class="ico">▤</span>DAY</button>
-  <button class="rehearsal-btn" onclick="show('rehearsal')"><span class="ico">▶</span>REH</button>
-  <button onclick="show('hotel')"><span class="ico">★</span>HTL</button>
+  <button class="rehearsal-btn" onclick="show('rehearsal')"><span class="ico">▶</span>REHEARSAL</button>
+  <button onclick="show('hotel')"><span class="ico">★</span>HOTEL</button>
   <button onclick="show('info')"><span class="ico">⚑</span>INFO</button>
   <button data-pass onclick="show('pass')"><span class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;"><circle cx="9" cy="14" r="3"/><path d="M12 14h9"/><path d="M17 14v4"/><path d="M20 14v3"/></svg></span>PASS</button>
 </div>
@@ -3400,11 +3400,11 @@ function renderArrivalListPhone() {
   sorted.forEach(function(s){
     html += '<div class="arrival-section">' +
       '<div class="arrival-section-row">' +
-        '<div class="arrival-section-name">' + escHtmlPhone(s.section || '') + '</div>' +
-        '<div style="display:flex; align-items:center;">' +
+        '<div style="display:flex; align-items:center; gap:14px;">' +
           '<span class="arrival-section-time">' + escHtmlPhone(s.time || '--:--') + '</span>' +
-          '<button class="arrival-edit-btn">編集</button>' +
+          '<div class="arrival-section-name">' + escHtmlPhone(s.section || '') + '</div>' +
         '</div>' +
+        '<button class="arrival-edit-btn">編集</button>' +
       '</div>' +
     '</div>';
   });
