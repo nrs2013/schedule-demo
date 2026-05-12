@@ -953,6 +953,24 @@
     font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
   }
 
+  /* R139: ARTIST 版は閲覧専用。投稿カードのスタイルだけ追加 */
+  .info-post-card {
+    background: #1a1816;
+    border-left: 3px solid #e89a4a;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    border-radius: 0 6px 6px 0;
+  }
+  .info-post-head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 6px;
+  }
+  .info-post-author { font-size: 13px; color: #e89a4a; font-weight: 500; letter-spacing: 0.05em; }
+  .info-post-date { font-size: 11px; color: #5a5a55; font-family: 'Noto Sans JP', -apple-system, sans-serif; font-variant-numeric: tabular-nums; }
+  .info-post-title { font-size: 15px; font-weight: 600; color: #f0e0c8; margin: 4px 0 6px; letter-spacing: 0.02em; }
+  .info-post-body { font-size: 15px; color: #e0e0d8; line-height: 1.55; white-space: pre-wrap; word-break: break-word; }
+  .info-empty-msg { padding: 40px 20px; text-align: center; color: #888; font-size: 13px; }
+
   /* ── 入り時間 ───────── */
   .arrival-section {
     background: #242424;
@@ -2100,14 +2118,9 @@
   </div>
 
   <!-- ════ INFO ════ -->
+  <!-- R139: ARTIST 版は閲覧専用（投稿は STAFF 版から） -->
   <div class="screen" id="screen-info">
-    <div class="info-compose">
-      <button class="info-compose-btn">＋ NEW POST</button>
-    </div>
-
-    <!-- R123: INFO の静的デモ 4 件を撤去。新規はまだ無い旨を表示 -->
-    <div style="padding:40px 20px; text-align:center; color:#888; font-size:13px;">まだお知らせはありません<br><span style="font-size:11px; color:#666;">「＋ NEW POST」から投稿できます</span></div>
-
+    <div id="info-posts-host"></div>
     <div style="height:20px"></div>
   </div>
 
@@ -2124,8 +2137,8 @@
     <div style="background:#242424; border:1px dashed #4a4a4a; border-radius:6px; padding:14px; margin-bottom:14px;">
       <div style="font-size: 14px; letter-spacing:0.2em; color:#a8a8a8; font-weight: 500; margin-bottom:10px;">＋ 入り時間を追加</div>
       <div style="display:flex; gap:8px;">
-        <input type="text" placeholder="セクション名 (例: PA)" style="flex:1; background:#1d1d1d; border:1px solid #2c2c2c; border-radius:4px; padding:9px 10px; color:#e8e8e8; font-size: 17px;" />
-        <button class="sde-time" data-time="09:00" onclick="openTimePicker(this)" style="width:110px; background:#1d1d1d; border:1px solid #2c2c2c; border-radius:4px; padding:9px 10px; color:#e8e8e8; font-size: 17px; cursor: pointer;">09:00</button>
+        <input type="text" placeholder="セクション名 (例: PA)" style="flex:1; min-width:0; box-sizing:border-box; background:#1d1d1d; border:1px solid #2c2c2c; border-radius:4px; padding:9px 10px; color:#e8e8e8; font-size: 16px;" />
+        <button class="sde-time" data-time="09:00" onclick="openTimePicker(this)" style="width:90px; flex-shrink:0; box-sizing:border-box; background:#1d1d1d; border:1px solid #2c2c2c; border-radius:4px; padding:9px 10px; color:#e8e8e8; font-size: 16px; cursor: pointer;">09:00</button>
       </div>
       <button style="width:100%; margin-top:8px; background:#e89a4a; color:#0a0a08; border:none; padding:9px; border-radius:4px; font-size: 15px; font-weight: 500; letter-spacing:0.2em; cursor:pointer;">登録する</button>
     </div>
@@ -3730,6 +3743,71 @@ renderHotelListPhone();
   update();
   document.addEventListener('DOMContentLoaded', update);
   setInterval(update, 2000); // Firebase 同期で concerts が arrived した時にも追従
+})();
+</script>
+
+<script>
+/* R139: INFO 投稿の閲覧専用ビューア（ARTIST 版）
+ * - STAFF 版で投稿された内容を読み取り専用で表示
+ * - 投稿機能なし（PASS タブがないため）
+ */
+(function r139InfoArtistViewer(){
+  var LS_KEY_INFO_POSTS = 'schedule-studio:info-posts:v1';
+  function loadInfoPosts(){
+    try { return JSON.parse(localStorage.getItem(LS_KEY_INFO_POSTS) || '[]') || []; }
+    catch(e) { return []; }
+  }
+  function esc(s){
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+  function fmtDate(iso){
+    try {
+      var d = new Date(iso);
+      if (isNaN(d.getTime())) return '';
+      var pad = function(n){ return String(n).padStart(2,'0'); };
+      return pad(d.getMonth()+1) + '/' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+    } catch(e) { return ''; }
+  }
+  function render(){
+    var host = document.getElementById('info-posts-host');
+    if (!host) return;
+    var posts = loadInfoPosts();
+    if (!posts || posts.length === 0) {
+      host.innerHTML = '<div class="info-empty-msg">まだお知らせはありません</div>';
+      return;
+    }
+    posts.sort(function(a, b){ return (b.createdAt || '').localeCompare(a.createdAt || ''); });
+    var html = '';
+    posts.forEach(function(p){
+      var titleHtml = p.title ? '<div class="info-post-title">' + esc(p.title) + '</div>' : '';
+      html += '<div class="info-post-card">' +
+        '<div class="info-post-head">' +
+          '<div class="info-post-author">' + esc(p.author || '') + '</div>' +
+          '<div class="info-post-date">' + esc(fmtDate(p.createdAt)) + '</div>' +
+        '</div>' +
+        titleHtml +
+        '<div class="info-post-body">' + esc(p.body || '') + '</div>' +
+      '</div>';
+    });
+    host.innerHTML = html;
+  }
+  var _origShowR139 = window.show;
+  window.show = function(id) {
+    _origShowR139(id);
+    if (id === 'info') render();
+  };
+  window.addEventListener('storage', function(e){
+    if (!e || !e.key) return;
+    if (e.key === LS_KEY_INFO_POSTS) render();
+  });
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', render);
+  } else {
+    render();
+  }
+  console.log('[R139] info viewer (artist) loaded');
 })();
 </script>
 

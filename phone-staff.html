@@ -949,13 +949,99 @@
     text-align: center;
   }
   .info-compose-btn {
-    background: #3a3a3a; color: #d8d8d4;
-    border: none; padding: 8px 18px;
+    background: #e89a4a; color: #0a0a08;
+    border: none; padding: 10px 22px;
     border-radius: 99px;
-    font-size: 15px; font-weight: 500; letter-spacing: 0.15em;
+    font-size: 15px; font-weight: 600; letter-spacing: 0.15em;
     cursor: pointer;
     font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
   }
+  .info-compose-btn:active { transform: scale(0.97); }
+
+  /* R139: NEW POST 投稿カード（INFO） */
+  .info-post-card {
+    background: #1a1816;
+    border-left: 3px solid #e89a4a;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    border-radius: 0 6px 6px 0;
+  }
+  .info-post-head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 6px;
+  }
+  .info-post-author { font-size: 13px; color: #e89a4a; font-weight: 500; letter-spacing: 0.05em; }
+  .info-post-date { font-size: 11px; color: #5a5a55; font-family: 'Noto Sans JP', -apple-system, sans-serif; font-variant-numeric: tabular-nums; }
+  .info-post-title { font-size: 15px; font-weight: 600; color: #f0e0c8; margin: 4px 0 6px; letter-spacing: 0.02em; }
+  .info-post-body { font-size: 15px; color: #e0e0d8; line-height: 1.55; white-space: pre-wrap; word-break: break-word; }
+  .info-empty-msg { padding: 40px 20px; text-align: center; color: #888; font-size: 13px; }
+  .info-empty-msg .sub { font-size: 11px; color: #5a5a55; display: block; margin-top: 6px; }
+
+  /* R139: 未認証時の NEW POST ボタン（グレーアウト） */
+  .info-compose-btn.locked {
+    background: #2a2825;
+    color: #5a5a55;
+    border: 1px dashed #4a4845;
+    cursor: not-allowed;
+  }
+  .info-compose-btn.locked .lock-hint { font-size: 10px; opacity: 0.7; margin-left: 6px; }
+
+  /* R139: 投稿モーダル */
+  .info-modal {
+    position: fixed; inset: 0; z-index: 9999;
+    display: flex; align-items: flex-end; justify-content: center;
+  }
+  .info-modal-backdrop {
+    position: absolute; inset: 0; background: rgba(0,0,0,0.7);
+  }
+  .info-modal-sheet {
+    position: relative;
+    background: #1a1816;
+    border: 1px solid #4a4845;
+    border-radius: 14px 14px 0 0;
+    padding: 20px 18px 18px;
+    width: 100%; max-width: 540px;
+    box-sizing: border-box;
+    max-height: 88vh;
+    overflow-y: auto;
+  }
+  .info-modal-title {
+    font-size: 16px; font-weight: 600; color: #f0e0c8;
+    letter-spacing: 0.12em; margin-bottom: 14px;
+  }
+  .info-modal-label {
+    display: block; font-size: 12px; color: #888780;
+    letter-spacing: 0.08em; margin: 0 0 5px;
+  }
+  .info-modal-label .req { color: #e07a5f; margin-left: 4px; }
+  .info-modal-input {
+    width: 100%; background: #0a0a08;
+    border: 1px solid #2a2825; border-radius: 5px;
+    padding: 10px 12px; font-size: 15px; color: #f0e0c8;
+    margin-bottom: 12px; box-sizing: border-box;
+    font-family: 'Noto Sans JP', -apple-system, sans-serif;
+  }
+  .info-modal-textarea {
+    width: 100%; background: #0a0a08;
+    border: 1px solid #2a2825; border-radius: 5px;
+    padding: 10px 12px; font-size: 15px; color: #f0e0c8;
+    min-height: 110px; margin-bottom: 8px; box-sizing: border-box;
+    resize: vertical; line-height: 1.5;
+    font-family: 'Noto Sans JP', -apple-system, sans-serif;
+  }
+  .info-modal-hint {
+    font-size: 11px; color: #e07a5f; margin-bottom: 14px;
+    text-align: center; letter-spacing: 0.05em;
+  }
+  .info-modal-actions { display: flex; gap: 8px; }
+  .info-modal-btn {
+    flex: 1; padding: 12px; border-radius: 6px;
+    font-size: 14px; font-weight: 500; letter-spacing: 0.1em;
+    cursor: pointer;
+    font-family: 'Noto Sans JP', -apple-system, sans-serif;
+  }
+  .info-modal-btn.primary { background: #e89a4a; color: #0a0a08; border: none; }
+  .info-modal-btn.secondary { background: transparent; color: #888780; border: 1px solid #4a4845; }
 
   /* ── 入り時間 ───────── */
   .arrival-section {
@@ -2055,15 +2141,34 @@
   </div>
 
   <!-- ════ INFO ════ -->
+  <!-- R139: NEW POST 投稿機能（authed のみ投稿可、未認証はグレーアウト + アラート） -->
   <div class="screen" id="screen-info">
     <div class="info-compose">
-      <button class="info-compose-btn">＋ NEW POST</button>
+      <button class="info-compose-btn locked" id="info-new-post-btn" onclick="openInfoNewPost()">＋ NEW POST<span class="lock-hint">（要 PASS 認証）</span></button>
     </div>
 
-    <!-- R123: INFO の静的デモ 4 件を撤去。新規はまだ無い旨を表示 -->
-    <div style="padding:40px 20px; text-align:center; color:#888; font-size:13px;">まだお知らせはありません<br><span style="font-size:11px; color:#666;">「＋ NEW POST」から投稿できます</span></div>
+    <div id="info-posts-host"></div>
 
     <div style="height:20px"></div>
+  </div>
+
+  <!-- R139: NEW POST 投稿モーダル -->
+  <div class="info-modal" id="info-modal" style="display:none;">
+    <div class="info-modal-backdrop" onclick="closeInfoNewPost()"></div>
+    <div class="info-modal-sheet">
+      <div class="info-modal-title">＋ NEW POST</div>
+      <label class="info-modal-label">投稿者<span class="req">*必須</span></label>
+      <input class="info-modal-input" id="info-input-author" type="text" placeholder="例：演出 / のむ" maxlength="40" />
+      <label class="info-modal-label">題名<span class="req" style="color:#888;">（任意）</span></label>
+      <input class="info-modal-input" id="info-input-title" type="text" placeholder="例：明日の集合変更" maxlength="60" />
+      <label class="info-modal-label">本文<span class="req">*必須</span></label>
+      <textarea class="info-modal-textarea" id="info-input-body" placeholder="お知らせを書いてください" maxlength="500"></textarea>
+      <div class="info-modal-hint">※ 投稿後の削除・編集はできません</div>
+      <div class="info-modal-actions">
+        <button class="info-modal-btn secondary" onclick="closeInfoNewPost()">キャンセル</button>
+        <button class="info-modal-btn primary" onclick="confirmInfoNewPost()">投稿する</button>
+      </div>
+    </div>
   </div>
 
   <!-- ════ 入り時間 ════ -->
@@ -2079,8 +2184,8 @@
     <div style="background:#242424; border:1px dashed #4a4a4a; border-radius:6px; padding:14px; margin-bottom:14px;">
       <div style="font-size: 14px; letter-spacing:0.2em; color:#a8a8a8; font-weight: 500; margin-bottom:10px;">＋ 入り時間を追加</div>
       <div style="display:flex; gap:8px;">
-        <input type="text" placeholder="セクション名 (例: PA)" style="flex:1; background:#1d1d1d; border:1px solid #2c2c2c; border-radius:4px; padding:9px 10px; color:#e8e8e8; font-size: 17px;" />
-        <button class="sde-time" data-time="09:00" onclick="openTimePicker(this)" style="width:110px; background:#1d1d1d; border:1px solid #2c2c2c; border-radius:4px; padding:9px 10px; color:#e8e8e8; font-size: 17px; cursor: pointer;">09:00</button>
+        <input type="text" placeholder="セクション名 (例: PA)" style="flex:1; min-width:0; box-sizing:border-box; background:#1d1d1d; border:1px solid #2c2c2c; border-radius:4px; padding:9px 10px; color:#e8e8e8; font-size: 16px;" />
+        <button class="sde-time" data-time="09:00" onclick="openTimePicker(this)" style="width:90px; flex-shrink:0; box-sizing:border-box; background:#1d1d1d; border:1px solid #2c2c2c; border-radius:4px; padding:9px 10px; color:#e8e8e8; font-size: 16px; cursor: pointer;">09:00</button>
       </div>
       <button style="width:100%; margin-top:8px; background:#e89a4a; color:#0a0a08; border:none; padding:9px; border-radius:4px; font-size: 15px; font-weight: 500; letter-spacing:0.2em; cursor:pointer;">登録する</button>
     </div>
@@ -3732,6 +3837,147 @@ renderHotelListPhone();
   update();
   document.addEventListener('DOMContentLoaded', update);
   setInterval(update, 2000); // Firebase 同期で concerts が arrived した時にも追従
+})();
+</script>
+
+<script>
+/* R139: INFO の NEW POST 機能（authed のみ投稿可、削除・編集なし）
+ * - localStorage に投稿を保存（Firebase 同期は将来対応）
+ * - 既存の show() hook パターン（R60/R61/R77）と同じ流儀で window.show をラップ
+ * - tryUnlock（PASS 認証）成功時に再描画してボタンのロックを外す
+ */
+(function r139InfoNewPost(){
+  var LS_KEY_INFO_POSTS = 'schedule-studio:info-posts:v1';
+  var LS_KEY_INFO_AUTHOR = 'schedule-studio:info-author-name:v1';
+  function loadInfoPosts(){
+    try { return JSON.parse(localStorage.getItem(LS_KEY_INFO_POSTS) || '[]') || []; }
+    catch(e) { return []; }
+  }
+  function saveInfoPostsArr(arr){
+    try { localStorage.setItem(LS_KEY_INFO_POSTS, JSON.stringify(arr || [])); } catch(e){}
+  }
+  function loadSavedAuthor(){
+    try { return localStorage.getItem(LS_KEY_INFO_AUTHOR) || ''; } catch(e){ return ''; }
+  }
+  function saveAuthorName(name){
+    try { localStorage.setItem(LS_KEY_INFO_AUTHOR, name || ''); } catch(e){}
+  }
+  function esc(s){
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+  function fmtDate(iso){
+    try {
+      var d = new Date(iso);
+      if (isNaN(d.getTime())) return '';
+      var pad = function(n){ return String(n).padStart(2,'0'); };
+      return pad(d.getMonth()+1) + '/' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+    } catch(e) { return ''; }
+  }
+  function render(){
+    var host = document.getElementById('info-posts-host');
+    if (!host) return;
+    // 認証状態に応じてボタンのスタイル切替
+    var btn = document.getElementById('info-new-post-btn');
+    if (btn) {
+      var isAuthed = (typeof authed !== 'undefined') && authed === true;
+      if (isAuthed) btn.classList.remove('locked');
+      else btn.classList.add('locked');
+      // 「（要 PASS 認証）」ヒントの表示制御
+      var hint = btn.querySelector('.lock-hint');
+      if (hint) hint.style.display = isAuthed ? 'none' : 'inline';
+    }
+    // 投稿リスト描画（新しい順）
+    var posts = loadInfoPosts();
+    if (!posts || posts.length === 0) {
+      host.innerHTML = '<div class="info-empty-msg">まだお知らせはありません<span class="sub">PASS で認証して「＋ NEW POST」から投稿できます</span></div>';
+      return;
+    }
+    posts.sort(function(a, b){ return (b.createdAt || '').localeCompare(a.createdAt || ''); });
+    var html = '';
+    posts.forEach(function(p){
+      var titleHtml = p.title ? '<div class="info-post-title">' + esc(p.title) + '</div>' : '';
+      html += '<div class="info-post-card">' +
+        '<div class="info-post-head">' +
+          '<div class="info-post-author">' + esc(p.author || '') + '</div>' +
+          '<div class="info-post-date">' + esc(fmtDate(p.createdAt)) + '</div>' +
+        '</div>' +
+        titleHtml +
+        '<div class="info-post-body">' + esc(p.body || '') + '</div>' +
+      '</div>';
+    });
+    host.innerHTML = html;
+  }
+  window.openInfoNewPost = function(){
+    var isAuthed = (typeof authed !== 'undefined') && authed === true;
+    if (!isAuthed) {
+      alert('PASS タブでパスワードを入力して認証してください。');
+      return;
+    }
+    var a = document.getElementById('info-input-author');
+    var t = document.getElementById('info-input-title');
+    var b = document.getElementById('info-input-body');
+    var saved = loadSavedAuthor();
+    if (a) a.value = saved; // 初回以降は記憶された名前を自動入力
+    if (t) t.value = '';
+    if (b) b.value = '';
+    var modal = document.getElementById('info-modal');
+    if (modal) modal.style.display = 'flex';
+    // 名前未登録なら author に、登録済なら本文に focus
+    setTimeout(function(){
+      if (!saved && a) a.focus();
+      else if (b) b.focus();
+    }, 50);
+  };
+  window.closeInfoNewPost = function(){
+    var modal = document.getElementById('info-modal');
+    if (modal) modal.style.display = 'none';
+  };
+  window.confirmInfoNewPost = function(){
+    var aEl = document.getElementById('info-input-author');
+    var tEl = document.getElementById('info-input-title');
+    var bEl = document.getElementById('info-input-body');
+    var author = (aEl && aEl.value || '').trim();
+    var title  = (tEl && tEl.value || '').trim(); // 任意
+    var body   = (bEl && bEl.value || '').trim();
+    if (!author) { alert('投稿者名を入力してください。'); return; }
+    if (!body)   { alert('本文を入力してください。'); return; }
+    if (!confirm('投稿しますか？\n\n投稿後の削除・編集はできません。')) return;
+    saveAuthorName(author); // 名前を端末に記憶（次回自動入力用）
+    var posts = loadInfoPosts();
+    posts.push({ id: Date.now(), author: author, title: title, body: body, createdAt: new Date().toISOString() });
+    saveInfoPostsArr(posts);
+    window.closeInfoNewPost();
+    render();
+  };
+  // show() に hook（既存パターン）：info 開いたら再描画
+  var _origShowR139 = window.show;
+  window.show = function(id) {
+    _origShowR139(id);
+    if (id === 'info') render();
+  };
+  // tryUnlock に hook：PASS 認証成功時にボタンのロック解除
+  var _origTryUnlockR139 = window.tryUnlock;
+  if (typeof _origTryUnlockR139 === 'function') {
+    window.tryUnlock = function(){
+      _origTryUnlockR139();
+      render();
+    };
+  }
+  // storage イベント（別タブ・将来の Firebase 同期）
+  window.addEventListener('storage', function(e){
+    if (!e || !e.key) return;
+    if (e.key === LS_KEY_INFO_POSTS) render();
+  });
+  window.__renderInfoPosts = render;
+  // 起動時 1 回
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', render);
+  } else {
+    render();
+  }
+  console.log('[R139] info new post loaded');
 })();
 </script>
 
