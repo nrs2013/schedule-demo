@@ -2755,6 +2755,30 @@ window.changeTourDay = changeTourDay;
 // 初期化：ツアー期間からカレンダーを作って今日に合わせる
 refreshTour();
 
+// R158: PC 側で tour:start/end が更新されたら自動で tourDays を再構築して画面に反映
+function _r158ReloadTourRangePhone() {
+  try {
+    const ns = localStorage.getItem(_R65E_LS_TS);
+    const ne = localStorage.getItem(_R65E_LS_TE);
+    if (!ns || !ne) return;
+    if (ns !== tourStart || ne !== tourEnd) {
+      tourStart = ns;
+      tourEnd = ne;
+      console.log('[R158-phone] tour range updated:', tourStart, '~', tourEnd);
+      if (typeof refreshTour === 'function') refreshTour();
+      // 各画面の再描画
+      if (typeof renderRhCards === 'function') renderRhCards();
+      if (typeof renderArrivalListPhone === 'function') renderArrivalListPhone();
+      if (typeof renderScheduleDayListPhone === 'function') renderScheduleDayListPhone();
+    }
+  } catch(e) {}
+}
+window.addEventListener('storage', function(e){
+  if (!e || !e.key) return;
+  if (e.key === _R65E_LS_TS || e.key === _R65E_LS_TE) _r158ReloadTourRangePhone();
+});
+setInterval(_r158ReloadTourRangePhone, 2000);
+
 // ════════════════════════════════════════════════════════════
 // R59: PC（pc-edit.html）と localStorage 共有のデータ層
 // pc-edit.html を「軸」として、ここはそれを読み込む
