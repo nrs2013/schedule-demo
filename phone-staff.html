@@ -3703,6 +3703,122 @@ renderHotelListPhone();
 })();
 </script>
 
+<!-- R170: 入場認証オーバーレイ。LINE 経由で来たスタッフが初回のみ 4 桁パスワード入力、認証成功で localStorage に entered フラグ保存。次回以降は自動入場 -->
+<style>
+  .r170-entry-lock {
+    position: fixed; inset: 0; z-index: 999999;
+    background: rgba(10,10,8,0.96); backdrop-filter: blur(8px);
+    display: none; align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  .r170-entry-lock.show { display: flex; }
+  .r170-entry-card {
+    background: #14130f; border: 1px solid rgba(216,184,120,0.5);
+    border-radius: 8px; padding: 24px 20px; width: 100%; max-width: 360px;
+    text-align: center;
+  }
+  .r170-entry-icon { font-size: 36px; margin-bottom: 8px; color: #f0e0c8; }
+  .r170-entry-title { font-size: 16px; color: #f0e0c8; font-weight: 500; margin-bottom: 6px; }
+  .r170-entry-concert { font-size: 13px; color: #f5d4a8; letter-spacing: 0.05em; margin-bottom: 14px; }
+  .r170-entry-hint { font-size: 11px; color: #a8a8a0; margin-bottom: 16px; line-height: 1.6; }
+  .r170-entry-input {
+    width: 100%; background: #0a0a08; border: 1px solid #2c2c2c;
+    border-radius: 5px; padding: 12px; font-size: 18px; color: #f0e0c8;
+    text-align: center; letter-spacing: 0.6em; font-family: 'JetBrains Mono', monospace;
+    box-sizing: border-box; margin-bottom: 12px;
+    -webkit-text-security: disc;
+  }
+  .r170-entry-btn {
+    width: 100%; background: rgba(232,154,74,0.85); border: none;
+    color: #0a0a08; padding: 12px; border-radius: 5px;
+    font-size: 14px; font-weight: 500; letter-spacing: 0.1em;
+    cursor: pointer;
+  }
+  .r170-entry-btn:active { background: rgba(232,154,74,1); }
+  .r170-entry-err { color: #e07a5f; font-size: 12px; margin-top: 10px; min-height: 16px; }
+</style>
+<div class="r170-entry-lock" id="r170-entry-lock">
+  <div class="r170-entry-card">
+    <div class="r170-entry-icon">🎫</div>
+    <div class="r170-entry-title">入場パスワード</div>
+    <div class="r170-entry-concert" id="r170-entry-concert">—</div>
+    <div class="r170-entry-hint">この公演のスタッフ向け<br>初回だけ入力してください（次回からは自動で入れます）</div>
+    <input type="tel" inputmode="numeric" maxlength="8" class="r170-entry-input" id="r170-entry-input" autocomplete="off">
+    <button type="button" class="r170-entry-btn" id="r170-entry-btn">入場する</button>
+    <div class="r170-entry-err" id="r170-entry-err"></div>
+  </div>
+</div>
+<script>
+(function r170EntryAuth() {
+  var ENTERED_PREFIX = 'schedule-studio:entered:';
+  function getActiveConcert() {
+    try {
+      var concerts = JSON.parse(localStorage.getItem('schedule-studio:concerts:v1') || '[]');
+      var id = localStorage.getItem('schedule-studio:active-concert-id');
+      return (id && concerts.find(function(c){return c.id===id;})) || concerts[0] || null;
+    } catch(e) { return null; }
+  }
+  function isEntered(c) {
+    if (!c) return true; // concert 不明なら認証スキップ
+    try { return localStorage.getItem(ENTERED_PREFIX + c.id) === 'true'; } catch(e) { return false; }
+  }
+  function showLock(c) {
+    var lock = document.getElementById('r170-entry-lock');
+    var nameEl = document.getElementById('r170-entry-concert');
+    if (nameEl) nameEl.textContent = (c && c.title) || '—';
+    if (lock) lock.classList.add('show');
+    setTimeout(function(){
+      var inp = document.getElementById('r170-entry-input');
+      if (inp) inp.focus();
+    }, 200);
+  }
+  function hideLock() {
+    var lock = document.getElementById('r170-entry-lock');
+    if (lock) lock.classList.remove('show');
+  }
+  function tryEnter() {
+    var c = getActiveConcert();
+    var expected = (c && c.passwords && c.passwords.entry) || '';
+    var inp = document.getElementById('r170-entry-input');
+    var err = document.getElementById('r170-entry-err');
+    var v = inp ? inp.value : '';
+    // passwords.entry が未設定なら、暫定で edit パスワードでも入れる（既存公演との互換）
+    var fallback = (c && c.passwords && (c.passwords.edit || c.passwords.staff)) || '';
+    if (!expected && !fallback) {
+      // パスワード未設定の公演 → 認証不要で入る
+      if (c) localStorage.setItem(ENTERED_PREFIX + c.id, 'true');
+      hideLock();
+      return;
+    }
+    if (v === expected || (!expected && v === fallback)) {
+      if (c) localStorage.setItem(ENTERED_PREFIX + c.id, 'true');
+      if (err) err.textContent = '';
+      hideLock();
+    } else {
+      if (err) err.textContent = 'パスワードが違います';
+      if (inp) { inp.value = ''; inp.focus(); }
+    }
+  }
+  function init() {
+    var c = getActiveConcert();
+    if (!c) return;                 // 公演不明
+    if (isEntered(c)) return;        // 既に入場済み
+    var hasPw = c.passwords && (c.passwords.entry || c.passwords.edit);
+    if (!hasPw) return;              // パスワード未設定の古い公演はスキップ
+    showLock(c);
+    var btn = document.getElementById('r170-entry-btn');
+    if (btn) btn.onclick = tryEnter;
+    var inp = document.getElementById('r170-entry-input');
+    if (inp) inp.onkeydown = function(e){ if (e.key === 'Enter') tryEnter(); };
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function(){ setTimeout(init, 80); });
+  } else {
+    setTimeout(init, 80);
+  }
+})();
+</script>
+
 <!-- R168: 起動時に show() を呼んで上タブ（テクリハ/全体リハ/セトリ順/リハ順）の表示制御を確実に走らせる
      原因: HTML で <div class="screen active"> と直接書かれた場合、show() を経由しないので
            top-tabs-bar の display 切替ロジックが走らない -->

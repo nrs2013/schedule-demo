@@ -3722,6 +3722,59 @@ renderHotelListPhone();
 })();
 </script>
 
+<!-- R170: 入場認証オーバーレイ（ARTIST 版用） -->
+<style>
+  .r170-entry-lock { position: fixed; inset: 0; z-index: 999999; background: rgba(10,10,8,0.96); backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; padding: 20px; }
+  .r170-entry-lock.show { display: flex; }
+  .r170-entry-card { background: #14130f; border: 1px solid rgba(216,184,120,0.5); border-radius: 8px; padding: 24px 20px; width: 100%; max-width: 360px; text-align: center; }
+  .r170-entry-icon { font-size: 36px; margin-bottom: 8px; color: #f0e0c8; }
+  .r170-entry-title { font-size: 16px; color: #f0e0c8; font-weight: 500; margin-bottom: 6px; }
+  .r170-entry-concert { font-size: 13px; color: #f5d4a8; letter-spacing: 0.05em; margin-bottom: 14px; }
+  .r170-entry-hint { font-size: 11px; color: #a8a8a0; margin-bottom: 16px; line-height: 1.6; }
+  .r170-entry-input { width: 100%; background: #0a0a08; border: 1px solid #2c2c2c; border-radius: 5px; padding: 12px; font-size: 18px; color: #f0e0c8; text-align: center; letter-spacing: 0.6em; font-family: 'JetBrains Mono', monospace; box-sizing: border-box; margin-bottom: 12px; -webkit-text-security: disc; }
+  .r170-entry-btn { width: 100%; background: rgba(232,154,74,0.85); border: none; color: #0a0a08; padding: 12px; border-radius: 5px; font-size: 14px; font-weight: 500; letter-spacing: 0.1em; cursor: pointer; }
+  .r170-entry-btn:active { background: rgba(232,154,74,1); }
+  .r170-entry-err { color: #e07a5f; font-size: 12px; margin-top: 10px; min-height: 16px; }
+</style>
+<div class="r170-entry-lock" id="r170-entry-lock">
+  <div class="r170-entry-card">
+    <div class="r170-entry-icon">🎫</div>
+    <div class="r170-entry-title">入場パスワード</div>
+    <div class="r170-entry-concert" id="r170-entry-concert">—</div>
+    <div class="r170-entry-hint">この公演のアーティスト向け<br>初回だけ入力してください（次回からは自動で入れます）</div>
+    <input type="tel" inputmode="numeric" maxlength="8" class="r170-entry-input" id="r170-entry-input" autocomplete="off">
+    <button type="button" class="r170-entry-btn" id="r170-entry-btn">入場する</button>
+    <div class="r170-entry-err" id="r170-entry-err"></div>
+  </div>
+</div>
+<script>
+(function r170EntryAuth() {
+  var ENTERED_PREFIX = 'schedule-studio:entered:';
+  function getActiveConcert(){ try{ var cs=JSON.parse(localStorage.getItem('schedule-studio:concerts:v1')||'[]'); var id=localStorage.getItem('schedule-studio:active-concert-id'); return (id&&cs.find(function(c){return c.id===id;}))||cs[0]||null;}catch(e){return null;} }
+  function isEntered(c){ if(!c) return true; try{ return localStorage.getItem(ENTERED_PREFIX+c.id)==='true';}catch(e){return false;} }
+  function showLock(c){ var l=document.getElementById('r170-entry-lock'); var n=document.getElementById('r170-entry-concert'); if(n)n.textContent=(c&&c.title)||'—'; if(l)l.classList.add('show'); setTimeout(function(){var i=document.getElementById('r170-entry-input'); if(i)i.focus();},200); }
+  function hideLock(){ var l=document.getElementById('r170-entry-lock'); if(l)l.classList.remove('show'); }
+  function tryEnter(){
+    var c=getActiveConcert();
+    var expected=(c&&c.passwords&&c.passwords.entry)||'';
+    var fallback=(c&&c.passwords&&(c.passwords.artist||c.passwords.edit))||'';
+    var inp=document.getElementById('r170-entry-input'); var err=document.getElementById('r170-entry-err'); var v=inp?inp.value:'';
+    if(!expected&&!fallback){ if(c)localStorage.setItem(ENTERED_PREFIX+c.id,'true'); hideLock(); return; }
+    if(v===expected||(!expected&&v===fallback)){ if(c)localStorage.setItem(ENTERED_PREFIX+c.id,'true'); if(err)err.textContent=''; hideLock(); }
+    else { if(err)err.textContent='パスワードが違います'; if(inp){inp.value=''; inp.focus();} }
+  }
+  function init(){
+    var c=getActiveConcert(); if(!c) return; if(isEntered(c)) return;
+    var hasPw=c.passwords&&(c.passwords.entry||c.passwords.artist||c.passwords.edit); if(!hasPw) return;
+    showLock(c);
+    var b=document.getElementById('r170-entry-btn'); if(b)b.onclick=tryEnter;
+    var i=document.getElementById('r170-entry-input'); if(i)i.onkeydown=function(e){if(e.key==='Enter')tryEnter();};
+  }
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',function(){setTimeout(init,80);});}
+  else{setTimeout(init,80);}
+})();
+</script>
+
 <!-- R168: 起動時に show() を呼んで上タブ表示を確実に走らせる -->
 <script>
 (function r168InitShow(){
