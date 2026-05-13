@@ -2805,12 +2805,16 @@ function selectTourDay(idx) {
   if (typeof updateScheduleTabFromCalEvents === 'function') updateScheduleTabFromCalEvents();
 }
 
+// R143: wrap 多重チェーンを統合。1 関数に集約して、すべての再描画を直接呼ぶ
 function changeTourDay(delta) {
   const next = selectedDayIdx + delta;
   if (next < 0 || next >= tourDays.length) return;
   selectedDayIdx = next;
   renderDateBar();
   if (typeof updateScheduleTabFromCalEvents === 'function') updateScheduleTabFromCalEvents();
+  if (typeof renderRhCards === 'function') renderRhCards();
+  if (typeof renderArrivalListPhone === 'function') renderArrivalListPhone();
+  if (typeof renderScheduleDayListPhone === 'function') renderScheduleDayListPhone();
 }
 
 // 初期化：ツアー期間からカレンダーを作って今日に合わせる
@@ -2979,11 +2983,7 @@ document.addEventListener('blur', function(e) {
 window.addEventListener('DOMContentLoaded', function() {
   setTimeout(renderRhCards, 100);
 });
-const _renderAfterDateChange_a = window.changeTourDay || function(){};
-window.changeTourDay = function(delta) {
-  _renderAfterDateChange_a.call(this, delta);
-  renderRhCards();
-};
+// R143: changeTourDay wrap を削除（本体に統合済み）
 
 let _lastRehSig_a = localStorage.getItem(LS_KEY_REH_BY_DATE) || '';
 let _lastSetlistSig_a = localStorage.getItem(LS_KEY_SETLISTS) || '';
@@ -3348,11 +3348,7 @@ window.selectTourDay = function(idx) {
   _selectTourDayAfterM3(idx);
   renderArrivalListPhone();
 };
-const _changeTourDayAfterM3 = window.changeTourDay || changeTourDay;
-window.changeTourDay = function(delta) {
-  _changeTourDayAfterM3(delta);
-  renderArrivalListPhone();
-};
+// R143: changeTourDay wrap を削除（本体に統合済み）
 
 // 起動時にも1回
 renderArrivalListPhone();
@@ -3508,11 +3504,7 @@ window.selectTourDay = function(idx) {
   _selectTourDayAfterDayEvents(idx);
   renderScheduleDayListPhone();
 };
-const _changeTourDayAfterDayEvents = window.changeTourDay || changeTourDay;
-window.changeTourDay = function(delta) {
-  _changeTourDayAfterDayEvents(delta);
-  renderScheduleDayListPhone();
-};
+// R143: changeTourDay wrap を削除（本体に統合済み）
 
 // 起動時にも1回
 renderScheduleDayListPhone();
