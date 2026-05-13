@@ -3654,64 +3654,7 @@ renderHotelListPhone();
     });
 })();
 </script>
-<!-- R99: 同期診断バー (STAFF) -->
-<div id="r96-bar" style="position:fixed;top:0;left:0;right:0;z-index:99999;background:rgba(20,19,15,0.96);backdrop-filter:blur(10px);color:#e8e8e2;font-family:'JetBrains Mono',monospace;font-size:9px;padding:4px 8px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #2c2a27;letter-spacing:0.04em;flex-wrap:wrap;gap:6px;">
-  <span><span style="color:#888">STAFF</span> v<span id="r96-build">?</span></span>
-  <span><span style="color:#888">D </span><span id="r96-date">?</span></span>
-  <span><span style="color:#888">FB </span><span id="r96-fb">?</span></span>
-  <span><span style="color:#888">AUTH </span><span id="r96-auth">?</span></span>
-  <span><span style="color:#888">送 </span><span id="r96-tx">--</span></span>
-  <span><span style="color:#888">受 </span><span id="r96-rx">--</span></span>
-  <span><span style="color:#888">PC-HB </span><span id="r96-hb">--</span></span>
-</div>
-<style>
-#screen-rh, #screen-info, #screen-arrival, #screen-hotel, #screen-pass, #screen-schedule { padding-top: 26px !important; }
-.phone-concert-title, .tour-date-bar { padding-top: 26px !important; }
-</style>
-<script>
-(function r99Bar(){
-  function fmt(t){ if(!t) return '--'; const d=new Date(t); return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')+':'+String(d.getSeconds()).padStart(2,'0'); }
-  function tick(){
-    var be=document.getElementById('r96-build'); if(be){var m=document.querySelector('meta[name=build-version]'); be.textContent=m?m.content.slice(8):'?';}
-    var de=document.getElementById('r96-date'); if(de && typeof getCurrentDateIso==='function'){var iso=getCurrentDateIso(); de.textContent = iso ? iso.slice(5) : '?';}
-    var fe=document.getElementById('r96-fb'); if(fe){var ok=window.__fbConnected===true; fe.textContent=ok?'OK':'OFF'; fe.style.color=ok?'#7ec27a':'#e07a5f';}
-    var ae=document.getElementById('r96-auth'); if(ae){var au = (typeof authed!=='undefined')?authed:false; ae.textContent = au?'ON':'OFF'; ae.style.color = au?'#7ec27a':'#e07a5f';}
-    var te=document.getElementById('r96-tx'); if(te&&window.__lastFbWrite){te.textContent=fmt(window.__lastFbWrite.time); te.style.color=(Date.now()-window.__lastFbWrite.time<5000)?'#7ec27a':'#888';}
-    var re_=document.getElementById('r96-rx'); if(re_&&window.__lastFbReceive){re_.textContent=fmt(window.__lastFbReceive.time); re_.style.color=(Date.now()-window.__lastFbReceive.time<5000)?'#7ec27a':'#888';}
-    var he=document.getElementById('r96-hb'); if(he){he.textContent=String(window.__r96HbReceived||0);}
-  }
-  setInterval(tick, 500);
-
-  // PC heartbeat 購読
-  window.__r96HbReceived = 0;
-  function subscribePcHb(){
-    if (!window.__db) { setTimeout(subscribePcHb, 500); return; }
-    window.__db.ref('hb/pc').on('value', function(snap){
-      var v = snap.val();
-      if (v && v.n) window.__r96HbReceived = v.n;
-    });
-  }
-  subscribePcHb();
-
-  // R99: Phone 自身も heartbeat を 3秒ごとに送信（PC が観測できるように）
-  window.__r99StaffHb = 0;
-  setInterval(function(){
-    if (!window.__db) return;
-    window.__r99StaffHb++;
-    try { window.__db.ref('hb/staff').set({ t: Date.now(), n: window.__r99StaffHb }); } catch(e){}
-  }, 3000);
-
-  // R99: Phone がタグ等のクリックをするたびに「fb/log/staff」に記録
-  document.addEventListener('click', function(e){
-    var t = e.target;
-    if (t && t.classList && (t.classList.contains('tag-pill') || t.classList.contains('rh-rhno') || t.classList.contains('finish-btn'))) {
-      if (!window.__db) return;
-      var cls = Array.from(t.classList||[]).join(' ');
-      try { window.__db.ref('fb/log/staff').set({ t: Date.now(), action: 'click ' + cls.slice(0,40), authed: !!(window.authed) }); } catch(e){}
-    }
-  }, true);
-})();
-</script>
+<!-- R148: R96/R99 同期診断バーを撤去（本番演出家向けには不要のため） -->
 
 <script>
 (function r123Title(){
