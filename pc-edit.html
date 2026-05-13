@@ -4868,9 +4868,10 @@
       <div class="lock-card">
         <div class="lock-icon">＋</div>
         <div class="lock-mode-label">新しいコンサート</div>
-        <div class="lock-form-sub">名前と 2 つのパスワードを決めてください</div>
+        <div class="lock-form-sub">名前と 3 つのパスワードを決めてください</div>
         <input type="text" class="lock-input" placeholder="コンサート名" id="lock-add-title" autocomplete="off">
-        <!-- R67: CONCERT パスワード入力欄を撤去（STAFF は passless で入る仕様に変更） -->
+        <!-- R169: 入場パスワード（LINE 経由で来たスタッフが最初の 1 回だけ入力） -->
+        <input type="password" class="lock-input" placeholder="入場パスワード（4桁、LINE スタッフ用）" id="lock-add-entry" autocomplete="new-password" maxlength="8">
         <input type="password" class="lock-input" placeholder="ARTIST パスワード（4桁数字）" id="lock-add-artist" autocomplete="new-password">
         <input type="password" class="lock-input" placeholder="編集パスワード（4桁数字）" id="lock-add-edit" autocomplete="new-password">
         <button class="lock-btn" id="lock-add-btn" type="button">追加して入る</button>
@@ -10605,6 +10606,9 @@ function show(id) {
     /* R67: lock-add-concert は撤去済み */
     document.getElementById('lock-add-artist').value = '';
     document.getElementById('lock-add-edit').value = '';
+    /* R169: 入場パスワード入力欄もクリア */
+    var entryInp = document.getElementById('lock-add-entry');
+    if (entryInp) entryInp.value = '';
     setTimeout(function(){ document.getElementById('lock-add-title').focus(); }, 100);
   }
   function startGrand(){
@@ -10636,15 +10640,18 @@ function show(id) {
     const title = (document.getElementById('lock-add-title').value || '').trim();
     const artist = document.getElementById('lock-add-artist').value;
     const edit = document.getElementById('lock-add-edit').value;
+    /* R169: 入場パスワード（LINE 経由のスタッフ用、初回のみ入力）*/
+    const entry = (document.getElementById('lock-add-entry') ? document.getElementById('lock-add-entry').value : '') || '';
     if (!title) { alert('コンサート名を入力してください'); return; }
-    if (!artist || !edit) { alert('2 つのパスワード（ARTIST と 編集）を両方入力してください'); return; }
+    if (!artist || !edit) { alert('ARTIST と 編集の 2 つのパスワードを両方入力してください'); return; }
     if (artist === edit) { alert('ARTIST と 編集 は別々の値にしてください'); return; }
+    if (!entry) { alert('入場パスワード（4 桁）も入力してください'); return; }
     /* R117: STAFF は passless 設計のため作成フォームでは聞かない。
        Phone STAFF の PASS タブは fallback の '1111' で動作する */
     const newC = {
       id: 'concert-' + Date.now(),
       title: title,
-      passwords: { artist: artist, edit: edit },
+      passwords: { artist: artist, edit: edit, entry: entry },
       createdAt: new Date().toISOString()
     };
     /* R122: 新規コンサート作成時、既存のデータを全部消す（concert メタ情報以外） */
