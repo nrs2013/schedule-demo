@@ -4962,9 +4962,9 @@
              - Excel: D&D で代替（既存 handler はそのまま動く）
              - テンプレ: 不要に
              - + 行を追加: 曲リストの末尾にフルワイドで配置（後段の pc-add-row-bottom） -->
-        <!-- R145: テクリハ / 全リハ それぞれにリセットボタン（曲リストは共通のため動作は同じ） -->
+        <!-- R145: テクリハ / リハーサル それぞれにリセットボタン（曲リストは共通のため動作は同じ） / R150: 「全リハ」表記を「リハーサル」に統一 -->
         <button id="pc-btn-reset-tekuriha" class="pc-btn pc-btn-reset" type="button" onclick="window.__resetRehearsalSongs && window.__resetRehearsalSongs('テクリハ')">テクリハ リセット</button>
-        <button id="pc-btn-reset-main" class="pc-btn pc-btn-reset" type="button" onclick="window.__resetRehearsalSongs && window.__resetRehearsalSongs('全リハ')">全リハ リセット</button>
+        <button id="pc-btn-reset-main" class="pc-btn pc-btn-reset" type="button" onclick="window.__resetRehearsalSongs && window.__resetRehearsalSongs('リハーサル')">リハーサル リセット</button>
         <!-- R70 B-2d: PDF ボタン (現在のモードを自動判定) -->
         <button id="pc-btn-rh-pdf" class="pc-btn" type="button" onclick="window.__openRehearsalPdfCurrent && window.__openRehearsalPdfCurrent()">PDF</button>
       </div>
@@ -6227,9 +6227,9 @@ function show(id) {
     });
   }
 
-  // R145: テクリハ / 全リハ それぞれのリセットボタン（曲リストは共通のため、どちらを押しても songs を全削除）
+  // R145: テクリハ / リハーサル それぞれのリセットボタン（曲リストは共通のため、どちらを押しても songs を全削除）/ R150: 「全リハ」を「リハーサル」表記に統一
   window.__resetRehearsalSongs = function(modeLabel) {
-    var msg = (modeLabel || '') + 'の曲リストを全部リセットします。\n\n表示中のセトリの曲が全部消えます。\n（テクリハと全リハは曲リストを共有してるので、両方の表示が空になります）\n\n本当にリセットしますか？';
+    var msg = (modeLabel || '') + 'の曲リストを全部リセットします。\n\n表示中のセトリの曲が全部消えます。\n（テクリハとリハーサルは曲リストを共有してるので、両方の表示が空になります）\n\n本当にリセットしますか？';
     if (!confirm(msg)) return;
     songs.length = 0;
     if (typeof render === 'function') render();
