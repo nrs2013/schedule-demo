@@ -5169,6 +5169,19 @@
             </div>
             <div id="info-line-group-list" style="margin-top:8px;font-size:11px;color:#a8a8a0;"></div>
           </div>
+          <!-- R176: この公演の「入場パスワード（4 桁）」を後付けで設定 / 変更できる UI -->
+          <div style="margin-top:14px;padding-top:12px;border-top:1px dashed rgba(255,255,255,0.12);">
+            <div style="font-size:11px;color:#888;line-height:1.6;margin-bottom:6px;">
+              <strong style="color:#a8a8a0;">この公演 の入場パスワード（4 桁）</strong><br>
+              LINE グループから来た新しいスタッフが初回だけ入力するパスワード。<br>
+              一度入場すれば、その端末は次回からパスワード不要で自動入場。
+            </div>
+            <input type="password" id="info-entry-pass" class="info-input" placeholder="例：4827" style="margin-top:4px;font-family:'JetBrains Mono',monospace;font-size:11px;" maxlength="8" autocomplete="new-password">
+            <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+              <button type="button" class="info-push-btn" style="background:#444;border-color:#666;font-size:12px;padding:6px 14px;" onclick="window.__r176SaveEntryPass()">保存</button>
+              <span id="info-entry-pass-status" style="color:#888;font-size:11px;align-self:center;"></span>
+            </div>
+          </div>
         </details>
         <div class="info-field">
           <label class="info-label">件名（タイトル）</label>
@@ -9311,6 +9324,27 @@ function show(id) {
       concerts[idx].lineGroupId = gid;
       localStorage.setItem('schedule-studio:concerts:v1', JSON.stringify(concerts));
       if (status) { status.textContent = gid ? '✓ この公演に紐付けました' : '✓ クリアしました'; status.style.color = '#7ec27a'; }
+    } catch(e) {
+      if (status) { status.textContent = '✗ 保存失敗: ' + e.message; status.style.color = '#e07a5f'; }
+    }
+  };
+
+  // R176: 既存 CONCERT に入場パスワード（passwords.entry）を後付け / 変更
+  window.__r176SaveEntryPass = function() {
+    var inp = document.getElementById('info-entry-pass');
+    var status = document.getElementById('info-entry-pass-status');
+    if (!inp) return;
+    var pw = (inp.value || '').trim();
+    try {
+      var concerts = JSON.parse(localStorage.getItem('schedule-studio:concerts:v1') || '[]');
+      var id = localStorage.getItem('schedule-studio:active-concert-id');
+      var idx = concerts.findIndex(function(c){return c.id===id;});
+      if (idx < 0) { if (status) { status.textContent = '✗ アクティブな公演がありません'; status.style.color = '#e07a5f'; } return; }
+      if (!concerts[idx].passwords) concerts[idx].passwords = {};
+      concerts[idx].passwords.entry = pw;
+      localStorage.setItem('schedule-studio:concerts:v1', JSON.stringify(concerts));
+      if (status) { status.textContent = pw ? '✓ 入場パスワードを保存しました（' + pw.length + '桁）' : '✓ クリアしました'; status.style.color = '#7ec27a'; }
+      inp.value = '';
     } catch(e) {
       if (status) { status.textContent = '✗ 保存失敗: ' + e.message; status.style.color = '#e07a5f'; }
     }
