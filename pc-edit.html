@@ -6480,34 +6480,38 @@ function show(id) {
   });
 
   // R100: applyFbItem の "localVal === item.v スキップ" による未再描画問題の保険
-  // 1秒おきに in-memory rehearsalByDate と localStorage を比較、ズレてたら強制 reload + render
-  // R182: JSON.stringify はキー順で差が出るので、毎秒誤検出して render が走り、行 hover が点滅する。
-  //       → reload 後に「実質同じ」場合は再 render しないよう、reload 前後の lsStr で比較してから render。
-  setInterval(function(){
+  // R182: drift 検知の比較を「LS の中身が in-memory に全部反映されてれば一致と見なす」方針に変更。
+  //       getRehearsalData() が render 中に空エントリーを in-memory にだけ追加するため、
+  //       JSON.stringify 比較で毎秒誤検出 → reload+render → 行 hover が点滅、というループになっていた。
+  //       LS にない空エントリーは無視し、本当に内容が違う時だけ reload+render する。
+  function _r182IsRehearsalDrift() {
     try {
-      if (typeof _r172IsEditing === 'function' && _r172IsEditing()) return;
       const v = localStorage.getItem('schedule-studio:rehearsalByDate:v1');
-      if (!v) return;
+      if (!v) return false;
+      const lsObj = JSON.parse(v);
       const memObj = rehearsalByDate;
-      // 安価な事前チェック：日付数とキー総数で軽く比較してから JSON.stringify する
-      let lsObj; try { lsObj = JSON.parse(v); } catch(_) { return; }
       const lsKeys = Object.keys(lsObj || {});
-      const memKeys = Object.keys(memObj || {});
-      let needCheck = lsKeys.length !== memKeys.length;
-      if (!needCheck) {
-        // 各日付の曲数も比較
-        for (let i = 0; i < lsKeys.length; i++) {
-          const k = lsKeys[i];
-          const a = lsObj[k] || {}, b = memObj[k] || {};
-          if (Object.keys(a).length !== Object.keys(b).length) { needCheck = true; break; }
+      for (let i = 0; i < lsKeys.length; i++) {
+        const k = lsKeys[i];
+        const a = lsObj[k] || {};
+        const b = (memObj && memObj[k]) || {};
+        const aKeys = Object.keys(a);
+        for (let j = 0; j < aKeys.length; j++) {
+          const ak = aKeys[j];
+          if (!b[ak]) return true;
+          // 内容（rhNo, tags, memo）比較
+          if (JSON.stringify(a[ak]) !== JSON.stringify(b[ak])) return true;
         }
       }
-      // 構造同じならスキップ（JSON.stringify のキー順差による誤検出を回避）
-      if (!needCheck) return;
-      console.log('[R100/R182] structural drift detected → reload+render');
-      window.__reloadRehearsalByDate();
-      window.__rehearsalRender();
-    } catch(e){}
+      return false;
+    } catch(e) { return false; }
+  }
+  setInterval(function(){
+    if (typeof _r172IsEditing === 'function' && _r172IsEditing()) return;
+    if (!_r182IsRehearsalDrift()) return;
+    console.log('[R100/R182] real drift detected → reload+render');
+    try { window.__reloadRehearsalByDate(); } catch(e){}
+    try { window.__rehearsalRender(); } catch(e){}
   }, 2000);
 
   /* ========================================================
