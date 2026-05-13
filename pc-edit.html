@@ -2741,7 +2741,8 @@
     background: #14130f;
     border: 1px solid #2c2a27;
     border-radius: 5px;
-    padding: 2px 6px;
+    /* R163: 上下 padding を詰めて行の天地を抑える */
+    padding: 1px 6px;
     transition: border-color 0.12s, background 0.12s;
     width: 100%;
     box-sizing: border-box;
@@ -2773,10 +2774,11 @@
     border: none;
     color: #e8e8e2;
     font-family: 'JetBrains Mono', 'Noto Sans JP', monospace;
-    /* R159: H/M ラベルを消した分、数字を大きく */
-    font-size: 22px;
+    /* R163: 22px → 18px に戻す（行が縦に伸びすぎる対策） */
+    font-size: 18px;
     font-weight: 400;
-    padding: 2px 4px;
+    line-height: 1.1;
+    padding: 0 4px;
     border-radius: 3px;
     font-variant-numeric: tabular-nums;
     letter-spacing: 0.02em;
