@@ -667,10 +667,11 @@
     color: #d8b89c /* R57: D147 (15:21 JST) 値に戻す */;
   }
   /* D116: Excel ファイル drop 中の視覚フィードバック（金色破線で「ここにドロップ」感を出す） */
+  /* R144: 半透明 rgba(...0.06) だとブラウザのデフォルト白が透けて画面が白くなる→不透明色に */
   body.excel-drop-hint {
     outline: 4px dashed rgba(232,154,74,0.85);
     outline-offset: -8px;
-    background-color: rgba(232,154,74,0.06) !important;
+    background-color: #1f1a14 !important;
   }
   body.excel-drop-hint::before {
     content: '📊  Excel をドロップして取込';
@@ -6121,6 +6122,7 @@ function show(id) {
     });
   }
   // D116: 取込ロジックを関数化（drop でも呼べるように）
+  // R144: TIME列を固定列(C)じゃなくヘッダー行から動的判定 + 複数シート時の選択 UI
   function handleRhExcelFile(file) {
     if (!file) return;
     if (typeof XLSX === 'undefined') { alert('Excel ライブラリが読み込まれていません'); return; }
@@ -6129,28 +6131,62 @@ function show(id) {
       try {
         const arr = new Uint8Array(ev.target.result);
         const wb = XLSX.read(arr, {type: 'array'});
-        const ws = wb.Sheets[wb.SheetNames[0]];
+        // R144: シート選択（複数シートある場合）
+        let sheetName = wb.SheetNames[0];
+        if (wb.SheetNames.length > 1) {
+          const list = wb.SheetNames.map(function(n, i){ return (i+1) + '. ' + n; }).join('\n');
+          const sel = prompt('どのシートを取り込みますか？\n\n' + list + '\n\n番号を入力 (1〜' + wb.SheetNames.length + '):', '1');
+          if (sel === null) return; // キャンセル
+          const n = parseInt(sel, 10);
+          if (!isNaN(n) && n >= 1 && n <= wb.SheetNames.length) {
+            sheetName = wb.SheetNames[n - 1];
+          }
+        }
+        const ws = wb.Sheets[sheetName];
         const rows = XLSX.utils.sheet_to_json(ws, {header: 1});
         if (!rows || rows.length < 2) { alert('Excel にデータがありません（1 行目はヘッダー、2 行目以降にデータが必要）'); return; }
-        if (!confirm('現在の曲リストを Excel の内容で置き換えます。よろしいですか？')) return;
+        // R144: ヘッダー行を探して TIME / Title / No 列の位置を動的判定
+        let headerRowIdx = -1;
+        let timeColIdx = 2;   // デフォルト C 列
+        let titleColIdx = 1;  // デフォルト B 列
+        let noColIdx = 0;     // デフォルト A 列
+        for (let h = 0; h < Math.min(rows.length, 8); h++) {
+          const hr = rows[h];
+          if (!hr) continue;
+          let tCol = -1, ttCol = -1, nCol = -1;
+          for (let c = 0; c < hr.length; c++) {
+            const val = String(hr[c] || '').trim().toUpperCase();
+            if (tCol < 0 && val === 'TIME') tCol = c;
+            if (ttCol < 0 && (val === 'M-TITLE' || val === 'TITLE' || val.indexOf('タイトル') >= 0)) ttCol = c;
+            if (nCol < 0 && (val === 'NO' || val === 'M-NO' || val === 'M#' || val === 'NO.' || val === 'M-NO.')) nCol = c;
+          }
+          if (tCol >= 0) {
+            headerRowIdx = h;
+            timeColIdx = tCol;
+            if (ttCol >= 0) titleColIdx = ttCol;
+            if (nCol >= 0) noColIdx = nCol;
+            break;
+          }
+        }
+        const colLabel = function(c){ return String.fromCharCode(65 + c); };
+        if (!confirm('現在の曲リストを Excel の内容で置き換えます。よろしいですか？\n\nシート: ' + sheetName + '\n認識列: M# = ' + colLabel(noColIdx) + '列 / Title = ' + colLabel(titleColIdx) + '列 / TIME = ' + colLabel(timeColIdx) + '列')) return;
         const newSongs = [];
         let order = 1;
-        for (let i = 1; i < rows.length; i++) {
+        const startRow = headerRowIdx >= 0 ? headerRowIdx + 1 : 1;
+        for (let i = startRow; i < rows.length; i++) {
           const row = rows[i];
-          // D154 Phase 5: 一番左のセル（M#）が空の行はスキップ
-          // → 種別判定も廃止（D154 Phase 3）し、全部「行」として取り込む
           if (!row) continue;
-          const mStr = String(row[0] || '').trim();
-          if (!mStr) continue; // 左セル空 → スキップ
-          const title = String(row[1] || '').trim();
-          const dur = rhParseTime(row[2]);
+          const mStr = String(row[noColIdx] || '').trim();
+          if (!mStr) continue; // 左セル（No）空 → スキップ
+          const title = String(row[titleColIdx] || '').trim();
+          const dur = rhParseTime(row[timeColIdx]);
           newSongs.push({
             id: Date.now() + i,
             orderIndex: order++,
-            mNo: mStr, // D158: Excel の左セルをそのまま保存
+            mNo: mStr,
             title: title || '（タイトル未定）',
             durationSeconds: dur,
-            timeStr: row[2] ? String(row[2]).trim() : '', // D158: 元の表記も保存
+            timeStr: row[timeColIdx] ? String(row[timeColIdx]).trim() : '',
             isEvent: false,
             isMC: false,
             isEncore: false,
