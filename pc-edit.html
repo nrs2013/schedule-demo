@@ -6124,10 +6124,24 @@ function show(id) {
     return m + ':' + String(s).padStart(2, '0');
   }
   function rhParseTime(str) {
-    if (!str) return 0;
-    const parts = String(str).trim().split(':');
+    if (!str && str !== 0) return 0;
+    // R161: Excel の時刻セルは数値（日数の小数）で来る → 86400 秒換算
+    if (typeof str === 'number' && isFinite(str)) {
+      if (str > 0 && str < 1) return Math.round(str * 86400);   // 0.001168 → 約 101 秒
+      return Math.round(str);
+    }
+    const s = String(str).trim();
+    // "m:ss" / "mm:ss" / "h:mm:ss" 形式
+    const parts = s.split(':');
+    if (parts.length === 3) return (parseInt(parts[0], 10) || 0) * 3600 + (parseInt(parts[1], 10) || 0) * 60 + (parseInt(parts[2], 10) || 0);
     if (parts.length === 2) return (parseInt(parts[0], 10) || 0) * 60 + (parseInt(parts[1], 10) || 0);
-    if (parts.length === 1) return parseInt(parts[0], 10) || 0;
+    // R161: 数字を含む文字列（"3:42" でないただの "222" など）も整数として扱う
+    if (parts.length === 1) {
+      const n = parseFloat(parts[0]);
+      if (!isFinite(n)) return 0;
+      if (n > 0 && n < 1) return Math.round(n * 86400);
+      return Math.round(n);
+    }
     return 0;
   }
   if (btnRhTemplate) {
