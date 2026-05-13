@@ -6359,8 +6359,21 @@ function show(id) {
     } catch(e) { console.warn('[R157] reload setlists err', e && e.message); }
   };
 
+  // R172: ユーザーが入力中なら drift 検知を一時停止（メモが消えるバグの修正）
+  function _r172IsEditing() {
+    try {
+      var ae = document.activeElement;
+      if (!ae || ae === document.body) return false;
+      var tag = ae.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return true;
+      if (ae.getAttribute && (ae.getAttribute('contenteditable') === 'true' || ae.isContentEditable)) return true;
+    } catch(e) {}
+    return false;
+  }
+
   // R157: 1 秒おきの drift 検知（setlists 版、R100 の rehearsalByDate と同じ仕組み）
   setInterval(function(){
+    if (_r172IsEditing()) return; // R172
     try {
       const v = localStorage.getItem(LS_KEY_SETLISTS);
       if (!v) return;
@@ -6375,6 +6388,7 @@ function show(id) {
 
   // R158: 6 キーの drift 検知（同じ仕組みを他キーにも展開）
   setInterval(function(){
+    if (_r172IsEditing()) return; // R172
     function check(key, memGetter, reloadFn) {
       try {
         const v = localStorage.getItem(key);
@@ -6423,6 +6437,8 @@ function show(id) {
   // 1秒おきに in-memory rehearsalByDate と localStorage を比較、ズレてたら強制 reload + render
   setInterval(function(){
     try {
+      // R172: ユーザーが入力中なら drift 検知をスキップ（メモ・タイトル等の入力中に reload+render が走るとフォーカスと文字が消える）
+      if (typeof _r172IsEditing === 'function' && _r172IsEditing()) return;
       const v = localStorage.getItem('schedule-studio:rehearsalByDate:v1');
       const lsObj = v ? JSON.parse(v) : {};
       const memObj = rehearsalByDate;
