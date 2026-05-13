@@ -3757,7 +3757,7 @@ renderHotelListPhone();
   function tryEnter(){
     var c=getActiveConcert();
     var expected=(c&&c.passwords&&c.passwords.entry)||'';
-    var fallback=(c&&c.passwords&&(c.passwords.artist||c.passwords.edit))||'';
+    var fallback=(c&&c.passwords&&c.passwords.artist)||''; // R174: STAFF 用 edit パスでは ARTIST 画面に入れないように
     var inp=document.getElementById('r170-entry-input'); var err=document.getElementById('r170-entry-err'); var v=inp?inp.value:'';
     if(!expected&&!fallback){ if(c)localStorage.setItem(ENTERED_PREFIX+c.id,'true'); hideLock(); return; }
     if(v===expected||(!expected&&v===fallback)){ if(c)localStorage.setItem(ENTERED_PREFIX+c.id,'true'); if(err)err.textContent=''; hideLock(); }
