@@ -6098,7 +6098,9 @@ function show(id) {
     // rhNo は数字パースが必要なので blur で確定
   });
 
-  container.addEventListener('blur', function(e){
+  // R175: blur は bubble しないので container では受けられない → focusout (bubble する) に変更。
+  //       これで RH#、M#、title、メモ等の編集確定保存が確実に走る
+  container.addEventListener('focusout', function(e){
     const el = e.target;
     if (!el || !el.dataset || !el.dataset.field) return;
     // R103: 編集確定直前に localStorage から reload
