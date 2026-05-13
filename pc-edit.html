@@ -1695,23 +1695,23 @@
     background: rgba(232,154,74,0.30) !important;
     color: #ffffff !important;
   }
-  /* R72: PDF ボタン（pc-btn-rh-pdf）を SET LIST タブと同じ緑ベースに */
+  /* R160: PDF ボタン（pc-btn-rh-pdf）をテクリハボタン（.rh-mode-btn.active）と同じ金色系に統一 */
   #pc-btn-rh-pdf {
     background: #14130f !important;
-    border: 1px solid rgba(110,194,126,0.40) !important;
-    color: #b8d9b0 !important;
+    border: 1px solid rgba(216,184,120,0.5) !important;
+    color: #f0e0c8 !important;
     font-weight: 600 !important;
     letter-spacing: 0.18em !important;
     text-transform: uppercase;
     transition: background 0.12s, color 0.12s, border-color 0.12s;
   }
   #pc-btn-rh-pdf:hover {
-    background: rgba(110,194,126,0.10) !important;
-    border-color: rgba(110,194,126,0.65) !important;
-    color: #d8f0bc !important;
+    background: rgba(216,184,120,0.10) !important;
+    border-color: rgba(216,184,120,0.65) !important;
+    color: #f5d4a8 !important;
   }
   #pc-btn-rh-pdf:active {
-    background: rgba(110,194,126,0.18) !important;
+    background: rgba(216,184,120,0.18) !important;
   }
 
     /* tab-bar 内のLINEボタンは廃止（タブ整理で削除） */
@@ -2755,7 +2755,9 @@
     flex-direction: column;
     align-items: center;
   }
+  /* R159: H/M ラベルを全時計から削除（display:none）。HTML 側の <span class="arr-time-lbl">H</span> 等は残すが視覚的に消える */
   .arr-time-lbl {
+    display: none !important;
     font-size: 9px;
     color: #5a5a54;
     letter-spacing: 0.20em;
@@ -2771,7 +2773,8 @@
     border: none;
     color: #e8e8e2;
     font-family: 'JetBrains Mono', 'Noto Sans JP', monospace;
-    font-size: 16px;
+    /* R159: H/M ラベルを消した分、数字を大きく */
+    font-size: 22px;
     font-weight: 400;
     padding: 2px 4px;
     border-radius: 3px;
