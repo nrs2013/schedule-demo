@@ -5966,6 +5966,8 @@ function show(id) {
             if (rehearsalByDate[k]) delete rehearsalByDate[k][id];
           });
           saveRehearsals();
+          // R162: 曲削除時の saveSetlists() 抜け修正（リロード/別端末で復活してしまうバグ）
+          if (typeof saveSetlists === 'function') saveSetlists();
           render();
         }
       }
@@ -7045,14 +7047,35 @@ function show(id) {
   // R155: PC カレンダーから tour:start/end を自動導出して localStorage に書き込む
   // スマホ側 (phone-staff/artist.html) が schedule-studio:tour:start/end を読むので、ここで PC のカレンダーデータと同期させる。
   // ツアー範囲 = calEvents の date と showTimes のキー（YYYY-MM-DD）の最小〜最大
+  // R162: 日付形式を正規化する補助関数（"2026/5/12" や Date オブジェクトも YYYY-MM-DD に揃える）
+  function _r162NormalizeDate(v) {
+    if (!v) return null;
+    try {
+      // Date オブジェクト
+      if (v instanceof Date && !isNaN(v)) {
+        return v.getFullYear() + '-' + String(v.getMonth()+1).padStart(2,'0') + '-' + String(v.getDate()).padStart(2,'0');
+      }
+      var s = String(v).trim();
+      // YYYY-MM-DD で始まる場合は先頭 10 文字
+      var m1 = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+      if (m1) return m1[1] + '-' + m1[2].padStart(2,'0') + '-' + m1[3].padStart(2,'0');
+      // YYYY/M/D 形式
+      var m2 = s.match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})/);
+      if (m2) return m2[1] + '-' + m2[2].padStart(2,'0') + '-' + m2[3].padStart(2,'0');
+      // パース可能なら Date 経由
+      var d = new Date(s);
+      if (!isNaN(d)) return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    } catch(e) {}
+    return null;
+  }
   function deriveTourRange() {
     const dates = [];
     try {
       if (Array.isArray(calEvents)) {
-        calEvents.forEach(function(e){ if (e && typeof e.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(e.date)) dates.push(e.date); });
+        calEvents.forEach(function(e){ if (e && e.date != null) { var nd = _r162NormalizeDate(e.date); if (nd) dates.push(nd); } });
       }
       if (showTimes && typeof showTimes === 'object') {
-        Object.keys(showTimes).forEach(function(k){ if (/^\d{4}-\d{2}-\d{2}$/.test(k)) dates.push(k); });
+        Object.keys(showTimes).forEach(function(k){ var nd = _r162NormalizeDate(k); if (nd) dates.push(nd); });
       }
     } catch(e) {}
     if (dates.length === 0) return null;

@@ -2730,6 +2730,10 @@ function selectTourDay(idx) {
   closeDatePicker();
   // R60 M2: 日付切替のたびに SCHEDULE タブの内容も calEvents/showTimes から更新
   if (typeof updateScheduleTabFromCalEvents === 'function') updateScheduleTabFromCalEvents();
+  // R162: changeTourDay と同じく、日付ピッカー選択時にも各画面を再描画
+  if (typeof renderRhCards === 'function') renderRhCards();
+  if (typeof renderArrivalListPhone === 'function') renderArrivalListPhone();
+  if (typeof renderScheduleDayListPhone === 'function') renderScheduleDayListPhone();
 }
 
 function changeTourDay(delta) {
