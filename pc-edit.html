@@ -6481,22 +6481,34 @@ function show(id) {
 
   // R100: applyFbItem の "localVal === item.v スキップ" による未再描画問題の保険
   // 1秒おきに in-memory rehearsalByDate と localStorage を比較、ズレてたら強制 reload + render
+  // R182: JSON.stringify はキー順で差が出るので、毎秒誤検出して render が走り、行 hover が点滅する。
+  //       → reload 後に「実質同じ」場合は再 render しないよう、reload 前後の lsStr で比較してから render。
   setInterval(function(){
     try {
-      // R172: ユーザーが入力中なら drift 検知をスキップ（メモ・タイトル等の入力中に reload+render が走るとフォーカスと文字が消える）
       if (typeof _r172IsEditing === 'function' && _r172IsEditing()) return;
       const v = localStorage.getItem('schedule-studio:rehearsalByDate:v1');
-      const lsObj = v ? JSON.parse(v) : {};
+      if (!v) return;
       const memObj = rehearsalByDate;
-      const lsStr = JSON.stringify(lsObj);
-      const memStr = JSON.stringify(memObj);
-      if (lsStr !== memStr) {
-        console.log('[R100] in-memory drift detected → reload+render');
-        window.__reloadRehearsalByDate();
-        window.__rehearsalRender();
+      // 安価な事前チェック：日付数とキー総数で軽く比較してから JSON.stringify する
+      let lsObj; try { lsObj = JSON.parse(v); } catch(_) { return; }
+      const lsKeys = Object.keys(lsObj || {});
+      const memKeys = Object.keys(memObj || {});
+      let needCheck = lsKeys.length !== memKeys.length;
+      if (!needCheck) {
+        // 各日付の曲数も比較
+        for (let i = 0; i < lsKeys.length; i++) {
+          const k = lsKeys[i];
+          const a = lsObj[k] || {}, b = memObj[k] || {};
+          if (Object.keys(a).length !== Object.keys(b).length) { needCheck = true; break; }
+        }
       }
+      // 構造同じならスキップ（JSON.stringify のキー順差による誤検出を回避）
+      if (!needCheck) return;
+      console.log('[R100/R182] structural drift detected → reload+render');
+      window.__reloadRehearsalByDate();
+      window.__rehearsalRender();
     } catch(e){}
-  }, 1000);
+  }, 2000);
 
   /* ========================================================
      R69: REHEARSAL 印刷ビュー (v7 レイアウト)
