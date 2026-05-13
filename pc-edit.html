@@ -162,7 +162,20 @@
     // R95: child_changed と child_added を統一処理（初回書き込みも反映するため）
     function applyFbItem(item) {
       if (!item || !item.k || typeof item.v !== 'string') return;
+      // R173: 自分の直近 write の echo を 3 秒間無視する（Excel 取込直後の child_added バーストで
+      //       in-memory の新曲リストが Firebase 側の古い値で上書きされるバグ対策）
+      try {
+        if (window.__lastFbWrite && window.__lastFbWrite.key === item.k
+            && (Date.now() - window.__lastFbWrite.time) < 3000) {
+          return;
+        }
+      } catch(_) {}
       const localVal = localStorage.getItem(item.k);
+      // R173: ローカルと同じ値なら、reload も不要（フルスキップ）。これで自分の write echo を完全に弾く
+      if (localVal === item.v) {
+        window.__lastFbReceive = { time: Date.now(), key: item.k };
+        return;
+      }
       // R101: localStorage 書き込みだけ skip、reload+render は in-memory ステイル防止のため必ず実行
       if (localVal !== item.v) {
         suppressFbWrite = true;
@@ -6341,6 +6354,19 @@ function show(id) {
       if (!v) return;
       const next = JSON.parse(v);
       if (!Array.isArray(next) || next.length === 0) return;
+      // R173: 安全ガード — LS のアクティブセトリが in-memory より曲数が少ない場合は
+      //       「Firebase 同期が in-memory より遅れて到着した」可能性が高いので、reload を skip。
+      //       これで Excel 取込で in-memory に新曲を入れた直後の LS 上書きを防ぐ。
+      try {
+        const _curActive = (Array.isArray(setlists) ? setlists.find(function(s){return s.id===activeSetlistId;}) : null);
+        const _nextActive = next.find(function(s){return s.id===activeSetlistId;});
+        if (_curActive && _nextActive
+            && Array.isArray(_curActive.songs) && Array.isArray(_nextActive.songs)
+            && _nextActive.songs.length < _curActive.songs.length) {
+          console.warn('[R173] __reloadSetlists skip: LS has fewer songs than memory (cur=' + _curActive.songs.length + ', next=' + _nextActive.songs.length + ')');
+          return;
+        }
+      } catch(_) {}
       // setlists 配列の中身を入れ替え（外部参照は壊さない）
       setlists.length = 0;
       Array.prototype.push.apply(setlists, next);
@@ -6415,6 +6441,8 @@ function show(id) {
   // Firebase 経由で別ソースから localStorage が書き換わった場合の保険
   window.addEventListener('storage', function(e){
     if (!e || !e.key) return;
+    // R173: 入力中は storage event reload もスキップ（R172 と同じ趣旨）
+    if (typeof _r172IsEditing === 'function' && _r172IsEditing()) return;
     if (e.key === 'schedule-studio:rehearsalByDate:v1') {
       console.log('[R100] storage event - rehearsalByDate changed, reload+render');
       try { window.__reloadRehearsalByDate(); } catch(err){}
