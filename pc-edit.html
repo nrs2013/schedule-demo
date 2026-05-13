@@ -5102,16 +5102,39 @@
       </div>
       <div class="info-form" id="info-form">
         <details style="margin-bottom:16px;background:rgba(255,255,255,0.03);padding:12px 16px;border-radius:6px;border:1px solid rgba(255,255,255,0.08);">
-          <summary style="cursor:pointer;color:#a8a8a0;font-size:12px;letter-spacing:0.06em;">⚙ LINE 連携 設定（初回のみ）</summary>
+          <summary style="cursor:pointer;color:#a8a8a0;font-size:12px;letter-spacing:0.06em;">⚙ LINE 連携 設定（初回のみ）— 順番に押すだけ</summary>
+          <!-- R167: 押すだけセットアップウィザード -->
           <div style="margin-top:10px;font-size:11px;color:#888;line-height:1.6;">
-            Google Apps Script のウェブアプリ URL を貼り付けてください。<br>
-            設定方法は <a href="line-setup-guide.html" target="_blank" style="color:#6ec6c8;">セットアップ手順</a> 参照。
+            下のボタンを <strong style="color:#e8e8e2;">1 → 2 → 3 → 4 → 5 → 6 → 7</strong> の順に押してください。
+            各ボタンが必要な画面を新しいタブで開きます。
           </div>
+          <div style="display:flex;flex-direction:column;gap:6px;margin-top:10px;">
+            <button type="button" onclick="window.open('https://manager.line.biz/account/@242uoxqo/setting/messaging-api','_blank')" style="background:#1d1d1d;border:1px solid rgba(216,184,120,0.5);color:#f0e0c8;padding:8px 12px;border-radius:4px;font-size:12px;cursor:pointer;text-align:left;">
+              <strong>1.</strong> LINE 公式アカウント管理画面を開く（Messaging API を有効化）
+            </button>
+            <button type="button" onclick="window.open('https://developers.line.biz/console/','_blank')" style="background:#1d1d1d;border:1px solid rgba(216,184,120,0.5);color:#f0e0c8;padding:8px 12px;border-radius:4px;font-size:12px;cursor:pointer;text-align:left;">
+              <strong>2.</strong> LINE Developers を開く（チャネルアクセストークンを取得 → コピー）
+            </button>
+            <button type="button" onclick="window.open('https://script.google.com/home','_blank')" style="background:#1d1d1d;border:1px solid rgba(216,184,120,0.5);color:#f0e0c8;padding:8px 12px;border-radius:4px;font-size:12px;cursor:pointer;text-align:left;">
+              <strong>3.</strong> Google Apps Script を新規プロジェクトで開く
+            </button>
+            <button type="button" onclick="window.__r167ShowGasCode()" style="background:#1d1d1d;border:1px solid rgba(216,184,120,0.5);color:#f0e0c8;padding:8px 12px;border-radius:4px;font-size:12px;cursor:pointer;text-align:left;">
+              <strong>3-b.</strong> GAS に貼るコードを表示する（コピーボタン付き）
+            </button>
+            <div style="background:rgba(255,255,255,0.04);padding:6px 10px;border-radius:4px;font-size:11px;color:#888;margin:4px 0;">
+              <strong style="color:#e8e8e2;">4.</strong> 上記 GAS をデプロイして、ウェブアプリ URL をここに貼って「保存」：
+            </div>
           <input type="text" id="info-line-gas-url" class="info-input" placeholder="https://script.google.com/macros/s/.../exec" style="margin-top:8px;font-family:'JetBrains Mono',monospace;font-size:11px;">
-          <div style="display:flex;gap:8px;margin-top:8px;">
+          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
             <button type="button" class="info-push-btn" style="background:#444;border-color:#666;font-size:12px;padding:6px 14px;" onclick="window.__r125SaveLineUrl()">保存</button>
             <button type="button" class="info-push-btn" style="background:#444;border-color:#666;font-size:12px;padding:6px 14px;" onclick="window.__r125TestLine()">テスト送信</button>
+            <button type="button" class="info-push-btn" style="background:#1d1d1d;border:1px solid rgba(216,184,120,0.5);color:#f0e0c8;font-size:12px;padding:6px 14px;" onclick="window.__r167CopyGasUrl()">📋 5. この URL をコピー</button>
+            <button type="button" class="info-push-btn" style="background:#1d1d1d;border:1px solid rgba(216,184,120,0.5);color:#f0e0c8;font-size:12px;padding:6px 14px;" onclick="window.open('https://developers.line.biz/console/','_blank')">6. Webhook 登録のため LINE Developers を開く</button>
             <span id="info-line-status" style="color:#888;font-size:11px;align-self:center;"></span>
+          </div>
+          <div style="background:rgba(255,255,255,0.04);padding:6px 10px;border-radius:4px;font-size:11px;color:#888;margin-top:8px;line-height:1.6;">
+            <strong style="color:#e8e8e2;">7.</strong> あなたの LINE で「○○公演スタッフ」グループを作り、<strong style="color:#e8e8e2;">SCHEDULE STUDIO Bot を招待</strong>してください。招待された瞬間、Bot が自動で参加メッセージを送ります。<br>
+            その後、下の「この公演 のグループ ID」セクションで「グループ一覧を取得」を押すと一覧から選べます。
           </div>
           <!-- R164: 現在の公演に紐付ける LINE グループ ID（公演ごとに変える） -->
           <div style="margin-top:14px;padding-top:12px;border-top:1px dashed rgba(255,255,255,0.12);">
@@ -9239,6 +9262,60 @@ function show(id) {
       if (status) { status.textContent = gid ? '✓ この公演に紐付けました' : '✓ クリアしました'; status.style.color = '#7ec27a'; }
     } catch(e) {
       if (status) { status.textContent = '✗ 保存失敗: ' + e.message; status.style.color = '#e07a5f'; }
+    }
+  };
+
+  // R167: GAS コードをモーダルで表示してコピー可能に
+  window.__r167ShowGasCode = function() {
+    fetch('line-gas-bot.gs').then(function(r){ return r.text(); }).then(function(code){
+      var bg = document.createElement('div');
+      bg.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:99999;display:flex;align-items:center;justify-content:center;padding:24px;';
+      bg.onclick = function(e){ if (e.target === bg) bg.remove(); };
+      var box = document.createElement('div');
+      box.style.cssText = 'background:#1a1a1a;border:1px solid rgba(216,184,120,0.4);border-radius:8px;padding:18px;max-width:920px;width:100%;max-height:88vh;display:flex;flex-direction:column;';
+      box.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">' +
+        '<strong style="color:#f0e0c8;font-size:14px;">GAS に貼るコード</strong>' +
+        '<button id="r167-copy-code" style="background:#1d1d1d;border:1px solid rgba(216,184,120,0.5);color:#f0e0c8;padding:6px 14px;border-radius:4px;font-size:12px;cursor:pointer;">📋 コードをコピー</button>' +
+        '</div>' +
+        '<div style="color:#888;font-size:11px;margin-bottom:8px;line-height:1.6;">GAS の「コード.gs」を全選択して削除 → ここの内容を貼り付け → 一番上の CHANNEL_ACCESS_TOKEN にトークンを貼る → デプロイ → ウェブアプリ URL を SCHEDULE STUDIO に戻して保存。</div>' +
+        '<textarea readonly id="r167-code-area" style="flex:1;background:#0a0a08;color:#e8e8e2;border:1px solid #2c2c2c;border-radius:4px;padding:10px;font-family:JetBrains Mono,monospace;font-size:11px;line-height:1.5;resize:none;min-height:400px;"></textarea>' +
+        '<div style="text-align:right;margin-top:10px;"><button id="r167-close" style="background:#444;border:1px solid #666;color:#e8e8e2;padding:6px 18px;border-radius:4px;font-size:12px;cursor:pointer;">閉じる</button></div>';
+      bg.appendChild(box);
+      document.body.appendChild(bg);
+      box.querySelector('#r167-code-area').value = code;
+      box.querySelector('#r167-close').onclick = function(){ bg.remove(); };
+      box.querySelector('#r167-copy-code').onclick = function(){
+        var ta = box.querySelector('#r167-code-area');
+        ta.select();
+        try { document.execCommand('copy'); this.textContent = '✓ コピーしました'; this.style.background = 'rgba(126,194,122,0.18)'; }
+        catch(e) { this.textContent = 'コピー失敗'; }
+      };
+    }).catch(function(err){
+      alert('GAS コードの取得に失敗しました。\nブラウザでこのページを直接開いてリトライしてください。\n\n' + err.message);
+    });
+  };
+
+  // R167: GAS URL を clipboard にコピー（Webhook 登録用）
+  window.__r167CopyGasUrl = function() {
+    var url = localStorage.getItem('schedule-studio:line-gas-url') || '';
+    var status = document.getElementById('info-line-status');
+    if (!url) {
+      if (status) { status.textContent = '✗ 先に GAS URL を保存してください'; status.style.color = '#e07a5f'; }
+      return;
+    }
+    try {
+      navigator.clipboard.writeText(url).then(function(){
+        if (status) { status.textContent = '✓ URL をコピーしました。LINE Developers の Webhook URL 欄に貼ってください'; status.style.color = '#7ec27a'; }
+      }, function(err){
+        if (status) { status.textContent = '✗ コピー失敗: ' + err.message; status.style.color = '#e07a5f'; }
+      });
+    } catch(e) {
+      // フォールバック
+      var ta = document.createElement('textarea');
+      ta.value = url; document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); if (status) { status.textContent = '✓ URL をコピーしました'; status.style.color = '#7ec27a'; } }
+      catch(_) { if (status) { status.textContent = '✗ コピー失敗'; status.style.color = '#e07a5f'; } }
+      document.body.removeChild(ta);
     }
   };
 
