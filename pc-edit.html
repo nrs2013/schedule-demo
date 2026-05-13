@@ -6209,6 +6209,8 @@ function show(id) {
         }
         songs.length = 0;
         Array.prototype.push.apply(songs, newSongs);
+        // R151: 保存（localStorage 永続化 + Firebase 同期）— 取込結果を確実に残す
+        if (typeof saveSetlists === 'function') saveSetlists();
         render();
         alert('Excel から ' + newSongs.length + ' 件の曲を取り込みました。');
       } catch (err) {
@@ -6232,6 +6234,8 @@ function show(id) {
     var msg = (modeLabel || '') + 'の曲リストを全部リセットします。\n\n表示中のセトリの曲が全部消えます。\n（テクリハとリハーサルは曲リストを共有してるので、両方の表示が空になります）\n\n本当にリセットしますか？';
     if (!confirm(msg)) return;
     songs.length = 0;
+    // R151: 保存（localStorage 永続化 + Firebase 同期）— リロード時にも反映を残す
+    if (typeof saveSetlists === 'function') saveSetlists();
     if (typeof render === 'function') render();
   };
 
