@@ -140,6 +140,14 @@
       if (typeof window.__reloadSetlists === 'function') {
         try { window.__reloadSetlists(); console.log('[R157] startup setlists reload OK'); } catch(e){}
       }
+      // R158: R157 と同じパターンで他キー（6 種）の in-memory も起動時に同期する
+      if (typeof window.__reloadCalEvents === 'function')   { try { window.__reloadCalEvents(); }   catch(e){} }
+      if (typeof window.__reloadShowTimes === 'function')   { try { window.__reloadShowTimes(); }   catch(e){} }
+      if (typeof window.__reloadCalMemos === 'function')    { try { window.__reloadCalMemos(); }    catch(e){} }
+      if (typeof window.__reloadArrivals === 'function')    { try { window.__reloadArrivals(); }    catch(e){} }
+      if (typeof window.__reloadDailyEvents === 'function') { try { window.__reloadDailyEvents(); } catch(e){} }
+      if (typeof window.__reloadHotels === 'function')      { try { window.__reloadHotels(); }      catch(e){} }
+      console.log('[R158] startup reload all keys OK');
       if (typeof window.__rehearsalRender === 'function') {
         try { window.__rehearsalRender(); } catch(e){}
       }
@@ -6301,6 +6309,30 @@ function show(id) {
     } catch(e){}
   }, 1000);
 
+  // R158: 6 キーの drift 検知（同じ仕組みを他キーにも展開）
+  setInterval(function(){
+    function check(key, memGetter, reloadFn) {
+      try {
+        const v = localStorage.getItem(key);
+        if (!v) return;
+        let memObj;
+        try { memObj = memGetter(); } catch(_){ return; }
+        if (typeof memObj === 'undefined') return;
+        const memStr = JSON.stringify(memObj);
+        if (v !== memStr) {
+          console.log('[R158] drift detected: ' + key + ' → reload');
+          if (typeof reloadFn === 'function') reloadFn();
+        }
+      } catch(e){}
+    }
+    check('schedule-studio:calEvents:v1',             function(){ return (typeof calEvents             !== 'undefined') ? calEvents             : undefined; }, window.__reloadCalEvents);
+    check('schedule-studio:showTimes:v1',             function(){ return (typeof showTimes             !== 'undefined') ? showTimes             : undefined; }, window.__reloadShowTimes);
+    check('schedule-studio:calMemos:v1',              function(){ return (typeof calMemos              !== 'undefined') ? calMemos              : undefined; }, window.__reloadCalMemos);
+    check('schedule-studio:arrivalSectionsByDate:v1', function(){ return (typeof arrivalSectionsByDate !== 'undefined') ? arrivalSectionsByDate : undefined; }, window.__reloadArrivals);
+    check('schedule-studio:dayEvents:v1',             function(){ return (typeof dailyEvents           !== 'undefined') ? dailyEvents           : undefined; }, window.__reloadDailyEvents);
+    check('schedule-studio:hotels:v1',                function(){ return (typeof hotels                !== 'undefined') ? hotels                : undefined; }, window.__reloadHotels);
+  }, 1000);
+
   // R100: storage イベント = 他タブ/他デバイス（一部ブラウザ）からの localStorage 変更を検知
   // Firebase 経由で別ソースから localStorage が書き換わった場合の保険
   window.addEventListener('storage', function(e){
@@ -6314,6 +6346,13 @@ function show(id) {
       console.log('[R100/R157] storage event - setlists changed, reload+render');
       try { window.__reloadSetlists(); } catch(err){}
     }
+    // R158: 他キーも storage event で reload
+    if (e.key === 'schedule-studio:calEvents:v1')             { try { window.__reloadCalEvents   && window.__reloadCalEvents();   } catch(err){} }
+    if (e.key === 'schedule-studio:showTimes:v1')             { try { window.__reloadShowTimes   && window.__reloadShowTimes();   } catch(err){} }
+    if (e.key === 'schedule-studio:calMemos:v1')              { try { window.__reloadCalMemos    && window.__reloadCalMemos();    } catch(err){} }
+    if (e.key === 'schedule-studio:arrivalSectionsByDate:v1') { try { window.__reloadArrivals    && window.__reloadArrivals();    } catch(err){} }
+    if (e.key === 'schedule-studio:dayEvents:v1')             { try { window.__reloadDailyEvents && window.__reloadDailyEvents(); } catch(err){} }
+    if (e.key === 'schedule-studio:hotels:v1')                { try { window.__reloadHotels      && window.__reloadHotels();      } catch(err){} }
   });
 
   // R100: applyFbItem の "localVal === item.v スキップ" による未再描画問題の保険
