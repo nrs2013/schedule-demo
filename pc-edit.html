@@ -6243,11 +6243,14 @@ function show(id) {
       try {
         const arr = new Uint8Array(ev.target.result);
         const wb = XLSX.read(arr, {type: 'array'});
-        // R144: シート選択（複数シートある場合）
+        // R144: シート選択（複数シートある場合） / R178: DAY 系のシート名を優先デフォルトに
         let sheetName = wb.SheetNames[0];
         if (wb.SheetNames.length > 1) {
-          const list = wb.SheetNames.map(function(n, i){ return (i+1) + '. ' + n; }).join('\n');
-          const sel = prompt('どのシートを取り込みますか？\n\n' + list + '\n\n番号を入力 (1〜' + wb.SheetNames.length + '):', '1');
+          // R178: "DAY1" "DAY2" 等の本番セトリ用シートを優先。なければ最後のシート（新しい運用が多いため）
+          let defaultIdx = wb.SheetNames.findIndex(function(n){ return /^DAY\s*\d+/i.test(n); });
+          if (defaultIdx < 0) defaultIdx = wb.SheetNames.length - 1;
+          const list = wb.SheetNames.map(function(n, i){ return (i+1) + '. ' + n + (i === defaultIdx ? ' ★推奨' : ''); }).join('\n');
+          const sel = prompt('取り込むシートを選んでください。\n本番セトリは「DAY1」「DAY2」など日付別シートが多いです（旧テンプレ流用の場合、古い「セットリスト」シートが残ってることがあります）。\n\n' + list + '\n\n番号を入力 (1〜' + wb.SheetNames.length + '):', String(defaultIdx + 1));
           if (sel === null) return; // キャンセル
           const n = parseInt(sel, 10);
           if (!isNaN(n) && n >= 1 && n <= wb.SheetNames.length) {
@@ -6292,13 +6295,20 @@ function show(id) {
           if (!mStr) continue; // 左セル（No）空 → スキップ
           const title = String(row[titleColIdx] || '').trim();
           const dur = rhParseTime(row[timeColIdx]);
+          // R178: timeStr が Excel 時刻シリアル値（数値 / "0.001168..." の文字列）の場合は durationSeconds から M:SS に整形して保存。表示時の見た目が壊れないように
+          let _timeStr = row[timeColIdx] ? String(row[timeColIdx]).trim() : '';
+          if (_timeStr && /^\d*\.\d+$/.test(_timeStr)) {
+            const _m = Math.floor((dur || 0) / 60);
+            const _s = (dur || 0) % 60;
+            _timeStr = _m + ':' + String(_s).padStart(2, '0');
+          }
           newSongs.push({
             id: Date.now() + i,
             orderIndex: order++,
             mNo: mStr,
             title: title || '（タイトル未定）',
             durationSeconds: dur,
-            timeStr: row[timeColIdx] ? String(row[timeColIdx]).trim() : '',
+            timeStr: _timeStr,
             isEvent: false,
             isMC: false,
             isEncore: false,
