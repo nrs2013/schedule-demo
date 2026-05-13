@@ -2737,6 +2737,10 @@ function changeTourDay(delta) {
   selectedDayIdx = next;
   renderDateBar();
   if (typeof updateScheduleTabFromCalEvents === 'function') updateScheduleTabFromCalEvents();
+  // R149: wrap チェーンを廃止し、ここで直接 3 つの再描画を呼ぶ（R143 の修正を再適用）
+  if (typeof renderRhCards === 'function') renderRhCards();
+  if (typeof renderArrivalListPhone === 'function') renderArrivalListPhone();
+  if (typeof renderScheduleDayListPhone === 'function') renderScheduleDayListPhone();
 }
 
 // 初期化：ツアー期間からカレンダーを作って今日に合わせる
@@ -2927,12 +2931,7 @@ window.addEventListener('DOMContentLoaded', function() {
   setTimeout(renderRhCards, 100);
 });
 
-// 日付切替時にも再描画
-const _renderAfterDateChange = window.changeTourDay || function(){};
-window.changeTourDay = function(delta) {
-  _renderAfterDateChange.call(this, delta);
-  renderRhCards();
-};
+// R149: 日付切替の wrap は削除（renderRhCards は本体 changeTourDay 内で直接呼ぶ）
 
 // R88b: Firebase 経由で setlists / rehearsalByDate が変わったら自動再描画
 // 監視を 500ms 間隔に短縮、デバッグログも追加
@@ -3312,11 +3311,7 @@ window.selectTourDay = function(idx) {
   _selectTourDayAfterM3(idx);
   renderArrivalListPhone();
 };
-const _changeTourDayAfterM3 = window.changeTourDay || changeTourDay;
-window.changeTourDay = function(delta) {
-  _changeTourDayAfterM3(delta);
-  renderArrivalListPhone();
-};
+// R149: changeTourDay wrap は削除（renderArrivalListPhone は本体 changeTourDay 内で直接呼ぶ）
 
 // 起動時にも1回
 renderArrivalListPhone();
@@ -3472,11 +3467,7 @@ window.selectTourDay = function(idx) {
   _selectTourDayAfterDayEvents(idx);
   renderScheduleDayListPhone();
 };
-const _changeTourDayAfterDayEvents = window.changeTourDay || changeTourDay;
-window.changeTourDay = function(delta) {
-  _changeTourDayAfterDayEvents(delta);
-  renderScheduleDayListPhone();
-};
+// R149: changeTourDay wrap は削除（renderScheduleDayListPhone は本体 changeTourDay 内で直接呼ぶ）
 
 // 起動時にも1回
 renderScheduleDayListPhone();
