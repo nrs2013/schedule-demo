@@ -6938,9 +6938,37 @@ function show(id) {
   })();
 
   // 保存ヘルパー
-  function saveCalEvents()  { saveJSON(LS_KEY_EVENTS, calEvents); }
-  function saveShowTimes()  { saveJSON(LS_KEY_SHOW_TIMES, showTimes); }
+  function saveCalEvents()  { saveJSON(LS_KEY_EVENTS, calEvents); updateTourRangeFromData(); }
+  function saveShowTimes()  { saveJSON(LS_KEY_SHOW_TIMES, showTimes); updateTourRangeFromData(); }
   function saveCalMemos()   { saveJSON(LS_KEY_MEMOS, calMemos); }
+
+  // R155: PC カレンダーから tour:start/end を自動導出して localStorage に書き込む
+  // スマホ側 (phone-staff/artist.html) が schedule-studio:tour:start/end を読むので、ここで PC のカレンダーデータと同期させる。
+  // ツアー範囲 = calEvents の date と showTimes のキー（YYYY-MM-DD）の最小〜最大
+  function deriveTourRange() {
+    const dates = [];
+    try {
+      if (Array.isArray(calEvents)) {
+        calEvents.forEach(function(e){ if (e && typeof e.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(e.date)) dates.push(e.date); });
+      }
+      if (showTimes && typeof showTimes === 'object') {
+        Object.keys(showTimes).forEach(function(k){ if (/^\d{4}-\d{2}-\d{2}$/.test(k)) dates.push(k); });
+      }
+    } catch(e) {}
+    if (dates.length === 0) return null;
+    dates.sort();
+    return { start: dates[0], end: dates[dates.length - 1] };
+  }
+  function updateTourRangeFromData() {
+    const r = deriveTourRange();
+    if (!r) return;
+    try {
+      localStorage.setItem('schedule-studio:tour:start', r.start);
+      localStorage.setItem('schedule-studio:tour:end', r.end);
+    } catch(e) {}
+  }
+  // 起動時に1回（calEvents / showTimes を読んだ直後の状態で同期）
+  updateTourRangeFromData();
 
   // R53: 編集モード/閲覧モードの分け廃止 → 常に編集UI
   // calEditMode フラグは互換のため残す（true 固定）が、もう参照は不要
