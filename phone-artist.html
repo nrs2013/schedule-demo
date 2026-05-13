@@ -3721,5 +3721,23 @@ renderHotelListPhone();
   setInterval(update, 2000); // Firebase 同期で concerts が arrived した時にも追従
 })();
 </script>
+
+<!-- R168: 起動時に show() を呼んで上タブ表示を確実に走らせる -->
+<script>
+(function r168InitShow(){
+  function init() {
+    var active = document.querySelector('.screen.active');
+    if (!active || typeof show !== 'function') return;
+    var screenId = active.id.replace(/^screen-/, '');
+    var bottomTab = (screenId === 'rh' || screenId === 'tekuriha') ? 'rehearsal' : screenId;
+    try { show(bottomTab); } catch(e) { console.warn('[R168] init show error', e); }
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function(){ setTimeout(init, 50); });
+  } else {
+    setTimeout(init, 50);
+  }
+})();
+</script>
 </body>
 </html>

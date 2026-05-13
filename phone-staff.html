@@ -3702,5 +3702,27 @@ renderHotelListPhone();
   setInterval(update, 2000); // Firebase 同期で concerts が arrived した時にも追従
 })();
 </script>
+
+<!-- R168: 起動時に show() を呼んで上タブ（テクリハ/全体リハ/セトリ順/リハ順）の表示制御を確実に走らせる
+     原因: HTML で <div class="screen active"> と直接書かれた場合、show() を経由しないので
+           top-tabs-bar の display 切替ロジックが走らない -->
+<script>
+(function r168InitShow(){
+  function init() {
+    var active = document.querySelector('.screen.active');
+    if (!active || typeof show !== 'function') return;
+    var screenId = active.id.replace(/^screen-/, '');
+    // 'rh' / 'tekuriha' は show() の中で actualScreenId として処理される
+    // 'rehearsal' を渡すと lastRehearsalSub から rh or tekuriha が選ばれる
+    var bottomTab = (screenId === 'rh' || screenId === 'tekuriha') ? 'rehearsal' : screenId;
+    try { show(bottomTab); } catch(e) { console.warn('[R168] init show error', e); }
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function(){ setTimeout(init, 50); });
+  } else {
+    setTimeout(init, 50);
+  }
+})();
+</script>
 </body>
 </html>
