@@ -162,16 +162,9 @@
     // R95: child_changed と child_added を統一処理（初回書き込みも反映するため）
     function applyFbItem(item) {
       if (!item || !item.k || typeof item.v !== 'string') return;
-      // R173: 自分の直近 write の echo を 3 秒間無視する（Excel 取込直後の child_added バーストで
-      //       in-memory の新曲リストが Firebase 側の古い値で上書きされるバグ対策）
-      try {
-        if (window.__lastFbWrite && window.__lastFbWrite.key === item.k
-            && (Date.now() - window.__lastFbWrite.time) < 3000) {
-          return;
-        }
-      } catch(_) {}
+      // R177: R173 の「自分の write を 3 秒間無視」は他端末からの正当な更新も巻き込んでしまうため撤去。
+      //       代わりに次の `localVal === item.v` フルスキップだけで echo を弾く（同じ値なら何もしない）。
       const localVal = localStorage.getItem(item.k);
-      // R173: ローカルと同じ値なら、reload も不要（フルスキップ）。これで自分の write echo を完全に弾く
       if (localVal === item.v) {
         window.__lastFbReceive = { time: Date.now(), key: item.k };
         return;
@@ -9335,6 +9328,13 @@ function show(id) {
     var status = document.getElementById('info-entry-pass-status');
     if (!inp) return;
     var pw = (inp.value || '').trim();
+    // R177: 空保存の誤クリック防止（クリアする場合だけ確認）
+    if (!pw) {
+      if (!confirm('入場パスワードを「未設定」に戻します。\nLINE 経由で来たスタッフが認証なしで入れるようになります。\n\nよろしいですか？')) {
+        if (status) { status.textContent = '✗ キャンセル'; status.style.color = '#888'; }
+        return;
+      }
+    }
     try {
       var concerts = JSON.parse(localStorage.getItem('schedule-studio:concerts:v1') || '[]');
       var id = localStorage.getItem('schedule-studio:active-concert-id');
