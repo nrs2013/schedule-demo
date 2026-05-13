@@ -1695,20 +1695,24 @@
     background: rgba(232,154,74,0.30) !important;
     color: #ffffff !important;
   }
-  /* R160: PDF ボタン（pc-btn-rh-pdf）をテクリハボタン（.rh-mode-btn.active）と同じ金色系に統一 */
+  /* R160+R171: PDF ボタンをテクリハ active と完全一致させる（background/color/font/letter-spacing 全部揃える） */
   #pc-btn-rh-pdf {
-    background: #14130f !important;
+    background: rgba(255,255,255,0.06) !important;
     border: 1px solid rgba(216,184,120,0.5) !important;
-    color: #f0e0c8 !important;
-    font-weight: 600 !important;
-    letter-spacing: 0.18em !important;
-    text-transform: uppercase;
+    color: #f0f0ec !important;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    letter-spacing: 0.08em !important;
+    text-transform: none !important;
+    padding: 8px 18px !important;
+    border-radius: 6px !important;
     transition: background 0.12s, color 0.12s, border-color 0.12s;
   }
   #pc-btn-rh-pdf:hover {
-    background: rgba(216,184,120,0.10) !important;
+    background: rgba(255,255,255,0.10) !important;
     border-color: rgba(216,184,120,0.65) !important;
-    color: #f5d4a8 !important;
+    color: #ffffff !important;
   }
   #pc-btn-rh-pdf:active {
     background: rgba(216,184,120,0.18) !important;
