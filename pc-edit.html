@@ -6292,8 +6292,9 @@ function show(id) {
           const row = rows[i];
           if (!row) continue;
           const mStr = String(row[noColIdx] || '').trim();
-          if (!mStr) continue; // 左セル（No）空 → スキップ
           const title = String(row[titleColIdx] || '').trim();
+          // R183: No と Title の両方が空の時だけスキップ。No だけ空の Overture/OPENING/SE 等も取り込む
+          if (!mStr && !title) continue;
           const dur = rhParseTime(row[timeColIdx]);
           // R178: timeStr が Excel 時刻シリアル値（数値 / "0.001168..." の文字列）の場合は durationSeconds から M:SS に整形して保存。表示時の見た目が壊れないように
           let _timeStr = row[timeColIdx] ? String(row[timeColIdx]).trim() : '';
