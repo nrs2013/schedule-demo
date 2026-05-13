@@ -2683,8 +2683,9 @@ let tourEnd = (function(){
   if (_t < _ts) tourStart = _r65eYmd(_t);
   if (_t > _te) tourEnd   = _r65eYmd(_t);
 })();
-let tourDays = [];
-let selectedDayIdx = 0;
+// R154: let → var に変更。HTML inline onclick から確実にグローバル参照できるようにする
+var tourDays = [];
+var selectedDayIdx = 0;
 
 function buildTourDays(startStr, endStr) {
   const start = new Date(startStr);
@@ -2792,6 +2793,12 @@ function changeTourDay(delta) {
   const next = selectedDayIdx + delta;
   if (next < 0 || next >= tourDays.length) return;
   selectedDayIdx = next;
+  // R154: 保険として日付表示を直接 DOM 更新（renderDateBar が何かで動かなくても日付は変わる）
+  try {
+    const _d = tourDays[selectedDayIdx];
+    const _el = document.getElementById('tour-date-main');
+    if (_el && _d) _el.textContent = _d.date + ' (' + _d.dow + ')';
+  } catch(e) {}
   renderDateBar();
   if (typeof updateScheduleTabFromCalEvents === 'function') updateScheduleTabFromCalEvents();
   // R149: wrap チェーンを廃止し、ここで直接 3 つの再描画を呼ぶ（R143 の修正を再適用）
@@ -2799,6 +2806,8 @@ function changeTourDay(delta) {
   if (typeof renderArrivalListPhone === 'function') renderArrivalListPhone();
   if (typeof renderScheduleDayListPhone === 'function') renderScheduleDayListPhone();
 }
+// R154: changeTourDay をグローバルにも公開（HTML inline onclick から確実に呼べるように）
+window.changeTourDay = changeTourDay;
 
 // 初期化：ツアー期間からカレンダーを作って今日に合わせる
 refreshTour();
