@@ -135,6 +135,11 @@
       if (typeof window.__reloadRehearsalByDate === 'function') {
         try { window.__reloadRehearsalByDate(); console.log('[R101] startup reload OK'); } catch(e){}
       }
+      // R157: 起動時 FB pull で localStorage が新しく上書きされても in-memory の setlists/songs は古い
+      // ままだった問題を修正。pull 完了後に必ず __reloadSetlists を呼ぶ。
+      if (typeof window.__reloadSetlists === 'function') {
+        try { window.__reloadSetlists(); console.log('[R157] startup setlists reload OK'); } catch(e){}
+      }
       if (typeof window.__rehearsalRender === 'function') {
         try { window.__rehearsalRender(); } catch(e){}
       }
@@ -6253,9 +6258,48 @@ function show(id) {
       console.log('[R94c] rehearsalByDate reloaded, dates=' + Object.keys(rehearsalByDate).length);
     } catch(e) { console.warn('[R94c] reload reh err', e && e.message); }
   };
-  // setlists のリロードは PC 側ではほぼ不要（PC が曲名編集の主体）なので no-op に。
-  // 今後スマホ側から setlists を編集する機能が出来た時に実装する。
-  window.__reloadSetlists = function() { /* no-op for now */ };
+  // R157: __reloadSetlists を本実装。
+  // 起動時の Firebase pull で localStorage が新しいデータに上書きされても、in-memory の setlists/songs が古い
+  // ままだった → Excel 取込時に古い in-memory が新データで上書きされ、saveSetlists() で Firebase に書き戻し、
+  // 結果「全く別のセットリスト」が見える、というバグを修正。
+  // localStorage の最新 setlists を読んで in-memory に反映し、songs 参照も再バインドして再描画する。
+  window.__reloadSetlists = function() {
+    try {
+      const v = localStorage.getItem(LS_KEY_SETLISTS);
+      if (!v) return;
+      const next = JSON.parse(v);
+      if (!Array.isArray(next) || next.length === 0) return;
+      // setlists 配列の中身を入れ替え（外部参照は壊さない）
+      setlists.length = 0;
+      Array.prototype.push.apply(setlists, next);
+      // activeSetlistId の整合
+      if (!activeSetlistId || !setlists.find(function(s){ return s.id === activeSetlistId; })) {
+        activeSetlistId = setlists[0].id;
+        try { localStorage.setItem(__LS_PREFIX_SL + 'activeSetlistId', activeSetlistId); } catch(e) {}
+      }
+      // songs を新しい setlists.find(...).songs に再バインド
+      const _sl = setlists.find(function(s){ return s.id === activeSetlistId; });
+      if (_sl) songs = _sl.songs;
+      // 再描画
+      if (typeof renderSetlistTabs === 'function') renderSetlistTabs();
+      if (typeof render === 'function') render();
+      console.log('[R157] setlists reloaded, count=' + setlists.length + ', active=' + activeSetlistId + ', songs=' + (_sl ? _sl.songs.length : '?'));
+    } catch(e) { console.warn('[R157] reload setlists err', e && e.message); }
+  };
+
+  // R157: 1 秒おきの drift 検知（setlists 版、R100 の rehearsalByDate と同じ仕組み）
+  setInterval(function(){
+    try {
+      const v = localStorage.getItem(LS_KEY_SETLISTS);
+      if (!v) return;
+      const lsStr = v;
+      const memStr = JSON.stringify(setlists);
+      if (lsStr !== memStr) {
+        console.log('[R157] in-memory setlists drift detected → reload');
+        window.__reloadSetlists();
+      }
+    } catch(e){}
+  }, 1000);
 
   // R100: storage イベント = 他タブ/他デバイス（一部ブラウザ）からの localStorage 変更を検知
   // Firebase 経由で別ソースから localStorage が書き換わった場合の保険
@@ -6267,8 +6311,8 @@ function show(id) {
       try { window.__rehearsalRender(); } catch(err){}
     }
     if (e.key === 'schedule-studio:setlists:v1') {
-      console.log('[R100] storage event - setlists changed');
-      try { window.__rehearsalRender(); } catch(err){}
+      console.log('[R100/R157] storage event - setlists changed, reload+render');
+      try { window.__reloadSetlists(); } catch(err){}
     }
   });
 
