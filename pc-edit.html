@@ -1296,7 +1296,7 @@
   /* 列順: drag / M# / TITLE / TIME / RH# / TAGS(8タグ) / MEMO(広く) / × */
   .pc-table-header {
     display: grid;
-    grid-template-columns: 28px 50px 320px 60px 50px 432px minmax(180px, 1fr) 26px; /* R180: TITLE を 320px の固定幅に（最長曲名「夜空で一番輝いてる星の名前を僕は知らない」が省略されずに収まる）/ MEMO は flex で残り埋める */
+    grid-template-columns: 28px 50px 365px 60px 50px 432px minmax(180px, 1fr) 26px; /* R181: TITLE を 320→365px に拡張（あと 3 文字分） */
     gap: 8px;
     padding: 6px 14px;
     background: #1a1918;
@@ -1312,7 +1312,7 @@
     /* D132: REHEARSAL 曲行カードを「少し沈める」B 案 #141311 に
        カード感は残しつつ、CALENDAR 素地 #0E0D0C に近づけてアプリ全体のトーン統一 */
     display: grid;
-    grid-template-columns: 28px 50px 320px 60px 50px 432px minmax(180px, 1fr) 26px; /* R180: TITLE を 320px の固定幅に（最長曲名「夜空で一番輝いてる星の名前を僕は知らない」が省略されずに収まる）/ MEMO は flex で残り埋める */
+    grid-template-columns: 28px 50px 365px 60px 50px 432px minmax(180px, 1fr) 26px; /* R181: TITLE を 320→365px に拡張（あと 3 文字分） */
     gap: 8px;
     padding: 6px 14px;
     background: #141311;
