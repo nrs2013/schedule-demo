@@ -1246,6 +1246,17 @@
   .pc-btn:hover { color: #e8e8e2; border-color: #5a5a53; }
   .pc-btn.primary { background: rgba(255,255,255,0.06); color: #f0f0ec; border-color: rgba(216,184,120,0.5); }
   .pc-btn.primary:hover { background: rgba(255,255,255,0.10); border-color: rgba(216,184,120,0.7); }
+  /* R145: リセットボタン（赤系で危険感）*/
+  .pc-btn.pc-btn-reset {
+    background: rgba(226,75,74,0.10);
+    color: #e07a5f;
+    border-color: rgba(226,75,74,0.45);
+  }
+  .pc-btn.pc-btn-reset:hover {
+    background: rgba(226,75,74,0.18);
+    border-color: rgba(226,75,74,0.7);
+    color: #f0998a;
+  }
   /* + 追加 横の種類セレクト */
   .pc-add-type-select {
     background: #1c1b19;
@@ -4951,6 +4962,9 @@
              - Excel: D&D で代替（既存 handler はそのまま動く）
              - テンプレ: 不要に
              - + 行を追加: 曲リストの末尾にフルワイドで配置（後段の pc-add-row-bottom） -->
+        <!-- R145: テクリハ / 全リハ それぞれにリセットボタン（曲リストは共通のため動作は同じ） -->
+        <button id="pc-btn-reset-tekuriha" class="pc-btn pc-btn-reset" type="button" onclick="window.__resetRehearsalSongs && window.__resetRehearsalSongs('テクリハ')">テクリハ リセット</button>
+        <button id="pc-btn-reset-main" class="pc-btn pc-btn-reset" type="button" onclick="window.__resetRehearsalSongs && window.__resetRehearsalSongs('全リハ')">全リハ リセット</button>
         <!-- R70 B-2d: PDF ボタン (現在のモードを自動判定) -->
         <button id="pc-btn-rh-pdf" class="pc-btn" type="button" onclick="window.__openRehearsalPdfCurrent && window.__openRehearsalPdfCurrent()">PDF</button>
       </div>
@@ -6212,6 +6226,14 @@ function show(id) {
       rhFileInput.value = '';
     });
   }
+
+  // R145: テクリハ / 全リハ それぞれのリセットボタン（曲リストは共通のため、どちらを押しても songs を全削除）
+  window.__resetRehearsalSongs = function(modeLabel) {
+    var msg = (modeLabel || '') + 'の曲リストを全部リセットします。\n\n表示中のセトリの曲が全部消えます。\n（テクリハと全リハは曲リストを共有してるので、両方の表示が空になります）\n\n本当にリセットしますか？';
+    if (!confirm(msg)) return;
+    songs.length = 0;
+    if (typeof render === 'function') render();
+  };
 
   // マスター日付バーから呼ばれる：日付変更時にリハ計画を再レンダー
   window.__rehearsalRender = render;
