@@ -1715,9 +1715,8 @@
     text-overflow: ellipsis;
     text-align: center;
     line-height: 1.3;
-    /* R196: ラベルが長くてもセルを超えない */
+    /* R196b: ラベルが長くてもセルを超えない（max-width は連続バーを潰すので削除） */
     min-width: 0;
-    max-width: 100%;
     box-sizing: border-box;
   }
   .cal-event-pill.show  { background: rgba(224,122,95,0.30); color: #f5a89c; font-weight: 500; }
