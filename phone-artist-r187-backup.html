@@ -1981,6 +1981,7 @@
 
   <!-- ════ TOUR CALENDAR（月表示・カレンダーアプリ風）════ -->
   <div class="screen" id="screen-tour-calendar">
+    <button type="button" class="tour-cal-back" onclick="show('schedule')">‹ SCHEDULE に戻る</button>
     <div class="tour-cal-title">TOUR CALENDAR</div>
 
     <div class="cal-header">
@@ -2041,12 +2042,14 @@
   </div>
 
   <!-- ════ タイムスケジュール ════ -->
-  <div class="screen active" id="screen-schedule">
-    <!-- R188: 入り時間 ↔ DAY SCHEDULE サブタブ統合（R137 復元） -->
-    <div class="phone-top-tabs" style="display:flex; gap:8px; margin-bottom:12px; padding:0 2px;">
-      <button type="button" onclick="show('arrival')" style="flex:1; padding:10px 8px; background:#1d1d1d; border:1px solid rgba(255,255,255,0.18); color:#a8a8a8; font-size:12px; letter-spacing:0.16em; border-radius:4px; cursor:pointer;">入り時間</button>
-      <button type="button" onclick="show('schedule')" style="flex:1; padding:10px 8px; background:#3a3a36; border:1px solid rgba(216,184,120,0.5); color:#f0e0c8; font-size:12px; letter-spacing:0.16em; border-radius:4px; cursor:pointer; font-weight:500;">DAY SCHEDULE</button>
-    </div>
+  <div class="screen" id="screen-schedule">
+    <button type="button" class="tour-cal-btn" onclick="show('tour-calendar')">
+      <span class="tour-cal-btn-left">
+        <span class="tour-cal-btn-ico">▦</span>
+        <span>TOUR CALENDAR</span>
+      </span>
+      <span class="tour-cal-btn-arrow">›</span>
+    </button>
     <!-- R77 P2: PC の DAY SCHEDULE と同期（自由項目・1行表示） -->
     <div class="schedule-section-title" style="margin-top:6px;">DAY SCHEDULE</div>
     <div id="schedule-day-list-host"></div>
@@ -2079,7 +2082,7 @@
   </div>
 
   <!-- ════ RH ════ -->
-  <div class="screen" id="screen-rh">
+  <div class="screen active" id="screen-rh">
     <!-- リハーサル全体カウントダウン（sticky wrapper） -->
     <div class="rh-countdown-wrap">
       <div class="rh-countdown-card">
@@ -2102,7 +2105,7 @@
   <!-- ════ INFO ════ -->
   <div class="screen" id="screen-info">
     <div class="info-compose">
-      <button class="info-compose-btn" type="button" onclick="alert('INFO 投稿機能は準備中です。PC編集側からお知らせを追加してください。')">＋ NEW POST</button>
+      <button class="info-compose-btn">＋ NEW POST</button>
     </div>
 
     <!-- R123: INFO の静的デモ 4 件を撤去。新規はまだ無い旨を表示 -->
@@ -2113,11 +2116,7 @@
 
   <!-- ════ 入り時間 ════ -->
   <div class="screen" id="screen-arrival">
-    <!-- R188: 入り時間 ↔ DAY SCHEDULE サブタブ統合（R137 復元） -->
-    <div class="phone-top-tabs" style="display:flex; gap:8px; margin-bottom:12px; padding:0 2px;">
-      <button type="button" onclick="show('arrival')" style="flex:1; padding:10px 8px; background:#3a3a36; border:1px solid rgba(216,184,120,0.5); color:#f0e0c8; font-size:12px; letter-spacing:0.16em; border-radius:4px; cursor:pointer; font-weight:500;">入り時間</button>
-      <button type="button" onclick="show('schedule')" style="flex:1; padding:10px 8px; background:#1d1d1d; border:1px solid rgba(255,255,255,0.18); color:#a8a8a8; font-size:12px; letter-spacing:0.16em; border-radius:4px; cursor:pointer;">DAY SCHEDULE</button>
-    </div>
+    <div style="height: 8px;"></div>
 
     <!-- 自分の入り時間を追加するエリア -->
     <div style="background:#242424; border:1px dashed #4a4a4a; border-radius:6px; padding:14px; margin-bottom:14px;">
@@ -2162,9 +2161,7 @@
 <!-- 下タブ -->
 <!-- R67 P1: 下タブを統合（テクリハ＋RH→リハーサル1個に） -->
 <!-- D150 ARTIST: 3 タブを英語ラベルに（PC 版と統一感） -->
-<!-- R188: CALENDAR を先頭に追加（R137 復元） -->
 <div class="phone-bottom-tabs" id="bottom-tabs">
-  <button onclick="show('tour-calendar')"><span class="ico">▦</span>CALENDAR</button>
   <button class="active" onclick="show('schedule')"><span class="ico">▤</span>DAY SCHEDULE</button>
   <button class="rehearsal-btn" onclick="show('rehearsal')"><span class="ico">▶</span>REHEARSAL</button>
   <button onclick="show('info')"><span class="ico">⚑</span>INFO</button>
@@ -3033,8 +3030,6 @@ window.__phoneRefreshAll = function() {
 let calEvents = loadJSON(LS_KEY_EVENTS, JSON.parse(JSON.stringify(DEFAULT_CAL_EVENTS)));
 let showTimes = loadJSON(LS_KEY_SHOW_TIMES, JSON.parse(JSON.stringify(DEFAULT_SHOW_TIMES)));
 let calMemos  = loadJSON(LS_KEY_MEMOS, {});
-// R188: 会場バンド（PC 側ドラッグ＆ドロップで決めた会場名）を取り込む
-let venueGroups = loadJSON('schedule-studio:venueGroups:v1', []);
 // 空ラベル掃除
 (function cleanupEmptyEvents() {
   const before = calEvents.length;
@@ -3049,30 +3044,16 @@ function fmtCalKey(d) {
 }
 function getEventsForDate(d) {
   const k = fmtCalKey(d);
-  // R188: endDate 範囲対応（2 日連続本番などを 2 日目以降にも描画）
-  const evs = calEvents.filter(e => {
-    const start = e.date;
-    const end = e.endDate || e.date;
-    return k >= start && k <= end;
-  });
-  // R188: venue が空のイベントには、PC 側で設定された venueGroups から会場名を継承
-  if (Array.isArray(venueGroups) && venueGroups.length) {
-    const vg = venueGroups.find(g => k >= g.startDate && k <= g.endDate);
-    if (vg && vg.venue) {
-      evs.forEach(e => { if (!e.venue) e.venue = vg.venue; });
-    }
-  }
-  return evs;
+  return calEvents.filter(e => e.date === k);
 }
 function isContinuousEvent(d, ev) {
-  if (!ev) return { hasPrev:false, hasNext:false };
-  // R188: 同一 event の date〜endDate 範囲で連続性を判定（pc-edit と挙動を揃える）
-  const start = ev.date;
-  const end = ev.endDate || ev.date;
+  if (!ev || !ev.type) return { hasPrev:false, hasNext:false };
   const prev = new Date(d); prev.setDate(d.getDate() - 1);
   const next = new Date(d); next.setDate(d.getDate() + 1);
-  const prevK = fmtCalKey(prev), nextK = fmtCalKey(next);
-  return { hasPrev: prevK >= start && prevK <= end, hasNext: nextK >= start && nextK <= end };
+  const prevEvs = getEventsForDate(prev);
+  const nextEvs = getEventsForDate(next);
+  const same = e2 => e2.type === ev.type && (e2.venue || '') === (ev.venue || '');
+  return { hasPrev: prevEvs.some(same), hasNext: nextEvs.some(same) };
 }
 function escHtmlPhone(s) {
   return (s==null?'':String(s)).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
