@@ -2128,9 +2128,9 @@
       <div style="padding:40px 20px; text-align:center; color:#888; font-size:13px;">まだお知らせはありません<br><span style="font-size:11px; color:#666;">「＋ NEW POST」から投稿できます</span></div>
     </div>
 
-    <!-- 投稿シート（簡易ボトムモーダル） -->
-    <div id="info-compose-sheet" style="display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,0.72); align-items:flex-end; justify-content:center;">
-      <div style="width:100%; max-width:520px; background:#1d1d1d; border-top:1px solid #3a3a36; border-radius:14px 14px 0 0; padding:18px 18px 24px; box-sizing:border-box;">
+    <!-- 投稿シート（簡易ボトムモーダル）R208: 下タブと被らないよう padding-bottom 増やす -->
+    <div id="info-compose-sheet" style="display:none; position:fixed; inset:0; z-index:99999; background:rgba(0,0,0,0.72); align-items:flex-end; justify-content:center;">
+      <div style="width:100%; max-width:520px; background:#1d1d1d; border-top:1px solid #3a3a36; border-radius:14px 14px 0 0; padding:18px 18px 100px; box-sizing:border-box;">
         <div style="font-size:14px; letter-spacing:0.3em; color:#d8d8d4; margin-bottom:12px;">NEW POST</div>
         <input id="info-compose-name" type="text" placeholder="お名前（空欄なら匿名）" style="width:100%; box-sizing:border-box; background:#0f0f0f; border:1px solid #2c2c2c; border-radius:4px; padding:10px; color:#e8e8e8; font-size:15px; margin-bottom:8px;">
         <input id="info-compose-subject" type="text" placeholder="件名（タイトル）" style="width:100%; box-sizing:border-box; background:#0f0f0f; border:1px solid #2c2c2c; border-radius:4px; padding:10px; color:#e8e8e8; font-size:15px; margin-bottom:8px;">
@@ -2169,9 +2169,9 @@
     <!-- R61 M3: PCと共有の arrivalSectionsByDate から動的レンダリング -->
     <div id="arrival-list-host"></div>
 
-    <!-- R206: 入り時間 編集シート（時間ピッカー対応） -->
-    <div id="arrival-edit-sheet" style="display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,0.72); align-items:flex-end; justify-content:center;">
-      <div style="width:100%; max-width:520px; background:#1d1d1d; border-top:1px solid #3a3a36; border-radius:14px 14px 0 0; padding:18px 18px 24px; box-sizing:border-box;">
+    <!-- R206: 入り時間 編集シート（時間ピッカー対応）R208: 下タブと被らないよう padding-bottom 増やす -->
+    <div id="arrival-edit-sheet" style="display:none; position:fixed; inset:0; z-index:99999; background:rgba(0,0,0,0.72); align-items:flex-end; justify-content:center;">
+      <div style="width:100%; max-width:520px; background:#1d1d1d; border-top:1px solid #3a3a36; border-radius:14px 14px 0 0; padding:18px 18px 100px; box-sizing:border-box;">
         <div style="font-size:14px; letter-spacing:0.3em; color:#d8d8d4; margin-bottom:12px;">入り時間 編集</div>
         <div style="display:flex; gap:8px;">
           <button id="arrival-edit-time-btn" class="sde-time" data-time="09:00" onclick="openTimePicker(this)" style="width:90px; flex-shrink:0; box-sizing:border-box; background:#0f0f0f; border:1px solid #2c2c2c; border-radius:4px; padding:9px 10px; color:#e8e8e8; font-size: 16px; cursor: pointer;">09:00</button>
