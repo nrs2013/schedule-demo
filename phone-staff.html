@@ -2342,8 +2342,24 @@
 </div>
 
 <script>
-// D152 STAFF: 常に認証済み（PASS タブ撤去 + パスワードプロンプト一切なし）
-let authed = false; /* R107: 起動時は未認証。PASS で 1111 (STAFF) または 2222 (ARTIST) を入れて初めて編集可 */
+// R231: sessionStorage に保存して、リロード／タブ移動で再入力を不要に。ブラウザ閉じれば消える
+let authed = (function(){
+  try { return sessionStorage.getItem('schedule-studio:authed') === '1'; }
+  catch(e) { return false; }
+})();
+if (authed && typeof document !== 'undefined' && document.body) {
+  document.body.classList.add('authed');
+}
+// 起動時に authed=true なら PASS 画面の表示も「認証済み」状態に
+if (typeof window !== 'undefined') {
+  window.addEventListener('DOMContentLoaded', function(){
+    if (!authed) return;
+    const inputView = document.getElementById('pass-input-view');
+    const unlockedView = document.getElementById('pass-unlocked-view');
+    if (inputView) inputView.style.display = 'none';
+    if (unlockedView) unlockedView.style.display = 'flex';
+  });
+}
 const topTabsHiddenScreens = ['schedule','info','arrival','hotel','pass'];
 
 // R67 P1: 「リハーサル」下タブが「テクリハ」「全体リハ」両方を内包する
@@ -2411,6 +2427,8 @@ function tryUnlock() {
   var _r114Expected = (_r114Concert && _r114Concert.passwords && (_r114Concert.passwords.edit || _r114Concert.passwords.staff)) || '1111';
   if (v === _r114Expected) {
     authed = true;
+    /* R231: sessionStorage に保存し、リロードでも認証維持 */
+    try { sessionStorage.setItem('schedule-studio:authed', '1'); } catch(e) {}
     document.getElementById('pass-input-view').style.display = 'none';
     document.getElementById('pass-unlocked-view').style.display = 'flex';
     document.body.classList.add('authed');
@@ -2425,6 +2443,8 @@ function tryUnlock() {
 
 function resetAuth() {
   authed = false;
+  /* R231: sessionStorage からも消す */
+  try { sessionStorage.removeItem('schedule-studio:authed'); } catch(e) {}
   document.getElementById('pass-input-view').style.display = 'flex';
   document.getElementById('pass-unlocked-view').style.display = 'none';
   document.getElementById('pass-field').value = '';
