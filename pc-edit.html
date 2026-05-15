@@ -5794,27 +5794,40 @@ function show(id) {
     }
     return '2026-04-29'; // フォールバック（マスター日付バー読み込み前）
   }
+  // R230: テクリハ／リハーサル分離。各曲ごとに { tek, main } の 2 系統を持つ。
+  //       body.rh-mode-tekuriha で active を切替。旧フラット構造は遅延マイグレーション。
   function getRehearsalData(songId){
     const k = getCurrentDateKey();
-    if (!rehearsalByDate[k]) {
-      rehearsalByDate[k] = {};
-      // 4/29 のみ初期サンプルとして songs の値をコピー、それ以外の日は空（rhNo=null/tags=[]/memo='')
-      if (k === '2026-04-29') {
-        songs.forEach(function(s){
-          rehearsalByDate[k][s.id] = {
-            rhNo: (s.rhNo === undefined ? null : s.rhNo),
-            tags: s.tags ? s.tags.slice() : [],
-            memo: s.memo || ''
-          };
-        });
-      }
-    }
+    if (!rehearsalByDate[k]) rehearsalByDate[k] = {};
     if (!rehearsalByDate[k][songId]) {
-      rehearsalByDate[k][songId] = { rhNo: null, tags: [], memo: '' };
+      rehearsalByDate[k][songId] = {
+        tek:  { rhNo: null, tags: [], memo: '' },
+        main: { rhNo: null, tags: [], memo: '' }
+      };
     }
-    /* R98: dirty/saveRehearsals 副作用を撤廃。
-       render 中の getRehearsalData が毎回 saveRehearsals を呼んで Firebase 書き込みストームを起こしていた。
-       保存は実際の編集アクション側に任せる。*/
+    const entry = rehearsalByDate[k][songId];
+    if (!entry.tek)  entry.tek  = { rhNo: null, tags: [], memo: '' };
+    if (!entry.main) {
+      entry.main = {
+        rhNo: (entry.rhNo === undefined ? null : entry.rhNo),
+        tags: Array.isArray(entry.tags) ? entry.tags.slice() : [],
+        memo: entry.memo || ''
+      };
+      delete entry.rhNo; delete entry.tags; delete entry.memo;
+    }
+    const isTek = (typeof document !== 'undefined') &&
+                  document.body.classList.contains('rh-mode-tekuriha');
+    const sub = isTek ? entry.tek : entry.main;
+    if (!Array.isArray(sub.tags)) sub.tags = [];
+    return sub;
+  }
+  // R230: reset 用 — モード判定なしで entry 全体を返す
+  function getRehearsalEntry(songId) {
+    const k = getCurrentDateKey();
+    if (!rehearsalByDate[k]) rehearsalByDate[k] = {};
+    if (!rehearsalByDate[k][songId]) {
+      rehearsalByDate[k][songId] = { tek:{rhNo:null,tags:[],memo:''}, main:{rhNo:null,tags:[],memo:''} };
+    }
     return rehearsalByDate[k][songId];
   }
 
@@ -6368,12 +6381,34 @@ function show(id) {
   }
 
   // R145: テクリハ / リハーサル それぞれのリセットボタン（曲リストは共通のため、どちらを押しても songs を全削除）/ R150: 「全リハ」を「リハーサル」表記に統一
+  // R230: 曲リストは消さず、現モードの rhNo / tags / memo のみ全曲分クリア。
+  //       テクリハ／リハーサルが完全に独立して動くようになる。
   window.__resetRehearsalSongs = function(modeLabel) {
-    var msg = (modeLabel || '') + 'の曲リストを全部リセットします。\n\n表示中のセトリの曲が全部消えます。\n（テクリハとリハーサルは曲リストを共有してるので、両方の表示が空になります）\n\n本当にリセットしますか？';
+    var isTek = (modeLabel || '').indexOf('テクリハ') >= 0;
+    var subKey = isTek ? 'tek' : 'main';
+    var msg = (modeLabel || '') + 'のリハ計画（リハ順 / タグ / メモ）をリセットします。\n\n曲リストは残ります。\n' +
+              (isTek ? '（テクリハ側のみクリア、リハーサル側は残ります）' : '（リハーサル側のみクリア、テクリハ側は残ります）') +
+              '\n\n本当にリセットしますか？';
     if (!confirm(msg)) return;
-    songs.length = 0;
-    // R151: 保存（localStorage 永続化 + Firebase 同期）— リロード時にも反映を残す
-    if (typeof saveSetlists === 'function') saveSetlists();
+    var k = getCurrentDateKey();
+    if (rehearsalByDate[k]) {
+      Object.keys(rehearsalByDate[k]).forEach(function(songId){
+        var entry = rehearsalByDate[k][songId];
+        if (!entry) return;
+        // tek/main 構造に揃ってない古いエントリも正規化
+        if (!entry.tek)  entry.tek  = { rhNo:null, tags:[], memo:'' };
+        if (!entry.main) entry.main = {
+          rhNo: (entry.rhNo === undefined ? null : entry.rhNo),
+          tags: Array.isArray(entry.tags) ? entry.tags.slice() : [],
+          memo: entry.memo || ''
+        };
+        delete entry.rhNo; delete entry.tags; delete entry.memo;
+        entry[subKey].rhNo = null;
+        entry[subKey].tags = [];
+        entry[subKey].memo = '';
+      });
+      if (typeof saveRehearsals === 'function') saveRehearsals();
+    }
     if (typeof render === 'function') render();
   };
 
