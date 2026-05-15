@@ -2190,10 +2190,44 @@
     <div style="height:20px"></div>
   </div>
 
-  <!-- ════ HOTEL ════ -->
+  <!-- ════ HOTEL ════ R211: タクシー/メンバーの編集機能（認証必須） -->
   <div class="screen" id="screen-hotel">
     <!-- R62 M4: PCと共有の hotels から動的レンダリング -->
     <div id="hotel-list-host"></div>
+
+    <!-- タクシー編集シート -->
+    <div id="taxi-edit-sheet" style="display:none; position:fixed; inset:0; z-index:99999; background:rgba(0,0,0,0.72); align-items:flex-end; justify-content:center;">
+      <div style="width:100%; max-width:520px; background:#1d1d1d; border-top:1px solid #3a3a36; border-radius:14px 14px 0 0; padding:18px 18px 100px; box-sizing:border-box;">
+        <div style="font-size:14px; letter-spacing:0.3em; color:#d8d8d4; margin-bottom:12px;">🚕 TAXI</div>
+        <div style="display:flex; gap:8px; margin-bottom:8px;">
+          <button id="taxi-edit-time" class="sde-time" data-time="09:00" onclick="openTimePicker(this)" style="width:90px; flex-shrink:0; box-sizing:border-box; background:#0f0f0f; border:1px solid #2c2c2c; border-radius:4px; padding:9px 10px; color:#e8e8e8; font-size:16px; cursor:pointer;">09:00</button>
+          <input id="taxi-edit-section" type="text" placeholder="セクション (PA等)" style="flex:1; min-width:0; box-sizing:border-box; background:#0f0f0f; border:1px solid #2c2c2c; border-radius:4px; padding:9px 10px; color:#e8e8e8; font-size:16px;">
+        </div>
+        <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
+          <label style="font-size:13px; color:#a8a8a8; width:90px;">台数</label>
+          <input id="taxi-edit-count" type="number" min="1" value="1" style="flex:1; box-sizing:border-box; background:#0f0f0f; border:1px solid #2c2c2c; border-radius:4px; padding:9px 10px; color:#e8e8e8; font-size:16px;">
+        </div>
+        <div style="display:flex; gap:8px; margin-top:12px;">
+          <button id="taxi-edit-delete-btn" type="button" onclick="deleteTaxiEditPhone()" style="flex:1; background:#5a2222; color:#f0c0c0; border:1px solid #6d2c2c; border-radius:4px; padding:10px; font-size:14px;">削除</button>
+          <button type="button" onclick="closeTaxiEditPhone()" style="flex:1; background:#2a2a26; color:#a8a8a8; border:1px solid #3a3a36; border-radius:4px; padding:10px; font-size:14px;">キャンセル</button>
+          <button type="button" onclick="saveTaxiEditPhone()" style="flex:1; background:#e89a4a; color:#0a0a08; border:none; border-radius:4px; padding:10px; font-size:14px; font-weight:600; letter-spacing:0.2em;">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 宿泊メンバー編集シート -->
+    <div id="member-edit-sheet" style="display:none; position:fixed; inset:0; z-index:99999; background:rgba(0,0,0,0.72); align-items:flex-end; justify-content:center;">
+      <div style="width:100%; max-width:520px; background:#1d1d1d; border-top:1px solid #3a3a36; border-radius:14px 14px 0 0; padding:18px 18px 100px; box-sizing:border-box;">
+        <div style="font-size:14px; letter-spacing:0.3em; color:#d8d8d4; margin-bottom:12px;">🛏 MEMBER</div>
+        <input id="member-edit-section" type="text" placeholder="セクション (PA等)" style="width:100%; box-sizing:border-box; background:#0f0f0f; border:1px solid #2c2c2c; border-radius:4px; padding:9px 10px; color:#e8e8e8; font-size:16px; margin-bottom:8px;">
+        <input id="member-edit-name" type="text" placeholder="お名前" style="width:100%; box-sizing:border-box; background:#0f0f0f; border:1px solid #2c2c2c; border-radius:4px; padding:9px 10px; color:#e8e8e8; font-size:16px;">
+        <div style="display:flex; gap:8px; margin-top:12px;">
+          <button id="member-edit-delete-btn" type="button" onclick="deleteMemberEditPhone()" style="flex:1; background:#5a2222; color:#f0c0c0; border:1px solid #6d2c2c; border-radius:4px; padding:10px; font-size:14px;">削除</button>
+          <button type="button" onclick="closeMemberEditPhone()" style="flex:1; background:#2a2a26; color:#a8a8a8; border:1px solid #3a3a36; border-radius:4px; padding:10px; font-size:14px;">キャンセル</button>
+          <button type="button" onclick="saveMemberEditPhone()" style="flex:1; background:#e89a4a; color:#0a0a08; border:none; border-radius:4px; padding:10px; font-size:14px; font-weight:600; letter-spacing:0.2em;">保存</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- ════ PASS ════ -->
@@ -2217,7 +2251,7 @@
 <!-- R188: bottom-tabs 整理（R137 復元）。入り時間は DAY SCHEDULE のサブタブへ統合 -->
 <div class="phone-bottom-tabs" id="bottom-tabs">
   <button onclick="show('tour-calendar')"><span class="ico">▦</span>CALENDAR</button>
-  <button class="active" onclick="show('schedule')"><span class="ico">▤</span>DAY SCHEDULE</button>
+  <button class="active" onclick="show('schedule')"><span class="ico">▤</span>DAY</button>
   <button class="rehearsal-btn" onclick="show('rehearsal')"><span class="ico">▶</span>REHEARSAL</button>
   <button onclick="show('hotel')"><span class="ico">★</span>HOTEL</button>
   <button onclick="show('info')"><span class="ico">⚑</span>INFO</button>
@@ -3867,30 +3901,32 @@ function renderHotelListPhone() {
     host.innerHTML = '<div style="color:#5a5a55;font-size:13px;padding:20px;text-align:center;">— ホテル未登録 —</div>';
     return;
   }
+  /* R211: authed のとき編集ボタンを表示 */
+  const isAuthed = (typeof authed !== 'undefined') && authed;
   let html = '';
-  hotels.forEach(function(h){
+  hotels.forEach(function(h, hotelIdx){
     let taxiList = '';
-    if (h.taxis && h.taxis.length) {
-      h.taxis.forEach(function(t){
-        taxiList += '<div class="taxi-row">' +
-          '<span class="taxi-time">' + escHtmlPhone(t.time||'') + '</span>' +
-          '<span class="taxi-section-name">' + escHtmlPhone(t.section||'') + '</span>' +
-          '<span class="taxi-count">' + (t.count||0) + ' 台</span>' +
-        '</div>';
-      });
-    }
+    (h.taxis || []).forEach(function(t, ti){
+      const editAttr = isAuthed ? ' onclick="openTaxiEditPhone(' + hotelIdx + ',' + ti + ')" style="cursor:pointer;"' : '';
+      taxiList += '<div class="taxi-row"' + editAttr + '>' +
+        '<span class="taxi-time">' + escHtmlPhone(t.time||'') + '</span>' +
+        '<span class="taxi-section-name">' + escHtmlPhone(t.section||'') + '</span>' +
+        '<span class="taxi-count">' + (t.count||0) + ' 台</span>' +
+      '</div>';
+    });
     let memberList = '';
-    if (h.members && h.members.length) {
-      h.members.forEach(function(m){
-        memberList += '<div class="hotel-member-row">' +
-          '<div class="hotel-member-section">' + escHtmlPhone(m.section||'') + '</div>' +
-          '<div class="hotel-member-name">' + escHtmlPhone(m.name||'') + '</div>' +
-        '</div>';
-      });
-    }
+    (h.members || []).forEach(function(m, mi){
+      const editAttr = isAuthed ? ' onclick="openMemberEditPhone(' + hotelIdx + ',' + mi + ')" style="cursor:pointer;"' : '';
+      memberList += '<div class="hotel-member-row"' + editAttr + '>' +
+        '<div class="hotel-member-section">' + escHtmlPhone(m.section||'') + '</div>' +
+        '<div class="hotel-member-name">' + escHtmlPhone(m.name||'') + '</div>' +
+      '</div>';
+    });
     const memberCount = (h.members || []).length;
     const mapsQ = encodeURIComponent(h.name || '');
     const urlText = h.url ? h.url.replace(/^https?:\/\//, '').replace(/\/$/, '') : '';
+    const taxiAddBtn = isAuthed ? '<button type="button" class="taxi-add-btn" onclick="openTaxiEditPhone(' + hotelIdx + ',-1)" style="background:transparent; border:1px solid #3a3a36; color:#a8a8a8; padding:4px 10px; border-radius:4px; font-size:12px; cursor:pointer;">+ 追加</button>' : '';
+    const memberAddBtn = isAuthed ? '<button type="button" class="taxi-add-btn" onclick="openMemberEditPhone(' + hotelIdx + ',-1)" style="background:transparent; border:1px solid #3a3a36; color:#a8a8a8; padding:4px 10px; border-radius:4px; font-size:12px; cursor:pointer;">+ 追加</button>' : '';
     html += '<div class="hotel-block">' +
       '<div class="hotel-block-head">' +
         '<div class="hotel-name">' + escHtmlPhone(h.name || '') + '</div>' +
@@ -3902,21 +3938,122 @@ function renderHotelListPhone() {
         '</dl>' +
         (h.name ? '<a class="hotel-map-btn" href="https://maps.google.com/?q=' + mapsQ + '" target="_blank">📍 MAP</a>' : '') +
       '</div>' +
-      (taxiList ? (
-        '<div class="taxi-section">' +
-          '<div class="taxi-head"><div class="taxi-title">🚕 タクシー配車</div></div>' +
-          '<div class="taxi-list">' + taxiList + '</div>' +
-        '</div>'
-      ) : '') +
-      (memberList ? (
-        '<div class="hotel-members-head">' +
-          '<span>宿泊メンバー</span>' +
-          '<span style="color:#d8d8d4">' + memberCount + '名</span>' +
-        '</div>' + memberList
-      ) : '') +
+      '<div class="taxi-section">' +
+        '<div class="taxi-head" style="display:flex; align-items:center; justify-content:space-between;"><div class="taxi-title">🚕 タクシー配車</div>' + taxiAddBtn + '</div>' +
+        (taxiList ? '<div class="taxi-list">' + taxiList + '</div>' : '<div style="color:#5a5a55; font-size:12px; padding:6px 0;">— 未登録 —</div>') +
+      '</div>' +
+      '<div class="hotel-members-head" style="display:flex; align-items:center; justify-content:space-between;">' +
+        '<span>宿泊メンバー</span>' +
+        '<span style="display:flex; align-items:center; gap:8px;"><span style="color:#d8d8d4">' + memberCount + '名</span>' + memberAddBtn + '</span>' +
+      '</div>' +
+      (memberList ? memberList : '<div style="color:#5a5a55; font-size:12px; padding:6px 12px;">— 未登録 —</div>') +
     '</div>';
   });
   host.innerHTML = html;
+}
+
+/* R211: ホテル タクシー/メンバー編集（認証必須） */
+let __editingHotelIdx = -1;
+let __editingTaxiIdx = -1;
+let __editingMemberIdx = -1;
+function _hotelAuthGuard() {
+  if (typeof authed === 'undefined' || !authed) {
+    alert('編集には PASS タブで認証が必要です');
+    return false;
+  }
+  return true;
+}
+function openTaxiEditPhone(hotelIdx, taxiIdx) {
+  if (!_hotelAuthGuard()) return;
+  __editingHotelIdx = hotelIdx;
+  __editingTaxiIdx = taxiIdx;
+  const hotel = hotels[hotelIdx];
+  if (!hotel) return;
+  if (!hotel.taxis) hotel.taxis = [];
+  const item = (taxiIdx >= 0) ? (hotel.taxis[taxiIdx] || {}) : {};
+  const timeBtn = document.getElementById('taxi-edit-time');
+  const tt = item.time || '09:00';
+  if (timeBtn) { timeBtn.textContent = tt; timeBtn.setAttribute('data-time', tt); }
+  document.getElementById('taxi-edit-section').value = item.section || '';
+  document.getElementById('taxi-edit-count').value = item.count || 1;
+  document.getElementById('taxi-edit-delete-btn').style.display = (taxiIdx >= 0) ? '' : 'none';
+  document.getElementById('taxi-edit-sheet').style.display = 'flex';
+  document.querySelectorAll('.phone-bottom-tabs').forEach(function(t){ t.style.display = 'none'; });
+}
+function closeTaxiEditPhone() {
+  document.getElementById('taxi-edit-sheet').style.display = 'none';
+  document.querySelectorAll('.phone-bottom-tabs').forEach(function(t){ t.style.display = ''; });
+  __editingHotelIdx = -1; __editingTaxiIdx = -1;
+}
+function saveTaxiEditPhone() {
+  if (__editingHotelIdx < 0) return;
+  const hotel = hotels[__editingHotelIdx];
+  if (!hotel) return;
+  if (!hotel.taxis) hotel.taxis = [];
+  const timeBtn = document.getElementById('taxi-edit-time');
+  const time = (timeBtn.getAttribute('data-time') || timeBtn.textContent.trim() || '09:00');
+  const section = (document.getElementById('taxi-edit-section').value || '').trim();
+  const count = parseInt(document.getElementById('taxi-edit-count').value || '1', 10) || 1;
+  if (__editingTaxiIdx < 0) {
+    hotel.taxis.push({ time: time, section: section, count: count });
+  } else {
+    hotel.taxis[__editingTaxiIdx] = { time: time, section: section, count: count };
+  }
+  saveHotels();
+  renderHotelListPhone();
+  closeTaxiEditPhone();
+}
+function deleteTaxiEditPhone() {
+  if (__editingHotelIdx < 0 || __editingTaxiIdx < 0) return;
+  if (!confirm('このタクシー配車を削除しますか？')) return;
+  hotels[__editingHotelIdx].taxis.splice(__editingTaxiIdx, 1);
+  saveHotels();
+  renderHotelListPhone();
+  closeTaxiEditPhone();
+}
+function openMemberEditPhone(hotelIdx, memberIdx) {
+  if (!_hotelAuthGuard()) return;
+  __editingHotelIdx = hotelIdx;
+  __editingMemberIdx = memberIdx;
+  const hotel = hotels[hotelIdx];
+  if (!hotel) return;
+  if (!hotel.members) hotel.members = [];
+  const item = (memberIdx >= 0) ? (hotel.members[memberIdx] || {}) : {};
+  document.getElementById('member-edit-section').value = item.section || '';
+  document.getElementById('member-edit-name').value = item.name || '';
+  document.getElementById('member-edit-delete-btn').style.display = (memberIdx >= 0) ? '' : 'none';
+  document.getElementById('member-edit-sheet').style.display = 'flex';
+  document.querySelectorAll('.phone-bottom-tabs').forEach(function(t){ t.style.display = 'none'; });
+}
+function closeMemberEditPhone() {
+  document.getElementById('member-edit-sheet').style.display = 'none';
+  document.querySelectorAll('.phone-bottom-tabs').forEach(function(t){ t.style.display = ''; });
+  __editingHotelIdx = -1; __editingMemberIdx = -1;
+}
+function saveMemberEditPhone() {
+  if (__editingHotelIdx < 0) return;
+  const hotel = hotels[__editingHotelIdx];
+  if (!hotel) return;
+  if (!hotel.members) hotel.members = [];
+  const section = (document.getElementById('member-edit-section').value || '').trim();
+  const name = (document.getElementById('member-edit-name').value || '').trim();
+  if (!name) { alert('お名前を入力してください'); return; }
+  if (__editingMemberIdx < 0) {
+    hotel.members.push({ section: section, name: name });
+  } else {
+    hotel.members[__editingMemberIdx] = { section: section, name: name };
+  }
+  saveHotels();
+  renderHotelListPhone();
+  closeMemberEditPhone();
+}
+function deleteMemberEditPhone() {
+  if (__editingHotelIdx < 0 || __editingMemberIdx < 0) return;
+  if (!confirm('このメンバーを削除しますか？')) return;
+  hotels[__editingHotelIdx].members.splice(__editingMemberIdx, 1);
+  saveHotels();
+  renderHotelListPhone();
+  closeMemberEditPhone();
 }
 
 const _showAfterM4 = window.show;
