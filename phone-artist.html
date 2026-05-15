@@ -3248,17 +3248,37 @@ function renderCalendarMonths() {
       let events = '';
       const evs = (!isOutside) ? getEventsForDate(d) : [];
       let hasPillBarStart = false;
+      /* R205: 連続範囲を 1 本の長い pill として描画。先頭日のみ描画、2 日目以降はスキップ */
       evs.slice(0, 3).forEach(function(e){
         const cont = isContinuousEvent(d, e);
-        const positionCls = (cont.hasPrev && cont.hasNext) ? ' bar-mid'
-                          : cont.hasNext ? ' bar-start'
-                          : cont.hasPrev ? ' bar-end'
-                          : '';
-        /* R191: 会場名は venue band に分離。pill は event 名のみ */
-        const label = cont.hasPrev ? '' : escHtmlPhone(e.label || '');
-        events += '<div class="cal-event-pill ' + e.type + positionCls + '">' + label + '</div>';
-        /* R204: bar-start を含むセルは z-index を上げて、はみ出し部分が隣セル背景に隠されないように */
-        if (positionCls === ' bar-start' || positionCls === '') hasPillBarStart = true;
+        if (cont.hasPrev) return;
+        let span = 1;
+        if (cont.hasNext) {
+          let cur = new Date(d);
+          while (true) {
+            if (cur.getDay() === 0) break;
+            cur.setDate(cur.getDate() + 1);
+            const curK = fmtCalKey(cur);
+            const nextEvs = calEvents.filter(function(e2){
+              const st = e2.date;
+              const en = e2.endDate || e2.date;
+              return curK >= st && curK <= en;
+            });
+            const hasSame = nextEvs.some(function(e2){
+              return e2.type === e.type && (e2.venue || '') === (e.venue || '');
+            });
+            if (!hasSame) break;
+            span++;
+          }
+        }
+        const label = escHtmlPhone(e.label || '');
+        if (span === 1) {
+          events += '<div class="cal-event-pill ' + e.type + '">' + label + '</div>';
+        } else {
+          const styleAttr = ' style="width: calc(' + (span * 100) + '% + ' + ((span - 1) * 7) + 'px);"';
+          events += '<div class="cal-event-pill ' + e.type + ' span-multi"' + styleAttr + '>' + label + '</div>';
+          hasPillBarStart = true;
+        }
       });
       if (hasPillBarStart) cellCls.push('has-pill-bar-start');
 
