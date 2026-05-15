@@ -1646,6 +1646,8 @@
     overflow: visible;
     box-sizing: border-box;
     position: relative;
+    /* R196: 長いラベルでセルが横に広がらないように min-width: 0（grid item 定番） */
+    min-width: 0;
     -webkit-tap-highlight-color: transparent;
     transition: background 0.1s;
   }
@@ -1693,6 +1695,8 @@
     align-items: stretch;
     /* R59-fix: 隣セルへの連続バーがクリップされないように visible */
     overflow: visible;
+    /* R196: 長い label でセル幅が広がらないように */
+    min-width: 0;
   }
   .cal-event-pill {
     font-size: 9px;
@@ -1707,6 +1711,10 @@
     text-overflow: ellipsis;
     text-align: center;
     line-height: 1.3;
+    /* R196: ラベルが長くてもセルを超えない */
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
   }
   .cal-event-pill.show  { background: rgba(224,122,95,0.30); color: #f5a89c; font-weight: 500; }
   .cal-event-pill.rh    { background: rgba(126,194,122,0.22); color: #b8d9b0; }
