@@ -3792,5 +3792,54 @@ renderHotelListPhone();
   }
 })();
 </script>
+
+<!-- R185: LINE リッチメニュー hash routing（軽量版）
+     R138 を R168 ベースで安全に再導入。MutationObserver は使わず、起動時とhashchangeでshow()を呼ぶだけ。 -->
+<script>
+(function r185HashRouter(){
+  var HASH_TO_SCREEN = {
+    'today': 'schedule',
+    'schedule': 'schedule',
+    'day-schedule': 'schedule',
+    'calendar': 'tour-calendar',
+    'tour-calendar': 'tour-calendar',
+    'rehearsal': 'rehearsal',
+    'rh': 'rehearsal',
+    'tekuriha': 'rehearsal',
+    'info': 'info',
+    'arrival': 'arrival',
+    'hotel': 'hotel',
+    'pass': 'pass'
+  };
+  function applyHash() {
+    var h = (location.hash || '').replace(/^#/, '').toLowerCase().trim();
+    if (!h) return;
+    var target = HASH_TO_SCREEN[h];
+    if (!target || typeof window.show !== 'function') return;
+    try { window.show(target); } catch(e) { console.warn('[R185] show error', e); }
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function(){ setTimeout(applyHash, 120); });
+  } else {
+    setTimeout(applyHash, 120);
+  }
+  window.addEventListener('hashchange', applyHash);
+  function bindClearHash() {
+    document.querySelectorAll('#bottom-tabs button').forEach(function(b){
+      b.addEventListener('click', function(){
+        if (location.hash && window.history && window.history.replaceState) {
+          window.history.replaceState(null, '', location.pathname + location.search);
+        }
+      });
+    });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bindClearHash);
+  } else {
+    bindClearHash();
+  }
+  console.log('[R185] LINE rich-menu hash router loaded. hash:', location.hash);
+})();
+</script>
 </body>
 </html>
