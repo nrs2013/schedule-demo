@@ -1657,7 +1657,7 @@
   }
   .cal-cell:active { background: #242322; }
   .cal-cell.outside { background: #141312; }
-  .cal-cell.in-tour { background: rgba(232,154,74,0.05); }
+  /* R197: in-tour のハイライトは削除（PC版にない、紛らわしい） */
   .cal-cell.today { background: rgba(232,154,74,0.10); }
 
   /* 全ての日にちが同じサイズ・同じ位置に揃う（iOS Calendar 風） */
@@ -1780,12 +1780,14 @@
     z-index: 1;
   }
   /* R194: align-self:stretch でセル幅いっぱいに広げてから、margin -10px で隣セルへ食い込ませる */
+  /* R197: bar-start は overflow:visible にして長い会場名を連続範囲に表示 */
   .cal-venue-band.bar-start {
     border-radius: 3px 0 0 3px;
     border-right: 0;
     margin-right: -10px;
     padding-right: 4px;
     z-index: 2;
+    overflow: visible;
   }
   .cal-venue-band.bar-mid {
     border-radius: 0;
