@@ -2125,12 +2125,12 @@
     <!-- 自分の入り時間を追加するエリア -->
     <div style="background:#242424; border:1px dashed #4a4a4a; border-radius:6px; padding:14px; margin-bottom:14px;">
       <div style="font-size: 14px; letter-spacing:0.2em; color:#a8a8a8; font-weight: 500; margin-bottom:10px;">＋ 入り時間を追加</div>
-      <!-- R189: 時間を左、セクション名を右に -->
+      <!-- R195: 入り時間の追加機能を実装（誰でも登録可、認証不要） -->
       <div style="display:flex; gap:8px;">
-        <button class="sde-time" data-time="09:00" onclick="openTimePicker(this)" style="width:90px; flex-shrink:0; box-sizing:border-box; background:#1d1d1d; border:1px solid #2c2c2c; border-radius:4px; padding:9px 10px; color:#e8e8e8; font-size: 16px; cursor: pointer;">09:00</button>
-        <input type="text" placeholder="セクション名 (例: PA)" style="flex:1; min-width:0; box-sizing:border-box; background:#1d1d1d; border:1px solid #2c2c2c; border-radius:4px; padding:9px 10px; color:#e8e8e8; font-size: 16px;" />
+        <button id="arrival-add-time-btn" class="sde-time" data-time="09:00" onclick="openTimePicker(this)" style="width:90px; flex-shrink:0; box-sizing:border-box; background:#1d1d1d; border:1px solid #2c2c2c; border-radius:4px; padding:9px 10px; color:#e8e8e8; font-size: 16px; cursor: pointer;">09:00</button>
+        <input id="arrival-add-section-input" type="text" placeholder="セクション名 (例: PA)" style="flex:1; min-width:0; box-sizing:border-box; background:#1d1d1d; border:1px solid #2c2c2c; border-radius:4px; padding:9px 10px; color:#e8e8e8; font-size: 16px;" />
       </div>
-      <button style="width:100%; margin-top:8px; background:#e89a4a; color:#0a0a08; border:none; padding:9px; border-radius:4px; font-size: 15px; font-weight: 500; letter-spacing:0.2em; cursor:pointer;">登録する</button>
+      <button type="button" onclick="addArrivalSectionPhone()" style="width:100%; margin-top:8px; background:#e89a4a; color:#0a0a08; border:none; padding:9px; border-radius:4px; font-size: 15px; font-weight: 500; letter-spacing:0.2em; cursor:pointer;">登録する</button>
     </div>
 
     <!-- 既存リスト（誰でも追加・編集できる） -->
@@ -3419,16 +3419,60 @@ function renderArrivalListPhone() {
   });
   let html = '';
   sorted.forEach(function(s){
+    const idx = list.indexOf(s); // 元の list での index
     // R190: DAY SCHEDULE と揃える（時間左・セクション名右寄せ）
+    // R195: 編集ボタン onclick で誰でも編集可（認証不要）
     html += '<div class="arrival-section">' +
       '<div class="arrival-section-row" style="display:flex; align-items:center;">' +
         '<span class="arrival-section-time">' + escHtmlPhone(s.time || '--:--') + '</span>' +
         '<div class="arrival-section-name" style="flex:1; text-align:right; padding-right:12px;">' + escHtmlPhone(s.section || '') + '</div>' +
-        '<button class="arrival-edit-btn">編集</button>' +
+        '<button class="arrival-edit-btn" onclick="editArrivalSectionPhone(' + idx + ')">編集</button>' +
       '</div>' +
     '</div>';
   });
   host.innerHTML = html;
+}
+
+// R195: 入り時間の追加（認証不要、誰でも登録可）
+function addArrivalSectionPhone() {
+  const sectionInput = document.getElementById('arrival-add-section-input');
+  const timeBtn = document.getElementById('arrival-add-time-btn');
+  if (!sectionInput || !timeBtn) return;
+  const section = (sectionInput.value || '').trim();
+  if (!section) { alert('セクション名を入力してください'); return; }
+  const time = timeBtn.getAttribute('data-time') || timeBtn.textContent.trim() || '09:00';
+  const iso = getCurrentDateIso();
+  if (!iso) { alert('日付を先に選んでください'); return; }
+  if (!arrivalSectionsByDate[iso]) arrivalSectionsByDate[iso] = [];
+  arrivalSectionsByDate[iso].push({ section: section, time: time });
+  saveArrivals();
+  renderArrivalListPhone();
+  sectionInput.value = '';
+}
+
+// R195: 入り時間の編集／削除（認証不要、誰でも編集可）
+function editArrivalSectionPhone(idx) {
+  const iso = getCurrentDateIso();
+  if (!iso) return;
+  const list = arrivalSectionsByDate[iso] || [];
+  const item = list[idx];
+  if (!item) return;
+  const newSection = prompt('セクション名（空欄にすると削除）:', item.section || '');
+  if (newSection === null) return; // キャンセル
+  if (newSection.trim() === '') {
+    if (confirm('「' + (item.section || '') + '」を削除しますか？')) {
+      list.splice(idx, 1);
+      saveArrivals();
+      renderArrivalListPhone();
+    }
+    return;
+  }
+  const newTime = prompt('時間 (HH:MM):', item.time || '09:00');
+  if (newTime === null) return;
+  item.section = newSection.trim();
+  if (newTime.trim()) item.time = newTime.trim();
+  saveArrivals();
+  renderArrivalListPhone();
 }
 
 // show / selectTourDay / changeTourDay をさらに拡張（M2 のラッパーの上にもう一段）
