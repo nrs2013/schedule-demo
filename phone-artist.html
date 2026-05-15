@@ -1724,24 +1724,23 @@
   .cal-event-pill.tek   { background: rgba(110,198,200,0.22); color: #a8dcde; }
   .cal-event-pill.setup { background: rgba(184,149,88,0.32);  color: #e8c890; }
   .cal-event-pill.stay  { background: rgba(168,168,160,0.10); color: #787878; font-weight: 500; }
-  /* R59: 連続イベントを横バー化（同会場・同種別を繋ぐ） */
-  /* セル右padding 3px + grid gap 1px = 4px、左も同じ。重ならせるには各-5pxで gap も埋める */
+  /* R199: 連続イベントを横バー化。venue band と同じく margin -10px に強化 */
   .cal-event-pill.bar-start {
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
-    margin-right: -5px;
+    margin-right: -10px;
     text-align: left;
     padding-left: 4px;
-    padding-right: 0;
+    padding-right: 4px;
     position: relative;
     z-index: 2;
   }
   .cal-event-pill.bar-mid {
     border-radius: 0;
-    margin-left: -5px;
-    margin-right: -5px;
-    padding-left: 0;
-    padding-right: 0;
+    margin-left: -10px;
+    margin-right: -10px;
+    padding-left: 4px;
+    padding-right: 4px;
     min-height: 12px;
     position: relative;
     z-index: 2;
@@ -1749,8 +1748,8 @@
   .cal-event-pill.bar-end {
     border-top-left-radius: 0;
     border-bottom-left-radius: 0;
-    margin-left: -5px;
-    padding-left: 0;
+    margin-left: -10px;
+    padding-left: 4px;
     padding-right: 4px;
     position: relative;
     z-index: 2;
