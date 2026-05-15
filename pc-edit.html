@@ -6274,12 +6274,18 @@ function show(id) {
       try {
         const arr = new Uint8Array(ev.target.result);
         const wb = XLSX.read(arr, {type: 'array'});
+        // R221: 非表示シート (Hidden=1) や VeryHidden (Hidden=2) を選択肢から除外
+        const visibleSheets = wb.SheetNames.filter(function(name, i){
+          const info = wb.Workbook && wb.Workbook.Sheets && wb.Workbook.Sheets[i];
+          return !info || !info.Hidden;
+        });
+        const candidates = visibleSheets.length > 0 ? visibleSheets : wb.SheetNames;
         // R220: シート選択を独自モーダルで（複数シートある場合のみ）
-        let sheetName = wb.SheetNames[0];
-        if (wb.SheetNames.length > 1) {
-          const idx = await __selectSheetModal(wb.SheetNames);
+        let sheetName = candidates[0];
+        if (candidates.length > 1) {
+          const idx = await __selectSheetModal(candidates);
           if (idx < 0) return; // キャンセル
-          sheetName = wb.SheetNames[idx];
+          sheetName = candidates[idx];
         }
         const ws = wb.Sheets[sheetName];
         const rows = XLSX.utils.sheet_to_json(ws, {header: 1});
