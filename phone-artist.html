@@ -1766,26 +1766,30 @@
     position: relative;
     z-index: 1;
   }
+  /* R192: 連結の隙間を消すため margin を -5px に拡大、z-index で前面に */
   .cal-venue-band.bar-start {
     border-radius: 3px 0 0 3px;
     border-right: 0;
-    margin-right: -4px;
-    padding-right: 3px;
+    margin-right: -5px;
+    padding-right: 4px;
+    z-index: 2;
   }
   .cal-venue-band.bar-mid {
     border-radius: 0;
     border-left: 0;
     border-right: 0;
-    margin-left: -4px;
-    margin-right: -4px;
-    padding-left: 3px;
-    padding-right: 3px;
+    margin-left: -5px;
+    margin-right: -5px;
+    padding-left: 4px;
+    padding-right: 4px;
+    z-index: 2;
   }
   .cal-venue-band.bar-end {
     border-radius: 0 3px 3px 0;
     border-left: 0;
-    margin-left: -4px;
-    padding-left: 3px;
+    margin-left: -5px;
+    padding-left: 4px;
+    z-index: 2;
   }
 
   /* ── 日タップ時の編集シート（ボトム） ───────── */
