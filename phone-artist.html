@@ -2122,9 +2122,10 @@
     <!-- 自分の入り時間を追加するエリア -->
     <div style="background:#242424; border:1px dashed #4a4a4a; border-radius:6px; padding:14px; margin-bottom:14px;">
       <div style="font-size: 14px; letter-spacing:0.2em; color:#a8a8a8; font-weight: 500; margin-bottom:10px;">＋ 入り時間を追加</div>
+      <!-- R189: 時間を左、セクション名を右に -->
       <div style="display:flex; gap:8px;">
-        <input type="text" placeholder="セクション名 (例: PA)" style="flex:1; min-width:0; box-sizing:border-box; background:#1d1d1d; border:1px solid #2c2c2c; border-radius:4px; padding:9px 10px; color:#e8e8e8; font-size: 16px;" />
         <button class="sde-time" data-time="09:00" onclick="openTimePicker(this)" style="width:90px; flex-shrink:0; box-sizing:border-box; background:#1d1d1d; border:1px solid #2c2c2c; border-radius:4px; padding:9px 10px; color:#e8e8e8; font-size: 16px; cursor: pointer;">09:00</button>
+        <input type="text" placeholder="セクション名 (例: PA)" style="flex:1; min-width:0; box-sizing:border-box; background:#1d1d1d; border:1px solid #2c2c2c; border-radius:4px; padding:9px 10px; color:#e8e8e8; font-size: 16px;" />
       </div>
       <button style="width:100%; margin-top:8px; background:#e89a4a; color:#0a0a08; border:none; padding:9px; border-radius:4px; font-size: 15px; font-weight: 500; letter-spacing:0.2em; cursor:pointer;">登録する</button>
     </div>
@@ -3362,13 +3363,12 @@ function renderArrivalListPhone() {
   });
   let html = '';
   sorted.forEach(function(s){
+    // R189: 時間を左、セクション名を右、編集ボタンは右端
     html += '<div class="arrival-section">' +
-      '<div class="arrival-section-row">' +
-        '<div class="arrival-section-name">' + escHtmlPhone(s.section || '') + '</div>' +
-        '<div style="display:flex; align-items:center;">' +
-          '<span class="arrival-section-time">' + escHtmlPhone(s.time || '--:--') + '</span>' +
-          '<button class="arrival-edit-btn">編集</button>' +
-        '</div>' +
+      '<div class="arrival-section-row" style="display:flex; align-items:center;">' +
+        '<span class="arrival-section-time" style="margin-right:14px;">' + escHtmlPhone(s.time || '--:--') + '</span>' +
+        '<div class="arrival-section-name" style="flex:1;">' + escHtmlPhone(s.section || '') + '</div>' +
+        '<button class="arrival-edit-btn">編集</button>' +
       '</div>' +
     '</div>';
   });
