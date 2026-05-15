@@ -93,15 +93,20 @@ function handleLineWebhook(body) {
         props.setProperty('groups', JSON.stringify(groups));
       }
 
-      // 招待挨拶
+      // 招待挨拶 + メニューカード自動送信
       try {
         pushToGroup(
           groupId,
           'SCHEDULE STUDIO Bot が参加しました。\n' +
-            'グループ名: ' + (groupName || '(未設定)') + '\n' +
-            'グループ ID: ' + groupId.slice(0, 8) + '...\n\n' +
-            'PC 編集側で「現在の公演」にこのグループを紐付けると、進行通知がここに届きます。'
+            'グループ名: ' + (groupName || '(未設定)') + '\n\n' +
+            '下のメニューカードを長押し →「アナウンス」で固定すると、\n' +
+            'グループ画面の上部に常時表示されて便利です。\n\n' +
+            '※もう一度出したい時は、このグループに「メニュー」と入力してください。'
         );
+      } catch (e) {}
+      // 続けてメニュー Flex も送る
+      try {
+        pushFlexToGroup(groupId, 'SCHEDULE STUDIO メニュー', buildMenuFlex());
       } catch (e) {}
     }
 
@@ -117,9 +122,112 @@ function handleLineWebhook(body) {
     if (event.type === 'memberJoined' && event.source && event.source.type === 'group') {
       _refreshGroupName(event.source.groupId);
     }
+
+    // テキストメッセージ受信 → 「メニュー」キーワードで Flex 返信
+    if (event.type === 'message' && event.message && event.message.type === 'text') {
+      const raw = (event.message.text || '').trim();
+      const norm = raw.toLowerCase()
+        .replace(/ﾒﾆｭｰ/g, 'メニュー');
+      if (
+        norm === 'メニュー' ||
+        norm === 'めにゅー' ||
+        norm === 'menu' ||
+        norm === 'menyu'
+      ) {
+        const target =
+          (event.source && (event.source.groupId || event.source.roomId || event.source.userId)) || null;
+        if (target) {
+          try {
+            pushFlexToGroup(target, 'SCHEDULE STUDIO メニュー', buildMenuFlex());
+          } catch (e) {}
+        }
+      }
+    }
   });
 
   return _json({ ok: true });
+}
+
+// ────────────────────────────────────────────────────────────
+// メニュー Flex Message（6ボタン）
+// ────────────────────────────────────────────────────────────
+function buildMenuFlex() {
+  const base = 'https://nrs2013.github.io/schedule-studio/phone-staff.html';
+  const btn = function (label, hash, bg) {
+    return {
+      type: 'button',
+      style: 'primary',
+      color: bg,
+      height: 'sm',
+      action: { type: 'uri', label: label, uri: base + '#' + hash }
+    };
+  };
+  return {
+    type: 'bubble',
+    size: 'mega',
+    header: {
+      type: 'box',
+      layout: 'vertical',
+      backgroundColor: '#00B900',
+      paddingAll: '14px',
+      contents: [
+        { type: 'text', text: 'SCHEDULE STUDIO', color: '#FFFFFF', weight: 'bold', size: 'md' },
+        { type: 'text', text: '知りたい情報をタップしてください', color: '#FFFFFF', size: 'xs', margin: 'xs' }
+      ]
+    },
+    body: {
+      type: 'box',
+      layout: 'vertical',
+      spacing: 'sm',
+      paddingAll: '12px',
+      contents: [
+        {
+          type: 'box',
+          layout: 'horizontal',
+          spacing: 'sm',
+          contents: [
+            btn('TODAY',     'today',     '#D85A30'),
+            btn('CALENDAR',  'calendar',  '#185FA5'),
+            btn('REHEARSAL', 'rehearsal', '#534AB7')
+          ]
+        },
+        {
+          type: 'box',
+          layout: 'horizontal',
+          spacing: 'sm',
+          contents: [
+            btn('INFO',  'info',  '#0F6E56'),
+            btn('HOTEL', 'hotel', '#854F0B'),
+            btn('PASS',  'pass',  '#993556')
+          ]
+        },
+        {
+          type: 'text',
+          text: 'このカードを長押し →「アナウンス」で上部に固定できます',
+          size: 'xxs',
+          color: '#888888',
+          wrap: true,
+          margin: 'md',
+          align: 'center'
+        }
+      ]
+    }
+  };
+}
+
+function pushFlexToGroup(groupId, altText, contents) {
+  const url = 'https://api.line.me/v2/bot/message/push';
+  const payload = {
+    to: groupId,
+    messages: [{ type: 'flex', altText: altText, contents: contents }]
+  };
+  return UrlFetchApp.fetch(url, {
+    method: 'post',
+    contentType: 'application/json',
+    headers: { Authorization: 'Bearer ' + CHANNEL_ACCESS_TOKEN },
+    payload: JSON.stringify(payload),
+    muteHttpExceptions: true
+  });
 }
 
 function _refreshGroupName(groupId) {
