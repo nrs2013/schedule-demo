@@ -2169,6 +2169,22 @@
     <!-- R61 M3: PCと共有の arrivalSectionsByDate から動的レンダリング -->
     <div id="arrival-list-host"></div>
 
+    <!-- R206: 入り時間 編集シート（時間ピッカー対応） -->
+    <div id="arrival-edit-sheet" style="display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,0.72); align-items:flex-end; justify-content:center;">
+      <div style="width:100%; max-width:520px; background:#1d1d1d; border-top:1px solid #3a3a36; border-radius:14px 14px 0 0; padding:18px 18px 24px; box-sizing:border-box;">
+        <div style="font-size:14px; letter-spacing:0.3em; color:#d8d8d4; margin-bottom:12px;">入り時間 編集</div>
+        <div style="display:flex; gap:8px;">
+          <button id="arrival-edit-time-btn" class="sde-time" data-time="09:00" onclick="openTimePicker(this)" style="width:90px; flex-shrink:0; box-sizing:border-box; background:#0f0f0f; border:1px solid #2c2c2c; border-radius:4px; padding:9px 10px; color:#e8e8e8; font-size: 16px; cursor: pointer;">09:00</button>
+          <input id="arrival-edit-section-input" type="text" placeholder="セクション名" style="flex:1; min-width:0; box-sizing:border-box; background:#0f0f0f; border:1px solid #2c2c2c; border-radius:4px; padding:9px 10px; color:#e8e8e8; font-size: 16px;" />
+        </div>
+        <div style="display:flex; gap:8px; margin-top:12px;">
+          <button type="button" onclick="deleteArrivalSectionPhone()" style="flex:1; background:#5a2222; color:#f0c0c0; border:1px solid #6d2c2c; border-radius:4px; padding:10px; font-size:14px;">削除</button>
+          <button type="button" onclick="closeArrivalEditSheet()" style="flex:1; background:#2a2a26; color:#a8a8a8; border:1px solid #3a3a36; border-radius:4px; padding:10px; font-size:14px;">キャンセル</button>
+          <button type="button" onclick="saveArrivalEditPhone()" style="flex:1; background:#e89a4a; color:#0a0a08; border:none; border-radius:4px; padding:10px; font-size:14px; font-weight:600; letter-spacing:0.2em;">保存</button>
+        </div>
+      </div>
+    </div>
+
     <div style="height:20px"></div>
   </div>
 
@@ -3511,29 +3527,60 @@ function addArrivalSectionPhone() {
   sectionInput.value = '';
 }
 
-// R195: 入り時間の編集／削除（認証不要、誰でも編集可）
+// R206: 入り時間の編集シート（時間ピッカー対応、認証不要）
+let __editingArrivalIdx = -1;
 function editArrivalSectionPhone(idx) {
   const iso = getCurrentDateIso();
   if (!iso) return;
   const list = arrivalSectionsByDate[iso] || [];
   const item = list[idx];
   if (!item) return;
-  const newSection = prompt('セクション名（空欄にすると削除）:', item.section || '');
-  if (newSection === null) return; // キャンセル
-  if (newSection.trim() === '') {
-    if (confirm('「' + (item.section || '') + '」を削除しますか？')) {
-      list.splice(idx, 1);
-      saveArrivals();
-      renderArrivalListPhone();
-    }
-    return;
+  __editingArrivalIdx = idx;
+  const sectionEl = document.getElementById('arrival-edit-section-input');
+  const timeBtn = document.getElementById('arrival-edit-time-btn');
+  if (sectionEl) sectionEl.value = item.section || '';
+  if (timeBtn) {
+    timeBtn.textContent = item.time || '09:00';
+    timeBtn.setAttribute('data-time', item.time || '09:00');
   }
-  const newTime = prompt('時間 (HH:MM):', item.time || '09:00');
-  if (newTime === null) return;
-  item.section = newSection.trim();
-  if (newTime.trim()) item.time = newTime.trim();
+  const sheet = document.getElementById('arrival-edit-sheet');
+  if (sheet) sheet.style.display = 'flex';
+}
+function closeArrivalEditSheet() {
+  const sheet = document.getElementById('arrival-edit-sheet');
+  if (sheet) sheet.style.display = 'none';
+  __editingArrivalIdx = -1;
+}
+function saveArrivalEditPhone() {
+  if (__editingArrivalIdx < 0) return;
+  const iso = getCurrentDateIso();
+  if (!iso) return;
+  const list = arrivalSectionsByDate[iso] || [];
+  const item = list[__editingArrivalIdx];
+  if (!item) return;
+  const sectionEl = document.getElementById('arrival-edit-section-input');
+  const timeBtn = document.getElementById('arrival-edit-time-btn');
+  const newSection = (sectionEl ? sectionEl.value : '').trim();
+  const newTime = (timeBtn ? (timeBtn.getAttribute('data-time') || timeBtn.textContent.trim()) : '').trim() || '09:00';
+  if (!newSection) { alert('セクション名を入力してください'); return; }
+  item.section = newSection;
+  item.time = newTime;
   saveArrivals();
   renderArrivalListPhone();
+  closeArrivalEditSheet();
+}
+function deleteArrivalSectionPhone() {
+  if (__editingArrivalIdx < 0) return;
+  const iso = getCurrentDateIso();
+  if (!iso) return;
+  const list = arrivalSectionsByDate[iso] || [];
+  const item = list[__editingArrivalIdx];
+  if (!item) return;
+  if (!confirm('「' + (item.section || '') + '」を削除しますか？')) return;
+  list.splice(__editingArrivalIdx, 1);
+  saveArrivals();
+  renderArrivalListPhone();
+  closeArrivalEditSheet();
 }
 
 // show / selectTourDay / changeTourDay をさらに拡張（M2 のラッパーの上にもう一段）
@@ -3593,11 +3640,8 @@ function renderInfoPhone() {
   }).join('');
 }
 
+// R207: INFO 投稿を認証不要に変更（誰でも投稿可）
 function openInfoComposePhone() {
-  if (typeof authed === 'undefined' || !authed) {
-    alert('INFO 投稿には認証が必要です。\nPASS タブでパスワードを入れてください。');
-    return;
-  }
   const sheet = document.getElementById('info-compose-sheet');
   if (!sheet) return;
   document.getElementById('info-compose-subject').value = '';
@@ -3609,10 +3653,6 @@ function closeInfoComposePhone() {
   if (sheet) sheet.style.display = 'none';
 }
 function submitInfoComposePhone() {
-  if (typeof authed === 'undefined' || !authed) {
-    alert('認証が切れています。PASS タブで再認証してください。');
-    return;
-  }
   const nameEl = document.getElementById('info-compose-name');
   const subjEl = document.getElementById('info-compose-subject');
   const bodyEl = document.getElementById('info-compose-body');
