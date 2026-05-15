@@ -1659,6 +1659,8 @@
      :has() のフォールバック + JS で has-band-start クラスを付与（iOS Safari 互換性のため両方） */
   .cal-cell:has(.cal-venue-band.bar-start) { z-index: 5; }
   .cal-cell.has-band-start { z-index: 5; }
+  /* R204: pill 連続バーの bar-start を含むセルも z-index を上げて、はみ出した bar が隣セル背景に隠れないように */
+  .cal-cell.has-pill-bar-start { z-index: 4; }
 
   /* 全ての日にちが同じサイズ・同じ位置に揃う（iOS Calendar 風） */
   .cal-day-num {
@@ -3245,6 +3247,7 @@ function renderCalendarMonths() {
 
       let events = '';
       const evs = (!isOutside) ? getEventsForDate(d) : [];
+      let hasPillBarStart = false;
       evs.slice(0, 3).forEach(function(e){
         const cont = isContinuousEvent(d, e);
         const positionCls = (cont.hasPrev && cont.hasNext) ? ' bar-mid'
@@ -3254,7 +3257,10 @@ function renderCalendarMonths() {
         /* R191: 会場名は venue band に分離。pill は event 名のみ */
         const label = cont.hasPrev ? '' : escHtmlPhone(e.label || '');
         events += '<div class="cal-event-pill ' + e.type + positionCls + '">' + label + '</div>';
+        /* R204: bar-start を含むセルは z-index を上げて、はみ出し部分が隣セル背景に隠されないように */
+        if (positionCls === ' bar-start' || positionCls === '') hasPillBarStart = true;
       });
+      if (hasPillBarStart) cellCls.push('has-pill-bar-start');
 
       /* R191: 会場帯（venue band）— PC 版と同じロジック */
       let venueBandHtml = '';
