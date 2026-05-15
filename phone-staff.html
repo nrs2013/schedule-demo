@@ -957,31 +957,32 @@
     font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
   }
 
+  /* R214 [A案統一]: 共通カードトークン。すべての画面のカードがこの色・余白・角丸を共有 */
   /* ── 入り時間 ───────── */
   .arrival-section {
-    background: #242424;
-    border: 1px solid #2c2c2c;
-    border-radius: 6px;
-    margin-bottom: 6px;
+    background: #1a1a1a;
+    border: 0.5px solid #2c2c2c;
+    border-radius: 8px;
+    margin-bottom: 4px;
     overflow: hidden;
   }
   .arrival-section-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 14px;
+    padding: 8px 12px;
     cursor: pointer;
   }
   .arrival-section-name {
-    font-size: 18px;
+    font-size: 14px;
     font-weight: 500;
     color: #e8e8e8;
     letter-spacing: 0.05em;
   }
   .arrival-section-time {
     font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif; font-variant-numeric: tabular-nums;
-    font-size: 26px;
-    color: #e6c870;
+    font-size: 17px;
+    color: #e89a4a;
     font-weight: 500;
   }
   .arrival-section-time.empty {
@@ -1016,23 +1017,25 @@
   }
 
   /* ── HOTEL ───────── */
+  /* R214: HOTEL カードを A案統一トークンに */
   .hotel-block {
-    background: #242424;
-    border: 1px solid #2c2c2c;
+    background: #1a1a1a;
+    border: 0.5px solid #2c2c2c;
     border-radius: 8px;
-    margin-bottom: 14px;
+    margin-bottom: 10px;
     overflow: hidden;
   }
   .hotel-block-head {
-    padding: 14px;
+    padding: 12px 14px;
     background: transparent;
-    border-bottom: 1px solid #2c2c2c;
+    border-bottom: 0.5px solid #2c2c2c;
     position: relative;
   }
   .hotel-name {
-    font-size: 20px;
+    font-size: 16px;
     font-weight: 500;
-    color: #e8e8e8;
+    color: #e89a4a;
+    letter-spacing: 0.05em;
     margin-bottom: 4px;
   }
   /* MAP ボタン — 各ホテルに添付された Google マップを開く */
@@ -1055,11 +1058,11 @@
   }
   .hotel-map-btn:active { background: rgba(91,155,213,0.3); }
 
-  /* ── タクシー配車セクション ───────── */
+  /* ── タクシー配車セクション ───────── R214: 統一 */
   .taxi-section {
     padding: 10px 14px 12px;
-    border-top: 1px solid #2c2c2c;
-    background: #1d1d1d;
+    border-top: 0.5px solid #2c2c2c;
+    background: transparent;
   }
   .taxi-head {
     display: flex; align-items: center; justify-content: space-between;
