@@ -1765,12 +1765,13 @@
     text-overflow: ellipsis;
     height: 13px;
     line-height: 11px;
-    width: 100%;
+    width: auto;
+    align-self: stretch;
     box-sizing: border-box;
     position: relative;
     z-index: 1;
   }
-  /* R193: 連結の隙間を完全に消すため margin を -10px に強化 */
+  /* R194: align-self:stretch でセル幅いっぱいに広げてから、margin -10px で隣セルへ食い込ませる */
   .cal-venue-band.bar-start {
     border-radius: 3px 0 0 3px;
     border-right: 0;
