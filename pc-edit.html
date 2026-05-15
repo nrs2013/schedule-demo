@@ -6235,25 +6235,51 @@ function show(id) {
     });
   }
   // D116: 取込ロジックを関数化（drop でも呼べるように）
+  // R220: シート選択を独自モーダル（ボタン式）に変更。ネイティブ prompt は改行潰れで読みにくいため
+  function __selectSheetModal(sheetNames) {
+    return new Promise(function(resolve) {
+      const overlay = document.createElement('div');
+      overlay.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:99999; display:flex; align-items:center; justify-content:center;';
+      const box = document.createElement('div');
+      box.style.cssText = 'background:#1d1d1d; border:0.5px solid #2c2c2c; border-radius:10px; padding:20px; min-width:320px; max-width:420px;';
+      const title = document.createElement('div');
+      title.style.cssText = 'color:#e8e8e8; font-size:15px; margin-bottom:14px; font-weight:500; letter-spacing:0.05em;';
+      title.textContent = '取り込むシートを選んでください';
+      box.appendChild(title);
+      sheetNames.forEach(function(name, idx) {
+        const btn = document.createElement('button');
+        btn.textContent = name;
+        btn.style.cssText = 'display:block; width:100%; text-align:left; background:#0f0f0f; border:0.5px solid #2c2c2c; color:#e8e8e8; padding:12px 16px; margin-bottom:6px; border-radius:6px; cursor:pointer; font-size:14px; font-family:inherit;';
+        btn.onmouseover = function() { btn.style.background = '#252525'; btn.style.borderColor = '#c8a878'; };
+        btn.onmouseout = function() { btn.style.background = '#0f0f0f'; btn.style.borderColor = '#2c2c2c'; };
+        btn.onclick = function() { document.body.removeChild(overlay); resolve(idx); };
+        box.appendChild(btn);
+      });
+      const cancel = document.createElement('button');
+      cancel.textContent = 'キャンセル';
+      cancel.style.cssText = 'display:block; width:100%; background:transparent; border:0.5px solid #3a3a36; color:#a8a8a8; padding:10px; margin-top:10px; border-radius:6px; cursor:pointer; font-size:13px; font-family:inherit;';
+      cancel.onclick = function() { document.body.removeChild(overlay); resolve(-1); };
+      box.appendChild(cancel);
+      overlay.appendChild(box);
+      document.body.appendChild(overlay);
+    });
+  }
+
   // R144: TIME列を固定列(C)じゃなくヘッダー行から動的判定 + 複数シート時の選択 UI
   function handleRhExcelFile(file) {
     if (!file) return;
     if (typeof XLSX === 'undefined') { alert('Excel ライブラリが読み込まれていません'); return; }
     const reader = new FileReader();
-    reader.onload = function(ev){
+    reader.onload = async function(ev){
       try {
         const arr = new Uint8Array(ev.target.result);
         const wb = XLSX.read(arr, {type: 'array'});
-        // R219: シート選択は自動推奨せず、ユーザーが選んだシートをそのまま読み込む
+        // R220: シート選択を独自モーダルで（複数シートある場合のみ）
         let sheetName = wb.SheetNames[0];
         if (wb.SheetNames.length > 1) {
-          const list = wb.SheetNames.map(function(n, i){ return (i+1) + '. ' + n; }).join('\n');
-          const sel = prompt('取り込むシートを選んでください。\n\n' + list + '\n\n番号を入力 (1〜' + wb.SheetNames.length + '):', '1');
-          if (sel === null) return; // キャンセル
-          const n = parseInt(sel, 10);
-          if (!isNaN(n) && n >= 1 && n <= wb.SheetNames.length) {
-            sheetName = wb.SheetNames[n - 1];
-          }
+          const idx = await __selectSheetModal(wb.SheetNames);
+          if (idx < 0) return; // キャンセル
+          sheetName = wb.SheetNames[idx];
         }
         const ws = wb.Sheets[sheetName];
         const rows = XLSX.utils.sheet_to_json(ws, {header: 1});
