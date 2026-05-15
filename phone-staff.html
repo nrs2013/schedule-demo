@@ -1659,8 +1659,10 @@
   .cal-cell.outside { background: #141312; }
   /* R197: in-tour のハイライトは削除（PC版にない、紛らわしい） */
   .cal-cell.today { background: rgba(232,154,74,0.10); }
-  /* R198: bar-start を含むセルは z-index を上げて、はみ出した会場名が隣セルに隠れないように */
+  /* R198: bar-start を含むセルは z-index を上げて、はみ出した会場名が隣セルに隠れないように
+     :has() のフォールバック + JS で has-band-start クラスを付与（iOS Safari 互換性のため両方） */
   .cal-cell:has(.cal-venue-band.bar-start) { z-index: 5; }
+  .cal-cell.has-band-start { z-index: 5; }
 
   /* 全ての日にちが同じサイズ・同じ位置に揃う（iOS Calendar 風） */
   .cal-day-num {
@@ -3240,6 +3242,8 @@ function renderCalendarMonths() {
                           : '';
           const bandLabel = samePrev ? '' : ('📍 ' + (vg.venue || ''));
           venueBandHtml = '<div class="cal-venue-band' + bandPosCls + '" title="' + escHtmlPhone(vg.venue || '') + '">' + escHtmlPhone(bandLabel) + '</div>';
+          /* R198b: ラベル描画する側のセル（bar-start or 単独）は z-index を上げて、はみ出した会場名が隣セルに隠れないようにする */
+          if (!samePrev) cellCls.push('has-band-start');
         }
       }
 
