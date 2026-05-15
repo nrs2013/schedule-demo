@@ -6245,13 +6245,21 @@ function show(id) {
         const arr = new Uint8Array(ev.target.result);
         const wb = XLSX.read(arr, {type: 'array'});
         // R144: シート選択（複数シートある場合） / R178: DAY 系のシート名を優先デフォルトに
+        // R218: 「進行表」「本番」「DAY」系を優先 / 「セットリスト」は旧テンプレの可能性が高いので推奨から外す
         let sheetName = wb.SheetNames[0];
         if (wb.SheetNames.length > 1) {
-          // R178: "DAY1" "DAY2" 等の本番セトリ用シートを優先。なければ最後のシート（新しい運用が多いため）
-          let defaultIdx = wb.SheetNames.findIndex(function(n){ return /^DAY\s*\d+/i.test(n); });
-          if (defaultIdx < 0) defaultIdx = wb.SheetNames.length - 1;
-          const list = wb.SheetNames.map(function(n, i){ return (i+1) + '. ' + n + (i === defaultIdx ? ' ★推奨' : ''); }).join('\n');
-          const sel = prompt('取り込むシートを選んでください。\n本番セトリは「DAY1」「DAY2」など日付別シートが多いです（旧テンプレ流用の場合、古い「セットリスト」シートが残ってることがあります）。\n\n' + list + '\n\n番号を入力 (1〜' + wb.SheetNames.length + '):', String(defaultIdx + 1));
+          let defaultIdx = wb.SheetNames.findIndex(function(n){
+            return /^DAY\s*\d+/i.test(n) || /^進行/.test(n) || /本番セトリ/.test(n);
+          });
+          if (defaultIdx < 0) {
+            // 「セットリスト」シートは旧テンプレ流用で紛らわしいので避け、それ以外の最後のシートを優先
+            for (let i = wb.SheetNames.length - 1; i >= 0; i--) {
+              if (!/セットリスト/.test(wb.SheetNames[i])) { defaultIdx = i; break; }
+            }
+            if (defaultIdx < 0) defaultIdx = wb.SheetNames.length - 1;
+          }
+          const list = wb.SheetNames.map(function(n, i){ return (i+1) + '. ' + n + (i === defaultIdx ? ' ★推奨（本番セトリ）' : (/セットリスト/.test(n) ? ' ⚠ 旧テンプレの可能性' : '')); }).join('\n');
+          const sel = prompt('取り込むシートを選んでください。\n本番セトリは「DAY1」「DAY2」「進行表」「本番セトリ」などの名前です。\n「セットリスト」は前のライブの旧テンプレが残っていることが多いので注意してください。\n\n' + list + '\n\n番号を入力 (1〜' + wb.SheetNames.length + '):', String(defaultIdx + 1));
           if (sel === null) return; // キャンセル
           const n = parseInt(sel, 10);
           if (!isNaN(n) && n >= 1 && n <= wb.SheetNames.length) {
