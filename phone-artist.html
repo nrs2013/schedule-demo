@@ -1283,22 +1283,23 @@
     padding: 4px 0;
     margin-bottom: 14px;
   }
+  /* R209: DAY SCHEDULE の行を少しコンパクトに */
   .schedule-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 16px 18px;
+    padding: 10px 14px;
     border-bottom: 1px solid #2c2c2c;
   }
   .schedule-row:last-child { border-bottom: none; }
   .schedule-row-label {
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 600;
     color: #d8d8d4;
     letter-spacing: 0.05em;
   }
   .schedule-row-time {
-    font-size: 26px;
+    font-size: 22px;
     font-weight: 500;
     color: #e89a4a;
     font-variant-numeric: tabular-nums;
@@ -1306,9 +1307,9 @@
     background: transparent;
     border: none;
     font-family: inherit;
-    padding: 4px 0;
+    padding: 2px 0;
     text-align: right;
-    min-width: 90px;
+    min-width: 80px;
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
   }
@@ -1317,7 +1318,7 @@
   .schedule-row-time.door-open { color: #e6c870; }
   /* SHOW TIME：赤系（本番のキメ色） */
   .schedule-row-time.show-time { color: #e07a5f; }
-  .schedule-row.muted .schedule-row-time { color: #787878; font-weight: 600; font-size: 22px; }
+  .schedule-row.muted .schedule-row-time { color: #787878; font-weight: 600; font-size: 19px; }
 
   /* ── R77 P2: PC の DAY SCHEDULE と同期した1行リスト（入り時間と統一） ───────── */
   .schedule-day-card {
@@ -3543,6 +3544,7 @@ function addArrivalSectionPhone() {
 }
 
 // R206: 入り時間の編集シート（時間ピッカー対応、認証不要）
+// R209: シート open 時に下タブを非表示にして被り問題を解消
 let __editingArrivalIdx = -1;
 function editArrivalSectionPhone(idx) {
   const iso = getCurrentDateIso();
@@ -3560,11 +3562,13 @@ function editArrivalSectionPhone(idx) {
   }
   const sheet = document.getElementById('arrival-edit-sheet');
   if (sheet) sheet.style.display = 'flex';
+  document.querySelectorAll('.phone-bottom-tabs').forEach(function(t){ t.style.display = 'none'; });
 }
 function closeArrivalEditSheet() {
   const sheet = document.getElementById('arrival-edit-sheet');
   if (sheet) sheet.style.display = 'none';
   __editingArrivalIdx = -1;
+  document.querySelectorAll('.phone-bottom-tabs').forEach(function(t){ t.style.display = ''; });
 }
 function saveArrivalEditPhone() {
   if (__editingArrivalIdx < 0) return;
@@ -3656,16 +3660,19 @@ function renderInfoPhone() {
 }
 
 // R207: INFO 投稿を認証不要に変更（誰でも投稿可）
+// R209: シート open 時に下タブを非表示にして被り問題を解消
 function openInfoComposePhone() {
   const sheet = document.getElementById('info-compose-sheet');
   if (!sheet) return;
   document.getElementById('info-compose-subject').value = '';
   document.getElementById('info-compose-body').value = '';
   sheet.style.display = 'flex';
+  document.querySelectorAll('.phone-bottom-tabs').forEach(function(t){ t.style.display = 'none'; });
 }
 function closeInfoComposePhone() {
   const sheet = document.getElementById('info-compose-sheet');
   if (sheet) sheet.style.display = 'none';
+  document.querySelectorAll('.phone-bottom-tabs').forEach(function(t){ t.style.display = ''; });
 }
 function submitInfoComposePhone() {
   const nameEl = document.getElementById('info-compose-name');
