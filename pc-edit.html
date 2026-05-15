@@ -9297,12 +9297,24 @@ function show(id) {
       if (status) { status.textContent = '✗ 先に URL を保存してください'; status.style.color = '#e07a5f'; }
       return;
     }
+    // R184: 現在の公演に紐付いた LINE グループ ID を取得
+    var groupId = '';
+    try {
+      var concerts = JSON.parse(localStorage.getItem('schedule-studio:concerts:v1') || '[]');
+      var aid = localStorage.getItem('schedule-studio:active-concert-id');
+      var c = (aid && concerts.find(function(x){return x.id===aid;})) || concerts[0];
+      groupId = (c && c.lineGroupId) || '';
+    } catch(e) {}
+    if (!groupId) {
+      if (status) { status.textContent = '✗ 現在の公演に LINE グループ ID が紐付いていません（下の「この公演のグループ ID」に貼って保存してください）'; status.style.color = '#e07a5f'; }
+      return;
+    }
     if (status) { status.textContent = '送信中…'; status.style.color = '#888'; }
     fetch(url, {
       method: 'POST',
       mode: 'no-cors',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({type:'test', subject:'テスト送信', body:'SCHEDULE STUDIO からのテスト配信です。', sender:'system', sentAt: new Date().toLocaleString('ja-JP')})
+      body: JSON.stringify({action:'push', to: groupId, text: '【テスト送信】SCHEDULE STUDIO からのテスト配信です。\n送信時刻: ' + new Date().toLocaleString('ja-JP')})
     }).then(function(){
       if (status) { status.textContent = '✓ テスト送信しました（LINE 確認してください）'; status.style.color = '#7ec27a'; }
     }).catch(function(err){
