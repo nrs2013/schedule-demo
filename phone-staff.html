@@ -1770,11 +1770,11 @@
     position: relative;
     z-index: 1;
   }
-  /* R192: 連結の隙間を消すため margin を -5px に拡大、z-index で前面に */
+  /* R193: 連結の隙間を完全に消すため margin を -10px に強化 */
   .cal-venue-band.bar-start {
     border-radius: 3px 0 0 3px;
     border-right: 0;
-    margin-right: -5px;
+    margin-right: -10px;
     padding-right: 4px;
     z-index: 2;
   }
@@ -1782,8 +1782,8 @@
     border-radius: 0;
     border-left: 0;
     border-right: 0;
-    margin-left: -5px;
-    margin-right: -5px;
+    margin-left: -10px;
+    margin-right: -10px;
     padding-left: 4px;
     padding-right: 4px;
     z-index: 2;
@@ -1791,7 +1791,7 @@
   .cal-venue-band.bar-end {
     border-radius: 0 3px 3px 0;
     border-left: 0;
-    margin-left: -5px;
+    margin-left: -10px;
     padding-left: 4px;
     z-index: 2;
   }
@@ -3094,13 +3094,18 @@ function getEventsForDate(d) {
 }
 function isContinuousEvent(d, ev) {
   if (!ev) return { hasPrev:false, hasNext:false };
-  // R188: 同一 event の date〜endDate 範囲で連続性を判定（pc-edit と挙動を揃える）
+  // R193: 自身の endDate 範囲内 OR 隣の日に同じ type & venue の event がある場合、連続として扱う
   const start = ev.date;
   const end = ev.endDate || ev.date;
   const prev = new Date(d); prev.setDate(d.getDate() - 1);
   const next = new Date(d); next.setDate(d.getDate() + 1);
   const prevK = fmtCalKey(prev), nextK = fmtCalKey(next);
-  return { hasPrev: prevK >= start && prevK <= end, hasNext: nextK >= start && nextK <= end };
+  const ownPrev = prevK >= start && prevK <= end;
+  const ownNext = nextK >= start && nextK <= end;
+  const sameTypeVenue = function(e2){ return e2.type === ev.type && (e2.venue || '') === (ev.venue || ''); };
+  const sharedPrev = getEventsForDate(prev).some(sameTypeVenue);
+  const sharedNext = getEventsForDate(next).some(sameTypeVenue);
+  return { hasPrev: ownPrev || sharedPrev, hasNext: ownNext || sharedNext };
 }
 function escHtmlPhone(s) {
   return (s==null?'':String(s)).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
