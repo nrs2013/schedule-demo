@@ -549,11 +549,11 @@
     box-shadow: 0 6px 12px rgba(0,0,0,0.5);
   }
   .rh-countdown-card {
-    /* R71: 上下幅を詰める */
-    background: #242424;
-    border: 1px solid #2c2c2c;
+    /* R215 [A案統一]: 共通カードトークン */
+    background: #1a1a1a;
+    border: 0.5px solid #2c2c2c;
     border-radius: 8px;
-    padding: 6px 14px;
+    padding: 8px 12px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -609,11 +609,11 @@
 
   /* ── RHカード: 3行レイアウト ───────── */
   .rh-card {
-    /* R76: スマホでより多くの曲を一度に見られるよう、行を詰める */
-    background: #242424;
-    border: 1px solid #2c2c2c;
-    border-radius: 6px;
-    padding: 8px 10px 9px;
+    /* R215 [A案統一]: 共通カードトークン */
+    background: #1a1a1a;
+    border: 0.5px solid #2c2c2c;
+    border-radius: 8px;
+    padding: 8px 12px;
     margin-bottom: 4px;
     position: relative;
     transition: all 0.15s;
@@ -912,11 +912,12 @@
 
   /* ── INFO ───────── */
   .info-item {
-    background: #242424;
-    border: 1px solid #2c2c2c;
-    border-radius: 6px;
-    padding: 12px 14px;
-    margin-bottom: 8px;
+    /* R215 [A案統一] */
+    background: #1a1a1a;
+    border: 0.5px solid #2c2c2c;
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 6px;
   }
   .info-item.unread { border-left: 3px solid #6e6e6e; }
   .info-item.urgent {
@@ -1077,25 +1078,27 @@
   }
   .taxi-list { display: flex; flex-direction: column; gap: 4px; }
   .taxi-row {
+    /* R215 [A案統一] */
     display: grid;
     grid-template-columns: 56px 1fr 50px 28px;
     gap: 8px;
     align-items: center;
-    background: #242424;
-    border: 1px solid #2c2c2c;
-    border-radius: 4px;
-    padding: 7px 10px;
-    font-size: 16px;
+    background: #1a1a1a;
+    border: 0.5px solid #2c2c2c;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 14px;
   }
   .taxi-time {
     font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif; font-variant-numeric: tabular-nums;
-    color: #e6c870;
+    color: #e89a4a;
+    font-size: 17px;
     font-weight: 500;
-    font-variant-numeric: tabular-nums;
   }
   .taxi-section-name {
     color: #e8e8e8;
-    font-weight: 600;
+    font-size: 14px;
+    font-weight: 500;
   }
   .taxi-count {
     color: #e6c870;
@@ -1334,15 +1337,15 @@
     padding: 0;
     margin: 0 12px;
   }
-  /* R210: DAY SCHEDULE 行をコンパクトに（文字小さく、上下余白縮小、行数を増やす） */
+  /* R215 [A案統一] */
   .schedule-day-row {
-    background: #242424;
-    border: 1px solid #2c2c2c;
-    border-radius: 6px;
+    background: #1a1a1a;
+    border: 0.5px solid #2c2c2c;
+    border-radius: 8px;
     margin-bottom: 4px;
     display: flex;
     align-items: center;
-    padding: 6px 12px;
+    padding: 8px 12px;
     gap: 10px;
   }
   .schedule-day-time {

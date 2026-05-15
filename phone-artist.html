@@ -545,11 +545,11 @@
     box-shadow: 0 6px 12px rgba(0,0,0,0.5);
   }
   .rh-countdown-card {
-    /* R71: 上下幅を詰める */
-    background: #242424;
-    border: 1px solid #2c2c2c;
+    /* R215 [A案統一] */
+    background: #1a1a1a;
+    border: 0.5px solid #2c2c2c;
     border-radius: 8px;
-    padding: 6px 14px;
+    padding: 8px 12px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -605,11 +605,11 @@
 
   /* ── RHカード: 3行レイアウト ───────── */
   .rh-card {
-    /* R76: スマホでより多くの曲を一度に見られるよう、行を詰める */
-    background: #242424;
-    border: 1px solid #2c2c2c;
-    border-radius: 6px;
-    padding: 8px 10px 9px;
+    /* R215 [A案統一] */
+    background: #1a1a1a;
+    border: 0.5px solid #2c2c2c;
+    border-radius: 8px;
+    padding: 8px 12px;
     margin-bottom: 4px;
     position: relative;
     transition: all 0.15s;
@@ -908,11 +908,12 @@
 
   /* ── INFO ───────── */
   .info-item {
-    background: #242424;
-    border: 1px solid #2c2c2c;
-    border-radius: 6px;
-    padding: 12px 14px;
-    margin-bottom: 8px;
+    /* R215 [A案統一] */
+    background: #1a1a1a;
+    border: 0.5px solid #2c2c2c;
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 6px;
   }
   .info-item.unread { border-left: 3px solid #6e6e6e; }
   .info-item.urgent {
@@ -953,31 +954,31 @@
     font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
   }
 
-  /* ── 入り時間 ───────── */
+  /* R215 [A案統一] */
   .arrival-section {
-    background: #242424;
-    border: 1px solid #2c2c2c;
-    border-radius: 6px;
-    margin-bottom: 6px;
+    background: #1a1a1a;
+    border: 0.5px solid #2c2c2c;
+    border-radius: 8px;
+    margin-bottom: 4px;
     overflow: hidden;
   }
   .arrival-section-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 14px;
+    padding: 8px 12px;
     cursor: pointer;
   }
   .arrival-section-name {
-    font-size: 18px;
+    font-size: 14px;
     font-weight: 500;
     color: #e8e8e8;
     letter-spacing: 0.05em;
   }
   .arrival-section-time {
     font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif; font-variant-numeric: tabular-nums;
-    font-size: 26px;
-    color: #e6c870;
+    font-size: 17px;
+    color: #e89a4a;
     font-weight: 500;
   }
   .arrival-section-time.empty {
@@ -1011,24 +1012,25 @@
     font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
   }
 
-  /* ── HOTEL ───────── */
+  /* R215 [A案統一] */
   .hotel-block {
-    background: #242424;
-    border: 1px solid #2c2c2c;
+    background: #1a1a1a;
+    border: 0.5px solid #2c2c2c;
     border-radius: 8px;
-    margin-bottom: 14px;
+    margin-bottom: 6px;
     overflow: hidden;
   }
   .hotel-block-head {
-    padding: 14px;
+    padding: 10px 14px;
     background: transparent;
-    border-bottom: 1px solid #2c2c2c;
+    border-bottom: 0.5px solid #2c2c2c;
     position: relative;
   }
   .hotel-name {
-    font-size: 20px;
+    font-size: 17px;
     font-weight: 500;
-    color: #e8e8e8;
+    color: #e89a4a;
+    letter-spacing: 0.02em;
     margin-bottom: 4px;
   }
   /* MAP ボタン — 各ホテルに添付された Google マップを開く */
@@ -1070,25 +1072,27 @@
   }
   .taxi-list { display: flex; flex-direction: column; gap: 4px; }
   .taxi-row {
+    /* R215 [A案統一] */
     display: grid;
     grid-template-columns: 56px 1fr 50px 28px;
     gap: 8px;
     align-items: center;
-    background: #242424;
-    border: 1px solid #2c2c2c;
-    border-radius: 4px;
-    padding: 7px 10px;
-    font-size: 16px;
+    background: #1a1a1a;
+    border: 0.5px solid #2c2c2c;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 14px;
   }
   .taxi-time {
     font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif; font-variant-numeric: tabular-nums;
-    color: #e6c870;
+    color: #e89a4a;
+    font-size: 17px;
     font-weight: 500;
-    font-variant-numeric: tabular-nums;
   }
   .taxi-section-name {
     color: #e8e8e8;
-    font-weight: 600;
+    font-size: 14px;
+    font-weight: 500;
   }
   .taxi-count {
     color: #e6c870;
@@ -1327,15 +1331,15 @@
     padding: 0;
     margin: 0 12px;
   }
-  /* R210: DAY SCHEDULE 行をコンパクトに */
+  /* R215 [A案統一] */
   .schedule-day-row {
-    background: #242424;
-    border: 1px solid #2c2c2c;
-    border-radius: 6px;
+    background: #1a1a1a;
+    border: 0.5px solid #2c2c2c;
+    border-radius: 8px;
     margin-bottom: 4px;
     display: flex;
     align-items: center;
-    padding: 6px 12px;
+    padding: 8px 12px;
     gap: 10px;
   }
   .schedule-day-time {
