@@ -1067,21 +1067,23 @@
   }
   .taxi-head {
     display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
+    gap: 8px;
   }
   .taxi-title {
-    font-size: 14px;
+    font-size: 12px;
     letter-spacing: 0.25em;
-    color: #e6c870;
+    color: #787878;
     font-weight: 500;
     text-transform: uppercase;
+    white-space: nowrap;
   }
   .taxi-list { display: flex; flex-direction: column; gap: 4px; }
   .taxi-row {
-    /* R215 [A案統一] */
+    /* R217 [統一]: 3項目に合わせて 3列 grid に。空列のガタつきを解消 */
     display: grid;
-    grid-template-columns: 56px 1fr 50px 28px;
-    gap: 8px;
+    grid-template-columns: 64px 1fr auto;
+    gap: 10px;
     align-items: center;
     background: #1a1a1a;
     border: 0.5px solid #2c2c2c;
@@ -1189,14 +1191,14 @@
   .hotel-info-grid dd { color: #e8e8e8; margin: 0; font-weight: 500; word-break: break-all; }
   .hotel-info-grid dd a { color: #d8d8d4; text-decoration: none; }
   .hotel-members-head {
-    padding: 8px 14px;
-    font-size: 14px;
+    padding: 10px 14px;
+    font-size: 12px;
     color: #787878;
-    letter-spacing: 0.2em;
+    letter-spacing: 0.25em;
     text-transform: uppercase;
     font-weight: 500;
-    background: #1d1d1d;
-    border-bottom: 1px solid #2c2c2c;
+    background: transparent;
+    border-bottom: 0.5px solid #2c2c2c;
     display: flex;
     justify-content: space-between;
   }
@@ -3958,8 +3960,8 @@ function renderHotelListPhone() {
     const memberCount = (h.members || []).length;
     const mapsQ = encodeURIComponent(h.name || '');
     const urlText = h.url ? h.url.replace(/^https?:\/\//, '').replace(/\/$/, '') : '';
-    /* R212: 追加ボタンを小さくしてタイトルが折り返さないように */
-    const addBtnStyle = 'background:transparent; border:1px solid #3a3a36; color:#a8a8a8; padding:2px 8px; border-radius:4px; font-size:11px; cursor:pointer; white-space:nowrap; flex-shrink:0;';
+    /* R217: 追加ボタンを固定幅で小型化。letter-spacing と max-width で見た目を統一 */
+    const addBtnStyle = 'background:transparent; border:0.5px solid #3a3a36; color:#a8a8a8; padding:3px 10px; border-radius:4px; font-size:11px; cursor:pointer; white-space:nowrap; flex:0 0 auto; max-width:72px; letter-spacing:0.18em; font-weight:500;';
     const taxiAddBtn = isAuthed ? '<button type="button" class="taxi-add-btn" onclick="openTaxiEditPhone(' + hotelIdx + ',-1)" style="' + addBtnStyle + '">+ 追加</button>' : '';
     const memberAddBtn = isAuthed ? '<button type="button" class="taxi-add-btn" onclick="openMemberEditPhone(' + hotelIdx + ',-1)" style="' + addBtnStyle + '">+ 追加</button>' : '';
     html += '<div class="hotel-block">' +
