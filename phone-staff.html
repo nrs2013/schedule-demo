@@ -1749,6 +1749,49 @@
     z-index: 2;
   }
 
+  /* R191: 会場帯（venue band）— PC 版と同じく pill の上に別レイヤーで表示 */
+  .cal-venue-band {
+    background: rgba(58,68,82,0.85);
+    border: 1px solid rgba(108,128,150,0.70);
+    color: #c8d8e8;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    padding: 0 4px;
+    border-radius: 3px;
+    margin: 2px 0 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    height: 13px;
+    line-height: 11px;
+    width: 100%;
+    box-sizing: border-box;
+    position: relative;
+    z-index: 1;
+  }
+  .cal-venue-band.bar-start {
+    border-radius: 3px 0 0 3px;
+    border-right: 0;
+    margin-right: -4px;
+    padding-right: 3px;
+  }
+  .cal-venue-band.bar-mid {
+    border-radius: 0;
+    border-left: 0;
+    border-right: 0;
+    margin-left: -4px;
+    margin-right: -4px;
+    padding-left: 3px;
+    padding-right: 3px;
+  }
+  .cal-venue-band.bar-end {
+    border-radius: 0 3px 3px 0;
+    border-left: 0;
+    margin-left: -4px;
+    padding-left: 3px;
+  }
+
   /* ── 日タップ時の編集シート（ボトム） ───────── */
   .cal-day-sheet {
     position: fixed;
@@ -3150,15 +3193,38 @@ function renderCalendarMonths() {
                           : cont.hasNext ? ' bar-start'
                           : cont.hasPrev ? ' bar-end'
                           : '';
-        /* R63 A1: bar-start (or 単独日) では label + 会場 を表示 */
-        const labelText = e.label + (e.venue ? ' · ' + e.venue : '');
-        const label = cont.hasPrev ? '' : escHtmlPhone(labelText);
+        /* R191: 会場名は venue band に分離。pill は event 名のみ */
+        const label = cont.hasPrev ? '' : escHtmlPhone(e.label || '');
         events += '<div class="cal-event-pill ' + e.type + positionCls + '">' + label + '</div>';
       });
+
+      /* R191: 会場帯（venue band）— PC 版と同じロジック */
+      let venueBandHtml = '';
+      if (!isOutside) {
+        const dk = fmtCalKey(d);
+        const vg = Array.isArray(venueGroups)
+          ? venueGroups.find(function(g){ return dk >= g.startDate && dk <= g.endDate; })
+          : null;
+        if (vg) {
+          const dprev = new Date(d); dprev.setDate(d.getDate() - 1);
+          const dnext = new Date(d); dnext.setDate(d.getDate() + 1);
+          const prevG = venueGroups.find(function(g){ const k = fmtCalKey(dprev); return k >= g.startDate && k <= g.endDate; });
+          const nextG = venueGroups.find(function(g){ const k = fmtCalKey(dnext); return k >= g.startDate && k <= g.endDate; });
+          const samePrev = prevG && prevG.id === vg.id;
+          const sameNext = nextG && nextG.id === vg.id;
+          const bandPosCls = (samePrev && sameNext) ? ' bar-mid'
+                          : sameNext ? ' bar-start'
+                          : samePrev ? ' bar-end'
+                          : '';
+          const bandLabel = samePrev ? '' : ('📍 ' + (vg.venue || ''));
+          venueBandHtml = '<div class="cal-venue-band' + bandPosCls + '" title="' + escHtmlPhone(vg.venue || '') + '">' + escHtmlPhone(bandLabel) + '</div>';
+        }
+      }
 
       const iso = fmtCalKey(d);
       html += '<div class="' + cellCls.join(' ') + '" onclick="openCalDaySheet(\'' + iso + '\')">' +
               '<div class="' + numCls.join(' ') + '">' + d.getDate() + '</div>' +
+              venueBandHtml +
               '<div class="cal-events">' + events + '</div>' +
               '</div>';
     }
