@@ -43,6 +43,8 @@ function doPost(e) {
   switch (body.action) {
     case 'push':
       return handlePush(body);
+    case 'pushMenu':
+      return handlePushMenu(body);
     case 'listGroups':
       return handleListGroups();
     case 'getGroupName':
@@ -285,6 +287,20 @@ function pushToGroup(groupId, text) {
     payload: JSON.stringify(payload),
     muteHttpExceptions: true
   });
+}
+
+// ────────────────────────────────────────────────────────────
+// メニューカード（Flex Message）を SCHEDULE STUDIO から手動送信
+// ────────────────────────────────────────────────────────────
+function handlePushMenu(body) {
+  const to = body.to;
+  if (!to) return _json({ ok: false, error: 'missing to' });
+  try {
+    const res = pushFlexToGroup(to, 'SCHEDULE STUDIO メニュー', buildMenuFlex());
+    return _json({ ok: true, lineStatus: res.getResponseCode() });
+  } catch (e) {
+    return _json({ ok: false, error: String(e) });
+  }
 }
 
 // ────────────────────────────────────────────────────────────

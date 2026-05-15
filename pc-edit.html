@@ -5139,6 +5139,7 @@
           <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
             <button type="button" class="info-push-btn" style="background:#444;border-color:#666;font-size:12px;padding:6px 14px;" onclick="window.__r125SaveLineUrl()">保存</button>
             <button type="button" class="info-push-btn" style="background:#444;border-color:#666;font-size:12px;padding:6px 14px;" onclick="window.__r125TestLine()">テスト送信</button>
+            <button type="button" class="info-push-btn" style="background:#2a4a2a;border-color:#3d6d3d;color:#c9e8c9;font-size:12px;padding:6px 14px;" onclick="window.__r186SendMenu()">📋 メニューカード送信</button>
             <button type="button" class="info-push-btn" style="background:#1d1d1d;border:1px solid rgba(216,184,120,0.5);color:#f0e0c8;font-size:12px;padding:6px 14px;" onclick="window.__r167CopyGasUrl()">📋 5. この URL をコピー</button>
             <button type="button" class="info-push-btn" style="background:#1d1d1d;border:1px solid rgba(216,184,120,0.5);color:#f0e0c8;font-size:12px;padding:6px 14px;" onclick="window.open('https://developers.line.biz/console/','_blank')">6. Webhook 登録のため LINE Developers を開く</button>
             <span id="info-line-status" style="color:#888;font-size:11px;align-self:center;"></span>
@@ -9317,6 +9318,37 @@ function show(id) {
       body: JSON.stringify({action:'push', to: groupId, text: '【テスト送信】SCHEDULE STUDIO からのテスト配信です。\n送信時刻: ' + new Date().toLocaleString('ja-JP')})
     }).then(function(){
       if (status) { status.textContent = '✓ テスト送信しました（LINE 確認してください）'; status.style.color = '#7ec27a'; }
+    }).catch(function(err){
+      if (status) { status.textContent = '✗ 失敗: ' + err.message; status.style.color = '#e07a5f'; }
+    });
+  };
+  // R186: メニューカード（6ボタンの Flex Message）を現在の公演グループに送信
+  window.__r186SendMenu = function(){
+    const url = localStorage.getItem('schedule-studio:line-gas-url') || '';
+    const status = document.getElementById('info-line-status');
+    if (!url) {
+      if (status) { status.textContent = '✗ 先に URL を保存してください'; status.style.color = '#e07a5f'; }
+      return;
+    }
+    var groupId = '';
+    try {
+      var concerts = JSON.parse(localStorage.getItem('schedule-studio:concerts:v1') || '[]');
+      var aid = localStorage.getItem('schedule-studio:active-concert-id');
+      var c = (aid && concerts.find(function(x){return x.id===aid;})) || concerts[0];
+      groupId = (c && c.lineGroupId) || '';
+    } catch(e) {}
+    if (!groupId) {
+      if (status) { status.textContent = '✗ 現在の公演に LINE グループ ID が紐付いていません（下の「この公演のグループ ID」に貼って保存してください）'; status.style.color = '#e07a5f'; }
+      return;
+    }
+    if (status) { status.textContent = 'メニューカード送信中…'; status.style.color = '#888'; }
+    fetch(url, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({action:'pushMenu', to: groupId})
+    }).then(function(){
+      if (status) { status.textContent = '✓ メニューカードを送信しました（LINE で長押し→アナウンスで固定できます）'; status.style.color = '#7ec27a'; }
     }).catch(function(err){
       if (status) { status.textContent = '✗ 失敗: ' + err.message; status.style.color = '#e07a5f'; }
     });
