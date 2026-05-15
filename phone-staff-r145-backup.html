@@ -1,0 +1,4050 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<!-- R58: アプリ色（ダーク）に合わせる -->
+<meta name="theme-color" content="#0d0c0b">
+<meta name="msapplication-navbutton-color" content="#0d0c0b">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="build-version" content="20260511.430000">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="apple-touch-icon" href="favicon.svg">
+<title>SCHEDULE STUDIO — STAFF</title>
+<!-- R57 LIFF: LINE Front-end Framework SDK -->
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<!-- D147 STAFF: Firebase SDK + 同期 -->
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
+<!-- R68: Firebase 匿名認証 SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script>
+(function initFirebase(){
+  const firebaseConfig = {
+    apiKey: "AIzaSyB0g9NU2jHWLgHSpgxyvWjizdloLbkJ_aM",
+    authDomain: "schedule-studio-2b14f.firebaseapp.com",
+    databaseURL: "https://schedule-studio-2b14f-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "schedule-studio-2b14f",
+    storageBucket: "schedule-studio-2b14f.firebasestorage.app",
+    messagingSenderId: "480145267674",
+    appId: "1:480145267674:web:8d1a8e9b11d3ee69613ee3"
+  };
+  try {
+    firebase.initializeApp(firebaseConfig);
+    /* R68 (A案): 匿名認証 — アプリを開いた人だけが Firebase にアクセス可能になる
+       ルール側で auth != null を要求すれば、外から URL 直叩きは弾ける */
+    firebase.auth().signInAnonymously().then(function(){
+      window.__fbAuthed = true;
+      console.log('[Firebase Auth] 匿名認証 OK');
+    }).catch(function(err){
+      window.__fbAuthed = false;
+      console.warn('[Firebase Auth] 匿名認証失敗:', err && err.message);
+    });
+    window.__db = firebase.database();
+    window.__db.ref('.info/connected').on('value', function(snap){
+      window.__fbConnected = snap.val() === true;
+    });
+  } catch (e) { console.error('[FB] init err', e); }
+})();
+// localStorage ↔ Firebase 自動同期
+(function fbSync(){
+  if (!window.__db) return;
+  const FB_ROOT = 'ls';
+  function encKey(k){ return k.replace(/[.#$/\[\]]/g, '_'); }
+  const _setItem = localStorage.setItem.bind(localStorage);
+  const _removeItem = localStorage.removeItem.bind(localStorage);
+  let suppress = false;
+  localStorage.setItem = function(key, value){
+    _setItem(key, value);
+    if (suppress) return;
+    if (typeof key === 'string' && key.indexOf('schedule-studio:') === 0) {
+      try {
+        window.__db.ref(FB_ROOT + '/' + encKey(key)).set({ k: key, v: String(value), t: Date.now() });
+        window.__lastFbWrite = { time: Date.now(), key: key };
+      } catch(e){}
+    }
+  };
+  localStorage.removeItem = function(key){
+    _removeItem(key);
+    if (suppress) return;
+    if (typeof key === 'string' && key.indexOf('schedule-studio:') === 0) {
+      try { window.__db.ref(FB_ROOT + '/' + encKey(key)).remove(); } catch(e){}
+    }
+  };
+  // 起動時 pull
+  window.__db.ref(FB_ROOT).once('value').then(function(snap){
+    const all = snap.val() || {};
+    suppress = true;
+    Object.keys(all).forEach(function(k){
+      const it = all[k];
+      if (it && it.k && typeof it.v === 'string' && localStorage.getItem(it.k) !== it.v) _setItem(it.k, it.v);
+    });
+    suppress = false;
+    console.log('[FB] pull keys=' + Object.keys(all).length);
+    // R95: child_changed と child_added を統一処理（初回書き込みも反映するため）
+    function applyFbItem(it) {
+      if (!it || !it.k || typeof it.v !== 'string') return;
+      // R101 + R105: localStorage 書き込みだけ skip、reload+render は in-memory ステイル防止のため必ず実行
+      if (localStorage.getItem(it.k) !== it.v) {
+        suppress = true; _setItem(it.k, it.v); suppress = false;
+      }
+      window.__lastFbReceive = { time: Date.now(), key: it.k };
+      // R105: キーに応じて in-memory 変数を再読込
+      try {
+        if (it.k === 'schedule-studio:calEvents:v1' && typeof calEvents !== 'undefined') {
+          const v = JSON.parse(it.v); if (Array.isArray(v)) { calEvents.length = 0; v.forEach(x => calEvents.push(x)); }
+        }
+        if (it.k === 'schedule-studio:calMemos:v1' && typeof calMemos !== 'undefined') {
+          Object.keys(calMemos).forEach(k => delete calMemos[k]); Object.assign(calMemos, JSON.parse(it.v));
+        }
+        if (it.k === 'schedule-studio:showTimes:v1' && typeof showTimes !== 'undefined') {
+          Object.keys(showTimes).forEach(k => delete showTimes[k]); Object.assign(showTimes, JSON.parse(it.v));
+        }
+        if (it.k === 'schedule-studio:arrivalSectionsByDate:v1' && typeof arrivalSectionsByDate !== 'undefined') {
+          Object.keys(arrivalSectionsByDate).forEach(k => delete arrivalSectionsByDate[k]); Object.assign(arrivalSectionsByDate, JSON.parse(it.v));
+        }
+        if (it.k === 'schedule-studio:dayEvents:v1' && typeof dailyEventsPhone !== 'undefined') {
+          Object.keys(dailyEventsPhone).forEach(k => delete dailyEventsPhone[k]); Object.assign(dailyEventsPhone, JSON.parse(it.v));
+        }
+        if (it.k === 'schedule-studio:hotels:v1' && typeof hotels !== 'undefined') {
+          const v = JSON.parse(it.v); if (Array.isArray(v)) { hotels.length = 0; v.forEach(x => hotels.push(x)); }
+        }
+      } catch(e) { console.warn('[R105] inmem reload fail', it.k, e); }
+      if (typeof window.__phoneRefreshAll === 'function') window.__phoneRefreshAll();
+    }
+    window.__db.ref(FB_ROOT).on('child_changed', function(s){ applyFbItem(s.val()); });
+    window.__db.ref(FB_ROOT).on('child_added',   function(s){ applyFbItem(s.val()); });
+  }).catch(function(e){ console.error('[FB] pull err', e); });
+})();
+</script>
+<script>
+// 自動更新検知：ページを開く度にサーバの最新版を確認、新しければ即リロード
+(async function checkForUpdate() {
+  try {
+    const res = await fetch(location.pathname + '?cb=' + Date.now(), { cache: 'no-store' });
+    if (!res.ok) return;
+    const html = await res.text();
+    const m = html.match(/<meta name="build-version" content="([^"]+)"/);
+    const remote = m && m[1];
+    const local = document.querySelector('meta[name="build-version"]').content;
+    if (remote && remote !== local) {
+      // 新しい版があるので強制リロード（タイムスタンプ付きで完全にキャッシュ回避）
+      window.location.replace(location.pathname + '?v=' + Date.now());
+    }
+  } catch (e) { /* オフライン等は無視 */ }
+})();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+  }
+  html, body {
+    margin: 0; padding: 0;
+    background: #1a1a1a;
+    color: #e8e8e8;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+    height: 100%;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+  /* mono だけ JetBrains に上書き（ただし RHカウントダウンはゴシックでいきたいので除外） */
+  .mono, .rh-time, .rh-rhno, .rh-mno, .arrival-section-time, .pass-input,
+  .info-time, .progress-text {
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif; font-variant-numeric: tabular-nums;
+  }
+  body {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    height: 100dvh;
+  }
+
+  /* ── ツアー日付セレクター（最上部・はっきり見える大きさで） ───────── */
+  .tour-date-bar {
+    flex-shrink: 0;
+    display: flex;
+    align-items: stretch;
+    background: #141312;
+    border-bottom: 1px solid #2c2c2c;
+    height: 56px;
+  }
+  .tour-date-nav {
+    background: transparent;
+    border: none;
+    color: #a8a8a0;
+    font-size: 28px;
+    font-weight: 400;
+    width: 52px;
+    cursor: pointer;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+    transition: color 0.1s;
+  }
+  .tour-date-nav:active { color: #e89a4a; }
+  .tour-date-display {
+    flex: 1;
+    background: transparent;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    cursor: pointer;
+    color: inherit;
+    font-family: inherit;
+    -webkit-tap-highlight-color: transparent;
+    padding: 0;
+  }
+  .tour-date-main {
+    font-size: 21px;
+    font-weight: 500;
+    color: #e8e8e4;
+    letter-spacing: 0.06em;
+    font-variant-numeric: tabular-nums;
+  }
+  .tour-date-label {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    padding: 3px 8px;
+    border-radius: 3px;
+    border: 1px solid;
+  }
+  .tour-date-label.setup    { color: #a8a8d8; border-color: rgba(168,168,216,0.5); background: rgba(168,168,216,0.10); }
+  .tour-date-label.rehearsal{ color: #b8d9b0; border-color: rgba(126,194,122,0.5); background: rgba(126,194,122,0.10); }
+  .tour-date-label.bagari   { color: #f0d8a0; border-color: rgba(230,200,112,0.5); background: rgba(230,200,112,0.10); }
+  .tour-date-label.gp       { color: #f5b06a; border-color: rgba(232,154,74,0.5);  background: rgba(232,154,74,0.10); }
+  .tour-date-label.show     { color: #f0a09c; border-color: rgba(224,122,95,0.6);  background: rgba(224,122,95,0.12); }
+  .tour-date-label.off      { color: #787878; border-color: rgba(120,120,120,0.45); background: rgba(120,120,120,0.08); }
+
+  /* ── 日付選択モーダル ───────── */
+  .tour-date-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 110;
+    display: none;
+    flex-direction: column;
+    justify-content: flex-end;
+  }
+  .tour-date-modal.show { display: flex; }
+  .tour-date-modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+  }
+  .tour-date-modal-sheet {
+    position: relative;
+    background: #1f1e1c;
+    border-top: 1px solid #2c2c2c;
+    border-radius: 14px 14px 0 0;
+    padding-bottom: env(safe-area-inset-bottom, 16px);
+    max-height: 75vh;
+    display: flex;
+    flex-direction: column;
+    animation: picker-slide-up 0.22s ease-out;
+  }
+  .tour-date-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
+    border-bottom: 1px solid #2c2c2c;
+  }
+  .tour-date-modal-header button {
+    background: transparent;
+    border: none;
+    color: #787878;
+    font-size: 15px;
+    font-weight: 500;
+    font-family: inherit;
+    padding: 4px 8px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .tour-date-modal-title {
+    font-size: 13px;
+    letter-spacing: 0.25em;
+    color: #d8d8d4;
+    font-weight: 500;
+  }
+  .tour-date-range {
+    padding: 10px 16px;
+    font-size: 11px;
+    color: #787878;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid #2c2c2c;
+  }
+  .tour-date-range strong { color: #e89a4a; font-weight: 500; }
+  .tour-date-edit {
+    padding: 14px 16px 18px;
+    border-bottom: 1px solid #2c2c2c;
+    background: #1c1b19;
+  }
+  .tour-date-edit-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .tour-date-edit-label {
+    font-size: 13px;
+    color: #d8d8d4;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+  }
+  .tour-date-edit input[type="date"] {
+    background: #242322;
+    border: 1px solid #3a3a37;
+    border-radius: 6px;
+    color: #e89a4a;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 500;
+    padding: 8px 12px;
+    -webkit-appearance: none;
+    appearance: none;
+    font-variant-numeric: tabular-nums;
+  }
+  .tour-date-save {
+    width: 100%;
+    margin-top: 4px;
+    background: #e89a4a;
+    color: #0a0a08;
+    border: none;
+    border-radius: 6px;
+    padding: 12px;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    cursor: pointer;
+    font-family: inherit;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #tour-edit-toggle.active { color: #e89a4a; }
+  .tour-date-list {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .tour-date-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-bottom: 1px solid #2a2a27;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.1s;
+  }
+  .tour-date-item:active { background: #2a2828; }
+  .tour-date-item.selected {
+    background: rgba(232,154,74,0.10);
+    border-left: 3px solid #e89a4a;
+    padding-left: 13px;
+  }
+  .tour-date-item-left {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+  .tour-date-item-date {
+    font-size: 17px;
+    font-weight: 500;
+    color: #e8e8e4;
+    font-variant-numeric: tabular-nums;
+  }
+  .tour-date-item-dow {
+    font-size: 13px;
+    color: #a8a8a0;
+    font-weight: 600;
+  }
+  .tour-date-item.today .tour-date-item-date { color: #e89a4a; }
+  .tour-date-item.today .tour-date-item-date::after {
+    content: ' ●';
+    font-size: 9px;
+    vertical-align: middle;
+  }
+
+  /* ── ヘッダー（2段：日付 + 公演名） ───────── */
+  .phone-header {
+    flex-shrink: 0;
+    padding: 6px 14px 7px;
+    border-bottom: 1px solid #2c2c2c;
+    background: #1a1a1a;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .phone-header-date {
+    font-size: 15px;
+    color: #d8d8d4;
+    font-weight: 500;
+    letter-spacing: 0.2em;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .phone-header-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .phone-brand-mini {
+    font-size: 13px;
+    letter-spacing: 0.35em;
+    color: #787878;
+    font-weight: 500;
+    flex-shrink: 0;
+  }
+  .phone-concert-title {
+    flex: 1;
+    font-size: 17px;
+    font-weight: 600;
+    color: #e8e8e8;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    letter-spacing: 0.02em;
+  }
+  .progress-mini {
+    flex-shrink: 0;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+    font-variant-numeric: tabular-nums;
+    font-size: 15px;
+    font-weight: 600;
+    color: #a8a8a8;
+  }
+  @keyframes pulse { 0%,100% {opacity:1} 50% {opacity:0.4} }
+
+  /* ── 上タブ ───────── */
+  .phone-top-tabs {
+    flex-shrink: 0;
+    display: flex;
+    border-bottom: 1px solid #2c2c2c;
+    background: #1a1a1a;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .phone-top-tabs button {
+    flex: 1;
+    min-width: 80px;
+    background: transparent;
+    border: none;
+    padding: 12px 10px;
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    color: #787878;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    text-transform: uppercase;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+    white-space: nowrap;
+  }
+  .phone-top-tabs button.active {
+    color: #e89a4a;
+    border-bottom-color: #e89a4a;
+  }
+  /* R68 P1.1: 上タブを1段にまとめる */
+  .phone-top-tabs-bar {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: row;
+    background: #1a1a1a;
+    border-bottom: 1px solid #2c2c2c;
+  }
+  .phone-top-tabs-bar .phone-top-tabs {
+    flex: 1;
+    border-bottom: 0;
+  }
+  /* R73: 左右両方ともピル風統一、左=緑、右=オレンジ。!important で既存ルールを確実に上書き */
+  .phone-top-tabs-bar #top-tabs-rehearsal,
+  .phone-top-tabs-bar #top-tabs {
+    align-items: center !important;
+    padding: 6px !important;
+    gap: 4px !important;
+    background: #161616 !important;
+    overflow: visible !important;
+  }
+  .phone-top-tabs-bar #top-tabs-rehearsal button,
+  .phone-top-tabs-bar #top-tabs button {
+    flex: 1 !important;
+    min-width: 0 !important;
+    padding: 7px 8px !important;
+    font-size: 12px !important;
+    letter-spacing: 0.08em !important;
+    border: 1px solid #2c2c2c !important;
+    border-radius: 16px !important;
+    background: #1d1d1d !important;
+    color: #888 !important;
+    text-transform: none !important;
+  }
+  /* 左：テクリハ／全体リハ = 緑基調 */
+  .phone-top-tabs-bar #top-tabs-rehearsal button.active {
+    background: rgba(126,194,122,0.18) !important;
+    border-color: #7ec27a !important;
+    color: #b8d9b0 !important;
+  }
+  /* 右：セトリ順／リハ順 = オレンジ基調 */
+  .phone-top-tabs-bar #top-tabs button.active {
+    background: rgba(232,154,74,0.18) !important;
+    border-color: #e89a4a !important;
+    color: #e89a4a !important;
+  }
+  .top-tabs-divider {
+    width: 1px;
+    background: #2c2c2c;
+    flex-shrink: 0;
+    margin: 6px 0;
+  }
+
+  /* ── ボディ ───────── */
+  .phone-body {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 0 12px 12px;
+    -webkit-overflow-scrolling: touch;
+  }
+  /* スクリーンの上に余白を持たせる代わり、sticky countdown の上に塗り潰しを */
+  #screen-rh { padding-top: 0; }
+
+  /* スクリーン切替（sticky を効かせるため block に） */
+  .screen { display: none; }
+  .screen.active { display: block; animation: slideUp 0.2s ease-out; }
+  @keyframes slideUp { from {opacity:0; transform: translateY(4px);} to {opacity:1;} }
+
+  /* ── 認証バナー ───────── */
+  .auth-bar {
+    background: rgba(126,194,122,0.1);
+    border: 1px solid #7ec27a;
+    border-radius: 4px;
+    padding: 6px 10px;
+    margin-bottom: 10px;
+    font-size: 14px;
+    color: #b8d9b0;
+    letter-spacing: 0.15em;
+    text-align: center;
+    text-transform: uppercase;
+    font-weight: 500;
+    display: none;
+  }
+  body.authed .auth-bar { display: block; }
+
+  /* ── REHEARSAL 全体カウントダウン（画面上部に完全固定）───────── */
+  .rh-countdown-wrap {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: #1a1a1a;
+    margin: 0 -12px;
+    padding: 12px 12px 8px;
+    box-shadow: 0 6px 12px rgba(0,0,0,0.5);
+  }
+  .rh-countdown-card {
+    /* R71: 上下幅を詰める */
+    background: #242424;
+    border: 1px solid #2c2c2c;
+    border-radius: 8px;
+    padding: 6px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .rh-countdown-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, rgba(232,154,74,0.04), transparent 70%);
+    pointer-events: none;
+  }
+  .rh-countdown-left {
+    display: flex; flex-direction: column; gap: 2px;
+    position: relative;
+  }
+  .rh-countdown-label {
+    /* R71: letter-spacing を詰めて1行に収める */
+    font-size: 12px;
+    letter-spacing: 0.10em;
+    color: #a8a8a8;
+    font-weight: 500;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .rh-countdown-meta {
+    /* R71: 1行に収める */
+    font-size: 12px;
+    color: #787878;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+  }
+  .rh-countdown-meta strong { color: #a8a8a8; font-weight: 600; }
+  .rh-countdown-time {
+    /* R71: 数字も少し抑えて全体を細く */
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif !important;
+    font-size: 36px;
+    font-weight: 500;
+    font-style: normal;
+    color: #e89a4a;
+    letter-spacing: 0.02em;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    position: relative;
+    text-shadow: 0 0 16px rgba(232,154,74,0.18);
+  }
+  /* meta 行内の残り曲数アクセント */
+  .rh-remain-inline {
+    color: #d8d8d4;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── RHカード: 3行レイアウト ───────── */
+  .rh-card {
+    /* R76: スマホでより多くの曲を一度に見られるよう、行を詰める */
+    background: #242424;
+    border: 1px solid #2c2c2c;
+    border-radius: 6px;
+    padding: 8px 10px 9px;
+    margin-bottom: 4px;
+    position: relative;
+    transition: all 0.15s;
+  }
+  .rh-card.now {
+    background: #2a2222;
+    border-color: #e89a4a;
+    box-shadow: 0 0 0 1px rgba(232,154,74,0.15);
+  }
+  .rh-card.done {
+    opacity: 0.4;
+  }
+
+  /* 1行目: RH No / M No / 曲名 / 時間 / 終了ボタン */
+  /* R76: gap・margin・font を詰める */
+  .rh-line1 {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 4px;
+  }
+  .rh-rhno {
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+    font-weight: 500;
+    font-size: 17px;
+    color: #e89a4a;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    min-width: 18px;
+    background: transparent;
+    border: none;
+    padding: 2px 0;
+    margin: 0;
+    cursor: pointer;
+    text-align: left;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body:not(.authed) .rh-rhno {
+    /* タップは出来る（PASS画面に誘導するため） */
+    opacity: 0.85;
+  }
+  /* × 選択時：RH#のみグレー化（カードは暗くしない） */
+  .rh-card.no-rh .rh-rhno {
+    color: #5a5a55;
+    font-weight: 400;
+  }
+  /* リハ順モードでは×のカードを非表示 */
+  body.sort-rh .rh-card.no-rh { display: none; }
+
+  /* ── ホイール・ピッカー（時計風くるくる）───────── */
+  .picker-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: none;
+    flex-direction: column;
+    justify-content: flex-end;
+  }
+  .picker-overlay.show { display: flex; }
+  .picker-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+  }
+  .picker-sheet {
+    position: relative;
+    background: #1f1e1c;
+    border-top: 1px solid #2c2c2c;
+    border-radius: 14px 14px 0 0;
+    padding-bottom: env(safe-area-inset-bottom, 16px);
+    animation: picker-slide-up 0.22s ease-out;
+  }
+  @keyframes picker-slide-up {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+  .picker-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    border-bottom: 1px solid #2c2c2c;
+  }
+  .picker-header button {
+    background: transparent;
+    border: none;
+    color: #e89a4a;
+    font-size: 16px;
+    font-weight: 500;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+    padding: 6px 10px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .picker-header .picker-cancel { color: #787878; }
+  .picker-title {
+    font-size: 13px;
+    letter-spacing: 0.25em;
+    color: #a8a8a8;
+    font-weight: 500;
+  }
+  .picker-wheel-container {
+    position: relative;
+    height: 200px;
+    overflow: hidden;
+  }
+  .picker-wheel {
+    height: 100%;
+    width: 100%;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    scroll-snap-type: y mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    overscroll-behavior: contain;
+  }
+  .picker-wheel::-webkit-scrollbar { display: none; }
+  .picker-wheel-spacer { height: 80px; width: 100%; }
+  .picker-wheel-item {
+    height: 40px;
+    width: 100%;
+    box-sizing: border-box;
+    scroll-snap-align: center;
+    scroll-snap-stop: always;
+    text-align: center;
+    font-size: 28px;
+    font-weight: 500;
+    color: #4a4a44;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-variant-numeric: tabular-nums;
+    transition: color 0.12s, opacity 0.12s;
+    opacity: 0.55;
+    transform-origin: center center;
+    will-change: color, opacity;
+  }
+  .picker-wheel-item.center {
+    color: #e89a4a;
+    opacity: 1;
+  }
+  /* × は赤系で目立たせる */
+  .picker-wheel-item[data-value="x"] { font-size: 32px; }
+  .picker-wheel-item[data-value="x"].center { color: #e07a5f; }
+  .picker-wheel-item.near {
+    color: #a8a8a8;
+    opacity: 0.85;
+  }
+  .picker-wheel-line {
+    position: absolute;
+    left: 18px; right: 18px;
+    height: 1px;
+    background: rgba(232,154,74,0.35);
+    pointer-events: none;
+  }
+  .picker-wheel-line.top { top: 80px; }
+  .picker-wheel-line.bottom { top: 120px; }
+  .picker-wheel-mask {
+    position: absolute;
+    left: 0; right: 0;
+    height: 80px;
+    pointer-events: none;
+  }
+  .picker-wheel-mask.top {
+    top: 0;
+    background: linear-gradient(to bottom, #1f1e1c 30%, rgba(31,30,28,0.5) 70%, rgba(31,30,28,0));
+  }
+  .picker-wheel-mask.bottom {
+    bottom: 0;
+    background: linear-gradient(to top, #1f1e1c 30%, rgba(31,30,28,0.5) 70%, rgba(31,30,28,0));
+  }
+  .rh-mno {
+    /* R76: 20px → 17px */
+    font-size: 17px;
+    font-weight: 300;
+    color: #a8a8a8;
+    letter-spacing: 0.05em;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    min-width: 18px;
+  }
+  /* セトリ順モード: M# が主役、RH# が脇役 */
+  .rh-card.m-mode .rh-rhno { color: #a8a8a8; font-weight: 300; }
+  .rh-card.m-mode .rh-mno { color: #e89a4a; font-weight: 400; }
+  .rh-title {
+    /* R76: 20px → 16px */
+    flex: 1;
+    font-size: 16px;
+    font-weight: 600;
+    color: #e8e8e8;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    letter-spacing: 0.01em;
+  }
+  .rh-card.done .rh-title {
+    text-decoration: line-through;
+    color: #787878;
+  }
+  .rh-time {
+    /* R76: 16px → 13px */
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+    font-size: 13px;
+    color: #f0e0c8; /* R64: #e6c870 ゴールド → PC 版 master-date-main と同じクリーム */
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+    letter-spacing: 0.02em;
+  }
+
+  /* 2行目: タグ8個を四角ボックスで（4文字3個・2文字4個・1文字1個） */
+  /* R76: margin を詰める */
+  .rh-line2 {
+    display: grid;
+    grid-template-columns: 1.45fr 1.45fr 0.5fr 0.85fr 0.85fr 0.85fr 0.85fr 1.45fr;
+    gap: 2px;
+    align-items: stretch;
+    margin: 2px 0 6px;
+  }
+  /* 3行目: メモ（自由入力／改行で縦に伸びる／細めの文字でガチャ感を抑える） */
+  /* R76: 14px → 12px */
+  .rh-line3 {
+    font-size: 12px;
+    font-weight: 300;
+    color: #c8c8c4 !important;
+    line-height: 1.5;
+    letter-spacing: 0.01em;
+    min-width: 0;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+  .tag-pill {
+    /* OFF: 文字だけ（枠なし・背景なし・グレー）／ ON: カテゴリ色で四角に塗る */
+    padding: 5px 1px 4px;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    white-space: nowrap;
+    overflow: hidden;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    color: #6a6a64;
+    transition: all 0.12s, transform 0.08s;
+  }
+  .tag-pill:active {
+    transform: translateY(1px);
+  }
+  /* 点灯時：背景塗りつぶし＋色付き枠＋色付き文字 */
+  .tag-pill.on.monitor { background: rgba(91,155,213,0.18);  border-color: rgba(91,155,213,0.7);  color: #a8d4e8; }
+  .tag-pill.on.bagari  { background: rgba(224,122,95,0.18);  border-color: rgba(224,122,95,0.7);  color: #f0b09c; }
+  .tag-pill.on.oto     { background: rgba(230,200,112,0.18); border-color: rgba(230,200,112,0.7); color: #f0d8a0; }
+  .tag-pill.on.koutou  { background: rgba(126,194,122,0.18); border-color: rgba(126,194,122,0.7); color: #b8d9b0; }
+  .tag-pill.on.kigae   { background: rgba(196,168,136,0.18); border-color: rgba(196,168,136,0.7); color: #d8b89c; }
+  .tag-pill.on.shoumei { background: rgba(193,134,200,0.18); border-color: rgba(193,134,200,0.7); color: #d8b0e0; }
+  .tag-pill.on.kikou   { background: rgba(110,198,200,0.18); border-color: rgba(110,198,200,0.7); color: #a8dcde; }
+  .tag-pill.on.float   { background: rgba(217,126,184,0.18); border-color: rgba(217,126,184,0.7); color: #e8b3d4; }
+  .tag-pill.on.block   { background: rgba(199,93,93,0.18);   border-color: rgba(199,93,93,0.7);   color: #e8a8a8; }
+
+  /* 終了ボタン（押しやすく拡大、行内に収める） */
+  .finish-btn {
+    background: rgba(212,205,184,0.08);
+    color: #d8d8d4;
+    border: 1px solid rgba(212,205,184,0.3);
+    padding: 7px 16px;
+    border-radius: 99px;
+    font-size: 16px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.15s;
+    line-height: 1;
+  }
+  .finish-btn:active { background: rgba(232,154,74,0.3); transform: scale(0.96); }
+  .finish-btn.disabled {
+    background: #1c1c1c;
+    color: #5a5a5a;
+    border: 1px solid #2c2c2c;
+    cursor: not-allowed;
+  }
+  .finish-btn.disabled::before { content: '⊡'; opacity: 0.6; margin-right: 4px; font-size: 15px; } /* R65c B: 🔒 emoji → ⊡ シンプル Unicode */
+  .rh-card.done .finish-btn {
+    background: rgba(126,194,122,0.15);
+    color: #7ec27a;
+    border-color: #7ec27a;
+  }
+  .rh-card.done .finish-btn::before { content: '✓ '; }
+
+  /* ── INFO ───────── */
+  .info-item {
+    background: #242424;
+    border: 1px solid #2c2c2c;
+    border-radius: 6px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+  }
+  .info-item.unread { border-left: 3px solid #6e6e6e; }
+  .info-item.urgent {
+    border-color: #e07a5f;
+    background: rgba(224,122,95,0.06);
+  }
+  .info-item-head {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 6px;
+  }
+  .info-tag {
+    padding: 2px 8px; border-radius: 3px;
+    font-size: 13px; font-weight: 500; letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+  .info-tag.norm { background: rgba(168,168,160,0.12); color: #a8a8a8; border: 1px solid #4a4a4a; }
+  .info-tag.urg  { background: rgba(224,122,95,0.2); color: #f0b09c; border: 1px solid #e07a5f; }
+  .info-time {
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif; font-variant-numeric: tabular-nums;
+    font-size: 14px; color: #787878;
+  }
+  .info-body { font-size: 17px; color: #e8e8e8; line-height: 1.6; }
+  .info-author { font-size: 14px; color: #787878; margin-top: 6px; }
+  .info-compose {
+    background: #242424;
+    border: 1px dashed #4a4a4a;
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 12px;
+    text-align: center;
+  }
+  .info-compose-btn {
+    background: #e89a4a; color: #0a0a08;
+    border: none; padding: 10px 22px;
+    border-radius: 99px;
+    font-size: 15px; font-weight: 600; letter-spacing: 0.15em;
+    cursor: pointer;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+  }
+  .info-compose-btn:active { transform: scale(0.97); }
+
+  /* R139: NEW POST 投稿カード（INFO） */
+  .info-post-card {
+    background: #1a1816;
+    border-left: 3px solid #e89a4a;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    border-radius: 0 6px 6px 0;
+  }
+  .info-post-head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 6px;
+  }
+  .info-post-author { font-size: 13px; color: #e89a4a; font-weight: 500; letter-spacing: 0.05em; }
+  .info-post-date { font-size: 11px; color: #5a5a55; font-family: 'Noto Sans JP', -apple-system, sans-serif; font-variant-numeric: tabular-nums; }
+  .info-post-title { font-size: 15px; font-weight: 600; color: #f0e0c8; margin: 4px 0 6px; letter-spacing: 0.02em; }
+  .info-post-body { font-size: 15px; color: #e0e0d8; line-height: 1.55; white-space: pre-wrap; word-break: break-word; }
+  .info-empty-msg { padding: 40px 20px; text-align: center; color: #888; font-size: 13px; }
+  .info-empty-msg .sub { font-size: 11px; color: #5a5a55; display: block; margin-top: 6px; }
+
+  /* R139: 未認証時の NEW POST ボタン（グレーアウト） */
+  .info-compose-btn.locked {
+    background: #2a2825;
+    color: #5a5a55;
+    border: 1px dashed #4a4845;
+    cursor: not-allowed;
+  }
+  .info-compose-btn.locked .lock-hint { font-size: 10px; opacity: 0.7; margin-left: 6px; }
+
+  /* R139: 投稿モーダル（画面中央表示で下タブ・Safari UI と干渉しない） */
+  .info-modal {
+    position: fixed; inset: 0; z-index: 99999;
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px 12px;
+    box-sizing: border-box;
+  }
+  .info-modal-backdrop {
+    position: absolute; inset: 0; background: rgba(0,0,0,0.75);
+  }
+  .info-modal-sheet {
+    position: relative;
+    background: #1a1816;
+    border: 1px solid #4a4845;
+    border-radius: 14px;
+    padding: 20px 18px 18px;
+    width: 100%; max-width: 540px;
+    box-sizing: border-box;
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
+  }
+  .info-modal-title {
+    font-size: 16px; font-weight: 600; color: #f0e0c8;
+    letter-spacing: 0.12em; margin-bottom: 14px;
+  }
+  .info-modal-label {
+    display: block; font-size: 12px; color: #888780;
+    letter-spacing: 0.08em; margin: 0 0 5px;
+  }
+  .info-modal-label .req { color: #e07a5f; margin-left: 4px; }
+  .info-modal-input {
+    width: 100%; background: #0a0a08;
+    border: 1px solid #2a2825; border-radius: 5px;
+    padding: 10px 12px; font-size: 15px; color: #f0e0c8;
+    margin-bottom: 12px; box-sizing: border-box;
+    font-family: 'Noto Sans JP', -apple-system, sans-serif;
+  }
+  .info-modal-textarea {
+    width: 100%; background: #0a0a08;
+    border: 1px solid #2a2825; border-radius: 5px;
+    padding: 10px 12px; font-size: 15px; color: #f0e0c8;
+    min-height: 110px; margin-bottom: 8px; box-sizing: border-box;
+    resize: vertical; line-height: 1.5;
+    font-family: 'Noto Sans JP', -apple-system, sans-serif;
+  }
+  .info-modal-hint {
+    font-size: 11px; color: #e07a5f; margin-bottom: 14px;
+    text-align: center; letter-spacing: 0.05em;
+  }
+  .info-modal-actions { display: flex; gap: 8px; }
+  .info-modal-btn {
+    flex: 1; padding: 12px; border-radius: 6px;
+    font-size: 14px; font-weight: 500; letter-spacing: 0.1em;
+    cursor: pointer;
+    font-family: 'Noto Sans JP', -apple-system, sans-serif;
+  }
+  .info-modal-btn.primary { background: #e89a4a; color: #0a0a08; border: none; }
+  .info-modal-btn.secondary { background: transparent; color: #888780; border: 1px solid #4a4845; }
+
+  /* ── 入り時間 ───────── */
+  .arrival-section {
+    background: #242424;
+    border: 1px solid #2c2c2c;
+    border-radius: 6px;
+    margin-bottom: 6px;
+    overflow: hidden;
+  }
+  .arrival-section-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 14px;
+    cursor: pointer;
+  }
+  .arrival-section-name {
+    font-size: 18px;
+    font-weight: 500;
+    color: #e8e8e8;
+    letter-spacing: 0.05em;
+  }
+  .arrival-section-time {
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif; font-variant-numeric: tabular-nums;
+    font-size: 26px;
+    color: #e6c870;
+    font-weight: 500;
+  }
+  .arrival-section-time.empty {
+    color: #5a5a5a;
+    font-size: 16px;
+    font-style: italic;
+  }
+  .arrival-edit-btn {
+    background: rgba(168,168,160,0.12);
+    color: #a8a8a8;
+    border: 1px solid #4a4a4a;
+    padding: 4px 12px;
+    border-radius: 99px;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    cursor: pointer;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+    margin-left: 8px;
+  }
+  .arrival-empty-add {
+    background: #1c1c1c;
+    color: #a8a8a8;
+    border: 1px dashed #4a4a4a;
+    padding: 4px 12px;
+    border-radius: 99px;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    cursor: pointer;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+  }
+
+  /* ── HOTEL ───────── */
+  .hotel-block {
+    background: #242424;
+    border: 1px solid #2c2c2c;
+    border-radius: 8px;
+    margin-bottom: 14px;
+    overflow: hidden;
+  }
+  .hotel-block-head {
+    padding: 14px;
+    background: transparent;
+    border-bottom: 1px solid #2c2c2c;
+    position: relative;
+  }
+  .hotel-name {
+    font-size: 20px;
+    font-weight: 500;
+    color: #e8e8e8;
+    margin-bottom: 4px;
+  }
+  /* MAP ボタン — 各ホテルに添付された Google マップを開く */
+  .hotel-map-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(91,155,213,0.15);
+    color: #a8d4e8;
+    border: 1px solid #5b9bd5;
+    border-radius: 99px;
+    padding: 5px 12px;
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    cursor: pointer;
+    text-decoration: none;
+    margin-top: 10px;
+    width: fit-content;
+  }
+  .hotel-map-btn:active { background: rgba(91,155,213,0.3); }
+
+  /* ── タクシー配車セクション ───────── */
+  .taxi-section {
+    padding: 10px 14px 12px;
+    border-top: 1px solid #2c2c2c;
+    background: #1d1d1d;
+  }
+  .taxi-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .taxi-title {
+    font-size: 14px;
+    letter-spacing: 0.25em;
+    color: #e6c870;
+    font-weight: 500;
+    text-transform: uppercase;
+  }
+  .taxi-list { display: flex; flex-direction: column; gap: 4px; }
+  .taxi-row {
+    display: grid;
+    grid-template-columns: 56px 1fr 50px 28px;
+    gap: 8px;
+    align-items: center;
+    background: #242424;
+    border: 1px solid #2c2c2c;
+    border-radius: 4px;
+    padding: 7px 10px;
+    font-size: 16px;
+  }
+  .taxi-time {
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif; font-variant-numeric: tabular-nums;
+    color: #e6c870;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
+  .taxi-section-name {
+    color: #e8e8e8;
+    font-weight: 600;
+  }
+  .taxi-count {
+    color: #e6c870;
+    font-weight: 500;
+    text-align: right;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif; font-variant-numeric: tabular-nums; }
+  .taxi-del {
+    background: transparent;
+    color: #5a5a5a;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 0;
+  }
+  .taxi-del:hover { color: #e07a5f; }
+  .taxi-add-btn {
+    background: rgba(230,200,112,0.1);
+    color: #e6c870;
+    border: 1px dashed #e6c870;
+    border-radius: 4px;
+    padding: 8px;
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 6px;
+  }
+  /* 追加フォーム */
+  .taxi-form {
+    display: none;
+    background: #242424;
+    border: 1px solid #e6c870;
+    border-radius: 4px;
+    padding: 10px;
+    margin-top: 6px;
+  }
+  .taxi-form.open { display: block; }
+  .taxi-form-row {
+    display: grid;
+    grid-template-columns: 70px 1fr 60px;
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+  .taxi-form select, .taxi-form input {
+    background: #1d1d1d;
+    border: 1px solid #2c2c2c;
+    border-radius: 3px;
+    color: #e8e8e8;
+    font-size: 16px;
+    padding: 7px 8px;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+    width: 100%;
+  }
+  .taxi-form select { font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif; font-variant-numeric: tabular-nums; }
+  .taxi-form-actions { display: flex; gap: 6px; }
+  .taxi-form-actions button {
+    flex: 1;
+    padding: 7px;
+    border-radius: 3px;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    cursor: pointer;
+    border: none;
+  }
+  .taxi-form-actions .save {
+    background: #e6c870;
+    color: #1a1a1a;
+  }
+  .taxi-form-actions .cancel {
+    background: #1c1c1c;
+    color: #a8a8a8;
+    border: 1px solid #2c2c2c;
+  }
+  .hotel-rating {
+    color: #e6c870;
+    font-size: 15px;
+    margin-bottom: 8px;
+  }
+  .hotel-info-grid {
+    display: grid;
+    grid-template-columns: 50px 1fr;
+    gap: 4px 8px;
+    font-size: 15px;
+  }
+  .hotel-info-grid dt { color: #787878; }
+  .hotel-info-grid dd { color: #e8e8e8; margin: 0; font-weight: 500; word-break: break-all; }
+  .hotel-info-grid dd a { color: #d8d8d4; text-decoration: none; }
+  .hotel-members-head {
+    padding: 8px 14px;
+    font-size: 14px;
+    color: #787878;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    font-weight: 500;
+    background: #1d1d1d;
+    border-bottom: 1px solid #2c2c2c;
+    display: flex;
+    justify-content: space-between;
+  }
+  .hotel-member-row {
+    display: grid;
+    grid-template-columns: 90px 1fr;
+    gap: 12px;
+    padding: 8px 14px;
+    border-bottom: 1px solid rgba(44,42,39,0.4);
+    align-items: baseline;
+    font-size: 16px;
+  }
+  .hotel-member-row:last-child { border-bottom: none; }
+  .hotel-member-section {
+    color: #e89a4a;
+    font-weight: 500;
+    font-size: 15px;
+    letter-spacing: 0.05em;
+  }
+  .hotel-member-name { color: #e8e8e8; font-weight: 500; }
+
+  /* ── PASS ───────── */
+  .pass-screen {
+    flex: 1;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 30px 20px;
+  }
+  .pass-icon {
+    width: 60px; height: 60px;
+    background: rgba(212,205,184,0.08);
+    border: 1px solid #6e6e6e;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: #d8d8d4; font-size: 32px;
+    margin-bottom: 16px;
+  }
+  .pass-title {
+    font-size: 21px; font-weight: 500; color: #e8e8e8;
+    margin-bottom: 4px; letter-spacing: 0.05em;
+  }
+  .pass-sub {
+    font-size: 16px; color: #a8a8a8;
+    text-align: center; margin-bottom: 24px;
+    line-height: 1.6;
+  }
+  .pass-input {
+    width: 100%;
+    background: #1d1d1d; border: 1px solid #2c2c2c;
+    border-radius: 4px; padding: 12px;
+    color: #e8e8e8; text-align: center;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif; font-variant-numeric: tabular-nums;
+    font-size: 26px; letter-spacing: 0.4em;
+    margin-bottom: 12px;
+  }
+  .pass-btn {
+    width: 100%;
+    background: #e89a4a; color: #0a0a08;
+    border: none; padding: 12px; border-radius: 4px;
+    font-size: 16px; font-weight: 500; letter-spacing: 0.25em;
+    cursor: pointer;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+  }
+  .pass-help {
+    font-size: 15px; color: #5a5a5a;
+    margin-top: 16px; text-align: center;
+    line-height: 1.6;
+  }
+  .pass-help strong { color: #d8d8d4; }
+  .pass-status {
+    background: rgba(126,194,122,0.1);
+    border: 1px solid #7ec27a;
+    border-radius: 6px;
+    padding: 10px 14px;
+    margin-bottom: 16px;
+    font-size: 16px; color: #b8d9b0;
+    text-align: center;
+    width: 100%;
+  }
+
+  /* ── タイムスケジュール画面 ───────── */
+  .schedule-section-title {
+    font-size: 12px;
+    letter-spacing: 0.3em;
+    color: #787878;
+    font-weight: 500;
+    text-transform: uppercase;
+    margin: 16px 4px 10px;
+  }
+  .schedule-card {
+    background: #242424;
+    border: 1px solid #2c2c2c;
+    border-radius: 10px;
+    padding: 4px 0;
+    margin-bottom: 14px;
+  }
+  .schedule-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 18px;
+    border-bottom: 1px solid #2c2c2c;
+  }
+  .schedule-row:last-child { border-bottom: none; }
+  .schedule-row-label {
+    font-size: 16px;
+    font-weight: 600;
+    color: #d8d8d4;
+    letter-spacing: 0.05em;
+  }
+  .schedule-row-time {
+    font-size: 26px;
+    font-weight: 500;
+    color: #e89a4a;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
+    background: transparent;
+    border: none;
+    font-family: inherit;
+    padding: 4px 0;
+    text-align: right;
+    min-width: 90px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .schedule-row-time:active { opacity: 0.7; }
+  /* DOOR OPEN：黄色（チケット感） */
+  .schedule-row-time.door-open { color: #e6c870; }
+  /* SHOW TIME：赤系（本番のキメ色） */
+  .schedule-row-time.show-time { color: #e07a5f; }
+  .schedule-row.muted .schedule-row-time { color: #787878; font-weight: 600; font-size: 22px; }
+
+  /* ── R77 P2: PC の DAY SCHEDULE と同期した1行リスト（入り時間と統一） ───────── */
+  .schedule-day-card {
+    background: transparent;
+    border: none;
+    padding: 0;
+    margin: 0 12px;
+  }
+  .schedule-day-row {
+    background: #242424;
+    border: 1px solid #2c2c2c;
+    border-radius: 6px;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    padding: 12px 14px;
+    gap: 12px;
+  }
+  .schedule-day-time {
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+    font-variant-numeric: tabular-nums;
+    font-size: 22px;
+    color: #e6c870;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    min-width: 165px;
+    text-align: left;
+    flex-shrink: 0;
+  }
+  .schedule-day-time.door-open { color: #e6c870; }
+  .schedule-day-time.show-time { color: #e07a5f; }
+  .schedule-day-label {
+    font-size: 18px;
+    font-weight: 500;
+    color: #e8e8e8;
+    letter-spacing: 0.05em;
+    flex: 1;
+    text-align: right;
+    word-break: break-word;
+  }
+
+  /* 編集モード（authed のとき）：3入力欄＋削除 */
+  .schedule-day-row.edit {
+    gap: 6px;
+    padding: 10px 10px;
+  }
+  .sde-time,
+  select.sde-time,
+  button.sde-time {
+    width: 78px;
+    box-sizing: border-box;
+    background: #1a1a1a;
+    border: 1px solid #3a3a3a;
+    border-radius: 6px;
+    color: #e8e8e2;
+    font-size: 14px;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+    padding: 6px 4px;
+    font-family: inherit;
+    color-scheme: dark;
+    cursor: pointer;
+    appearance: menulist;
+  }
+  
+  /* R61: button.sde-time をピッカー起動ボタンとして select と同じ見た目に */
+  button.sde-time {
+    appearance: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+    text-align: center;
+    font-family: inherit;
+  }
+  .sde-time.end { color: #b0b0b0; }
+  /* 時／分プルダウン（time-pair） スマホ版 */
+  .schedule-day-row.edit .time-pair {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+  }
+  .schedule-day-row.edit .time-pair select.time-hour,
+  .schedule-day-row.edit .time-pair select.time-min {
+    width: 50px;
+    box-sizing: border-box;
+    background: #1a1a1a;
+    border: 1px solid #3a3a3a;
+    border-radius: 6px;
+    color: #e8e8e2;
+    font-size: 14px;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+    padding: 6px 2px;
+    font-family: inherit;
+    color-scheme: dark;
+    cursor: pointer;
+    appearance: menulist;
+  }
+  .schedule-day-row.edit .time-pair .time-colon {
+    color: #6a6a6a;
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .sde-tilde { color: #8a8a8a; font-size: 13px; }
+  .sde-label {
+    flex: 1;
+    background: #1a1a1a;
+    border: 1px solid #3a3a3a;
+    border-radius: 6px;
+    color: #d8d8d4;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 6px 8px;
+    font-family: inherit;
+    min-width: 0;
+  }
+  .sde-del {
+    background: #2a1a1a;
+    border: 1px solid #4a2a2a;
+    color: #d87878;
+    width: 30px;
+    height: 30px;
+    border-radius: 6px;
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .sde-add {
+    display: block;
+    width: calc(100% - 24px);
+    margin: 8px 12px 14px;
+    background: #1a2a1a;
+    border: 1px dashed #4a6a4a;
+    color: #7ec27a;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+  }
+
+  /* ── 時刻ホイールピッカー（HH:MM 2連／中央に寄せる） ───────── */
+  .time-picker-wheels {
+    position: relative;
+    height: 200px;
+    overflow: hidden;
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+  }
+  .time-picker-wheels .picker-wheel {
+    flex: 0 0 90px;
+    width: 90px;
+  }
+  .time-picker-colon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 30px;
+    font-weight: 500;
+    color: #d8d8d4;
+    width: 18px;
+    z-index: 2;
+    padding-bottom: 2px;
+  }
+  /* 時刻ピッカー内のハイライト線は HH:MM ブロックの幅に合わせる */
+  .time-picker-wheels .picker-wheel-line {
+    left: 50%;
+    right: auto;
+    width: 210px;
+    transform: translateX(-105px);
+  }
+  .time-picker-wheels .picker-wheel-mask {
+    width: 100%;
+  }
+  .schedule-date {
+    font-size: 18px;
+    font-weight: 500;
+    color: #e8e8e8;
+    letter-spacing: 0.05em;
+    text-align: center;
+    margin: 8px 0 16px;
+  }
+
+  /* ── TOUR CALENDARボタン ───────── */
+  .tour-cal-btn {
+    width: 100%;
+    background: #242424;
+    border: 1px solid #3a3a37;
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin: 6px 0 16px;
+    color: #d8d8d4;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.2em;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.12s, border-color 0.12s;
+  }
+  .tour-cal-btn:active { background: #2e2c2a; border-color: #e89a4a; }
+  .tour-cal-btn-left { display: flex; align-items: center; gap: 12px; }
+  .tour-cal-btn-ico { font-size: 18px; color: #e89a4a; }
+  .tour-cal-btn-arrow { color: #e89a4a; font-size: 20px; }
+
+  /* ── TOUR CALENDAR（月表示・カレンダーアプリ風） ───────── */
+  .tour-cal-back {
+    background: transparent;
+    border: none;
+    color: #e89a4a;
+    font-size: 15px;
+    font-weight: 500;
+    font-family: inherit;
+    padding: 8px 0;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    margin-bottom: 4px;
+  }
+  .tour-cal-title {
+    font-size: 12px;
+    letter-spacing: 0.35em;
+    color: #787878;
+    font-weight: 500;
+    text-transform: uppercase;
+    margin: 4px 4px 6px;
+  }
+  .cal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 0 0 12px;
+  }
+  .cal-month-title {
+    font-size: 19px;
+    font-weight: 500;
+    color: #f0e0c8; /* R64: #e8e8e4 → PC 版クリームに統一 */
+    letter-spacing: 0.06em;
+    font-variant-numeric: tabular-nums;
+  }
+  .cal-nav {
+    background: transparent;
+    border: none;
+    color: #a8a8a0;
+    font-size: 26px;
+    font-weight: 400;
+    width: 44px;
+    height: 40px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: color 0.1s;
+  }
+  .cal-nav:active { color: #e89a4a; }
+
+  .cal-dow-row {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1px;
+    margin-bottom: 1px;
+  }
+  .cal-dow {
+    text-align: center;
+    font-size: 11px;
+    font-weight: 500;
+    color: #787878;
+    letter-spacing: 0.1em;
+    padding: 8px 0 6px;
+    background: #1c1b19;
+  }
+  .cal-dow.sat { color: #88a8d0; }
+  .cal-dow.sun { color: #d08888; }
+
+  /* R63 B2: 縦スクロール多月コンテナ */
+  .cal-months-wrap {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    max-height: calc(100vh - 220px);
+    padding-bottom: 24px;
+  }
+  .cal-month-block { margin-bottom: 18px; }
+  .cal-month-block .cal-month-title {
+    font-size: 13px;
+    letter-spacing: 0.06em;
+    color: #f0e0c8; /* R64: 月ブロック内タイトルもクリームに */
+    font-weight: 500;
+    padding: 12px 6px 6px;
+    text-align: left;
+  }
+  .cal-today-btn {
+    background: rgba(232,154,74,0.15);
+    border: 1px solid rgba(232,154,74,0.5);
+    color: #e89a4a;
+    padding: 5px 16px;
+    border-radius: 99px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    cursor: pointer;
+  }
+  .cal-today-btn:active { background: rgba(232,154,74,0.30); }
+
+  .cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    grid-auto-rows: 72px;
+    gap: 1px;
+    background: #2c2c2c;
+    border: 1px solid #2c2c2c;
+    border-top: none;
+  }
+  .cal-cell {
+    height: 72px;
+    background: #1a1a1a;
+    padding: 5px 3px 4px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    /* R59-fix: bar-start/mid/end が隣セルへ突き出せるように overflow 解放 */
+    overflow: visible;
+    box-sizing: border-box;
+    position: relative;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.1s;
+  }
+  .cal-cell:active { background: #242322; }
+  .cal-cell.outside { background: #141312; }
+  .cal-cell.in-tour { background: rgba(232,154,74,0.05); }
+  .cal-cell.today { background: rgba(232,154,74,0.10); }
+
+  /* 全ての日にちが同じサイズ・同じ位置に揃う（iOS Calendar 風） */
+  .cal-day-num {
+    font-size: 14px;
+    font-weight: 500;
+    color: #e8e8e4;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+    width: 26px;
+    height: 26px;
+    line-height: 26px;
+    text-align: center;
+    border-radius: 50%;
+    margin: 0 auto 3px;
+    letter-spacing: 0;
+    flex-shrink: 0;
+    box-sizing: border-box;
+    display: block;
+  }
+  .cal-day-num.sat { color: #7faedc; }
+  .cal-day-num.sun { color: #dc7f7f; }
+  .cal-cell.outside .cal-day-num { color: #3a3a37; }
+  .cal-cell.outside .cal-day-num.sat { color: #3a4854; }
+  .cal-cell.outside .cal-day-num.sun { color: #543a3a; }
+
+  /* 今日：オレンジの丸で囲むだけ、サイズ・太さは他と完全に同じ */
+  .cal-cell.today .cal-day-num {
+    background: #e89a4a;
+    color: #0a0a08 !important;
+    font-weight: 600;
+  }
+
+  .cal-events {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    width: 100%;
+    align-items: stretch;
+    /* R59-fix: 隣セルへの連続バーがクリップされないように visible */
+    overflow: visible;
+  }
+  .cal-event-pill {
+    font-size: 9px;
+    padding: 1px 3px;
+    border-radius: 2px;
+    background: rgba(232,154,74,0.22);
+    color: #f5b06a;
+    font-weight: 600;
+    letter-spacing: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: center;
+    line-height: 1.3;
+  }
+  .cal-event-pill.show  { background: rgba(224,122,95,0.30); color: #f5a89c; font-weight: 500; }
+  .cal-event-pill.rh    { background: rgba(126,194,122,0.22); color: #b8d9b0; }
+  .cal-event-pill.tek   { background: rgba(110,198,200,0.22); color: #a8dcde; }
+  .cal-event-pill.setup { background: rgba(184,149,88,0.32);  color: #e8c890; }
+  .cal-event-pill.stay  { background: rgba(168,168,160,0.10); color: #787878; font-weight: 500; }
+  /* R59: 連続イベントを横バー化（同会場・同種別を繋ぐ） */
+  /* セル右padding 3px + grid gap 1px = 4px、左も同じ。重ならせるには各-5pxで gap も埋める */
+  .cal-event-pill.bar-start {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    margin-right: -5px;
+    text-align: left;
+    padding-left: 4px;
+    padding-right: 0;
+    position: relative;
+    z-index: 2;
+  }
+  .cal-event-pill.bar-mid {
+    border-radius: 0;
+    margin-left: -5px;
+    margin-right: -5px;
+    padding-left: 0;
+    padding-right: 0;
+    min-height: 12px;
+    position: relative;
+    z-index: 2;
+  }
+  .cal-event-pill.bar-end {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    margin-left: -5px;
+    padding-left: 0;
+    padding-right: 4px;
+    position: relative;
+    z-index: 2;
+  }
+
+  /* ── 日タップ時の編集シート（ボトム） ───────── */
+  .cal-day-sheet {
+    position: fixed;
+    inset: 0;
+    z-index: 105;
+    display: none;
+    flex-direction: column;
+    justify-content: flex-end;
+  }
+  .cal-day-sheet.show { display: flex; }
+  .cal-day-sheet-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+  }
+  .cal-day-sheet-body {
+    position: relative;
+    background: #1f1e1c;
+    border-top: 1px solid #2c2c2c;
+    border-radius: 14px 14px 0 0;
+    padding: 14px 16px env(safe-area-inset-bottom, 16px);
+    animation: picker-slide-up 0.22s ease-out;
+  }
+  .cal-day-sheet-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #2c2c2c;
+    margin-bottom: 8px;
+  }
+  .cal-day-sheet-date {
+    font-size: 18px;
+    font-weight: 500;
+    color: #e8e8e4;
+    letter-spacing: 0.05em;
+  }
+  .cal-day-sheet-close {
+    background: transparent; border: none;
+    color: #787878; font-size: 14px; font-weight: 500;
+    font-family: inherit; padding: 4px 8px; cursor: pointer;
+  }
+  .cal-day-sheet-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 4px;
+    border-bottom: 1px solid #2a2a27;
+  }
+  .cal-day-sheet-row:last-child { border-bottom: none; }
+  .cal-day-sheet-lbl {
+    font-size: 13px;
+    color: #a8a8a0;
+    letter-spacing: 0.1em;
+    font-weight: 500;
+  }
+  .cal-day-sheet-val {
+    font-size: 18px;
+    font-weight: 500;
+    color: #e89a4a;
+    font-variant-numeric: tabular-nums;
+    background: transparent;
+    border: none;
+    font-family: inherit;
+    padding: 4px 8px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .cal-day-sheet-val.show { color: #e07a5f; }
+  .cal-day-sheet-val.door { color: #e6c870; }
+  .cal-day-sheet-val.muted { color: #5a5a55; font-weight: 400; }
+
+  /* ── テクリハ画面 ───────── */
+  .tekuriha-empty {
+    background: #242424;
+    border: 1px dashed #3a3a37;
+    border-radius: 10px;
+    padding: 40px 20px;
+    text-align: center;
+    color: #787878;
+    font-size: 14px;
+    line-height: 1.7;
+    margin-top: 24px;
+  }
+  .tekuriha-empty strong { color: #d8d8d4; font-size: 16px; display: block; margin-bottom: 8px; letter-spacing: 0.1em; }
+
+  /* ── 下タブ ───────── */
+  .phone-bottom-tabs {
+    /* R66: viewport-fit=cover でホームインジケータまで使う場合、
+       button の高さ 64px を維持しつつ下に safe-area 分の余白を確保。
+       こうすると下の白い帯は消えつつ、ボタンは完全に見える。 */
+    flex-shrink: 0;
+    display: flex;
+    background: #1a1a1a;
+    border-top: 1px solid #2c2c2c;
+    height: calc(64px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    box-sizing: border-box;
+  }
+  .phone-bottom-tabs button {
+    flex: 1;
+    min-width: 0;
+    background: transparent;
+    border: none;
+    color: #787878;
+    cursor: pointer;
+    font-size: 10px;
+    letter-spacing: 0;
+    font-weight: 500;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    position: relative;
+    padding: 6px 1px 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: clip;
+  }
+  .phone-bottom-tabs button.active { color: #f0e0c8; } /* R65c A: オレンジ → クリームに統一 */
+  /* 認証後：PASSタブが緑に点灯（認証済み表示の代わり） */
+  body.authed .phone-bottom-tabs button[data-pass] {
+    color: #7ec27a;
+  }
+  body.authed .phone-bottom-tabs button[data-pass] .ico {
+    color: #7ec27a;
+    text-shadow: 0 0 8px rgba(126,194,122,0.55);
+  }
+  .phone-bottom-tabs button .ico {
+    font-size: 22px; line-height: 1;
+  }
+  .phone-bottom-tabs button .badge {
+    position: absolute;
+    top: 4px; right: 50%;
+    transform: translateX(20px);
+    background: #e07a5f;
+    color: #fff;
+    font-size: 14px; font-weight: 500;
+    min-width: 18px; height: 18px;
+    border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0 5px;
+  }
+  /* D151: スマホ CALENDAR は閲覧のみ — 日付タップで開く編集シートを完全撤去 */
+  .cal-day-sheet, .cal-day-sheet.show {
+    display: none !important;
+  }
+</style>
+
+<!-- ツアー日付セレクター（最上部の1行） -->
+<div class="tour-date-bar">
+  <button class="tour-date-nav" onclick="changeTourDay(-1)">‹</button>
+  <button class="tour-date-display" onclick="openDatePicker()">
+    <span class="tour-date-main" id="tour-date-main">4/29 (水)</span>
+  </button>
+  <button class="tour-date-nav" onclick="changeTourDay(1)">›</button>
+</div>
+
+<!-- R74: コンサートタイトル行を非表示にして表示領域を稼ぐ -->
+<div class="phone-header" id="header" style="display:none;">
+  <div class="phone-header-row">
+    <div class="phone-brand-mini">SCH</div>
+    <div class="phone-concert-title" id="phone-concert-title-el">—</div>
+    <div class="progress-mini" id="progress-mini">1 / 5</div>
+  </div>
+</div>
+
+<!-- R69 P1.2: 常時1段4ボタン構成。左=テクリハ/全体リハ、右=セトリ順/リハ順 -->
+<div class="phone-top-tabs-bar" id="top-tabs-bar" style="display:none;">
+  <div class="phone-top-tabs" id="top-tabs-rehearsal">
+    <button data-sub="tekuriha" onclick="showRehearsalSub('tekuriha')">テクリハ</button>
+    <button class="active" data-sub="rh" onclick="showRehearsalSub('rh')">全体リハ</button>
+  </div>
+  <div class="top-tabs-divider"></div>
+  <div class="phone-top-tabs" id="top-tabs">
+    <button onclick="setSortMode('m', this)">セトリ順</button>
+    <button class="active" onclick="setSortMode('rh', this)">リハ順</button>
+  </div>
+</div>
+
+<!-- ボディ -->
+<div class="phone-body" id="body">
+
+  <!-- ════ TOUR CALENDAR（月表示・カレンダーアプリ風）════ -->
+  <!-- R137: 下タブから直接アクセス。SCHEDULE に戻るボタン廃止（下タブで戻れるため） -->
+  <div class="screen" id="screen-tour-calendar">
+    <div class="tour-cal-title">TOUR CALENDAR</div>
+
+    <div class="cal-header">
+      <!-- R63 B2: prev/next 撤去、TODAY ボタンだけ。月ブロックが縦に積まれて自然スクロール -->
+      <button class="cal-today-btn" onclick="scrollCalToToday()">TODAY</button>
+    </div>
+
+    <div class="cal-dow-row">
+      <div class="cal-dow">月</div>
+      <div class="cal-dow">火</div>
+      <div class="cal-dow">水</div>
+      <div class="cal-dow">木</div>
+      <div class="cal-dow">金</div>
+      <div class="cal-dow sat">土</div>
+      <div class="cal-dow sun">日</div>
+    </div>
+
+    <div class="cal-months-wrap" id="cal-months-wrap"><!-- R63 B2: 縦スクロール多月 --></div>
+
+    <div style="font-size:11px; color:#5a5a55; text-align:center; margin:14px 0 6px; letter-spacing:0.08em;">
+      日をタップで編集／PCのCALENDARタブと相互リンク
+    </div>
+  </div>
+
+  <!-- 日タップ時の編集シート -->
+  <div class="cal-day-sheet" id="cal-day-sheet">
+    <div class="cal-day-sheet-backdrop" onclick="closeCalDaySheet()"></div>
+    <div class="cal-day-sheet-body">
+      <div class="cal-day-sheet-head">
+        <div class="cal-day-sheet-date" id="cal-day-sheet-date">--</div>
+        <button class="cal-day-sheet-close" onclick="closeCalDaySheet()">閉じる</button>
+      </div>
+      <div class="cal-day-sheet-row">
+        <div class="cal-day-sheet-lbl">テクリハ開始</div>
+        <button class="cal-day-sheet-val" data-time="--:--" onclick="openTimePicker(this)">--:--</button>
+      </div>
+      <div class="cal-day-sheet-row">
+        <div class="cal-day-sheet-lbl">テクリハ終了</div>
+        <button class="cal-day-sheet-val" data-time="--:--" onclick="openTimePicker(this)">--:--</button>
+      </div>
+      <div class="cal-day-sheet-row">
+        <div class="cal-day-sheet-lbl">REHEARSAL 開始</div>
+        <button class="cal-day-sheet-val" data-time="--:--" onclick="openTimePicker(this)">--:--</button>
+      </div>
+      <div class="cal-day-sheet-row">
+        <div class="cal-day-sheet-lbl">REHEARSAL 終了</div>
+        <button class="cal-day-sheet-val" data-time="--:--" onclick="openTimePicker(this)">--:--</button>
+      </div>
+      <div class="cal-day-sheet-row">
+        <div class="cal-day-sheet-lbl">DOOR OPEN</div>
+        <button class="cal-day-sheet-val door" data-time="--:--" onclick="openTimePicker(this)">--:--</button>
+      </div>
+      <div class="cal-day-sheet-row">
+        <div class="cal-day-sheet-lbl">SHOW TIME</div>
+        <button class="cal-day-sheet-val show" data-time="--:--" onclick="openTimePicker(this)">--:--</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ DAY SCHEDULE（タイムスケジュール）════ -->
+  <!-- R137: TOUR CALENDAR ボタン廃止（下タブからアクセス）／入り時間とサブタブで切替 -->
+  <div class="screen active" id="screen-schedule">
+    <!-- R137: 入り時間 ↔ DAY SCHEDULE サブタブ -->
+    <div class="phone-top-tabs" style="margin-bottom:12px;">
+      <button onclick="show('arrival')">入り時間</button>
+      <button class="active" onclick="show('schedule')">DAY SCHEDULE</button>
+    </div>
+    <div id="schedule-day-list-host"></div>
+
+    <div style="font-size:11px; color:#5a5a55; text-align:center; margin-top:18px; letter-spacing:0.08em;">
+      ※ PCの DAY SCHEDULE タブと連動（PC側で編集）
+    </div>
+  </div>
+
+  <!-- ════ テクリハ ════ -->
+  <div class="screen" id="screen-tekuriha">
+    <!-- テクリハ全体カウントダウン -->
+    <div class="rh-countdown-wrap">
+      <div class="rh-countdown-card">
+        <div class="rh-countdown-left">
+          <div class="rh-countdown-label">テクリハ終了まで</div>
+          <div class="rh-countdown-meta">予定 <strong>21:00</strong></div>
+        </div>
+        <div class="rh-countdown-time">02:34:18</div>
+      </div>
+    </div>
+
+    <div id="tekuriha-card-list">
+    <!-- R135: 静的デモ完全撤去。動的カードはここに描画 -->
+    </div>
+
+    <div style="font-size:11px; color:#5a5a55; text-align:center; margin:18px 0; letter-spacing:0.08em;">
+      ※ PCと相互リンク（あとから書いた人が優先）
+    </div>
+  </div>
+
+  <!-- ════ RH ════ -->
+  <div class="screen" id="screen-rh">
+    <!-- リハーサル全体カウントダウン（sticky wrapper） -->
+    <div class="rh-countdown-wrap">
+      <div class="rh-countdown-card">
+        <div class="rh-countdown-left">
+          <div class="rh-countdown-label">リハ終了まで</div>
+          <div class="rh-countdown-meta">予定 <strong>16:00</strong></div>
+        </div>
+        <div class="rh-countdown-time" id="rh-cd">02:34:18</div>
+      </div>
+    </div>
+
+    <div id="rh-card-list">
+    <!-- R88: 静的カードは撤去。renderRhCards() が動的に生成する -->
+
+    </div><!-- end #rh-card-list -->
+
+    <div style="height:12px"></div>
+  </div>
+
+  <!-- ════ INFO ════ -->
+  <!-- R139: NEW POST 投稿機能（authed のみ投稿可、未認証はグレーアウト + アラート） -->
+  <div class="screen" id="screen-info">
+    <div class="info-compose">
+      <button class="info-compose-btn locked" id="info-new-post-btn" onclick="openInfoNewPost()">＋ NEW POST<span class="lock-hint">（要 PASS 認証）</span></button>
+    </div>
+
+    <div id="info-posts-host"></div>
+
+    <div style="height:20px"></div>
+  </div>
+
+  <!-- R139: NEW POST 投稿モーダル -->
+  <div class="info-modal" id="info-modal" style="display:none;">
+    <div class="info-modal-backdrop" onclick="closeInfoNewPost()"></div>
+    <div class="info-modal-sheet">
+      <div class="info-modal-title">＋ NEW POST</div>
+      <label class="info-modal-label">投稿者<span class="req">*必須</span></label>
+      <input class="info-modal-input" id="info-input-author" type="text" placeholder="例：演出 / のむ" maxlength="40" />
+      <label class="info-modal-label">題名<span class="req" style="color:#888;">（任意）</span></label>
+      <input class="info-modal-input" id="info-input-title" type="text" placeholder="例：明日の集合変更" maxlength="60" />
+      <label class="info-modal-label">本文<span class="req">*必須</span></label>
+      <textarea class="info-modal-textarea" id="info-input-body" placeholder="お知らせを書いてください" maxlength="500"></textarea>
+      <div class="info-modal-hint">※ 投稿後の削除・編集はできません</div>
+      <div class="info-modal-actions">
+        <button class="info-modal-btn secondary" onclick="closeInfoNewPost()">キャンセル</button>
+        <button class="info-modal-btn primary" onclick="confirmInfoNewPost()">投稿する</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ 入り時間 ════ -->
+  <!-- R137: 下タブから ARRIVAL を撤去。DAY SCHEDULE 画面とサブタブで切替アクセス -->
+  <div class="screen" id="screen-arrival">
+    <!-- R137: 入り時間 ↔ DAY SCHEDULE サブタブ -->
+    <div class="phone-top-tabs" style="margin-bottom:12px;">
+      <button class="active" onclick="show('arrival')">入り時間</button>
+      <button onclick="show('schedule')">DAY SCHEDULE</button>
+    </div>
+
+    <!-- 自分の入り時間を追加するエリア -->
+    <div style="background:#242424; border:1px dashed #4a4a4a; border-radius:6px; padding:14px; margin-bottom:14px;">
+      <div style="font-size: 14px; letter-spacing:0.2em; color:#a8a8a8; font-weight: 500; margin-bottom:10px;">＋ 入り時間を追加</div>
+      <div style="display:flex; gap:8px;">
+        <button class="sde-time" data-time="09:00" onclick="openTimePicker(this)" style="width:90px; flex-shrink:0; box-sizing:border-box; background:#1d1d1d; border:1px solid #2c2c2c; border-radius:4px; padding:9px 10px; color:#e8e8e8; font-size: 16px; cursor: pointer;">09:00</button>
+        <input type="text" placeholder="セクション名 (例: PA)" style="flex:1; min-width:0; box-sizing:border-box; background:#1d1d1d; border:1px solid #2c2c2c; border-radius:4px; padding:9px 10px; color:#e8e8e8; font-size: 16px;" />
+      </div>
+      <button style="width:100%; margin-top:8px; background:#e89a4a; color:#0a0a08; border:none; padding:9px; border-radius:4px; font-size: 15px; font-weight: 500; letter-spacing:0.2em; cursor:pointer;">登録する</button>
+    </div>
+
+    <!-- 既存リスト（誰でも追加・編集できる） -->
+    <div style="font-size: 14px; letter-spacing:0.2em; color:#787878; margin: 0 4px 8px; text-transform:uppercase; font-weight: 500;">— 登録済み —</div>
+    <!-- R61 M3: PCと共有の arrivalSectionsByDate から動的レンダリング -->
+    <div id="arrival-list-host"></div>
+
+    <div style="height:20px"></div>
+  </div>
+
+  <!-- ════ HOTEL ════ -->
+  <div class="screen" id="screen-hotel">
+    <!-- R62 M4: PCと共有の hotels から動的レンダリング -->
+    <div id="hotel-list-host"></div>
+  </div>
+
+  <!-- ════ PASS ════ -->
+  <div class="screen" id="screen-pass">
+    <div class="pass-screen" id="pass-input-view">
+      <div style="font-size: 15px; letter-spacing:0.4em; color:#d8d8d4; font-weight: 600; margin-bottom:18px;">PASSWORD</div>
+      <input class="pass-input" id="pass-field" type="password" maxlength="4" placeholder="••••" inputmode="numeric" />
+      <button class="pass-btn" onclick="tryUnlock()">認証する</button>
+    </div>
+    <div class="pass-screen" id="pass-unlocked-view" style="display:none;">
+      <div class="pass-icon" style="background:rgba(126,194,122,0.12); border-color:#7ec27a; color:#7ec27a;">✓</div>
+      <div style="font-size: 18px; color:#b8d9b0; font-weight: 500; margin-bottom:18px; letter-spacing:0.1em;">認証済み</div>
+      <button class="pass-btn" style="background:#1c1c1c; color:#a8a8a8; border:1px solid #2c2c2c;" onclick="resetAuth()">ログアウト</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- R65 Step 2: PASS タブを復活（passless 入場 + 編集パスワードでロック解除式） -->
+<!-- D150 STAFF: タブを全部英語化（PC 版と統一感） -->
+<!-- R137: 下タブ再構成。R142: DAY SCHEDULE だけ DAY に短縮、他はフルスペル -->
+<div class="phone-bottom-tabs" id="bottom-tabs">
+  <button onclick="show('tour-calendar')"><span class="ico">▦</span>CALENDAR</button>
+  <button class="active" onclick="show('schedule')"><span class="ico">▤</span>DAY</button>
+  <button class="rehearsal-btn" onclick="show('rehearsal')"><span class="ico">▶</span>REHEARSAL</button>
+  <button onclick="show('hotel')"><span class="ico">★</span>HOTEL</button>
+  <button onclick="show('info')"><span class="ico">⚑</span>INFO</button>
+  <button data-pass onclick="show('pass')"><span class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;"><circle cx="9" cy="14" r="3"/><path d="M12 14h9"/><path d="M17 14v4"/><path d="M20 14v3"/></svg></span>PASS</button>
+</div>
+
+<!-- ツアー日付選択モーダル -->
+<div class="tour-date-modal" id="tour-date-modal">
+  <div class="tour-date-modal-backdrop" onclick="closeDatePicker()"></div>
+  <div class="tour-date-modal-sheet">
+    <div class="tour-date-modal-header">
+      <button onclick="closeDatePicker()">閉じる</button>
+      <div class="tour-date-modal-title">ツアー日程</div>
+      <button id="tour-edit-toggle" onclick="toggleTourEdit()">編集</button>
+    </div>
+
+    <!-- ツアー期間（編集モードでは入力可） -->
+    <div class="tour-date-range" id="tour-date-range">
+      会場入り <strong id="tour-range-start">4/27</strong> 〜 千秋楽 <strong id="tour-range-end">5/3</strong>（<span id="tour-range-days">7</span>日間）
+    </div>
+
+    <!-- 編集フォーム（デフォルト非表示） -->
+    <div class="tour-date-edit" id="tour-date-edit" style="display:none;">
+      <div class="tour-date-edit-row">
+        <span class="tour-date-edit-label">会場入り</span>
+        <input type="date" id="tour-start-input" value="2026-04-27" />
+      </div>
+      <div class="tour-date-edit-row">
+        <span class="tour-date-edit-label">千秋楽</span>
+        <input type="date" id="tour-end-input" value="2026-05-03" />
+      </div>
+      <button class="tour-date-save" onclick="saveTourRange()">保存</button>
+      <div style="font-size:11px; color:#5a5a55; text-align:center; margin-top:8px; letter-spacing:0.05em;">
+        ※ PCと相互リンク（あとから書いた人が優先）
+      </div>
+    </div>
+
+    <div class="tour-date-list" id="tour-date-list"></div>
+  </div>
+</div>
+
+<!-- ホイール・ピッカー（時刻 HH:MM）-->
+<div class="picker-overlay" id="time-picker">
+  <div class="picker-backdrop" onclick="closeTimePicker()"></div>
+  <div class="picker-sheet">
+    <div class="picker-header">
+      <button class="picker-cancel" onclick="closeTimePicker()">キャンセル</button>
+      <div class="picker-title" id="time-picker-title">時刻</div>
+      <button onclick="commitTimePicker()">決定</button>
+    </div>
+    <div class="time-picker-wheels">
+      <div class="picker-wheel" id="time-picker-hour"></div>
+      <div class="time-picker-colon">:</div>
+      <div class="picker-wheel" id="time-picker-minute"></div>
+      <div class="picker-wheel-mask top"></div>
+      <div class="picker-wheel-mask bottom"></div>
+      <div class="picker-wheel-line top"></div>
+      <div class="picker-wheel-line bottom"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ホイール・ピッカー（RH順くるくる）-->
+<div class="picker-overlay" id="rh-picker">
+  <div class="picker-backdrop" onclick="closeRhPicker()"></div>
+  <div class="picker-sheet">
+    <div class="picker-header">
+      <button class="picker-cancel" onclick="closeRhPicker()">キャンセル</button>
+      <div class="picker-title">リハ順</div>
+      <button onclick="commitRhPicker()">決定</button>
+    </div>
+    <div class="picker-wheel-container">
+      <div class="picker-wheel" id="rh-picker-wheel"></div>
+      <div class="picker-wheel-mask top"></div>
+      <div class="picker-wheel-mask bottom"></div>
+      <div class="picker-wheel-line top"></div>
+      <div class="picker-wheel-line bottom"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// D152 STAFF: 常に認証済み（PASS タブ撤去 + パスワードプロンプト一切なし）
+let authed = false; /* R107: 起動時は未認証。PASS で 1111 (STAFF) または 2222 (ARTIST) を入れて初めて編集可 */
+const topTabsHiddenScreens = ['schedule','info','arrival','hotel','pass'];
+
+// R67 P1: 「リハーサル」下タブが「テクリハ」「全体リハ」両方を内包する
+let lastRehearsalSub = 'rh'; // 'rh' or 'tekuriha'。前回開いていた方を覚える
+
+function show(id) {
+  // 'rehearsal' が来たら、前回開いていた sub を実際の screen として開く
+  let actualScreenId = id;
+  let activeBottomTab = id;
+  if (id === 'rehearsal') {
+    actualScreenId = (lastRehearsalSub === 'tekuriha') ? 'tekuriha' : 'rh';
+    activeBottomTab = 'rehearsal';
+  } else if (id === 'tekuriha' || id === 'rh') {
+    activeBottomTab = 'rehearsal';
+    lastRehearsalSub = id;
+  }
+
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const target = document.getElementById('screen-' + actualScreenId);
+  if (target) target.classList.add('active');
+
+  // 下タブ active 切替（onclick の show('xxx') から判定）
+  document.querySelectorAll('#bottom-tabs button').forEach(b => {
+    b.classList.remove('active');
+    const oc = b.getAttribute('onclick') || '';
+    const m = oc.match(/show\(['"]([^'"]+)['"]\)/);
+    if (m && m[1] === activeBottomTab) b.classList.add('active');
+  });
+
+  // R69 P1.2: 上タブは常時1段4ボタン（リハーサル系画面のときだけバー全体を表示）
+  const ttBar = document.getElementById('top-tabs-bar');
+  const ttReh = document.getElementById('top-tabs-rehearsal');
+  const ttRh  = document.getElementById('top-tabs');
+  const ttDiv = document.querySelector('.top-tabs-divider');
+  const isRehearsalScreen = (actualScreenId === 'rh' || actualScreenId === 'tekuriha');
+  if (ttBar) ttBar.style.display = isRehearsalScreen ? 'flex' : 'none';
+  // リハーサル系画面なら左右両方とも表示する（4ボタン横並び）
+  if (ttRh)  ttRh.style.display  = isRehearsalScreen ? 'flex' : 'none';
+  if (ttDiv) ttDiv.style.display = isRehearsalScreen ? 'block' : 'none';
+  // 左側のリハーサル上タブの active 切替
+  if (isRehearsalScreen && ttReh) {
+    ttReh.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+    const subBtn = ttReh.querySelector('button[data-sub="' + actualScreenId + '"]');
+    if (subBtn) subBtn.classList.add('active');
+  }
+
+  const body = document.getElementById('body');
+  if (body) body.scrollTop = 0;
+}
+
+// R67 P1: 上タブからのテクリハ／全体リハ切替
+function showRehearsalSub(sub) {
+  show(sub); // 'rh' or 'tekuriha'
+}
+
+function tryUnlock() {
+  /* R65 Step 2: STAFF の編集パスワード認証（PASS タブから入力された値をチェック）
+     現状は仮パスワード '1111'。本番では pc-edit.html で設定した「編集パスワード」を使う */
+  const v = document.getElementById('pass-field').value;
+  /* R114: コンサートに保存されたパスワードを参照（fallback で 1111） */
+  var _r114Concerts = JSON.parse(localStorage.getItem('schedule-studio:concerts:v1')||'[]');
+  var _r114ActiveId = localStorage.getItem('schedule-studio:active-concert-id');
+  var _r114Concert = (_r114ActiveId && _r114Concerts.find(function(c){return c.id===_r114ActiveId;})) || _r114Concerts[0];
+  /* R118: STAFF パスワード = 編集パスワード（passwords.edit）を参照。fallback は '1111' */
+  var _r114Expected = (_r114Concert && _r114Concert.passwords && (_r114Concert.passwords.edit || _r114Concert.passwords.staff)) || '1111';
+  if (v === _r114Expected) {
+    authed = true;
+    document.getElementById('pass-input-view').style.display = 'none';
+    document.getElementById('pass-unlocked-view').style.display = 'flex';
+    document.body.classList.add('authed');
+    // 終了ボタン全部有効化
+    document.querySelectorAll('.finish-btn.disabled').forEach(b => b.classList.remove('disabled'));
+    // R77 P3: SCHEDULE タブを編集UI に切り替え
+    if (typeof renderScheduleDayListPhone === 'function') renderScheduleDayListPhone();
+  } else {
+    alert('パスワードが違います');
+  }
+}
+
+function resetAuth() {
+  authed = false;
+  document.getElementById('pass-input-view').style.display = 'flex';
+  document.getElementById('pass-unlocked-view').style.display = 'none';
+  document.getElementById('pass-field').value = '';
+  document.body.classList.remove('authed');
+  // done でないカードのボタンを再ロック
+  document.querySelectorAll('.rh-card:not(.done) .finish-btn').forEach(b => b.classList.add('disabled'));
+  // R77 P3: SCHEDULE タブを閲覧UI に戻す
+  if (typeof renderScheduleDayListPhone === 'function') renderScheduleDayListPhone();
+}
+
+// 終了ボタン トグル動作: 認証済みなら done のオン/オフを切り替え
+function toggleFinish(cardId) {
+  /* R115: 未認証時はサイレントに無視（PASS タブを押した時だけ認証画面が出る） */
+  if (!authed) return;
+  const card = document.getElementById(cardId);
+  if (!card) return;
+  const btn = card.querySelector('.finish-btn');
+  const wasDone = card.classList.contains('done');
+
+  if (wasDone) {
+    // 完了取り消し: done を外して「終了」に戻す
+    card.classList.remove('done');
+    btn.textContent = '終了';
+  } else {
+    // 完了: now を外して done に
+    card.classList.remove('now');
+    card.classList.add('done');
+    btn.textContent = '完了';
+    // 次の未完了カードを now に
+    const cards = document.querySelectorAll('.rh-card');
+    for (const c of cards) {
+      if (!c.classList.contains('done')) {
+        c.classList.add('now');
+        break;
+      }
+    }
+  }
+  updateProgress();
+}
+
+function updateProgress() {
+  const total = document.querySelectorAll('.rh-card').length;
+  const done = document.querySelectorAll('.rh-card.done').length;
+  const remain = total - done;
+  const el = document.getElementById('progress-mini');
+  if (el) el.textContent = done + ' / ' + total;
+  const remainEl = document.getElementById('remain-num');
+  if (remainEl) remainEl.textContent = remain;
+}
+
+// リハーサル全体カウントダウン: 終了予定時刻まで
+// デモ用: 残り 2:34:18 から減算
+let rhSec = 2*3600 + 34*60 + 18;
+setInterval(() => {
+  rhSec = Math.max(0, rhSec - 1);
+  const h = String(Math.floor(rhSec / 3600)).padStart(2,'0');
+  const m = String(Math.floor((rhSec % 3600) / 60)).padStart(2,'0');
+  const s = String(rhSec % 60).padStart(2,'0');
+  const el = document.getElementById('rh-cd');
+  if (el) el.textContent = h + ':' + m + ':' + s;
+}, 1000);
+
+updateProgress();
+
+// 並び順切替: 'rh' = リハ順 / 'm' = セトリ順
+function setSortMode(mode, btn) {
+  // 上タブの active 切替
+  document.querySelectorAll('#top-tabs button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+
+  // body に sort-rh / sort-m クラスを設定（リハ順では × カードを非表示にする）
+  document.body.classList.toggle('sort-rh', mode === 'rh');
+  document.body.classList.toggle('sort-m', mode === 'm');
+
+  // 現在表示中の画面のカードリストを対象に
+  const activeScreen = document.querySelector('.screen.active');
+  if (!activeScreen) return;
+  const list = activeScreen.querySelector('#rh-card-list, #tekuriha-card-list');
+  if (!list) return;
+  const cards = Array.from(list.querySelectorAll('.rh-card'));
+  const attr = (mode === 'm') ? 'data-m' : 'data-rh';
+  cards.sort((a, b) => {
+    const av = parseInt(a.getAttribute(attr), 10);
+    const bv = parseInt(b.getAttribute(attr), 10);
+    return av - bv;
+  });
+  cards.forEach(c => list.appendChild(c));
+
+  // セトリ順では M番号が主役、RH番号が脇役（色をスワップ）
+  cards.forEach(c => {
+    if (mode === 'm') c.classList.add('m-mode');
+    else c.classList.remove('m-mode');
+  });
+}
+
+// 5分刻みの時刻プルダウンを各 .time-pulldown に流し込む（00:00〜23:55）
+document.querySelectorAll('.time-pulldown').forEach(sel => {
+  let html = '';
+  for (let h = 0; h < 24; h++) {
+    for (let m = 0; m < 60; m += 5) {
+      const hh = String(h).padStart(2, '0');
+      const mm = String(m).padStart(2, '0');
+      const t = `${hh}:${mm}`;
+      const selected = (t === '08:00') ? ' selected' : '';
+      html += `<option value="${t}"${selected}>${t}</option>`;
+    }
+  }
+  sel.innerHTML = html;
+});
+
+function toggleTaxiForm(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.toggle('open');
+}
+
+// R88 Phase B: タグタップでトグル + localStorage 保存（PC ↔ Firebase 同期）
+document.addEventListener('click', (e) => {
+  const t = e.target;
+  if (t && t.classList && t.classList.contains('tag-pill')) {
+    /* R115b: 未認証時はサイレント無視 */
+    if (!authed) return;
+    t.classList.toggle('on');
+    // どのカードのどのタグか特定して rehearsalByDate を更新
+    const card = t.closest('.rh-card');
+    if (!card) return;
+    const songId = parseInt(card.getAttribute('data-song-id'), 10);
+    const tagKey = Array.from(t.classList).find(c => ['monitor','bagari','oto','koutou','kigae','shoumei','kikou','block'].indexOf(c) >= 0);
+    if (!songId || !tagKey) return;
+    const isOn = t.classList.contains('on');
+    saveRehTag(songId, tagKey, isOn);
+  }
+});
+
+// ── ホイール・ピッカー（リハ順）──
+let activeRhBtn = null;
+let pickerScrollTimeout = null;
+
+function openRhPicker(btn) {
+  /* R115: 未認証時はサイレント無視 */
+  if (!authed) return;
+  activeRhBtn = btn;
+  const wheel = document.getElementById('rh-picker-wheel');
+  // アイテム生成: ×（リハなし）+ 1〜14
+  let html = '<div class="picker-wheel-spacer"></div>';
+  html += `<div class="picker-wheel-item" data-value="x">×</div>`;
+  for (let i = 1; i <= 14; i++) {
+    html += `<div class="picker-wheel-item" data-value="${i}">${i}</div>`;
+  }
+  html += '<div class="picker-wheel-spacer"></div>';
+  wheel.innerHTML = html;
+
+  const overlay = document.getElementById('rh-picker');
+  overlay.classList.add('show');
+
+  // スクロール位置を現在値に合わせる（×=index0、1=index1、…14=index14）
+  const cur = btn.dataset.value;
+  const idx = (cur === 'x') ? 0 : Math.max(0, Math.min(14, parseInt(cur, 10) || 1));
+  setTimeout(() => {
+    wheel.scrollTop = idx * 40;
+    updatePickerHighlight();
+  }, 20);
+
+  wheel.onscroll = () => {
+    if (pickerScrollTimeout) clearTimeout(pickerScrollTimeout);
+    updatePickerHighlight();
+  };
+}
+
+function updatePickerHighlight() {
+  const wheel = document.getElementById('rh-picker-wheel');
+  const items = wheel.querySelectorAll('.picker-wheel-item');
+  if (!items.length) return;
+  const containerRect = wheel.getBoundingClientRect();
+  const centerY = containerRect.top + containerRect.height / 2;
+  let closest = null, closestDist = Infinity;
+  items.forEach(item => {
+    item.classList.remove('center', 'near');
+    const r = item.getBoundingClientRect();
+    const itemCenter = r.top + r.height / 2;
+    const dist = Math.abs(itemCenter - centerY);
+    if (dist < closestDist) { closestDist = dist; closest = item; }
+  });
+  if (closest) {
+    closest.classList.add('center');
+    // 上下の隣接アイテムを「near」に
+    const items = Array.from(wheel.querySelectorAll('.picker-wheel-item'));
+    const idx = items.indexOf(closest);
+    if (idx > 0) items[idx - 1].classList.add('near');
+    if (idx < items.length - 1) items[idx + 1].classList.add('near');
+  }
+}
+
+function commitRhPicker() {
+  const wheel = document.getElementById('rh-picker-wheel');
+  const center = wheel.querySelector('.picker-wheel-item.center');
+  if (center && activeRhBtn) {
+    const v = center.dataset.value;
+    activeRhBtn.dataset.value = v;
+    activeRhBtn.textContent = (v === 'x') ? '×' : v;
+    // カードに「リハなし」状態をマーク
+    const card = activeRhBtn.closest('.rh-card');
+    if (card) {
+      if (v === 'x') {
+        card.classList.add('no-rh');
+        card.setAttribute('data-rh', '99'); // ソート時は最後尾
+      } else {
+        card.classList.remove('no-rh');
+        card.setAttribute('data-rh', v);
+      }
+      // R88 Phase B: localStorage 保存
+      const songId = parseInt(card.getAttribute('data-song-id'), 10);
+      if (songId) saveRehRhNo(songId, v === 'x' ? null : parseInt(v, 10));
+    }
+  }
+  closeRhPicker();
+}
+
+function closeRhPicker() {
+  document.getElementById('rh-picker').classList.remove('show');
+  activeRhBtn = null;
+}
+
+// ── 時刻ホイールピッカー ──
+let activeTimeBtn = null;
+
+function openTimePicker(btn) {
+  // 認証ゲートは一時OFF（誰でも編集可能 / 本番は認証ロックする想定）
+  activeTimeBtn = btn;
+
+  const label = btn.parentElement.querySelector('.schedule-row-label')?.textContent || '時刻';
+  document.getElementById('time-picker-title').textContent = label;
+
+  const [curH, curM] = (btn.dataset.time || '00:00').split(':').map(Number);
+  const minuteStep = 5; // 5分刻み
+  const minuteIdx = Math.round(curM / minuteStep);
+
+  // 時のホイール 0〜23
+  const hourWheel = document.getElementById('time-picker-hour');
+  let html = '<div class="picker-wheel-spacer"></div>';
+  for (let h = 0; h < 24; h++) {
+    html += `<div class="picker-wheel-item" data-value="${h}">${String(h).padStart(2,'0')}</div>`;
+  }
+  html += '<div class="picker-wheel-spacer"></div>';
+  hourWheel.innerHTML = html;
+
+  // 分のホイール 0〜55 (5分刻み)
+  const minuteWheel = document.getElementById('time-picker-minute');
+  html = '<div class="picker-wheel-spacer"></div>';
+  for (let m = 0; m < 60; m += minuteStep) {
+    html += `<div class="picker-wheel-item" data-value="${m}">${String(m).padStart(2,'0')}</div>`;
+  }
+  html += '<div class="picker-wheel-spacer"></div>';
+  minuteWheel.innerHTML = html;
+
+  // モーダル表示
+  document.getElementById('time-picker').classList.add('show');
+
+  // スクロール位置を現在値に合わせる
+  setTimeout(() => {
+    hourWheel.scrollTop = curH * 40;
+    minuteWheel.scrollTop = minuteIdx * 40;
+    updateTimePickerHighlight(hourWheel);
+    updateTimePickerHighlight(minuteWheel);
+  }, 20);
+
+  hourWheel.onscroll = () => updateTimePickerHighlight(hourWheel);
+  minuteWheel.onscroll = () => updateTimePickerHighlight(minuteWheel);
+}
+
+function updateTimePickerHighlight(wheel) {
+  const items = wheel.querySelectorAll('.picker-wheel-item');
+  if (!items.length) return;
+  const containerRect = wheel.getBoundingClientRect();
+  const centerY = containerRect.top + containerRect.height / 2;
+  let closest = null, closestDist = Infinity;
+  items.forEach(item => {
+    item.classList.remove('center', 'near');
+    const r = item.getBoundingClientRect();
+    const itemCenter = r.top + r.height / 2;
+    const dist = Math.abs(itemCenter - centerY);
+    if (dist < closestDist) { closestDist = dist; closest = item; }
+  });
+  if (closest) {
+    closest.classList.add('center');
+    const arr = Array.from(items);
+    const idx = arr.indexOf(closest);
+    if (idx > 0) arr[idx - 1].classList.add('near');
+    if (idx < arr.length - 1) arr[idx + 1].classList.add('near');
+  }
+}
+
+function commitTimePicker() {
+  if (!activeTimeBtn) return;
+  const hourCenter = document.querySelector('#time-picker-hour .picker-wheel-item.center');
+  const minuteCenter = document.querySelector('#time-picker-minute .picker-wheel-item.center');
+  if (hourCenter && minuteCenter) {
+    const h = String(hourCenter.dataset.value).padStart(2, '0');
+    const m = String(minuteCenter.dataset.value).padStart(2, '0');
+    const t = `${h}:${m}`;
+    activeTimeBtn.dataset.time = t;
+    activeTimeBtn.textContent = t;
+    /* R61: ボタンを value として扱えるよう property 代入 + change イベント発火（既存 change ハンドラを再利用） */
+    activeTimeBtn.value = t;
+    activeTimeBtn.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+  closeTimePicker();
+}
+
+function closeTimePicker() {
+  document.getElementById('time-picker').classList.remove('show');
+  activeTimeBtn = null;
+}
+
+// 初期：リハ順モード（×カードは隠れる）
+document.body.classList.add('sort-rh');
+// R65 Step 1: D147 の強制 authed を撤去。passless 入場は維持しつつ、authed=false で起動
+// → PASS タブで編集パスワードを入れた時だけ authed=true になる（編集機能解放）
+
+// ── ツアー日程（モック・期間→日数自動展開）──
+const TOUR_YEAR = 2026;
+/* R65e: tourStart/tourEnd を動的化
+   - localStorage から読む（PC 版と共有：schedule-studio:tour:start / end）
+   - 無ければデフォルト '2026-04-27' 〜 '2026-05-03'
+   - 今日が範囲外なら、ツアー期間を「今日を含む」よう自動拡張 */
+const _R65E_LS_TS = 'schedule-studio:tour:start';
+const _R65E_LS_TE = 'schedule-studio:tour:end';
+function _r65eYmd(d){ return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+let tourStart = (function(){
+  try { return localStorage.getItem(_R65E_LS_TS) || '2026-04-27'; }
+  catch(e){ return '2026-04-27'; }
+})();
+let tourEnd = (function(){
+  try { return localStorage.getItem(_R65E_LS_TE) || '2026-05-03'; }
+  catch(e){ return '2026-05-03'; }
+})();
+(function _r65eExtendToToday(){
+  const _t = new Date(); _t.setHours(0,0,0,0);
+  const _ts = new Date(tourStart);
+  const _te = new Date(tourEnd);
+  if (_t < _ts) tourStart = _r65eYmd(_t);
+  if (_t > _te) tourEnd   = _r65eYmd(_t);
+})();
+let tourDays = [];
+let selectedDayIdx = 0;
+
+function buildTourDays(startStr, endStr) {
+  const start = new Date(startStr);
+  const end = new Date(endStr);
+  if (isNaN(start) || isNaN(end) || start > end) return [];
+  const days = [];
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    days.push({
+      date: `${d.getMonth() + 1}/${d.getDate()}`,
+      dow: '日月火水木金土'[d.getDay()],
+      iso: d.toISOString().slice(0, 10),
+    });
+  }
+  return days;
+}
+
+// 端末の今日の日付からツアー内の該当日を自動選択
+function findTodayIndex() {
+  const now = new Date();
+  const todayStr = `${now.getMonth() + 1}/${now.getDate()}`;
+  const idx = tourDays.findIndex(d => d.date === todayStr);
+  if (idx >= 0) {
+    tourDays.forEach((d, i) => d.today = (i === idx));
+    return idx;
+  }
+  const todayMs = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  if (tourDays.length === 0) return 0;
+  const firstMs = new Date(tourDays[0].iso).getTime();
+  if (todayMs < firstMs) return 0;
+  return tourDays.length - 1;
+}
+
+function refreshTour() {
+  tourDays = buildTourDays(tourStart, tourEnd);
+  selectedDayIdx = findTodayIndex();
+  // 期間サマリ表示更新
+  if (tourDays.length) {
+    document.getElementById('tour-range-start').textContent = tourDays[0].date;
+    document.getElementById('tour-range-end').textContent = tourDays[tourDays.length - 1].date;
+    document.getElementById('tour-range-days').textContent = tourDays.length;
+  }
+  renderDateBar();
+  renderDateList();
+}
+
+function toggleTourEdit() {
+  const edit = document.getElementById('tour-date-edit');
+  const toggleBtn = document.getElementById('tour-edit-toggle');
+  const isOpen = edit.style.display !== 'none';
+  edit.style.display = isOpen ? 'none' : 'block';
+  toggleBtn.textContent = isOpen ? '編集' : '完了';
+  toggleBtn.classList.toggle('active', !isOpen);
+}
+
+function saveTourRange() {
+  const s = document.getElementById('tour-start-input').value;
+  const e = document.getElementById('tour-end-input').value;
+  if (!s || !e) { alert('日付を入力してください'); return; }
+  if (s > e) { alert('会場入りより千秋楽が前になっています'); return; }
+  tourStart = s;
+  tourEnd = e;
+  refreshTour();
+  toggleTourEdit();
+}
+
+function renderDateBar() {
+  if (!tourDays.length) return;
+  const d = tourDays[selectedDayIdx];
+  document.getElementById('tour-date-main').textContent = `${d.date} (${d.dow})`;
+}
+
+function renderDateList() {
+  const list = document.getElementById('tour-date-list');
+  list.innerHTML = tourDays.map((d, i) => {
+    const cls = ['tour-date-item'];
+    if (i === selectedDayIdx) cls.push('selected');
+    if (d.today) cls.push('today');
+    return `<div class="${cls.join(' ')}" onclick="selectTourDay(${i})">
+      <div class="tour-date-item-left">
+        <div class="tour-date-item-date">${d.date}</div>
+        <div class="tour-date-item-dow">(${d.dow})</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openDatePicker() {
+  renderDateList();
+  document.getElementById('tour-date-modal').classList.add('show');
+}
+
+function closeDatePicker() {
+  document.getElementById('tour-date-modal').classList.remove('show');
+}
+
+function selectTourDay(idx) {
+  selectedDayIdx = idx;
+  renderDateBar();
+  closeDatePicker();
+  // R60 M2: 日付切替のたびに SCHEDULE タブの内容も calEvents/showTimes から更新
+  if (typeof updateScheduleTabFromCalEvents === 'function') updateScheduleTabFromCalEvents();
+}
+
+// R143: wrap 多重チェーンを統合。1 関数に集約して、すべての再描画を直接呼ぶ
+function changeTourDay(delta) {
+  const next = selectedDayIdx + delta;
+  if (next < 0 || next >= tourDays.length) return;
+  selectedDayIdx = next;
+  renderDateBar();
+  if (typeof updateScheduleTabFromCalEvents === 'function') updateScheduleTabFromCalEvents();
+  if (typeof renderRhCards === 'function') renderRhCards();
+  if (typeof renderArrivalListPhone === 'function') renderArrivalListPhone();
+  if (typeof renderScheduleDayListPhone === 'function') renderScheduleDayListPhone();
+}
+
+// 初期化：ツアー期間からカレンダーを作って今日に合わせる
+refreshTour();
+
+// ════════════════════════════════════════════════════════════
+// R59: PC（pc-edit.html）と localStorage 共有のデータ層
+// pc-edit.html を「軸」として、ここはそれを読み込む
+// ════════════════════════════════════════════════════════════
+const LS_KEY_EVENTS    = 'schedule-studio:calEvents:v1';
+const LS_KEY_SHOW_TIMES = 'schedule-studio:showTimes:v1';
+const LS_KEY_MEMOS     = 'schedule-studio:calMemos:v1';
+
+/* R121: デモデータ撤去 */
+const DEFAULT_CAL_EVENTS = [];
+/* R121: デモデータ撤去 */
+const DEFAULT_SHOW_TIMES = {};
+function loadJSON(key, def) {
+  try {
+    const v = localStorage.getItem(key);
+    if (v === null) return def;
+    return JSON.parse(v);
+  } catch (e) { return def; }
+}
+function saveJSON(key, val) {
+  const s = JSON.stringify(val);
+  try { localStorage.setItem(key, s); } catch (e) {}
+  // R102: setItem hook が iOS Safari で動かない場合の保険として Firebase に直接書き込み
+  if (typeof key === 'string' && key.indexOf('schedule-studio:') === 0 && window.__db) {
+    try {
+      const encKey = key.replace(/[.#$/\[\]]/g, '_');
+      window.__db.ref('ls/' + encKey).set({ k: key, v: s, t: Date.now() });
+      window.__lastFbWrite = { time: Date.now(), key: key };
+    } catch (e) { console.warn('[R102] direct FB write fail', key, e); }
+  }
+}
+
+// ── R88: PC ↔ スマホ 完全リアルタイム同期（曲データ + リハ計画） ──
+const LS_KEY_SETLISTS = 'schedule-studio:setlists:v1';
+const LS_KEY_ACTIVE_SL = 'schedule-studio:activeSetlistId';
+const LS_KEY_REH_BY_DATE = 'schedule-studio:rehearsalByDate:v1';
+
+function getActiveSongs() {
+  const setlists = loadJSON(LS_KEY_SETLISTS, []);
+  if (!Array.isArray(setlists) || setlists.length === 0) return [];
+  const activeId = localStorage.getItem(LS_KEY_ACTIVE_SL);
+  const sl = (activeId && setlists.find(s => s.id === activeId)) || setlists[0];
+  return Array.isArray(sl.songs) ? sl.songs : [];
+}
+
+function getRehDictForToday() {
+  const dict = loadJSON(LS_KEY_REH_BY_DATE, {});
+  const iso = (typeof getCurrentDateIso === 'function') ? getCurrentDateIso() : null;
+  if (!iso) return {};
+  return dict[iso] || {};
+}
+
+function setRehDictForToday(songId, partial) {
+  const dict = loadJSON(LS_KEY_REH_BY_DATE, {});
+  const iso = (typeof getCurrentDateIso === 'function') ? getCurrentDateIso() : null;
+  if (!iso) return;
+  if (!dict[iso]) dict[iso] = {};
+  if (!dict[iso][songId]) dict[iso][songId] = { rhNo: null, tags: [], memo: '' };
+  Object.assign(dict[iso][songId], partial);
+  saveJSON(LS_KEY_REH_BY_DATE, dict);
+}
+
+function saveRehTag(songId, tagKey, isOn) {
+  const dict = loadJSON(LS_KEY_REH_BY_DATE, {});
+  const iso = (typeof getCurrentDateIso === 'function') ? getCurrentDateIso() : null;
+  if (!iso) return;
+  if (!dict[iso]) dict[iso] = {};
+  if (!dict[iso][songId]) dict[iso][songId] = { rhNo: null, tags: [], memo: '' };
+  const tags = Array.isArray(dict[iso][songId].tags) ? dict[iso][songId].tags : [];
+  const idx = tags.indexOf(tagKey);
+  if (isOn && idx < 0) tags.push(tagKey);
+  if (!isOn && idx >= 0) tags.splice(idx, 1);
+  dict[iso][songId].tags = tags;
+  saveJSON(LS_KEY_REH_BY_DATE, dict);
+}
+
+function saveRehRhNo(songId, rhNo) {
+  setRehDictForToday(songId, { rhNo: rhNo });
+}
+
+function saveRehMemo(songId, memo) {
+  setRehDictForToday(songId, { memo: memo });
+}
+
+// 8 種タグ定義（PC と同じ）
+const PHONE_TAG_LIST = [
+  {key:'monitor', label:'モニター'},
+  {key:'bagari',  label:'場当たり'},
+  {key:'oto',     label:'音'},
+  {key:'koutou',  label:'口答'},
+  {key:'kigae',   label:'着替'},
+  {key:'shoumei', label:'照明'},
+  {key:'kikou',   label:'機構'},
+  {key:'block',   label:'ブロック'}
+];
+
+// M# 計算（通常曲のみカウント、MC/Encore/Event/End はラベル）
+function computeMNoPhone(song, songsArr) {
+  if (song.isMC) return 'MC';
+  if (song.isEncore) return 'EN';
+  if (song.isEvent) return 'VCR';
+  if (song.isEnd) return 'END';
+  let cnt = 0;
+  for (const s of songsArr) {
+    if (!s.isMC && !s.isEncore && !s.isEvent && !s.isEnd) {
+      cnt++;
+      if (s.id === song.id) return 'M' + cnt;
+    }
+  }
+  return 'M?';
+}
+
+function formatTimePhone(seconds) {
+  if (seconds == null) return '—';
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return m + ':' + String(s).padStart(2, '0');
+}
+
+function escHtmlPhone(s) {
+  return (s == null ? '' : String(s)).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function renderRhCards() {
+  const list = document.getElementById('rh-card-list');
+  if (!list) return;
+  const songs = getActiveSongs();
+  const rehDict = getRehDictForToday();
+
+  if (songs.length === 0) {
+    list.innerHTML = '<div style="padding:40px 20px; text-align:center; color:#888; font-size:13px;">PC 側でセットリストを作成してください<br><span style="font-size:11px; color:#666;">（同期されると自動で表示されます）</span></div>';
+    return;
+  }
+
+  let html = '';
+  songs.forEach((song, i) => {
+    const reh = rehDict[song.id] || { rhNo: null, tags: [], memo: '' };
+    const mNo = computeMNoPhone(song, songs);
+    const time = (song.timeStr != null && song.timeStr !== '') ? song.timeStr
+               : (song.durationSeconds != null ? formatTimePhone(song.durationSeconds) : '');
+    const rhNo = reh.rhNo;
+    const rhDisp = (rhNo == null) ? '×' : rhNo;
+    const rhVal = (rhNo == null) ? 'x' : String(rhNo);
+    const noRhCls = (rhNo == null) ? ' no-rh' : '';
+    const dataRh = (rhNo == null) ? '99' : String(rhNo);
+    const tags = Array.isArray(reh.tags) ? reh.tags : [];
+
+    let tagHtml = '';
+    PHONE_TAG_LIST.forEach(t => {
+      const onCls = (tags.indexOf(t.key) >= 0) ? ' on' : '';
+      tagHtml += '<span class="tag-pill ' + t.key + onCls + '">' + t.label + '</span>';
+    });
+
+    html += '<div class="rh-card' + noRhCls + '" id="card-' + song.id + '" data-song-id="' + song.id + '" data-rh="' + dataRh + '" data-m="' + (i + 1) + '">' +
+      '<div class="rh-line1">' +
+        '<button type="button" class="rh-rhno" data-value="' + rhVal + '" onclick="openRhPicker(this)">' + rhDisp + '</button>' +
+        '<div class="rh-mno">' + mNo + '</div>' +
+        '<div class="rh-title">' + escHtmlPhone(song.title || '') + '</div>' +
+        '<div class="rh-time">' + escHtmlPhone(time) + '</div>' +
+        '<button class="finish-btn ' + ((typeof authed !== "undefined" && authed) ? '' : 'disabled') + '" onclick="toggleFinish(\'card-' + song.id + '\')"><span>終了</span></button>' +
+      '</div>' +
+      '<div class="rh-line2">' + tagHtml + '</div>' +
+      '<div class="rh-line3" contenteditable="' + (typeof authed !== "undefined" && authed ? "true" : "false") + '" data-song-id="' + song.id + '" data-field="memo">' + escHtmlPhone(reh.memo || '') + '</div>' +
+    '</div>';
+  });
+  list.innerHTML = html;
+  if (typeof updateProgress === 'function') updateProgress();
+}
+
+// メモ contenteditable の blur で保存
+document.addEventListener('blur', function(e) {
+  const el = e.target;
+  if (el && el.classList && el.classList.contains('rh-line3') && el.getAttribute('data-field') === 'memo') {
+    if (typeof authed !== 'undefined' && !authed) return; // 未認証は保存しない
+    const songId = parseInt(el.getAttribute('data-song-id'), 10);
+    if (!songId) return;
+    saveRehMemo(songId, el.innerText.trim());
+  }
+}, true);
+
+// 起動時に 1 回描画
+window.addEventListener('DOMContentLoaded', function() {
+  setTimeout(renderRhCards, 100);
+});
+
+// R143: changeTourDay wrap を削除。renderRhCards は本体 changeTourDay 内で呼ぶように統合済み
+
+// R88b: Firebase 経由で setlists / rehearsalByDate が変わったら自動再描画
+// 監視を 500ms 間隔に短縮、デバッグログも追加
+let _lastRehSig = localStorage.getItem(LS_KEY_REH_BY_DATE) || '';
+let _lastSetlistSig = localStorage.getItem(LS_KEY_SETLISTS) || '';
+console.log('[R88b] polling start', { setlistLen: _lastSetlistSig.length, rehLen: _lastRehSig.length });
+setInterval(function() {
+  const setSig = localStorage.getItem(LS_KEY_SETLISTS) || '';
+  const rehSig = localStorage.getItem(LS_KEY_REH_BY_DATE) || '';
+  if (setSig !== _lastSetlistSig || rehSig !== _lastRehSig) {
+    console.log('[R88b] data changed → re-render', { setChanged: setSig !== _lastSetlistSig, rehChanged: rehSig !== _lastRehSig });
+    _lastSetlistSig = setSig;
+    _lastRehSig = rehSig;
+    if (document.getElementById('rh-card-list')) renderRhCards();
+  }
+}, 500);
+
+// R88b: Firebase 同期 hook が呼ぶグローバル関数（即時再描画）
+window.__phoneRenderRh = renderRhCards;
+
+// R100: storage イベント
+window.addEventListener('storage', function(e){
+  if (!e || !e.key) return;
+  if (e.key === LS_KEY_REH_BY_DATE || e.key === LS_KEY_SETLISTS) {
+    if (typeof renderRhCards === 'function') renderRhCards();
+  }
+});
+
+window.__phoneRefreshAll = function() {
+  if (typeof renderRhCards === 'function') renderRhCards();
+  if (typeof renderDateBar === 'function') renderDateBar();
+  if (typeof renderDateList === 'function') renderDateList();
+  if (typeof renderCalendarMonths === 'function') renderCalendarMonths();
+  if (typeof renderArrivalListPhone === 'function') renderArrivalListPhone();
+  if (typeof renderScheduleDayListPhone === 'function') renderScheduleDayListPhone();
+  if (typeof renderHotelListPhone === 'function') renderHotelListPhone();
+  console.log('[R88b] phoneRefreshAll triggered');
+};
+
+let calEvents = loadJSON(LS_KEY_EVENTS, JSON.parse(JSON.stringify(DEFAULT_CAL_EVENTS)));
+let showTimes = loadJSON(LS_KEY_SHOW_TIMES, JSON.parse(JSON.stringify(DEFAULT_SHOW_TIMES)));
+let calMemos  = loadJSON(LS_KEY_MEMOS, {});
+// 空ラベル掃除
+(function cleanupEmptyEvents() {
+  const before = calEvents.length;
+  calEvents = calEvents.filter(e => e && e.label && String(e.label).trim() !== '');
+  if (calEvents.length !== before) saveJSON(LS_KEY_EVENTS, calEvents);
+})();
+function saveCalEvents() { saveJSON(LS_KEY_EVENTS, calEvents); }
+function saveShowTimes() { saveJSON(LS_KEY_SHOW_TIMES, showTimes); }
+function saveCalMemos()  { saveJSON(LS_KEY_MEMOS, calMemos); }
+function fmtCalKey(d) {
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+function getEventsForDate(d) {
+  const k = fmtCalKey(d);
+  return calEvents.filter(e => e.date === k);
+}
+function isContinuousEvent(d, ev) {
+  if (!ev || !ev.type) return { hasPrev:false, hasNext:false };
+  const prev = new Date(d); prev.setDate(d.getDate() - 1);
+  const next = new Date(d); next.setDate(d.getDate() + 1);
+  const prevEvs = getEventsForDate(prev);
+  const nextEvs = getEventsForDate(next);
+  const same = e2 => e2.type === ev.type && (e2.venue || '') === (ev.venue || '');
+  return { hasPrev: prevEvs.some(same), hasNext: nextEvs.some(same) };
+}
+function escHtmlPhone(s) {
+  return (s==null?'':String(s)).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+}
+
+// ── ツアー全体カレンダー（読み取り専用）──
+// 各日のスケジュール（モック・PC側で編集される想定）
+const tourSchedules = {
+  '4/27': { tekuriha: ['--','--'], rehearsal: ['--','--'], door: '--', show: '--' },
+  '4/28': { tekuriha: ['--','--'], rehearsal: ['09:00','17:00'], door: '--', show: '--' },
+  '4/29': { tekuriha: ['10:00','13:00'], rehearsal: ['14:00','16:30'], door: '17:30', show: '18:30' },
+  '4/30': { tekuriha: ['10:00','13:00'], rehearsal: ['14:00','16:00'], door: '17:30', show: '18:30' },
+  '5/1':  { tekuriha: ['--','--'],       rehearsal: ['12:00','15:00'], door: '17:30', show: '18:30' },
+  '5/2':  { tekuriha: ['--','--'],       rehearsal: ['12:00','15:00'], door: '17:30', show: '18:30' },
+  '5/3':  { tekuriha: ['--','--'],       rehearsal: ['12:00','15:00'], door: '17:30', show: '18:30' },
+};
+
+// ── 月表示カレンダー ──
+let calCurrentMonth = new Date(); // 表示中の月（1日に正規化）
+calCurrentMonth.setDate(1);
+
+function changeCalMonth(delta) {
+  /* R63 B2: 多月縦スクロール化により単独使用は不要だが、互換のため残す */
+  calCurrentMonth.setMonth(calCurrentMonth.getMonth() + delta);
+  renderCalendarMonth();
+}
+/* R63 B2: 今月へスクロール */
+function scrollCalToToday() {
+  const wrap = document.getElementById('cal-months-wrap');
+  if (!wrap) return;
+  const today = new Date();
+  const tb = wrap.querySelector('[data-year="' + today.getFullYear() + '"][data-month="' + today.getMonth() + '"]');
+  if (tb) tb.scrollIntoView({ block: 'start', behavior: 'smooth' });
+}
+
+// 月曜=0, 火=1, ..., 日=6 に変換（日曜を一番右にするため）
+function dayCol(d) {
+  const js = d.getDay(); // Sun=0, Mon=1, ..., Sat=6
+  return (js === 0) ? 6 : js - 1;
+}
+
+function renderCalendarMonth() {
+  /* R63 B2: 単一月レンダリングは廃止、renderCalendarMonths を呼ぶ */
+  renderCalendarMonths();
+}
+
+/* R63 B2: 前12ヶ月＋今月＋後12ヶ月 = 25ヶ月を縦に並べる */
+function renderCalendarMonths() {
+  const wrap = document.getElementById('cal-months-wrap');
+  if (!wrap) return;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const baseY = today.getFullYear();
+  const baseM = today.getMonth();
+  const tourStartDt = new Date(tourStart); tourStartDt.setHours(0,0,0,0);
+  const tourEndDt = new Date(tourEnd); tourEndDt.setHours(0,0,0,0);
+
+  let html = '';
+  for (let off = -12; off <= 12; off++) {
+    const md = new Date(baseY, baseM + off, 1);
+    const y = md.getFullYear();
+    const m = md.getMonth();
+    html += '<div class="cal-month-block" data-year="' + y + '" data-month="' + m + '">';
+    html += '<div class="cal-month-title">' + y + ' 年 ' + (m + 1) + ' 月</div>';
+    html += '<div class="cal-grid">';
+
+    const first = new Date(y, m, 1);
+    const startDate = new Date(first);
+    startDate.setDate(first.getDate() - dayCol(first));
+
+    for (let i = 0; i < 42; i++) {
+      const d = new Date(startDate);
+      d.setDate(startDate.getDate() + i);
+      d.setHours(0,0,0,0);
+
+      const dow = dayCol(d);
+      const isOutside = d.getMonth() !== m;
+      const isToday = d.getTime() === today.getTime();
+      const inTour = d >= tourStartDt && d <= tourEndDt;
+
+      const cellCls = ['cal-cell'];
+      if (isOutside) cellCls.push('outside');
+      if (inTour) cellCls.push('in-tour');
+      if (isToday) cellCls.push('today');
+
+      const numCls = ['cal-day-num'];
+      if (dow === 5) numCls.push('sat');
+      if (dow === 6) numCls.push('sun');
+
+      let events = '';
+      const evs = (!isOutside) ? getEventsForDate(d) : [];
+      evs.slice(0, 3).forEach(function(e){
+        const cont = isContinuousEvent(d, e);
+        const positionCls = (cont.hasPrev && cont.hasNext) ? ' bar-mid'
+                          : cont.hasNext ? ' bar-start'
+                          : cont.hasPrev ? ' bar-end'
+                          : '';
+        /* R63 A1: bar-start (or 単独日) では label + 会場 を表示 */
+        const labelText = e.label + (e.venue ? ' · ' + e.venue : '');
+        const label = cont.hasPrev ? '' : escHtmlPhone(labelText);
+        events += '<div class="cal-event-pill ' + e.type + positionCls + '">' + label + '</div>';
+      });
+
+      const iso = fmtCalKey(d);
+      html += '<div class="' + cellCls.join(' ') + '" onclick="openCalDaySheet(\'' + iso + '\')">' +
+              '<div class="' + numCls.join(' ') + '">' + d.getDate() + '</div>' +
+              '<div class="cal-events">' + events + '</div>' +
+              '</div>';
+    }
+    html += '</div></div>'; /* cal-grid + cal-month-block */
+  }
+  wrap.innerHTML = html;
+
+  /* 今月の位置にスクロール */
+  setTimeout(function(){
+    const tb = wrap.querySelector('[data-year="' + baseY + '"][data-month="' + baseM + '"]');
+    if (tb) tb.scrollIntoView({ block: 'start', behavior: 'auto' });
+  }, 30);
+}
+
+function _renderCalendarMonth_OLD() {
+  const grid = document.getElementById('cal-grid');
+  if (!grid) return;
+
+  const year = calCurrentMonth.getFullYear();
+  const month = calCurrentMonth.getMonth();
+  document.getElementById('cal-month-title').textContent = `${year} 年 ${month + 1} 月`;
+
+  // 月の最初の日と、それを含む週の月曜日
+  const first = new Date(year, month, 1);
+  const startDate = new Date(first);
+  startDate.setDate(first.getDate() - dayCol(first));
+
+  // 今日
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  // ツアー範囲
+  const tourStartDt = new Date(tourStart);
+  const tourEndDt = new Date(tourEnd);
+  tourStartDt.setHours(0,0,0,0);
+  tourEndDt.setHours(0,0,0,0);
+
+  // 6週間分（42日）描画
+  let html = '';
+  for (let i = 0; i < 42; i++) {
+    const d = new Date(startDate);
+    d.setDate(startDate.getDate() + i);
+    d.setHours(0,0,0,0);
+
+    const dow = dayCol(d);
+    const isOutside = d.getMonth() !== month;
+    const isToday = d.getTime() === today.getTime();
+    const inTour = d >= tourStartDt && d <= tourEndDt;
+
+    const dateKey = `${d.getMonth() + 1}/${d.getDate()}`;
+    const sched = tourSchedules[dateKey];
+
+    const cellCls = ['cal-cell'];
+    if (isOutside) cellCls.push('outside');
+    if (inTour) cellCls.push('in-tour');
+    if (isToday) cellCls.push('today');
+
+    const numCls = ['cal-day-num'];
+    if (dow === 5) numCls.push('sat');
+    if (dow === 6) numCls.push('sun');
+
+    // R59: calEvents（PC と共有）から取得して、連続バー（同会場・同種別を繋ぐ）で表示
+    let events = '';
+    const evs = (!isOutside) ? getEventsForDate(d) : [];
+    evs.slice(0, 3).forEach(function(e){
+      const cont = isContinuousEvent(d, e);
+      const positionCls = (cont.hasPrev && cont.hasNext) ? ' bar-mid'
+                        : cont.hasNext ? ' bar-start'
+                        : cont.hasPrev ? ' bar-end'
+                        : '';
+      const label = cont.hasPrev ? '' : escHtmlPhone(e.label);
+      events += `<div class="cal-event-pill ${e.type}${positionCls}">${label}</div>`;
+    });
+
+    const iso = fmtCalKey(d);
+    html += `<div class="${cellCls.join(' ')}" onclick="openCalDaySheet('${iso}')">
+      <div class="${numCls.join(' ')}">${d.getDate()}</div>
+      <div class="cal-events">${events}</div>
+    </div>`;
+  }
+  grid.innerHTML = html;
+}
+
+// 日タップ時の編集シート
+function openCalDaySheet(iso) {
+  const d = new Date(iso);
+  const dow = '日月火水木金土'[d.getDay()];
+  const dateStr = `${d.getMonth() + 1}/${d.getDate()} (${dow})`;
+  document.getElementById('cal-day-sheet-date').textContent = dateStr;
+
+  // スケジュール反映
+  const key = `${d.getMonth() + 1}/${d.getDate()}`;
+  const s = tourSchedules[key] || { tekuriha:['--','--'], rehearsal:['--','--'], door:'--', show:'--' };
+  const vals = document.querySelectorAll('#cal-day-sheet .cal-day-sheet-val');
+  const arr = [s.tekuriha[0], s.tekuriha[1], s.rehearsal[0], s.rehearsal[1], s.door, s.show];
+  vals.forEach((v, i) => {
+    const t = arr[i] || '--:--';
+    v.dataset.time = (t === '--' || t === '--:--') ? '00:00' : t;
+    v.textContent = t;
+    v.classList.toggle('muted', t === '--' || t === '--:--');
+  });
+
+  document.getElementById('cal-day-sheet').classList.add('show');
+}
+
+function closeCalDaySheet() {
+  document.getElementById('cal-day-sheet').classList.remove('show');
+}
+
+// R60 M2: SCHEDULE タブを開いた時に showTimes から DOOR OPEN/SHOW TIME を更新する関数
+function getCurrentDateIso() {
+  if (typeof tourDays === 'undefined' || !tourDays.length) return null;
+  if (typeof selectedDayIdx === 'undefined') return null;
+  const d = tourDays[selectedDayIdx];
+  return d && d.iso ? d.iso : null;
+}
+function getCurrentVenue() {
+  const iso = getCurrentDateIso();
+  if (!iso) return '';
+  const events = calEvents.filter(e => e.date === iso);
+  return events.length > 0 ? events[0].venue : '';
+}
+function updateScheduleTabFromCalEvents() {
+  const venue = getCurrentVenue();
+  const tk = venue && showTimes[venue] ? showTimes[venue] : null;
+  const doorBtn = document.querySelector('#screen-schedule .schedule-row-time.door-open');
+  const showBtn = document.querySelector('#screen-schedule .schedule-row-time.show-time');
+  if (doorBtn) {
+    const t = tk && tk.door ? tk.door : '--:--';
+    doorBtn.textContent = t;
+    doorBtn.setAttribute('data-time', (t === '--:--') ? '00:00' : t);
+  }
+  if (showBtn) {
+    const t = tk && tk.show ? tk.show : '--:--';
+    showBtn.textContent = t;
+    showBtn.setAttribute('data-time', (t === '--:--') ? '00:00' : t);
+  }
+}
+
+// 既存のshow()を拡張：tour-calendar画面に飛んだ時にレンダリング
+const _origShow = show;
+window.show = function(id) {
+  _origShow(id);
+  if (id === 'tour-calendar') {
+    // 今月で開く
+    calCurrentMonth = new Date();
+    calCurrentMonth.setDate(1);
+    renderCalendarMonth();
+  }
+  // R60 M2: SCHEDULE タブが開かれたら showTimes から最新の時間を反映
+  if (id === 'schedule') {
+    updateScheduleTabFromCalEvents();
+  }
+};
+
+// R60 M2: 起動時にも一度更新（初期表示で showTimes が反映されてないと困るので）
+updateScheduleTabFromCalEvents();
+
+// ════════════════════════════════════════════════════════════
+// R61 M3: 入り時間（arrival）を pc-edit.html と localStorage 共有
+// ════════════════════════════════════════════════════════════
+const LS_KEY_ARRIVALS = 'schedule-studio:arrivalSectionsByDate:v1';
+/* R121: デモデータ撤去 */
+const DEFAULT_ARRIVALS_BY_DATE = {};
+let arrivalSectionsByDate = loadJSON(LS_KEY_ARRIVALS, JSON.parse(JSON.stringify(DEFAULT_ARRIVALS_BY_DATE)));
+function saveArrivals() { saveJSON(LS_KEY_ARRIVALS, arrivalSectionsByDate); }
+
+function renderArrivalListPhone() {
+  const host = document.getElementById('arrival-list-host');
+  if (!host) return;
+  const iso = getCurrentDateIso();
+  if (!iso) { host.innerHTML = '<div style="color:#5a5a55; font-size:13px; padding:14px; text-align:center;">日付未選択</div>'; return; }
+  const list = arrivalSectionsByDate[iso] || [];
+  if (list.length === 0) {
+    host.innerHTML = '<div style="color:#5a5a55; font-size:13px; padding:14px; text-align:center;">— この日の入り時間は未登録 —</div>';
+    return;
+  }
+  const sorted = list.slice().sort(function(a, b){
+    const ta = a.time || '99:99';
+    const tb = b.time || '99:99';
+    return ta.localeCompare(tb);
+  });
+  let html = '';
+  sorted.forEach(function(s){
+    html += '<div class="arrival-section">' +
+      '<div class="arrival-section-row">' +
+        '<div style="display:flex; align-items:center; gap:14px;">' +
+          '<span class="arrival-section-time">' + escHtmlPhone(s.time || '--:--') + '</span>' +
+          '<div class="arrival-section-name">' + escHtmlPhone(s.section || '') + '</div>' +
+        '</div>' +
+        '<button class="arrival-edit-btn">編集</button>' +
+      '</div>' +
+    '</div>';
+  });
+  host.innerHTML = html;
+}
+
+// show / selectTourDay / changeTourDay をさらに拡張（M2 のラッパーの上にもう一段）
+const _showAfterM3 = window.show;
+window.show = function(id) {
+  _showAfterM3(id);
+  if (id === 'arrival') renderArrivalListPhone();
+};
+const _selectTourDayAfterM3 = window.selectTourDay || selectTourDay;
+window.selectTourDay = function(idx) {
+  _selectTourDayAfterM3(idx);
+  renderArrivalListPhone();
+};
+// R143: changeTourDay wrap を削除（renderArrivalListPhone は本体に統合済み）
+
+// 起動時にも1回
+renderArrivalListPhone();
+
+// ════════════════════════════════════════════════════════════
+// R77 P2: DAY SCHEDULE（日付別自由イベント）を pc-edit.html と localStorage 共有
+// ════════════════════════════════════════════════════════════
+const LS_KEY_DAY_EVENTS = 'schedule-studio:dayEvents:v1';
+let dailyEventsPhone = loadJSON(LS_KEY_DAY_EVENTS, {});
+
+function reloadDayEventsPhone() {
+  dailyEventsPhone = loadJSON(LS_KEY_DAY_EVENTS, {});
+}
+
+// R79: 5分刻み時刻プルダウン（00:00 〜 23:55、288項目を1個の select に）
+function timeOptionsHtmlPhone(selected) {
+  let html = '<option value="">--:--</option>';
+  for (let h = 0; h < 24; h++) {
+    for (let m = 0; m < 60; m += 5) {
+      const hh = String(h).padStart(2, '0');
+      const mm = String(m).padStart(2, '0');
+      const v = hh + ':' + mm;
+      const sel = (v === selected) ? ' selected' : '';
+      html += '<option value="' + v + '"' + sel + '>' + v + '</option>';
+    }
+  }
+  return html;
+}
+
+function renderScheduleDayListPhone() {
+  const host = document.getElementById('schedule-day-list-host');
+  if (!host) return;
+  // 毎回 localStorage から最新を取得（PCで更新→画面切替時に反映）
+  reloadDayEventsPhone();
+  const iso = getCurrentDateIso();
+  if (!iso) {
+    host.innerHTML = '<div style="color:#5a5a55; font-size:13px; padding:14px; text-align:center;">日付未選択</div>';
+    return;
+  }
+  const isEditable = (typeof authed !== 'undefined') && authed === true;
+  const list = dailyEventsPhone[iso] || [];
+
+  // 空＋編集不可：未登録メッセージ
+  if (list.length === 0 && !isEditable) {
+    host.innerHTML = '<div style="color:#5a5a55; font-size:13px; padding:14px 14px 18px; text-align:center; line-height:1.6;">— この日の DAY SCHEDULE は未登録 —<br><span style="font-size:11px;">PASS で認証すると編集できます</span></div>';
+    return;
+  }
+
+  // 並べ替え（編集モードでも常に startTime 順で上から早い時間）
+  const sorted = list.slice().sort(function(a, b){
+    const ta = a.startTime || '99:99';
+    const tb = b.startTime || '99:99';
+    return ta.localeCompare(tb);
+  });
+
+  let html = '<div class="schedule-day-card">';
+  sorted.forEach(function(ev){
+    const start = ev.startTime || '';
+    const end = ev.endTime || '';
+    const label = ev.label || '';
+    const labelLower = String(label).toLowerCase();
+    let timeClass = '';
+    if (labelLower.indexOf('door') >= 0) timeClass = ' door-open';
+    else if (labelLower.indexOf('show') >= 0) timeClass = ' show-time';
+
+    if (isEditable) {
+      // 編集モード：3つの入力欄＋削除ボタン
+      html += '<div class="schedule-day-row edit" data-day-id="' + ev.id + '">' +
+        '<button class="sde-time" data-field="startTime" data-time="' + (start || '') + '" onclick="openTimePicker(this)">' + (start || '--:--') + '</button>' +
+        '<span class="sde-tilde">〜</span>' +
+        '<button class="sde-time end" data-field="endTime" data-time="' + (end || '') + '" onclick="openTimePicker(this)">' + (end || '--:--') + '</button>' +
+        '<input type="text" class="sde-label" data-field="label" value="' + escHtmlPhone(label) + '" placeholder="項目名">' +
+        '<button class="sde-del" data-action="del-day-ev" title="削除">×</button>' +
+        '</div>';
+    } else {
+      // 閲覧モード：1行表示
+      const timeStr = end ? ((start || '--:--') + '〜' + end) : (start || '--:--');
+      html += '<div class="schedule-day-row">' +
+        '<div class="schedule-day-time' + timeClass + '">' + escHtmlPhone(timeStr) + '</div>' +
+        '<div class="schedule-day-label">' + escHtmlPhone(label) + '</div>' +
+        '</div>';
+    }
+  });
+  html += '</div>';
+
+  // 編集モード：追加ボタン
+  if (isEditable) {
+    html += '<button type="button" class="sde-add" data-action="add-day-ev">＋ 項目を追加</button>';
+  }
+
+  host.innerHTML = html;
+}
+
+// 編集モード：イベント・追加・削除
+document.addEventListener('change', function(e){
+  if (typeof authed === 'undefined' || !authed) return;
+  const row = e.target && e.target.closest && e.target.closest('.schedule-day-row.edit');
+  if (!row) return;
+  const id = +row.getAttribute('data-day-id');
+  const iso = getCurrentDateIso();
+  if (!iso) return;
+  const list = dailyEventsPhone[iso] || [];
+  const ev = list.find(function(x){ return x.id === id; });
+  if (!ev) return;
+  const field = e.target.getAttribute('data-field');
+  if (!field) return;
+  ev[field] = e.target.value;
+  saveJSON(LS_KEY_DAY_EVENTS, dailyEventsPhone);
+  if (field === 'startTime') renderScheduleDayListPhone();
+});
+
+document.addEventListener('click', function(e){
+  if (typeof authed === 'undefined' || !authed) return;
+  const t = e.target;
+  const action = t && t.getAttribute && t.getAttribute('data-action');
+  if (action === 'add-day-ev') {
+    const iso = getCurrentDateIso();
+    if (!iso) return;
+    if (!dailyEventsPhone[iso]) dailyEventsPhone[iso] = [];
+    // 既存の最大 id + 1（衝突防止のため localStorage 全体から計算）
+    let maxId = 100;
+    Object.values(dailyEventsPhone).forEach(function(arr){
+      if (Array.isArray(arr)) arr.forEach(function(x){
+        if (x && typeof x.id === 'number' && x.id >= maxId) maxId = x.id + 1;
+      });
+    });
+    dailyEventsPhone[iso].push({ id: maxId, startTime: '09:00', endTime: '', label: '' });
+    saveJSON(LS_KEY_DAY_EVENTS, dailyEventsPhone);
+    renderScheduleDayListPhone();
+  } else if (action === 'del-day-ev') {
+    const row = t.closest('.schedule-day-row.edit');
+    if (!row) return;
+    const id = +row.getAttribute('data-day-id');
+    const iso = getCurrentDateIso();
+    if (!iso) return;
+    const list = dailyEventsPhone[iso] || [];
+    const idx = list.findIndex(function(x){ return x.id === id; });
+    if (idx >= 0) {
+      list.splice(idx, 1);
+      saveJSON(LS_KEY_DAY_EVENTS, dailyEventsPhone);
+      renderScheduleDayListPhone();
+    }
+  }
+});
+
+const _showAfterDayEvents = window.show;
+window.show = function(id) {
+  _showAfterDayEvents(id);
+  if (id === 'schedule') renderScheduleDayListPhone();
+};
+const _selectTourDayAfterDayEvents = window.selectTourDay || selectTourDay;
+window.selectTourDay = function(idx) {
+  _selectTourDayAfterDayEvents(idx);
+  renderScheduleDayListPhone();
+};
+// R143: changeTourDay wrap を削除（renderScheduleDayListPhone は本体に統合済み）
+
+// 起動時にも1回
+renderScheduleDayListPhone();
+
+// ════════════════════════════════════════════════════════════
+// R62 M4: HOTEL を pc-edit.html と localStorage 共有
+// ════════════════════════════════════════════════════════════
+const LS_KEY_HOTELS = 'schedule-studio:hotels:v1';
+/* R121: デモデータ撤去 */
+const DEFAULT_HOTELS = [];
+let hotels = loadJSON(LS_KEY_HOTELS, JSON.parse(JSON.stringify(DEFAULT_HOTELS)));
+function saveHotels() { saveJSON(LS_KEY_HOTELS, hotels); }
+
+function renderHotelListPhone() {
+  const host = document.getElementById('hotel-list-host');
+  if (!host) return;
+  if (!hotels || hotels.length === 0) {
+    host.innerHTML = '<div style="color:#5a5a55;font-size:13px;padding:20px;text-align:center;">— ホテル未登録 —</div>';
+    return;
+  }
+  let html = '';
+  hotels.forEach(function(h){
+    let taxiList = '';
+    if (h.taxis && h.taxis.length) {
+      h.taxis.forEach(function(t){
+        taxiList += '<div class="taxi-row">' +
+          '<span class="taxi-time">' + escHtmlPhone(t.time||'') + '</span>' +
+          '<span class="taxi-section-name">' + escHtmlPhone(t.section||'') + '</span>' +
+          '<span class="taxi-count">' + (t.count||0) + ' 台</span>' +
+        '</div>';
+      });
+    }
+    let memberList = '';
+    if (h.members && h.members.length) {
+      h.members.forEach(function(m){
+        memberList += '<div class="hotel-member-row">' +
+          '<div class="hotel-member-section">' + escHtmlPhone(m.section||'') + '</div>' +
+          '<div class="hotel-member-name">' + escHtmlPhone(m.name||'') + '</div>' +
+        '</div>';
+      });
+    }
+    const memberCount = (h.members || []).length;
+    const mapsQ = encodeURIComponent(h.name || '');
+    const urlText = h.url ? h.url.replace(/^https?:\/\//, '').replace(/\/$/, '') : '';
+    html += '<div class="hotel-block">' +
+      '<div class="hotel-block-head">' +
+        '<div class="hotel-name">' + escHtmlPhone(h.name || '') + '</div>' +
+        '<dl class="hotel-info-grid">' +
+          (h.venue  ? '<dt>会場</dt><dd>' + escHtmlPhone(h.venue) + '</dd>' : '') +
+          (h.address? '<dt>住所</dt><dd>' + escHtmlPhone(h.address) + '</dd>' : '') +
+          (h.tel    ? '<dt>電話</dt><dd><a href="tel:' + escHtmlPhone(h.tel.replace(/-/g,'')) + '">' + escHtmlPhone(h.tel) + '</a></dd>' : '') +
+          (h.url    ? '<dt>URL</dt><dd><a href="' + escHtmlPhone(h.url) + '" target="_blank">' + escHtmlPhone(urlText) + '</a></dd>' : '') +
+        '</dl>' +
+        (h.name ? '<a class="hotel-map-btn" href="https://maps.google.com/?q=' + mapsQ + '" target="_blank">📍 MAP</a>' : '') +
+      '</div>' +
+      (taxiList ? (
+        '<div class="taxi-section">' +
+          '<div class="taxi-head"><div class="taxi-title">🚕 タクシー配車</div></div>' +
+          '<div class="taxi-list">' + taxiList + '</div>' +
+        '</div>'
+      ) : '') +
+      (memberList ? (
+        '<div class="hotel-members-head">' +
+          '<span>宿泊メンバー</span>' +
+          '<span style="color:#d8d8d4">' + memberCount + '名</span>' +
+        '</div>' + memberList
+      ) : '') +
+    '</div>';
+  });
+  host.innerHTML = html;
+}
+
+const _showAfterM4 = window.show;
+window.show = function(id) {
+  _showAfterM4(id);
+  if (id === 'hotel') renderHotelListPhone();
+};
+renderHotelListPhone();
+</script>
+
+<!-- R63 F-Alt: 起動時に URL の #sync=... を見て自動取込 -->
+<script>
+(function importSyncFromHash() {
+  if (typeof location === 'undefined' || !location.hash) return;
+  const m = location.hash.match(/^#sync=(.+)$/);
+  if (!m) return;
+  try {
+    const b64 = m[1];
+    const json = decodeURIComponent(escape(atob(b64)));
+    const data = JSON.parse(json);
+    function set(k, v) { if (v != null) localStorage.setItem(k, JSON.stringify(v)); }
+    set('schedule-studio:calEvents:v1', data.calEvents);
+    set('schedule-studio:showTimes:v1', data.showTimes);
+    set('schedule-studio:calMemos:v1', data.calMemos);
+    set('schedule-studio:arrivalSectionsByDate:v1', data.arrivalSectionsByDate);
+    set('schedule-studio:hotels:v1', data.hotels);
+    if (window.history && window.history.replaceState) {
+      window.history.replaceState(null, '', location.pathname + location.search);
+    }
+    alert('✅ 同期データを取り込みました。リロードします。\n\n（同期日時: ' + (data.syncedAt || '不明') + '）');
+    setTimeout(function(){ location.reload(); }, 100);
+  } catch (e) {
+    console.warn('[SYNC] import failed:', e);
+    alert('❌ 同期URL の読込に失敗しました。\n\n' + e.message);
+  }
+})();
+</script>
+
+<!-- R57 LIFF: 初期化（LINE 内で開いたときに認識させる。失敗してもアプリ本体は動く） -->
+<!-- R78: iPad で LINE 経由でアクセスされたら、データ込みで Safari に自動リダイレクト -->
+<script>
+(function(){
+  if (typeof liff === 'undefined') {
+    console.warn('[LIFF] SDK not loaded - skipping init (アプリは通常Webとして動きます)');
+    return;
+  }
+
+  // iPad 判定（古い iPad は UA に "iPad"、新しい iPadOS は "Macintosh"+touch）
+  function isIpadDevice() {
+    var ua = navigator.userAgent || '';
+    if (ua.indexOf('iPad') !== -1) return true;
+    if (ua.indexOf('Macintosh') !== -1 && (navigator.maxTouchPoints || 0) > 1) return true;
+    return false;
+  }
+
+  // 現在の localStorage 全部を Base64 化して #sync= ハッシュに詰める
+  function buildSafariRedirectUrl() {
+    try {
+      var data = {
+        calEvents:              JSON.parse(localStorage.getItem('schedule-studio:calEvents:v1') || 'null'),
+        showTimes:              JSON.parse(localStorage.getItem('schedule-studio:showTimes:v1') || 'null'),
+        calMemos:               JSON.parse(localStorage.getItem('schedule-studio:calMemos:v1') || 'null'),
+        arrivalSectionsByDate:  JSON.parse(localStorage.getItem('schedule-studio:arrivalSectionsByDate:v1') || 'null'),
+        hotels:                 JSON.parse(localStorage.getItem('schedule-studio:hotels:v1') || 'null'),
+        dayEvents:              JSON.parse(localStorage.getItem('schedule-studio:dayEvents:v1') || 'null'),
+        syncedAt: new Date().toISOString()
+      };
+      var json = JSON.stringify(data);
+      var b64 = btoa(unescape(encodeURIComponent(json)));
+      return 'https://nrs2013.github.io/schedule-studio/phone.html#sync=' + b64;
+    } catch (e) {
+      console.warn('[LIFF→Safari] build url failed:', e);
+      return 'https://nrs2013.github.io/schedule-studio/phone.html?from=liff_ipad';
+    }
+  }
+
+  liff.init({ liffId: '2009978771-HFu2qVD8' })
+    .then(function(){
+      var inClient = liff.isInClient && liff.isInClient();
+      console.log('[LIFF] init OK',
+                  '| isInClient:', inClient,
+                  '| isLoggedIn:', liff.isLoggedIn && liff.isLoggedIn(),
+                  '| os:', liff.getOS && liff.getOS(),
+                  '| isIpad:', isIpadDevice());
+
+      // R78: iPad の LINE 内アクセスは Safari に飛ばす
+      if (inClient && isIpadDevice()) {
+        var url = buildSafariRedirectUrl();
+        console.log('[LIFF→Safari] redirect:', url.length, 'chars');
+        try {
+          liff.openWindow({ url: url, external: true });
+          // openWindow が反映される時間を確保してから LIFF を閉じる
+          setTimeout(function(){
+            try { liff.closeWindow(); } catch(e){}
+          }, 600);
+        } catch (e) {
+          console.warn('[LIFF→Safari] openWindow failed:', e);
+          // フォールバック：通常の location 遷移
+          location.href = url;
+        }
+      }
+    })
+    .catch(function(err){
+      console.warn('[LIFF] init failed:', err);
+    });
+})();
+</script>
+<!-- R99: 同期診断バー (STAFF) -->
+<div id="r96-bar" style="position:fixed;top:0;left:0;right:0;z-index:99999;background:rgba(20,19,15,0.96);backdrop-filter:blur(10px);color:#e8e8e2;font-family:'JetBrains Mono',monospace;font-size:9px;padding:4px 8px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #2c2a27;letter-spacing:0.04em;flex-wrap:wrap;gap:6px;">
+  <span><span style="color:#888">STAFF</span> v<span id="r96-build">?</span></span>
+  <span><span style="color:#888">D </span><span id="r96-date">?</span></span>
+  <span><span style="color:#888">FB </span><span id="r96-fb">?</span></span>
+  <span><span style="color:#888">AUTH </span><span id="r96-auth">?</span></span>
+  <span><span style="color:#888">送 </span><span id="r96-tx">--</span></span>
+  <span><span style="color:#888">受 </span><span id="r96-rx">--</span></span>
+  <span><span style="color:#888">PC-HB </span><span id="r96-hb">--</span></span>
+</div>
+<style>
+#screen-rh, #screen-info, #screen-arrival, #screen-hotel, #screen-pass, #screen-schedule { padding-top: 26px !important; }
+.phone-concert-title, .tour-date-bar { padding-top: 26px !important; }
+</style>
+<script>
+(function r99Bar(){
+  function fmt(t){ if(!t) return '--'; const d=new Date(t); return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')+':'+String(d.getSeconds()).padStart(2,'0'); }
+  function tick(){
+    var be=document.getElementById('r96-build'); if(be){var m=document.querySelector('meta[name=build-version]'); be.textContent=m?m.content.slice(8):'?';}
+    var de=document.getElementById('r96-date'); if(de && typeof getCurrentDateIso==='function'){var iso=getCurrentDateIso(); de.textContent = iso ? iso.slice(5) : '?';}
+    var fe=document.getElementById('r96-fb'); if(fe){var ok=window.__fbConnected===true; fe.textContent=ok?'OK':'OFF'; fe.style.color=ok?'#7ec27a':'#e07a5f';}
+    var ae=document.getElementById('r96-auth'); if(ae){var au = (typeof authed!=='undefined')?authed:false; ae.textContent = au?'ON':'OFF'; ae.style.color = au?'#7ec27a':'#e07a5f';}
+    var te=document.getElementById('r96-tx'); if(te&&window.__lastFbWrite){te.textContent=fmt(window.__lastFbWrite.time); te.style.color=(Date.now()-window.__lastFbWrite.time<5000)?'#7ec27a':'#888';}
+    var re_=document.getElementById('r96-rx'); if(re_&&window.__lastFbReceive){re_.textContent=fmt(window.__lastFbReceive.time); re_.style.color=(Date.now()-window.__lastFbReceive.time<5000)?'#7ec27a':'#888';}
+    var he=document.getElementById('r96-hb'); if(he){he.textContent=String(window.__r96HbReceived||0);}
+  }
+  setInterval(tick, 500);
+
+  // PC heartbeat 購読
+  window.__r96HbReceived = 0;
+  function subscribePcHb(){
+    if (!window.__db) { setTimeout(subscribePcHb, 500); return; }
+    window.__db.ref('hb/pc').on('value', function(snap){
+      var v = snap.val();
+      if (v && v.n) window.__r96HbReceived = v.n;
+    });
+  }
+  subscribePcHb();
+
+  // R99: Phone 自身も heartbeat を 3秒ごとに送信（PC が観測できるように）
+  window.__r99StaffHb = 0;
+  setInterval(function(){
+    if (!window.__db) return;
+    window.__r99StaffHb++;
+    try { window.__db.ref('hb/staff').set({ t: Date.now(), n: window.__r99StaffHb }); } catch(e){}
+  }, 3000);
+
+  // R99: Phone がタグ等のクリックをするたびに「fb/log/staff」に記録
+  document.addEventListener('click', function(e){
+    var t = e.target;
+    if (t && t.classList && (t.classList.contains('tag-pill') || t.classList.contains('rh-rhno') || t.classList.contains('finish-btn'))) {
+      if (!window.__db) return;
+      var cls = Array.from(t.classList||[]).join(' ');
+      try { window.__db.ref('fb/log/staff').set({ t: Date.now(), action: 'click ' + cls.slice(0,40), authed: !!(window.authed) }); } catch(e){}
+    }
+  }, true);
+})();
+</script>
+
+<script>
+(function r123Title(){
+  function update() {
+    var el = document.getElementById('phone-concert-title-el');
+    if (!el) return;
+    try {
+      var concerts = JSON.parse(localStorage.getItem('schedule-studio:concerts:v1') || '[]');
+      var activeId = localStorage.getItem('schedule-studio:active-concert-id');
+      var c = (activeId && concerts.find(function(x){return x.id===activeId;})) || concerts[0];
+      if (c && c.title) el.textContent = c.title;
+      else el.textContent = '—';
+    } catch(e) {}
+  }
+  update();
+  document.addEventListener('DOMContentLoaded', update);
+  setInterval(update, 2000); // Firebase 同期で concerts が arrived した時にも追従
+})();
+</script>
+
+<script>
+/* R139: INFO の NEW POST 機能（authed のみ投稿可、削除・編集なし）
+ * - localStorage に投稿を保存（Firebase 同期は将来対応）
+ * - 既存の show() hook パターン（R60/R61/R77）と同じ流儀で window.show をラップ
+ * - tryUnlock（PASS 認証）成功時に再描画してボタンのロックを外す
+ */
+(function r139InfoNewPost(){
+  var LS_KEY_INFO_POSTS = 'schedule-studio:info-posts:v1';
+  var LS_KEY_INFO_AUTHOR = 'schedule-studio:info-author-name:v1';
+  function loadInfoPosts(){
+    try { return JSON.parse(localStorage.getItem(LS_KEY_INFO_POSTS) || '[]') || []; }
+    catch(e) { return []; }
+  }
+  function saveInfoPostsArr(arr){
+    try { localStorage.setItem(LS_KEY_INFO_POSTS, JSON.stringify(arr || [])); } catch(e){}
+  }
+  function loadSavedAuthor(){
+    try { return localStorage.getItem(LS_KEY_INFO_AUTHOR) || ''; } catch(e){ return ''; }
+  }
+  function saveAuthorName(name){
+    try { localStorage.setItem(LS_KEY_INFO_AUTHOR, name || ''); } catch(e){}
+  }
+  function esc(s){
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+  function fmtDate(iso){
+    try {
+      var d = new Date(iso);
+      if (isNaN(d.getTime())) return '';
+      var pad = function(n){ return String(n).padStart(2,'0'); };
+      return pad(d.getMonth()+1) + '/' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+    } catch(e) { return ''; }
+  }
+  function render(){
+    var host = document.getElementById('info-posts-host');
+    if (!host) return;
+    // 認証状態に応じてボタンのスタイル切替
+    var btn = document.getElementById('info-new-post-btn');
+    if (btn) {
+      var isAuthed = (typeof authed !== 'undefined') && authed === true;
+      if (isAuthed) btn.classList.remove('locked');
+      else btn.classList.add('locked');
+      // 「（要 PASS 認証）」ヒントの表示制御
+      var hint = btn.querySelector('.lock-hint');
+      if (hint) hint.style.display = isAuthed ? 'none' : 'inline';
+    }
+    // 投稿リスト描画（新しい順）
+    var posts = loadInfoPosts();
+    if (!posts || posts.length === 0) {
+      host.innerHTML = '<div class="info-empty-msg">まだお知らせはありません<span class="sub">PASS で認証して「＋ NEW POST」から投稿できます</span></div>';
+      return;
+    }
+    posts.sort(function(a, b){ return (b.createdAt || '').localeCompare(a.createdAt || ''); });
+    var html = '';
+    posts.forEach(function(p){
+      var titleHtml = p.title ? '<div class="info-post-title">' + esc(p.title) + '</div>' : '';
+      html += '<div class="info-post-card">' +
+        '<div class="info-post-head">' +
+          '<div class="info-post-author">' + esc(p.author || '') + '</div>' +
+          '<div class="info-post-date">' + esc(fmtDate(p.createdAt)) + '</div>' +
+        '</div>' +
+        titleHtml +
+        '<div class="info-post-body">' + esc(p.body || '') + '</div>' +
+      '</div>';
+    });
+    host.innerHTML = html;
+  }
+  window.openInfoNewPost = function(){
+    var isAuthed = (typeof authed !== 'undefined') && authed === true;
+    if (!isAuthed) {
+      alert('PASS タブでパスワードを入力して認証してください。');
+      return;
+    }
+    var a = document.getElementById('info-input-author');
+    var t = document.getElementById('info-input-title');
+    var b = document.getElementById('info-input-body');
+    var saved = loadSavedAuthor();
+    if (a) a.value = saved; // 初回以降は記憶された名前を自動入力
+    if (t) t.value = '';
+    if (b) b.value = '';
+    var modal = document.getElementById('info-modal');
+    if (modal) modal.style.display = 'flex';
+    // 名前未登録なら author に、登録済なら本文に focus
+    setTimeout(function(){
+      if (!saved && a) a.focus();
+      else if (b) b.focus();
+    }, 50);
+  };
+  window.closeInfoNewPost = function(){
+    var modal = document.getElementById('info-modal');
+    if (modal) modal.style.display = 'none';
+  };
+  window.confirmInfoNewPost = function(){
+    var aEl = document.getElementById('info-input-author');
+    var tEl = document.getElementById('info-input-title');
+    var bEl = document.getElementById('info-input-body');
+    var author = (aEl && aEl.value || '').trim();
+    var title  = (tEl && tEl.value || '').trim(); // 任意
+    var body   = (bEl && bEl.value || '').trim();
+    if (!author) { alert('投稿者名を入力してください。'); return; }
+    if (!body)   { alert('本文を入力してください。'); return; }
+    if (!confirm('投稿しますか？\n\n投稿後の削除・編集はできません。')) return;
+    saveAuthorName(author); // 名前を端末に記憶（次回自動入力用）
+    var posts = loadInfoPosts();
+    posts.push({ id: Date.now(), author: author, title: title, body: body, createdAt: new Date().toISOString() });
+    saveInfoPostsArr(posts);
+    window.closeInfoNewPost();
+    render();
+  };
+  // show() に hook（既存パターン）：info 開いたら再描画
+  var _origShowR139 = window.show;
+  window.show = function(id) {
+    _origShowR139(id);
+    if (id === 'info') render();
+  };
+  // tryUnlock に hook：PASS 認証成功時にボタンのロック解除
+  var _origTryUnlockR139 = window.tryUnlock;
+  if (typeof _origTryUnlockR139 === 'function') {
+    window.tryUnlock = function(){
+      _origTryUnlockR139();
+      render();
+    };
+  }
+  // storage イベント（別タブ・将来の Firebase 同期）
+  window.addEventListener('storage', function(e){
+    if (!e || !e.key) return;
+    if (e.key === LS_KEY_INFO_POSTS) render();
+  });
+  window.__renderInfoPosts = render;
+  // 起動時 1 回
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', render);
+  } else {
+    render();
+  }
+  console.log('[R139] info new post loaded');
+})();
+</script>
+
+<script>
+/* R138: LINE リッチメニュー URL ハッシュ ルーティング
+ * 前任 R126/R128/R133 が失敗。今度こそ確実に動かす。守るルール：
+ *  - show() を絶対にラップしない（CSS の .active を直接操作）
+ *  - hash がない時は何もしない（既存動作にゼロ影響）
+ *  - MutationObserver で 5 秒だけガード（他のコードに勝つ）
+ *  - 下タブクリックで hash 解除（通常モードに戻る）
+ */
+(function r138HashRouter(){
+  var HASH_TO_SCREEN = {
+    'today': 'schedule', 'schedule': 'schedule', 'day-schedule': 'schedule',
+    'calendar': 'tour-calendar', 'tour-calendar': 'tour-calendar',
+    'rehearsal': 'rh', 'rh': 'rh', 'tekuriha': 'tekuriha',
+    'info': 'info', 'arrival': 'arrival', 'hotel': 'hotel', 'pass': 'pass'
+  };
+  var SCREEN_TO_BOTTOM_TAB = {
+    'schedule': 'schedule',
+    'arrival': 'schedule',
+    'tour-calendar': 'tour-calendar',
+    'rh': 'rehearsal',
+    'tekuriha': 'rehearsal',
+    'info': 'info',
+    'hotel': 'hotel',
+    'pass': 'pass'
+  };
+  function getHashScreen() {
+    var h = (location.hash || '').replace(/^#/, '').toLowerCase().trim();
+    return HASH_TO_SCREEN[h] || null;
+  }
+  function force() {
+    var target = getHashScreen();
+    if (!target) return;
+    var el = document.getElementById('screen-' + target);
+    if (!el) return;
+    document.querySelectorAll('.screen.active').forEach(function(s){ s.classList.remove('active'); });
+    el.classList.add('active');
+    var bottomTarget = SCREEN_TO_BOTTOM_TAB[target] || target;
+    document.querySelectorAll('#bottom-tabs button').forEach(function(b){
+      b.classList.remove('active');
+      var oc = b.getAttribute('onclick') || '';
+      var m = oc.match(/show\(['"]([^'"]+)['"]\)/);
+      if (m && m[1] === bottomTarget) b.classList.add('active');
+    });
+  }
+  function init() {
+    if (!getHashScreen()) return;
+    force();
+    var deadline = Date.now() + 5000;
+    var observer = new MutationObserver(function(){
+      if (Date.now() > deadline) { observer.disconnect(); return; }
+      var t = getHashScreen();
+      if (!t) { observer.disconnect(); return; }
+      var expected = 'screen-' + t;
+      var active = document.querySelector('.screen.active');
+      if (!active || active.id !== expected) force();
+    });
+    observer.observe(document.body, { attributes: true, subtree: true, attributeFilter: ['class'] });
+    document.querySelectorAll('#bottom-tabs button').forEach(function(b){
+      b.addEventListener('click', function(){
+        if (location.hash) history.replaceState(null, '', location.pathname + location.search);
+      });
+    });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+  window.addEventListener('hashchange', force);
+  console.log('[R138] hash router loaded. current hash:', location.hash);
+})();
+</script>
+</body>
+</html>

@@ -160,7 +160,7 @@ function buildMenuFlex() {
       type: 'button',
       style: 'primary',
       color: bg,
-      height: 'sm',
+      height: 'md',
       action: { type: 'uri', label: label, uri: base + '#' + hash }
     };
   };
@@ -171,42 +171,28 @@ function buildMenuFlex() {
       type: 'box',
       layout: 'vertical',
       backgroundColor: '#00B900',
-      paddingAll: '14px',
+      paddingAll: '16px',
       contents: [
-        { type: 'text', text: 'SCHEDULE STUDIO', color: '#FFFFFF', weight: 'bold', size: 'md' },
-        { type: 'text', text: '知りたい情報をタップしてください', color: '#FFFFFF', size: 'xs', margin: 'xs' }
+        { type: 'text', text: 'SCHEDULE STUDIO', color: '#FFFFFF', weight: 'bold', size: 'lg' },
+        { type: 'text', text: '知りたい情報をタップしてください', color: '#FFFFFF', size: 'sm', margin: 'xs' }
       ]
     },
     body: {
       type: 'box',
       layout: 'vertical',
-      spacing: 'sm',
-      paddingAll: '12px',
+      spacing: 'md',
+      paddingAll: '14px',
       contents: [
-        {
-          type: 'box',
-          layout: 'horizontal',
-          spacing: 'sm',
-          contents: [
-            btn('TODAY',     'today',     '#D85A30'),
-            btn('CALENDAR',  'calendar',  '#185FA5'),
-            btn('REHEARSAL', 'rehearsal', '#534AB7')
-          ]
-        },
-        {
-          type: 'box',
-          layout: 'horizontal',
-          spacing: 'sm',
-          contents: [
-            btn('INFO',  'info',  '#0F6E56'),
-            btn('HOTEL', 'hotel', '#854F0B'),
-            btn('PASS',  'pass',  '#993556')
-          ]
-        },
+        btn('TODAY',     'today',     '#D85A30'),
+        btn('CALENDAR',  'calendar',  '#185FA5'),
+        btn('REHEARSAL', 'rehearsal', '#534AB7'),
+        btn('INFO',      'info',      '#0F6E56'),
+        btn('HOTEL',     'hotel',     '#854F0B'),
+        btn('PASS',      'pass',      '#993556'),
         {
           type: 'text',
           text: 'このカードを長押し →「アナウンス」で上部に固定できます',
-          size: 'xxs',
+          size: 'xs',
           color: '#888888',
           wrap: true,
           margin: 'md',
