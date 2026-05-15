@@ -1659,6 +1659,8 @@
   .cal-cell.outside { background: #141312; }
   /* R197: in-tour のハイライトは削除（PC版にない、紛らわしい） */
   .cal-cell.today { background: rgba(232,154,74,0.10); }
+  /* R198: bar-start を含むセルは z-index を上げて、はみ出した会場名が隣セルに隠れないように */
+  .cal-cell:has(.cal-venue-band.bar-start) { z-index: 5; }
 
   /* 全ての日にちが同じサイズ・同じ位置に揃う（iOS Calendar 風） */
   .cal-day-num {
