@@ -5839,11 +5839,10 @@ function show(id) {
     return m + ':' + String(s).padStart(2, '0');
   }
 
-  // D158: M# は data に mNo があればそれを返す、無ければ自動連番
+  // R222: M# は data に mNo があればそれを返す、無ければ空欄のまま（自動連番をやめる）
   function computeMNo(song, setlist){
     if (song.mNo && String(song.mNo).trim() !== '') return String(song.mNo);
-    const idx = setlist.indexOf(song) + 1;
-    return 'M' + idx;
+    return '';
   }
 
   const container = document.getElementById('pc-rows-container');
