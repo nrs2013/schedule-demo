@@ -9170,8 +9170,17 @@ function show(id) {
   }
 
   let nextInfoId = 100;
-  // D124: デフォルト履歴サンプルを撤去（実装版）
-  const infoHistory = [];
+  // R202: localStorage 永続化 + Firebase 同期。スマホからの投稿もここで読める
+  const LS_KEY_INFO_HISTORY = 'schedule-studio:infoHistory:v1';
+  let infoHistory = (function(){
+    try { return JSON.parse(localStorage.getItem(LS_KEY_INFO_HISTORY) || '[]') || []; }
+    catch(e){ return []; }
+  })();
+  window.__reloadInfoHistory = function(){
+    try { infoHistory = JSON.parse(localStorage.getItem(LS_KEY_INFO_HISTORY) || '[]') || []; }
+    catch(e){ infoHistory = []; }
+    if (typeof renderInfoHistory === 'function') renderInfoHistory();
+  };
 
   function renderInfoHistory(){
     const wrap = document.getElementById('info-history-list');
@@ -9230,6 +9239,8 @@ function show(id) {
       subject: subj || '（無題）',
       body: body
     });
+    // R202: localStorage に永続化（Firebase 経由でスマホにも同期）
+    try { localStorage.setItem(LS_KEY_INFO_HISTORY, JSON.stringify(infoHistory)); } catch(e){}
     renderInfoHistory();
     subjEl.value = '';
     bodyEl.value = '';

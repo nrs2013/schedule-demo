@@ -1695,18 +1695,17 @@
     font-weight: 600;
   }
 
+  /* R201: pill 連続バーを成立させるため flex → block へ（PC版D58/D59と同じ） */
   .cal-events {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
+    display: block;
     width: 100%;
-    align-items: stretch;
-    /* R59-fix: 隣セルへの連続バーがクリップされないように visible */
     overflow: visible;
-    /* R196: 長い label でセル幅が広がらないように */
     min-width: 0;
   }
+  .cal-events > * + * { margin-top: 2px; }
   .cal-event-pill {
+    display: block;
+    width: 100%;
     font-size: 9px;
     padding: 1px 3px;
     border-radius: 2px;
@@ -1719,7 +1718,6 @@
     text-overflow: ellipsis;
     text-align: center;
     line-height: 1.3;
-    /* R196b: ラベルが長くてもセルを超えない（max-width は連続バーを潰すので削除） */
     min-width: 0;
     box-sizing: border-box;
   }
@@ -1728,11 +1726,12 @@
   .cal-event-pill.tek   { background: rgba(110,198,200,0.22); color: #a8dcde; }
   .cal-event-pill.setup { background: rgba(184,149,88,0.32);  color: #e8c890; }
   .cal-event-pill.stay  { background: rgba(168,168,160,0.10); color: #787878; font-weight: 500; }
-  /* R199: 連続イベントを横バー化。venue band と同じく margin -10px に強化 */
+  /* R201: PC版D60と同じ "width: calc(100% + Npx)" 方式で連結。
+     セル padding 3px + grid gap 1px = 4px の谷を、+8px で確実に跨ぐ */
   .cal-event-pill.bar-start {
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
-    margin-right: -10px;
+    width: calc(100% + 8px);
     text-align: left;
     padding-left: 4px;
     padding-right: 4px;
@@ -1741,8 +1740,8 @@
   }
   .cal-event-pill.bar-mid {
     border-radius: 0;
-    margin-left: -10px;
-    margin-right: -10px;
+    margin-left: -8px;
+    width: calc(100% + 16px);
     padding-left: 4px;
     padding-right: 4px;
     min-height: 12px;
@@ -1752,7 +1751,8 @@
   .cal-event-pill.bar-end {
     border-top-left-radius: 0;
     border-bottom-left-radius: 0;
-    margin-left: -10px;
+    margin-left: -8px;
+    width: calc(100% + 8px);
     padding-left: 4px;
     padding-right: 4px;
     position: relative;
@@ -2114,14 +2114,28 @@
     <div style="height:12px"></div>
   </div>
 
-  <!-- ════ INFO ════ -->
+  <!-- ════ INFO ════ R202: スマホからも投稿できるよう実装（authed 必須） ════ -->
   <div class="screen" id="screen-info">
     <div class="info-compose">
-      <button class="info-compose-btn" type="button" onclick="alert('INFO 投稿機能は準備中です。PC編集側からお知らせを追加してください。')">＋ NEW POST</button>
+      <button class="info-compose-btn" type="button" onclick="openInfoComposePhone()">＋ NEW POST</button>
+    </div>
+    <div id="info-list-host">
+      <div style="padding:40px 20px; text-align:center; color:#888; font-size:13px;">まだお知らせはありません<br><span style="font-size:11px; color:#666;">「＋ NEW POST」から投稿できます</span></div>
     </div>
 
-    <!-- R123: INFO の静的デモ 4 件を撤去。新規はまだ無い旨を表示 -->
-    <div style="padding:40px 20px; text-align:center; color:#888; font-size:13px;">まだお知らせはありません<br><span style="font-size:11px; color:#666;">「＋ NEW POST」から投稿できます</span></div>
+    <!-- 投稿シート（簡易ボトムモーダル） -->
+    <div id="info-compose-sheet" style="display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,0.72); align-items:flex-end; justify-content:center;">
+      <div style="width:100%; max-width:520px; background:#1d1d1d; border-top:1px solid #3a3a36; border-radius:14px 14px 0 0; padding:18px 18px 24px; box-sizing:border-box;">
+        <div style="font-size:14px; letter-spacing:0.3em; color:#d8d8d4; margin-bottom:12px;">NEW POST</div>
+        <input id="info-compose-name" type="text" placeholder="お名前（空欄なら匿名）" style="width:100%; box-sizing:border-box; background:#0f0f0f; border:1px solid #2c2c2c; border-radius:4px; padding:10px; color:#e8e8e8; font-size:15px; margin-bottom:8px;">
+        <input id="info-compose-subject" type="text" placeholder="件名（タイトル）" style="width:100%; box-sizing:border-box; background:#0f0f0f; border:1px solid #2c2c2c; border-radius:4px; padding:10px; color:#e8e8e8; font-size:15px; margin-bottom:8px;">
+        <textarea id="info-compose-body" rows="5" placeholder="本文" style="width:100%; box-sizing:border-box; background:#0f0f0f; border:1px solid #2c2c2c; border-radius:4px; padding:10px; color:#e8e8e8; font-size:15px; resize:vertical;"></textarea>
+        <div style="display:flex; gap:8px; margin-top:12px;">
+          <button type="button" onclick="closeInfoComposePhone()" style="flex:1; background:#2a2a26; color:#a8a8a8; border:1px solid #3a3a36; border-radius:4px; padding:10px; font-size:14px;">キャンセル</button>
+          <button type="button" onclick="submitInfoComposePhone()" style="flex:1; background:#e89a4a; color:#0a0a08; border:none; border-radius:4px; padding:10px; font-size:14px; font-weight:600; letter-spacing:0.2em;">投稿する</button>
+        </div>
+      </div>
+    </div>
 
     <div style="height:20px"></div>
   </div>
@@ -3504,6 +3518,101 @@ window.selectTourDay = function(idx) {
 
 // 起動時にも1回
 renderArrivalListPhone();
+
+// ════════════════════════════════════════════════════════════
+// R202: INFO 投稿（authed 必須）。PC ⇔ スマホ で localStorage 共有
+// ════════════════════════════════════════════════════════════
+const LS_KEY_INFO_HISTORY = 'schedule-studio:infoHistory:v1';
+let infoHistoryPhone = loadJSON(LS_KEY_INFO_HISTORY, []);
+
+function reloadInfoHistoryPhone() {
+  infoHistoryPhone = loadJSON(LS_KEY_INFO_HISTORY, []);
+  renderInfoPhone();
+}
+window.__reloadInfoHistory = reloadInfoHistoryPhone;
+
+function escHtmlInfoPhone(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/\n/g,'<br>');
+}
+
+function renderInfoPhone() {
+  const host = document.getElementById('info-list-host');
+  if (!host) return;
+  const list = (loadJSON(LS_KEY_INFO_HISTORY, []) || []).slice()
+    .sort(function(a,b){ return String(b.sentAt||'').localeCompare(String(a.sentAt||'')); });
+  if (list.length === 0) {
+    host.innerHTML = '<div style="padding:40px 20px; text-align:center; color:#888; font-size:13px;">まだお知らせはありません<br><span style="font-size:11px; color:#666;">「＋ NEW POST」から投稿できます</span></div>';
+    return;
+  }
+  host.innerHTML = list.map(function(h){
+    return '' +
+      '<div class="info-item" style="background:#1d1d1d; border:1px solid #2c2c2c; border-radius:6px; padding:14px; margin:0 4px 8px;">' +
+        '<div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px;">' +
+          '<span style="font-size:10px; letter-spacing:0.2em; color:#e89a4a;">連絡</span>' +
+          '<span style="font-size:11px; color:#888;">' + escHtmlInfoPhone(h.sentAt) + '</span>' +
+        '</div>' +
+        (h.subject ? '<div style="font-weight:600; font-size:15px; color:#e8e8e8; margin-bottom:6px;">' + escHtmlInfoPhone(h.subject) + '</div>' : '') +
+        '<div style="font-size:14px; color:#d8d8d4; line-height:1.5;">' + escHtmlInfoPhone(h.body) + '</div>' +
+        '<div style="font-size:11px; color:#787878; margin-top:8px; text-align:right;">— ' + escHtmlInfoPhone(h.sender || '匿名') + '</div>' +
+      '</div>';
+  }).join('');
+}
+
+function openInfoComposePhone() {
+  if (typeof authed === 'undefined' || !authed) {
+    alert('INFO 投稿には認証が必要です。\nPASS タブでパスワードを入れてください。');
+    return;
+  }
+  const sheet = document.getElementById('info-compose-sheet');
+  if (!sheet) return;
+  document.getElementById('info-compose-subject').value = '';
+  document.getElementById('info-compose-body').value = '';
+  sheet.style.display = 'flex';
+}
+function closeInfoComposePhone() {
+  const sheet = document.getElementById('info-compose-sheet');
+  if (sheet) sheet.style.display = 'none';
+}
+function submitInfoComposePhone() {
+  if (typeof authed === 'undefined' || !authed) {
+    alert('認証が切れています。PASS タブで再認証してください。');
+    return;
+  }
+  const nameEl = document.getElementById('info-compose-name');
+  const subjEl = document.getElementById('info-compose-subject');
+  const bodyEl = document.getElementById('info-compose-body');
+  const name = (nameEl && nameEl.value || '').trim();
+  const subj = (subjEl && subjEl.value || '').trim();
+  const body = (bodyEl && bodyEl.value || '').trim();
+  if (!subj && !body) { alert('件名 or 本文を入力してください。'); return; }
+  const now = new Date();
+  const ts = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0')
+           + ' ' + String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+  const cur = loadJSON(LS_KEY_INFO_HISTORY, []) || [];
+  cur.push({
+    id: Date.now(),
+    sentAt: ts,
+    sender: name || '匿名',
+    subject: subj || '（無題）',
+    body: body
+  });
+  saveJSON(LS_KEY_INFO_HISTORY, cur);
+  infoHistoryPhone = cur;
+  renderInfoPhone();
+  closeInfoComposePhone();
+}
+
+(function wrapShowForInfo(){
+  const _prev = window.show;
+  window.show = function(id) {
+    _prev(id);
+    if (id === 'info') renderInfoPhone();
+  };
+})();
+
+renderInfoPhone();
 
 // ════════════════════════════════════════════════════════════
 // R77 P2: DAY SCHEDULE（日付別自由イベント）を pc-edit.html と localStorage 共有
