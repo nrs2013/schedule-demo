@@ -3925,8 +3925,10 @@ function renderHotelListPhone() {
     const memberCount = (h.members || []).length;
     const mapsQ = encodeURIComponent(h.name || '');
     const urlText = h.url ? h.url.replace(/^https?:\/\//, '').replace(/\/$/, '') : '';
-    const taxiAddBtn = isAuthed ? '<button type="button" class="taxi-add-btn" onclick="openTaxiEditPhone(' + hotelIdx + ',-1)" style="background:transparent; border:1px solid #3a3a36; color:#a8a8a8; padding:4px 10px; border-radius:4px; font-size:12px; cursor:pointer;">+ 追加</button>' : '';
-    const memberAddBtn = isAuthed ? '<button type="button" class="taxi-add-btn" onclick="openMemberEditPhone(' + hotelIdx + ',-1)" style="background:transparent; border:1px solid #3a3a36; color:#a8a8a8; padding:4px 10px; border-radius:4px; font-size:12px; cursor:pointer;">+ 追加</button>' : '';
+    /* R212: 追加ボタンを小さくしてタイトルが折り返さないように */
+    const addBtnStyle = 'background:transparent; border:1px solid #3a3a36; color:#a8a8a8; padding:2px 8px; border-radius:4px; font-size:11px; cursor:pointer; white-space:nowrap; flex-shrink:0;';
+    const taxiAddBtn = isAuthed ? '<button type="button" class="taxi-add-btn" onclick="openTaxiEditPhone(' + hotelIdx + ',-1)" style="' + addBtnStyle + '">+ 追加</button>' : '';
+    const memberAddBtn = isAuthed ? '<button type="button" class="taxi-add-btn" onclick="openMemberEditPhone(' + hotelIdx + ',-1)" style="' + addBtnStyle + '">+ 追加</button>' : '';
     html += '<div class="hotel-block">' +
       '<div class="hotel-block-head">' +
         '<div class="hotel-name">' + escHtmlPhone(h.name || '') + '</div>' +
@@ -3939,12 +3941,12 @@ function renderHotelListPhone() {
         (h.name ? '<a class="hotel-map-btn" href="https://maps.google.com/?q=' + mapsQ + '" target="_blank">📍 MAP</a>' : '') +
       '</div>' +
       '<div class="taxi-section">' +
-        '<div class="taxi-head" style="display:flex; align-items:center; justify-content:space-between;"><div class="taxi-title">🚕 タクシー配車</div>' + taxiAddBtn + '</div>' +
+        '<div class="taxi-head" style="display:flex; align-items:center; justify-content:space-between; gap:8px;"><div class="taxi-title" style="white-space:nowrap;">🚕 タクシー配車</div>' + taxiAddBtn + '</div>' +
         (taxiList ? '<div class="taxi-list">' + taxiList + '</div>' : '<div style="color:#5a5a55; font-size:12px; padding:6px 0;">— 未登録 —</div>') +
       '</div>' +
-      '<div class="hotel-members-head" style="display:flex; align-items:center; justify-content:space-between;">' +
-        '<span>宿泊メンバー</span>' +
-        '<span style="display:flex; align-items:center; gap:8px;"><span style="color:#d8d8d4">' + memberCount + '名</span>' + memberAddBtn + '</span>' +
+      '<div class="hotel-members-head" style="display:flex; align-items:center; justify-content:space-between; gap:8px;">' +
+        '<span style="white-space:nowrap;">宿泊メンバー</span>' +
+        '<span style="display:flex; align-items:center; gap:8px; white-space:nowrap;"><span style="color:#d8d8d4; white-space:nowrap;">' + memberCount + '名</span>' + memberAddBtn + '</span>' +
       '</div>' +
       (memberList ? memberList : '<div style="color:#5a5a55; font-size:12px; padding:6px 12px;">— 未登録 —</div>') +
     '</div>';
