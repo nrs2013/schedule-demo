@@ -2467,17 +2467,44 @@ function updateProgress() {
   if (remainEl) remainEl.textContent = remain;
 }
 
-// リハーサル全体カウントダウン: 終了予定時刻まで
-// デモ用: 残り 2:34:18 から減算
-let rhSec = 2*3600 + 34*60 + 18;
-setInterval(() => {
-  rhSec = Math.max(0, rhSec - 1);
-  const h = String(Math.floor(rhSec / 3600)).padStart(2,'0');
-  const m = String(Math.floor((rhSec % 3600) / 60)).padStart(2,'0');
-  const s = String(rhSec % 60).padStart(2,'0');
+// R213: リハーサル全体カウントダウン: DAY SCHEDULE のリハ終了時刻まで動的計算
+function updateRhCountdownPhone() {
   const el = document.getElementById('rh-cd');
-  if (el) el.textContent = h + ':' + m + ':' + s;
-}, 1000);
+  const metaStrong = document.querySelector('#screen-rh .rh-countdown-meta strong');
+  if (!el) return;
+  let iso = null;
+  try { iso = (typeof getCurrentDateIso === 'function') ? getCurrentDateIso() : null; } catch(e) {}
+  const events = (typeof dailyEventsPhone !== 'undefined' && iso && dailyEventsPhone[iso]) ? dailyEventsPhone[iso] : [];
+  const rhCandidates = events.filter(function(e){
+    const lbl = (e.label || '').toLowerCase();
+    return (lbl.indexOf('リハ') >= 0 || lbl.indexOf('reh') >= 0) && e.endTime;
+  });
+  if (rhCandidates.length === 0) {
+    el.textContent = '--:--:--';
+    if (metaStrong) metaStrong.textContent = '--:--';
+    return;
+  }
+  // 最後（時刻が一番遅い）のリハイベントを採用
+  const lastRh = rhCandidates.slice().sort(function(a,b){
+    return String(a.endTime).localeCompare(String(b.endTime));
+  }).pop();
+  const endTime = lastRh.endTime;
+  if (metaStrong) metaStrong.textContent = endTime;
+  const parts = String(endTime).split(':').map(Number);
+  if (parts.length < 2 || isNaN(parts[0]) || isNaN(parts[1])) {
+    el.textContent = '--:--:--';
+    return;
+  }
+  const now = new Date();
+  const endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), parts[0], parts[1], 0);
+  const diff = Math.max(0, Math.floor((endDate.getTime() - now.getTime()) / 1000));
+  const h = String(Math.floor(diff / 3600)).padStart(2,'0');
+  const m = String(Math.floor((diff % 3600) / 60)).padStart(2,'0');
+  const s = String(diff % 60).padStart(2,'0');
+  el.textContent = h + ':' + m + ':' + s;
+}
+setInterval(updateRhCountdownPhone, 1000);
+setTimeout(updateRhCountdownPhone, 200);
 
 updateProgress();
 
