@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260516.520000">
+<meta name="build-version" content="20260516.530000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -4849,14 +4849,14 @@
     flex-direction: column;
     align-items: center;
   }
-  /* R238b: A4 横向き紙レイアウト */
+  /* R238c: A4 横向き紙レイアウト（ブラウザ連動） */
   .tt-paper {
-    width: 297mm;
-    max-width: calc(100vw - 48px);
+    width: 100%;
+    max-width: calc(100vw - 40px);
     aspect-ratio: 297/210;
     background: #1a1a1a;
     border: 1px solid #4a4a4a;
-    padding: 6mm 6mm 4mm;
+    padding: 1.2% 1.2% 0.8%;
     box-sizing: border-box;
     margin: 0 auto;
     position: relative;
@@ -4865,30 +4865,89 @@
     flex-direction: column;
     overflow: hidden;
   }
-  .tt-paper .tt-grid { flex: 1; min-height: 0; overflow: hidden; }
+  .tt-paper .tt-grid { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+  /* 紙の中ヘッダ */
   .tt-paper-header {
     display: grid;
-    grid-template-columns: 2.2fr 1fr 1.6fr 1.4fr;
-    gap: 10px;
-    padding: 8px 10px;
+    grid-template-columns: minmax(0, 2.4fr) minmax(0, 1.1fr) minmax(0, 1.6fr) minmax(0, 1.4fr);
+    gap: 8px;
+    padding: 8px 12px;
+    background: linear-gradient(180deg, #232323 0%, #1d1d1d 100%);
+    border: 0.5px solid #4a4a4a;
+    border-radius: 6px;
+    margin-bottom: 6px;
+    align-items: center;
+  }
+  .tt-paper-header .h-cell {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    white-space: nowrap;
+    min-width: 0;
+  }
+  .tt-paper-header .h-lbl {
+    font-size: 10px;
+    color: #6e6c66;
+    letter-spacing: 0.08em;
+    margin-bottom: 2px;
+    font-weight: 500;
+  }
+  .tt-paper-header .h-val {
+    font-size: 16px;
+    font-weight: 500;
+    color: #e8e6dc;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .tt-paper-header .h-val.title {
+    font-size: 18px;
+    color: #e8e6dc;
+  }
+  .tt-paper-header .h-val.date {
+    font-size: 18px;
+    color: #c8a878;
+    font-feature-settings: 'tnum';
+  }
+  .tt-paper-header .h-val.phase {
+    font-size: 13px;
+    color: #d97070;
+  }
+  .tt-paper-header .h-val.reg {
+    font-size: 11px;
+    color: #c8a878;
+    margin-top: 2px;
+  }
+  /* 紙の中フッタ（大きく主要時刻表示） */
+  .tt-paper-footer {
+    margin-top: 6px;
+    padding: 10px 12px;
     background: #232323;
     border: 0.5px solid #4a4a4a;
     border-radius: 6px;
-    margin-bottom: 8px;
-    font-size: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 20px;
+    align-items: baseline;
+    justify-content: center;
+    font-style: italic;
+    min-height: 38px;
   }
-  .tt-paper-header .h-cell { display: flex; flex-direction: column; }
-  .tt-paper-header .h-lbl { font-size: 9px; color: #6e6c66; letter-spacing: 0.06em; margin-bottom: 1px; }
-  .tt-paper-header .h-val { font-size: 13px; font-weight: 500; color: #e8e6dc; }
-  .tt-paper-header .h-val.reg { color: #c8a878; font-size: 11px; }
-  .tt-paper-footer {
-    margin-top: 8px;
-    padding: 4px 6px;
-    font-size: 10px;
-    color: #6e6c66;
-    text-align: right;
-    border-top: 0.5px solid #353535;
+  .tt-paper-footer .ev-item {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
+    font-size: 14px;
+    color: #e8e6dc;
+    letter-spacing: 0.04em;
   }
+  .tt-paper-footer .ev-name {
+    color: #c8a878;
+    font-weight: 500;
+    font-size: 15px;
+  }
+  .tt-paper-footer .ev-time { color: #e8e6dc; font-feature-settings: 'tnum'; }
+  .tt-paper-footer .ev-sep { color: #4a4a4a; padding: 0 4px; }
+  .tt-paper-footer .ev-empty { font-size: 11px; color: #6e6c66; font-style: normal; }
   /* 印刷時 */
   @media print {
     @page { size: A4 landscape; margin: 6mm; }
@@ -5079,23 +5138,8 @@
   .tt-bar-handle.l { left: 0; }
   .tt-bar-handle.r { right: 0; }
   .tt-bar-handle:hover { background: rgba(200,168,120,0.4); }
-  /* R238b: 四隅ハンドル（移動用） */
-  .tt-bar-corner {
-    position: absolute;
-    width: 9px;
-    height: 9px;
-    cursor: move;
-    background: rgba(200,168,120,0.25);
-    border: 1px solid rgba(200,168,120,0.6);
-    border-radius: 2px;
-    z-index: 2;
-  }
-  .tt-bar-corner.tl { top: -1px; left: -1px; }
-  .tt-bar-corner.tr { top: -1px; right: -1px; }
-  .tt-bar-corner.bl { bottom: -1px; left: -1px; }
-  .tt-bar-corner.br { bottom: -1px; right: -1px; }
-  .tt-bar:hover .tt-bar-corner { background: rgba(200,168,120,0.7); }
-  .tt-bar.selected .tt-bar-corner { background: #c8a878; border-color: #c8a878; }
+  /* R238c: 四隅ハンドル撤去（通常ドラッグに戻す） */
+  .tt-bar-corner { display: none; }
   .tt-bar-text { cursor: text; }
   /* R238b: セクション最下部の追加ボタン */
   .tt-sec-add-row {
@@ -5407,9 +5451,9 @@
     <div class="tab-bar">
       <div class="tab-bar-row">
         <button class="parent-tab no-children active" data-parent="schedule">CALENDAR</button>
+        <button class="parent-tab no-children" data-parent="timetable">TIME SCHEDULE</button>
         <button class="parent-tab" data-parent="day-schedule">DAY SCHEDULE</button>
         <button class="parent-tab" data-parent="rehearsal">REHEARSAL</button>
-        <button class="parent-tab no-children" data-parent="timetable">TIME SCHEDULE</button>
         <button class="parent-tab no-children" data-parent="hotel">HOTEL</button>
         <button class="parent-tab no-children" data-parent="info">INFO</button>
       </div>
@@ -11634,9 +11678,9 @@ function show(id) {
   let CELL_W = 60;
   const SLOTS_PER_HOUR = 4;
   function SLOT_W(){ return CELL_W / SLOTS_PER_HOUR; }
-  const LANE_H = 40;
-  const BAR_H = 32;
-  const BAR_TOP = 4;
+  let LANE_H = 40;
+  let BAR_H = 32;
+  let BAR_TOP = 4;
   const LABEL_W = 110;
   const ADD_W = 36;
   let selectedBarId = null;
@@ -11656,6 +11700,25 @@ function show(id) {
     else CELL_W = Math.max(20, Math.min(360, 60 * userZoomScale));
     const lbl = document.getElementById('tt-zoom-label');
     if (lbl) lbl.textContent = (zoomMode === 'fit') ? 'FIT' : Math.round((CELL_W / 60) * 100) + '%';
+  }
+  function updateLaneH(tt){
+    const paper = document.getElementById('tt-paper');
+    if (!paper) return;
+    const paperH = paper.clientHeight;
+    const headerEl = document.getElementById('tt-paper-header');
+    const footerEl = document.getElementById('tt-paper-footer');
+    const headerH = headerEl ? headerEl.offsetHeight : 60;
+    const footerH = footerEl ? footerEl.offsetHeight : 50;
+    const timeRowH = 36;
+    const addRowH = 28;
+    const padding = 30;
+    const available = paperH - headerH - footerH - timeRowH - addRowH - padding;
+    const totalLanes = tt.sections.reduce(function(sum, s){ return sum + (s.lanes || 1); }, 0);
+    if (totalLanes > 0) {
+      LANE_H = Math.max(18, Math.min(60, Math.floor(available / totalLanes)));
+      BAR_H = Math.max(12, LANE_H - 8);
+      BAR_TOP = Math.max(2, Math.floor((LANE_H - BAR_H) / 2));
+    }
   }
   function getSpanSecIds(bar){
     return Array.isArray(bar.spanSecIds) && bar.spanSecIds.length > 1 ? bar.spanSecIds : null;
@@ -11692,8 +11755,11 @@ function show(id) {
   }
 
   function renderSpanBars(tt, gridEl){
+    // R238c: 縦串バー描画を一旦オフ（挙動が複雑なため再設計予定）
     var ov = gridEl.querySelector('.tt-span-overlay');
     if (ov) ov.remove();
+    return;
+    /* 以下、再設計後に有効化
     const newOv = document.createElement('div');
     newOv.className = 'tt-span-overlay';
     const timeRow = gridEl.querySelector('.tt-time-row');
@@ -11728,6 +11794,7 @@ function show(id) {
       bindBarEvents(tt, bar, el, null);
     });
     gridEl.appendChild(newOv);
+    */
   }
 
   function bindSectionEvents(tt, sec, body){
@@ -11762,32 +11829,7 @@ function show(id) {
         const width = Math.max(SLOT_W(), timeToPixel(et, tt) - left);
         ghost.style.left = left + 'px';
         ghost.style.width = width + 'px';
-        // 縦串検知
-        const elUnder = document.elementFromPoint(ev.clientX, ev.clientY);
-        if (elUnder) {
-          const otherRow = elUnder.closest('[data-sec-id]');
-          if (otherRow) {
-            const otherId = otherRow.getAttribute('data-sec-id');
-            if (otherId !== sec.id) {
-              const startIdx = tt.sections.findIndex(function(s){ return s.id === sec.id; });
-              const endIdx = tt.sections.findIndex(function(s){ return s.id === otherId; });
-              if (startIdx >= 0 && endIdx >= 0) {
-                const lo = Math.min(startIdx, endIdx);
-                const hi = Math.max(startIdx, endIdx);
-                curSecIds = tt.sections.slice(lo, hi + 1).map(function(s){ return s.id; });
-                if (curSecIds.length > 1) {
-                  ghost.style.background = 'rgba(184,123,143,0.3)';
-                  ghost.style.borderColor = '#b87b8f';
-                  isDragging = true;
-                }
-              }
-            } else {
-              curSecIds = [sec.id];
-              ghost.style.background = '';
-              ghost.style.borderColor = '';
-            }
-          }
-        }
+        // R238c: 縦串検知一旦オフ
       }
       function up(){
         document.removeEventListener('mousemove', move);
@@ -11803,9 +11845,8 @@ function show(id) {
         const newBar = {
           id: genId(), secId: sec.id, lane: lane,
           start: st, end: et, text: '',
-          color: curSecIds.length > 1 ? 'pink' : 'white'
+          color: 'white'
         };
-        if (curSecIds.length > 1) newBar.spanSecIds = curSecIds.slice();
         tt.bars.push(newBar);
         selectedBarId = newBar.id;
         saveToStorage();
@@ -11832,62 +11873,54 @@ function show(id) {
     const textEl = el.querySelector('.tt-bar-text');
     const handleL = el.querySelector('.tt-bar-handle.l');
     const handleR = el.querySelector('.tt-bar-handle.r');
-    const corners = el.querySelectorAll('.tt-bar-corner');
 
-    // バー本体クリック = 選択のみ
+    // バー本体ドラッグ = 移動／クリックのみ = 選択
     el.addEventListener('mousedown', function(e){
       if (e.target === handleL || e.target === handleR) return;
-      if (e.target.classList && e.target.classList.contains('tt-bar-corner')) return;
       if (e.target === textEl && textEl.getAttribute('contenteditable') === 'true') return;
       if (e.button !== 0) return;
       e.stopPropagation();
-      selectedBarId = bar.id;
-      document.querySelectorAll('.tt-bar.selected').forEach(function(b){ b.classList.remove('selected'); });
-      el.classList.add('selected');
-    });
-
-    // 四隅ハンドル = 移動
-    corners.forEach(function(c){
-      c.addEventListener('mousedown', function(e){
-        if (e.button !== 0) return;
-        e.stopPropagation();
-        e.preventDefault();
-        const parent = el.parentElement;
-        const rect = parent.getBoundingClientRect();
-        const startMouseX = e.clientX - rect.left;
-        const startMouseY = e.clientY - rect.top;
-        const initStart = bar.start;
-        const initEnd = bar.end;
-        const initLane = bar.lane || 0;
-        const duration = initEnd - initStart;
-        let dragging = false;
-        function move(ev){
-          const x = ev.clientX - rect.left;
-          const y = ev.clientY - rect.top;
-          const dx = x - startMouseX;
-          const dy = y - startMouseY;
-          if (Math.abs(dx) > 2 || Math.abs(dy) > 2) dragging = true;
-          if (!dragging) return;
-          const newStart = snapTime(pixelToTime(timeToPixel(initStart, tt) + dx, tt), tt.timeStart);
-          const newEnd = newStart + duration;
-          if (newStart >= tt.timeStart && newEnd <= tt.timeEnd) {
-            bar.start = newStart;
-            bar.end = newEnd;
-          }
-          if (sec) {
-            const newLane = Math.max(0, Math.min(sec.lanes - 1, initLane + Math.round(dy / LANE_H)));
-            bar.lane = newLane;
-          }
-          render();
+      const parent = el.parentElement;
+      const rect = parent.getBoundingClientRect();
+      const startMouseX = e.clientX - rect.left;
+      const startMouseY = e.clientY - rect.top;
+      const initStart = bar.start;
+      const initEnd = bar.end;
+      const initLane = bar.lane || 0;
+      const duration = initEnd - initStart;
+      let dragging = false;
+      function move(ev){
+        const x = ev.clientX - rect.left;
+        const y = ev.clientY - rect.top;
+        const dx = x - startMouseX;
+        const dy = y - startMouseY;
+        if (Math.abs(dx) > 4 || Math.abs(dy) > 4) dragging = true;
+        if (!dragging) return;
+        const newStart = snapTime(pixelToTime(timeToPixel(initStart, tt) + dx, tt), tt.timeStart);
+        const newEnd = newStart + duration;
+        if (newStart >= tt.timeStart && newEnd <= tt.timeEnd) {
+          bar.start = newStart;
+          bar.end = newEnd;
         }
-        function up(){
-          document.removeEventListener('mousemove', move);
-          document.removeEventListener('mouseup', up);
-          if (dragging) saveToStorage();
+        if (sec) {
+          const newLane = Math.max(0, Math.min(sec.lanes - 1, initLane + Math.round(dy / LANE_H)));
+          bar.lane = newLane;
         }
-        document.addEventListener('mousemove', move);
-        document.addEventListener('mouseup', up);
-      });
+        render();
+      }
+      function up(){
+        document.removeEventListener('mousemove', move);
+        document.removeEventListener('mouseup', up);
+        if (dragging) {
+          saveToStorage();
+        } else {
+          selectedBarId = bar.id;
+          document.querySelectorAll('.tt-bar.selected').forEach(function(b){ b.classList.remove('selected'); });
+          el.classList.add('selected');
+        }
+      }
+      document.addEventListener('mousemove', move);
+      document.addEventListener('mouseup', up);
     });
 
     textEl.addEventListener('dblclick', function(e){
@@ -12028,8 +12061,13 @@ function show(id) {
     const end = tt.timeEnd;
     const hours = Math.max(1, end - start);
 
-    // ズーム反映
+    // ヘッダ・フッタ生成（更新は LANE_H 計算より先）
+    renderPaperHeader(tt, dateKey);
+    renderPaperFooter(tt);
+
+    // ズーム反映 + 縦軸 FIT
     updateCellW(tt);
+    updateLaneH(tt);
     const cellW = CELL_W;
     const axisW = hours * cellW;
 
@@ -12174,6 +12212,62 @@ function show(id) {
         }
       });
     });
+  }
+
+  /* R238c: 紙ヘッダ・フッタ生成 */
+  function fmtTimeFromHour(h){
+    const totalMin = Math.round(h * 60);
+    let hh = Math.floor(totalMin / 60);
+    const mm = totalMin % 60;
+    if (hh >= 24) hh -= 24;
+    return hh + ':' + String(mm).padStart(2, '0');
+  }
+  function getActiveConcertTitle(){
+    try {
+      const raw = localStorage.getItem('schedule-studio:concerts:v1');
+      const active = localStorage.getItem('schedule-studio:active-concert-id');
+      if (!raw || !active) return '';
+      const concerts = JSON.parse(raw);
+      const c = (Array.isArray(concerts) ? concerts : []).find(function(x){ return x.id === active; });
+      return c ? (c.name || c.title || '') : '';
+    } catch(e) { return ''; }
+  }
+  function getTourInfoForDate(dateKey){
+    try {
+      if (typeof window.__getTourInfo === 'function') return window.__getTourInfo(dateKey) || {};
+      if (typeof getTourInfo === 'function') return getTourInfo(dateKey) || {};
+    } catch(e) {}
+    return {};
+  }
+  function renderPaperHeader(tt, dateKey){
+    const el = document.getElementById('tt-paper-header');
+    if (!el) return;
+    const title = getActiveConcertTitle();
+    const info = getTourInfoForDate(dateKey);
+    el.innerHTML =
+      '<div class="h-cell"><div class="h-lbl">TITLE</div><div class="h-val title">' + escapeHtml(title || '—') + '</div></div>' +
+      '<div class="h-cell"><div class="h-lbl">DATE</div><div class="h-val date">' + escapeHtml(fmtDateDisplay(dateKey)) + '</div></div>' +
+      '<div class="h-cell"><div class="h-lbl">VENUE</div><div class="h-val">' + escapeHtml(info.venue || '—') + '</div></div>' +
+      '<div class="h-cell"><div class="h-lbl">PHASE</div><div class="h-val phase">' + escapeHtml(info.day || '—') + '</div></div>';
+  }
+  function renderPaperFooter(tt){
+    const el = document.getElementById('tt-paper-footer');
+    if (!el) return;
+    const KEY_WORDS = /^(RH|通しRH|テクリハ|開場|開演|本番)/;
+    const major = tt.bars
+      .filter(function(b){
+        const t = (b.text || '').trim();
+        return b.color === 'pink' || KEY_WORDS.test(t);
+      })
+      .sort(function(a,b){ return a.start - b.start; });
+    if (major.length === 0) {
+      el.innerHTML = '<span class="ev-empty">下部の大きな表示は、ピンク色のバー（RH／開場／開演など）を追加すると自動で出ます</span>';
+      return;
+    }
+    el.innerHTML = major.map(function(b){
+      const txt = (b.text || '').trim() || '—';
+      return '<span class="ev-item"><span class="ev-name">' + escapeHtml(txt) + '</span><span class="ev-time">' + fmtTimeFromHour(b.start) + '〜' + fmtTimeFromHour(b.end) + '</span></span>';
+    }).join('<span class="ev-sep">/</span>');
   }
 
   function zoomIn(){
