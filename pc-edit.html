@@ -6024,14 +6024,10 @@ function show(id) {
           const sourceId = draggingId || +e.dataTransfer.getData('text/plain');
           const targetId = +row.getAttribute('data-id');
           if (!sourceId || sourceId === targetId) return;
-          // R232: reorder lock 立て、drift / FB echo の reload を 3 秒間止める
-          window.__r232ReorderLockUntil = Date.now() + 3000;
-          window.__r232SuppressFocusoutRender = true;
-          // R227: 編集中の input/contenteditable があれば blur して反映してから並び替え
+          // R236: R232 の lock 系を全撤去。R187 時代の素直な実装に戻す
           if (document.activeElement && typeof document.activeElement.blur === 'function') {
             document.activeElement.blur();
           }
-          window.__r232SuppressFocusoutRender = false;
           // songs 配列内で source を target の位置に移動
           const srcIdx = songs.findIndex(function(s){ return s.id === sourceId; });
           const tgtIdx = songs.findIndex(function(s){ return s.id === targetId; });
@@ -6175,8 +6171,7 @@ function show(id) {
       if (newVal !== reh.rhNo) {
         reh.rhNo = newVal;
         saveRehearsals();
-        // R232: reorder の blur で焦点が外れて来た focusout は render しない
-        if (state.viewMode === 'rh' && !window.__r232SuppressFocusoutRender) {
+        if (state.viewMode === 'rh') {
           render();
         } else {
           el.value = newVal === null ? '' : String(newVal);
@@ -6454,11 +6449,6 @@ function show(id) {
   // localStorage の最新 setlists を読んで in-memory に反映し、songs 参照も再バインドして再描画する。
   window.__reloadSetlists = function() {
     try {
-      // R233: reorder lock のみ残す（reject ロジックは全体同期を阻害するため撤去）
-      if (window.__r232ReorderLockUntil && Date.now() < window.__r232ReorderLockUntil) {
-        console.warn('[R233] __reloadSetlists skip: reorder lock');
-        return;
-      }
       const v = localStorage.getItem(LS_KEY_SETLISTS);
       if (!v) return;
       const next = JSON.parse(v);
@@ -6509,8 +6499,6 @@ function show(id) {
   // R157: 1 秒おきの drift 検知（setlists 版、R100 の rehearsalByDate と同じ仕組み）
   setInterval(function(){
     if (_r172IsEditing()) return; // R172
-    // R232: reorder lock 中は drift 検知も停止
-    if (window.__r232ReorderLockUntil && Date.now() < window.__r232ReorderLockUntil) return;
     try {
       const v = localStorage.getItem(LS_KEY_SETLISTS);
       if (!v) return;
