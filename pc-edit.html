@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260511.450000">
+<meta name="build-version" content="20260516.500000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -203,6 +203,8 @@
       if (item.k === 'schedule-studio:arrivalSectionsByDate:v1' && typeof window.__reloadArrivals === 'function') window.__reloadArrivals();
       if (item.k === 'schedule-studio:dayEvents:v1' && typeof window.__reloadDailyEvents === 'function') window.__reloadDailyEvents();
       if (item.k === 'schedule-studio:hotels:v1' && typeof window.__reloadHotels === 'function') window.__reloadHotels();
+      // R237 Phase 1: タイムテーブル
+      if (item.k === 'schedule-studio:timetableByDate:v1' && typeof window.__reloadTimetableByDate === 'function') window.__reloadTimetableByDate();
       // R109: render 前に renderMonth のキャッシュフラグを無効化（強制完全再描画）
       try {
         const monthEl = document.getElementById('pc-cal-month');
@@ -4836,6 +4838,246 @@
     line-height: 1.6;
   }
   .caption strong { color: #e89a4a; }
+
+  /* ── R237 Phase 1: タイムテーブル ─────────────────────────── */
+  .tt-wrap {
+    padding: 14px;
+    background: #1a1a1a;
+    color: #e8e6dc;
+    min-height: 400px;
+  }
+  .tt-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .tt-toolbar-info { display: flex; align-items: center; gap: 12px; }
+  .tt-toolbar-label { font-size: 13px; color: #c8a878; font-weight: 500; letter-spacing: 0.04em; }
+  .tt-toolbar-date { font-size: 14px; color: #e8e6dc; font-weight: 500; }
+  .tt-toolbar-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+  .tt-btn {
+    font-size: 12px;
+    padding: 6px 12px;
+    background: #232323;
+    color: #e8e6dc;
+    border: 0.5px solid #353535;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .tt-btn:hover { background: #2a2a2a; border-color: #c8a878; color: #c8a878; }
+  .tt-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .tt-btn.primary { background: #c8a878; color: #1a1a1a; border-color: #c8a878; font-weight: 500; }
+  .tt-btn.primary:hover { background: #d4b88a; color: #1a1a1a; }
+  .tt-grid-wrap {
+    background: #232323;
+    border: 0.5px solid #353535;
+    border-radius: 8px;
+    padding: 10px;
+    overflow-x: auto;
+  }
+  .tt-grid {
+    background: #1a1a1a;
+    border: 0.5px solid #353535;
+    border-radius: 6px;
+    overflow: hidden;
+    min-width: max-content;
+  }
+  .tt-time-row {
+    display: grid;
+    background: #232323;
+    border-bottom: 0.5px solid #4a4a4a;
+  }
+  .tt-time-corner {
+    padding: 8px 6px;
+    font-size: 11px;
+    color: #6e6c66;
+    border-right: 0.5px solid #4a4a4a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #2a2a2a;
+  }
+  .tt-time-cell {
+    padding: 8px 6px;
+    font-size: 12px;
+    color: #a8a59c;
+    border-right: 0.5px solid #353535;
+    font-weight: 500;
+    position: relative;
+  }
+  .tt-time-add {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #2a2a2a;
+    color: #c8a878;
+    font-size: 18px;
+    cursor: pointer;
+    border-left: 0.5px dashed #4a4a4a;
+    user-select: none;
+  }
+  .tt-time-add:hover { background: #353535; }
+  .tt-sec-row {
+    display: grid;
+    border-bottom: 0.5px solid #353535;
+  }
+  .tt-sec-row:last-child { border-bottom: none; }
+  .tt-sec-label {
+    background: #232323;
+    border-right: 0.5px solid #4a4a4a;
+    padding: 6px 4px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #e8e6dc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 4px;
+    text-align: center;
+  }
+  .tt-sec-lanes {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 10px;
+    color: #6e6c66;
+  }
+  .tt-sec-lane-btn {
+    cursor: pointer;
+    width: 18px;
+    height: 18px;
+    background: #2a2a2a;
+    border: 0.5px solid #4a4a4a;
+    border-radius: 3px;
+    color: #a8a59c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    line-height: 1;
+  }
+  .tt-sec-lane-btn:hover { background: #353535; color: #c8a878; }
+  .tt-sec-body {
+    position: relative;
+    background-image: linear-gradient(to right, #353535 0.5px, transparent 0.5px);
+    background-size: var(--tt-cell-w, 60px) 100%;
+  }
+  .tt-phase1-note {
+    margin-top: 12px;
+    padding: 10px 14px;
+    background: rgba(200,168,120,0.08);
+    border: 0.5px solid rgba(200,168,120,0.4);
+    border-radius: 6px;
+    color: #c8a878;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  /* ── R237 Phase 2: バー ─────────────────────────── */
+  .tt-sec-body { cursor: crosshair; user-select: none; }
+  .tt-bar {
+    position: absolute;
+    border-radius: 4px;
+    padding: 0 6px;
+    display: flex;
+    align-items: center;
+    font-size: 12px;
+    line-height: 1.2;
+    background: #2a2a2a;
+    border: 1px solid #4a4a4a;
+    color: #e8e6dc;
+    cursor: move;
+    overflow: hidden;
+    box-sizing: border-box;
+    user-select: none;
+  }
+  .tt-bar.color-white { background: #2a2a2a; border-color: #4a4a4a; color: #e8e6dc; }
+  .tt-bar.color-pink  { background: rgba(184,123,143,0.25); border-color: #b87b8f; color: #f5d4dc; }
+  .tt-bar.color-amber { background: rgba(212,161,74,0.25); border-color: #d4a14a; color: #f0d9a8; }
+  .tt-bar.color-gray  { background: rgba(120,120,120,0.25); border-color: #4a4a4a; color: #a8a59c; }
+  .tt-bar.color-accent { background: rgba(200,168,120,0.22); border-color: #c8a878; color: #c8a878; }
+  .tt-bar.selected { box-shadow: 0 0 0 2px #c8a878; z-index: 2; }
+  .tt-bar-text {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    outline: none;
+    padding: 2px 0;
+  }
+  .tt-bar-text[contenteditable="true"]:focus { white-space: nowrap; background: rgba(0,0,0,0.2); }
+  .tt-bar-handle {
+    position: absolute;
+    top: 0;
+    width: 6px;
+    height: 100%;
+    cursor: ew-resize;
+    background: transparent;
+  }
+  .tt-bar-handle.l { left: 0; }
+  .tt-bar-handle.r { right: 0; }
+  .tt-bar-handle:hover { background: rgba(200,168,120,0.4); }
+  .tt-bar-ghost {
+    position: absolute;
+    border-radius: 4px;
+    background: rgba(200,168,120,0.25);
+    border: 1.5px dashed #c8a878;
+    pointer-events: none;
+    z-index: 3;
+  }
+  .tt-help {
+    margin-top: 8px;
+    font-size: 11px;
+    color: #6e6c66;
+    padding: 0 4px;
+    line-height: 1.5;
+  }
+  /* R237 Phase 3: 色選択メニュー */
+  .tt-color-menu {
+    position: fixed;
+    background: #1a1a1a;
+    border: 0.5px solid #4a4a4a;
+    border-radius: 8px;
+    padding: 6px;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.6);
+    z-index: 99999;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 140px;
+  }
+  .tt-color-item {
+    padding: 7px 14px;
+    cursor: pointer;
+    font-size: 12px;
+    border-radius: 4px;
+    border: 1px solid transparent;
+    transition: filter 0.1s;
+  }
+  .tt-color-item:hover { filter: brightness(1.25); }
+  .tt-color-item.is-current { border-color: #c8a878; }
+  .tt-color-item.color-white { background: #2a2a2a; color: #e8e6dc; border-color: #4a4a4a; }
+  .tt-color-item.color-pink { background: rgba(184,123,143,0.4); color: #f5d4dc; border-color: #b87b8f; }
+  .tt-color-item.color-amber { background: rgba(212,161,74,0.4); color: #f0d9a8; border-color: #d4a14a; }
+  .tt-color-item.color-gray { background: rgba(120,120,120,0.4); color: #a8a59c; border-color: #4a4a4a; }
+  .tt-color-item.color-accent { background: rgba(200,168,120,0.4); color: #c8a878; border-color: #c8a878; }
+  .tt-color-menu-sep {
+    height: 1px;
+    background: #4a4a4a;
+    margin: 4px 0;
+  }
+  .tt-color-delete {
+    padding: 7px 14px;
+    cursor: pointer;
+    font-size: 12px;
+    border-radius: 4px;
+    color: #d97070;
+  }
+  .tt-color-delete:hover { background: rgba(217,112,112,0.15); }
 </style>
 
 
@@ -4960,6 +5202,7 @@
         <button class="parent-tab no-children active" data-parent="schedule">CALENDAR</button>
         <button class="parent-tab" data-parent="day-schedule">DAY SCHEDULE</button>
         <button class="parent-tab" data-parent="rehearsal">REHEARSAL</button>
+        <button class="parent-tab no-children" data-parent="timetable">タイムテーブル</button>
         <button class="parent-tab no-children" data-parent="hotel">HOTEL</button>
         <button class="parent-tab no-children" data-parent="info">INFO</button>
       </div>
@@ -5096,6 +5339,30 @@
         <div class="day-event-list" id="day-event-list"></div>
       </div>
       </div><!-- /sub-stage-schedule -->
+    </div>
+
+    <!-- ── mode-content: TIMETABLE（R237 Phase 1） ───────── -->
+    <div class="mode-content" id="mode-timetable">
+      <div class="tt-wrap">
+        <div class="tt-toolbar">
+          <div class="tt-toolbar-info">
+            <span class="tt-toolbar-label">タイムテーブル</span>
+            <span class="tt-toolbar-date" id="tt-date-display">—</span>
+          </div>
+          <div class="tt-toolbar-actions">
+            <button class="tt-btn" id="tt-btn-time-start" type="button">開始時刻</button>
+            <button class="tt-btn" id="tt-btn-time-end" type="button">終了時刻</button>
+            <button class="tt-btn" id="tt-btn-copy-prev" type="button" disabled>前日から複製</button>
+            <button class="tt-btn" id="tt-btn-print" type="button" disabled>A4 印刷</button>
+          </div>
+        </div>
+        <div class="tt-grid-wrap">
+          <div class="tt-grid" id="tt-grid"></div>
+        </div>
+        <div class="tt-help">
+          ✦ <strong style="color:#c8a878;">操作</strong>：セクション内をドラッグで範囲指定 → そのままバー作成 → テキスト入力 → Enter で確定 ／ バー端をドラッグで伸縮 ／ バー中央ドラッグで移動 ／ クリックで選択 → Delete で削除 ／ 15 分単位でスナップ
+        </div>
+      </div>
     </div>
 
     <!-- ── mode-content: INFO（自由入力＋LINEプッシュ＋履歴） ───────── -->
@@ -8242,7 +8509,8 @@ function show(id) {
       'day-schedule': 'mode-day-schedule',
       schedule: 'mode-schedule',
       hotel: 'mode-schedule',
-      rehearsal: 'mode-rehearsal' // REHEARSAL：デフォルトでテクリハに切替（下で扱う）
+      rehearsal: 'mode-rehearsal', // REHEARSAL：デフォルトでテクリハに切替（下で扱う）
+      timetable: 'mode-timetable'  // R237 Phase 1: タイムテーブル
     }
   };
   const tabState = {
@@ -8363,6 +8631,12 @@ function show(id) {
       document.querySelectorAll('.rh-mode-seg').forEach(function(seg){
         seg.classList.toggle('is-active', seg.getAttribute('data-rh-mode') === sub);
       });
+    }
+    if (parent === 'timetable') {
+      // R237 Phase 1: タイムテーブル
+      if (typeof window.__renderTimetable === 'function') {
+        window.__renderTimetable();
+      }
     }
   }
   // REHEARSAL 内 テクリハ／全体リハーサル 切替ボタン（両方とも mode-rehearsal を共有）
@@ -8741,6 +9015,11 @@ function show(id) {
     // REHEARSAL タブを再レンダー（その日のリハ計画 rhNo/tags/memo に切替）
     if (typeof window.__rehearsalRender === 'function') {
       window.__rehearsalRender();
+    }
+
+    // R237 Phase 1: タイムテーブル も日付別なので再レンダー
+    if (typeof window.__renderTimetable === 'function') {
+      window.__renderTimetable();
     }
 
     // CALENDAR の選択日も連動
@@ -11042,6 +11321,544 @@ function show(id) {
     });
   }
   subscribePhoneLog();
+})();
+</script>
+
+<script>
+/* ── R237 Phase 1: タイムテーブル ─────────────────────────── */
+(function timetableModule(){
+  'use strict';
+
+  const STORAGE_KEY = 'schedule-studio:timetableByDate:v1';
+
+  const DEFAULT_SECTIONS = [
+    { id: 'sec-stage',  name: 'STAGE',     lanes: 1 },
+    { id: 'sec-light',  name: '照明',      lanes: 1 },
+    { id: 'sec-video',  name: '映像',      lanes: 1 },
+    { id: 'sec-pa',     name: 'PA/MP',     lanes: 1 },
+    { id: 'sec-fx',     name: '特効',      lanes: 1 },
+    { id: 'sec-power',  name: '電源',      lanes: 1 },
+    { id: 'sec-rec',    name: '収録/カメラ', lanes: 1 },
+    { id: 'sec-cast',   name: 'CAST',     lanes: 1 },
+    { id: 'sec-note',   name: '備考',      lanes: 1 },
+    { id: 'sec-staff',  name: 'アルバイト', lanes: 1 }
+  ];
+
+  let timetableByDate = {};
+
+  function loadFromStorage(){
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) timetableByDate = JSON.parse(raw) || {};
+    } catch(e) {
+      timetableByDate = {};
+    }
+  }
+
+  function saveToStorage(){
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(timetableByDate));
+    } catch(e) { /* noop */ }
+  }
+
+  function pad2(n){ return String(n).padStart(2, '0'); }
+
+  function getCurrentDateKey(){
+    try {
+      const d = window.__masterDateState && window.__masterDateState.current;
+      if (!d) return null;
+      return d.getFullYear() + '-' + pad2(d.getMonth()+1) + '-' + pad2(d.getDate());
+    } catch(e) { return null; }
+  }
+
+  function getTimetableForDate(dateKey){
+    if (!dateKey) return null;
+    if (!timetableByDate[dateKey]) {
+      timetableByDate[dateKey] = {
+        timeStart: 8,
+        timeEnd: 24,
+        sections: DEFAULT_SECTIONS.map(function(s){ return Object.assign({}, s); }),
+        bars: []
+      };
+      saveToStorage();
+    } else {
+      const tt = timetableByDate[dateKey];
+      if (typeof tt.timeStart !== 'number') tt.timeStart = 8;
+      if (typeof tt.timeEnd !== 'number') tt.timeEnd = 24;
+      if (!Array.isArray(tt.sections) || tt.sections.length === 0) {
+        tt.sections = DEFAULT_SECTIONS.map(function(s){ return Object.assign({}, s); });
+      }
+      if (!Array.isArray(tt.bars)) tt.bars = [];
+    }
+    return timetableByDate[dateKey];
+  }
+
+  function fmtHour(h){
+    let display = h;
+    let suffix = '';
+    if (h >= 24) { display = h - 24; suffix = ''; }
+    return display + ':00';
+  }
+
+  function fmtDateDisplay(dateKey){
+    if (!dateKey) return '—';
+    const m = dateKey.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!m) return dateKey;
+    const d = new Date(parseInt(m[1]), parseInt(m[2])-1, parseInt(m[3]));
+    const dow = ['日','月','火','水','木','金','土'][d.getDay()];
+    return m[1] + '.' + m[2] + '.' + m[3] + ' (' + dow + ')';
+  }
+
+  function escapeHtml(s){
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+      return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c];
+    });
+  }
+
+  /* ── R237 Phase 2: バー描画・ドラッグ・編集 ─────────────────────────── */
+  const CELL_W = 60;
+  const SLOTS_PER_HOUR = 4;
+  const SLOT_W = CELL_W / SLOTS_PER_HOUR;
+  const LANE_H = 40;
+  const BAR_H = 32;
+  const BAR_TOP = 4;
+  let selectedBarId = null;
+
+  function genId(){
+    return 'b_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,7);
+  }
+  function snapTime(t, start){
+    const slot = Math.round((t - start) * SLOTS_PER_HOUR);
+    return start + slot / SLOTS_PER_HOUR;
+  }
+  function pixelToTime(px, tt){ return tt.timeStart + px / CELL_W; }
+  function timeToPixel(t, tt){ return (t - tt.timeStart) * CELL_W; }
+
+  function renderBarsInSection(tt, sec, body){
+    body.querySelectorAll('.tt-bar').forEach(function(b){ b.remove(); });
+    tt.bars.filter(function(b){ return b.secId === sec.id; }).forEach(function(bar){
+      const lane = Math.max(0, Math.min(sec.lanes - 1, bar.lane || 0));
+      const left = timeToPixel(bar.start, tt);
+      const width = Math.max(SLOT_W, timeToPixel(bar.end, tt) - left);
+      const top = lane * LANE_H + BAR_TOP;
+      const color = bar.color || 'white';
+      const el = document.createElement('div');
+      el.className = 'tt-bar color-' + color + (bar.id === selectedBarId ? ' selected' : '');
+      el.setAttribute('data-bar-id', bar.id);
+      el.style.cssText = 'left:' + left + 'px; width:' + width + 'px; top:' + top + 'px; height:' + BAR_H + 'px;';
+      el.innerHTML = '<div class="tt-bar-handle l"></div><div class="tt-bar-text">' + escapeHtml(bar.text || '') + '</div><div class="tt-bar-handle r"></div>';
+      body.appendChild(el);
+      bindBarEvents(tt, bar, el, sec);
+    });
+  }
+
+  function bindSectionEvents(tt, sec, body){
+    if (body.__bound) return;
+    body.__bound = true;
+    body.addEventListener('mousedown', function(e){
+      if (e.button !== 0) return;
+      if (e.target.closest('.tt-bar')) return;
+      const rect = body.getBoundingClientRect();
+      const startX = e.clientX - rect.left;
+      const startY = e.clientY - rect.top;
+      const startTime = snapTime(pixelToTime(startX, tt), tt.timeStart);
+      const lane = Math.max(0, Math.min(sec.lanes - 1, Math.floor(startY / LANE_H)));
+      let curEnd = startTime + 0.25;
+      const ghost = document.createElement('div');
+      ghost.className = 'tt-bar-ghost';
+      ghost.style.cssText = 'left:' + timeToPixel(startTime, tt) + 'px; width:' + SLOT_W + 'px; top:' + (lane * LANE_H + BAR_TOP) + 'px; height:' + BAR_H + 'px;';
+      body.appendChild(ghost);
+      function move(ev){
+        const x = ev.clientX - rect.left;
+        const t = snapTime(pixelToTime(x, tt), tt.timeStart);
+        curEnd = t > startTime ? t : (startTime + 0.25);
+        const st = Math.min(startTime, curEnd);
+        const et = Math.max(st + 0.25, curEnd);
+        const left = timeToPixel(st, tt);
+        const width = Math.max(SLOT_W, timeToPixel(et, tt) - left);
+        ghost.style.left = left + 'px';
+        ghost.style.width = width + 'px';
+      }
+      function up(){
+        document.removeEventListener('mousemove', move);
+        document.removeEventListener('mouseup', up);
+        ghost.remove();
+        let st = Math.min(startTime, curEnd);
+        let et = Math.max(startTime, curEnd);
+        if (et - st < 0.25) et = st + 0.25;
+        if (et > tt.timeEnd) et = tt.timeEnd;
+        if (st < tt.timeStart) st = tt.timeStart;
+        const newBar = { id: genId(), secId: sec.id, lane: lane, start: st, end: et, text: '', color: 'white' };
+        tt.bars.push(newBar);
+        selectedBarId = newBar.id;
+        saveToStorage();
+        renderBarsInSection(tt, sec, body);
+        setTimeout(function(){
+          const tx = body.querySelector('[data-bar-id="' + newBar.id + '"] .tt-bar-text');
+          if (tx) {
+            tx.setAttribute('contenteditable', 'true');
+            tx.focus();
+            const range = document.createRange();
+            range.selectNodeContents(tx);
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+          }
+        }, 30);
+      }
+      document.addEventListener('mousemove', move);
+      document.addEventListener('mouseup', up);
+    });
+  }
+
+  function bindBarEvents(tt, bar, el, sec){
+    const textEl = el.querySelector('.tt-bar-text');
+    const handleL = el.querySelector('.tt-bar-handle.l');
+    const handleR = el.querySelector('.tt-bar-handle.r');
+
+    el.addEventListener('mousedown', function(e){
+      if (e.target === handleL || e.target === handleR) return;
+      if (e.target === textEl && textEl.getAttribute('contenteditable') === 'true') return;
+      if (e.button !== 0) return;
+      e.stopPropagation();
+      const body = el.parentElement;
+      const rect = body.getBoundingClientRect();
+      const startMouseX = e.clientX - rect.left;
+      const startMouseY = e.clientY - rect.top;
+      const initStart = bar.start;
+      const initEnd = bar.end;
+      const initLane = bar.lane || 0;
+      const duration = initEnd - initStart;
+      let dragging = false;
+      function move(ev){
+        const x = ev.clientX - rect.left;
+        const y = ev.clientY - rect.top;
+        const dx = x - startMouseX;
+        const dy = y - startMouseY;
+        if (Math.abs(dx) > 3 || Math.abs(dy) > 3) dragging = true;
+        if (!dragging) return;
+        const newStart = snapTime(pixelToTime(timeToPixel(initStart, tt) + dx, tt), tt.timeStart);
+        const newEnd = newStart + duration;
+        if (newStart >= tt.timeStart && newEnd <= tt.timeEnd) {
+          bar.start = newStart;
+          bar.end = newEnd;
+        }
+        const newLane = Math.max(0, Math.min(sec.lanes - 1, initLane + Math.round(dy / LANE_H)));
+        bar.lane = newLane;
+        renderBarsInSection(tt, sec, body);
+      }
+      function up(){
+        document.removeEventListener('mousemove', move);
+        document.removeEventListener('mouseup', up);
+        if (dragging) {
+          saveToStorage();
+        } else {
+          selectedBarId = bar.id;
+          document.querySelectorAll('.tt-bar.selected').forEach(function(b){ b.classList.remove('selected'); });
+          el.classList.add('selected');
+        }
+      }
+      document.addEventListener('mousemove', move);
+      document.addEventListener('mouseup', up);
+    });
+
+    textEl.addEventListener('dblclick', function(e){
+      e.stopPropagation();
+      textEl.setAttribute('contenteditable', 'true');
+      textEl.focus();
+      const range = document.createRange();
+      range.selectNodeContents(textEl);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+    });
+    textEl.addEventListener('blur', function(){
+      if (textEl.getAttribute('contenteditable') !== 'true') return;
+      textEl.setAttribute('contenteditable', 'false');
+      bar.text = textEl.textContent.trim();
+      saveToStorage();
+    });
+    textEl.addEventListener('keydown', function(e){
+      if (e.key === 'Enter') { e.preventDefault(); textEl.blur(); }
+      if (e.key === 'Escape') { textEl.textContent = bar.text || ''; textEl.blur(); }
+    });
+
+    function startResize(side){
+      return function(e){
+        if (e.button !== 0) return;
+        e.stopPropagation();
+        e.preventDefault();
+        const body = el.parentElement;
+        const rect = body.getBoundingClientRect();
+        const initStart = bar.start;
+        const initEnd = bar.end;
+        function move(ev){
+          const x = ev.clientX - rect.left;
+          const t = snapTime(pixelToTime(x, tt), tt.timeStart);
+          if (side === 'l') {
+            if (t < initEnd - 0.24 && t >= tt.timeStart) bar.start = t;
+          } else {
+            if (t > initStart + 0.24 && t <= tt.timeEnd) bar.end = t;
+          }
+          renderBarsInSection(tt, sec, body);
+        }
+        function up(){
+          document.removeEventListener('mousemove', move);
+          document.removeEventListener('mouseup', up);
+          saveToStorage();
+        }
+        document.addEventListener('mousemove', move);
+        document.addEventListener('mouseup', up);
+      };
+    }
+    if (handleL) handleL.addEventListener('mousedown', startResize('l'));
+    if (handleR) handleR.addEventListener('mousedown', startResize('r'));
+
+    // R237 Phase 3: 右クリック → 色選択 / 削除
+    el.addEventListener('contextmenu', function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      showColorMenu(e.clientX, e.clientY, bar, sec);
+    });
+  }
+
+  /* R237 Phase 3: 色選択メニュー */
+  function showColorMenu(x, y, bar, sec){
+    document.querySelectorAll('.tt-color-menu').forEach(function(m){ m.remove(); });
+    const menu = document.createElement('div');
+    menu.className = 'tt-color-menu';
+    menu.style.left = x + 'px';
+    menu.style.top = y + 'px';
+    const colors = [
+      { key: 'white',  name: '白（作業）' },
+      { key: 'pink',   name: 'ピンク（本番）' },
+      { key: 'amber',  name: 'アンバー（PA等）' },
+      { key: 'gray',   name: 'グレー（休止）' },
+      { key: 'accent', name: 'クリーム（強調）' }
+    ];
+    colors.forEach(function(c){
+      const item = document.createElement('div');
+      item.className = 'tt-color-item color-' + c.key + (bar.color === c.key ? ' is-current' : '');
+      item.textContent = c.name;
+      item.addEventListener('click', function(){
+        bar.color = c.key;
+        menu.remove();
+        saveToStorage();
+        const dk = getCurrentDateKey();
+        const tt = getTimetableForDate(dk);
+        const body = document.querySelector('[data-sec-id="' + sec.id + '"] .tt-sec-body');
+        if (body) renderBarsInSection(tt, sec, body);
+      });
+      menu.appendChild(item);
+    });
+    // 区切り
+    const sep = document.createElement('div');
+    sep.className = 'tt-color-menu-sep';
+    menu.appendChild(sep);
+    // 削除
+    const del = document.createElement('div');
+    del.className = 'tt-color-delete';
+    del.textContent = '🗑 このバーを削除';
+    del.addEventListener('click', function(){
+      const dk = getCurrentDateKey();
+      const tt = getTimetableForDate(dk);
+      if (tt) {
+        tt.bars = tt.bars.filter(function(b){ return b.id !== bar.id; });
+        if (selectedBarId === bar.id) selectedBarId = null;
+        saveToStorage();
+        menu.remove();
+        render();
+      }
+    });
+    menu.appendChild(del);
+
+    document.body.appendChild(menu);
+    // 画面端調整
+    const rect = menu.getBoundingClientRect();
+    if (rect.right > window.innerWidth - 8) menu.style.left = (window.innerWidth - rect.width - 8) + 'px';
+    if (rect.bottom > window.innerHeight - 8) menu.style.top = (window.innerHeight - rect.height - 8) + 'px';
+    // 外側クリックで閉じる
+    setTimeout(function(){
+      function close(e){
+        if (!menu.contains(e.target)) {
+          menu.remove();
+          document.removeEventListener('mousedown', close);
+        }
+      }
+      document.addEventListener('mousedown', close);
+    }, 10);
+  }
+
+  function render(){
+    const gridEl = document.getElementById('tt-grid');
+    const dateEl = document.getElementById('tt-date-display');
+    if (!gridEl) return;
+
+    const dateKey = getCurrentDateKey();
+    if (dateEl) dateEl.textContent = fmtDateDisplay(dateKey);
+    if (!dateKey) { gridEl.innerHTML = ''; return; }
+
+    const tt = getTimetableForDate(dateKey);
+    const start = tt.timeStart;
+    const end = tt.timeEnd;
+    const hours = Math.max(1, end - start);
+    const cellW = 60;
+    const labelW = 110;
+    const laneH = 40;
+    const addW = 36;
+
+    let html = '';
+
+    // 時刻ヘッダー
+    html += '<div class="tt-time-row" style="grid-template-columns:' + labelW + 'px repeat(' + hours + ',' + cellW + 'px) ' + addW + 'px;">';
+    html += '<div class="tt-time-corner">時刻</div>';
+    for (let h = start; h < end; h++) {
+      html += '<div class="tt-time-cell">' + fmtHour(h) + '</div>';
+    }
+    html += '<div class="tt-time-add" data-act="time-add" title="終了時刻を 1 時間延ばす">+</div>';
+    html += '</div>';
+
+    // セクション行
+    tt.sections.forEach(function(sec){
+      const rowH = laneH * sec.lanes;
+      html += '<div class="tt-sec-row" style="grid-template-columns:' + labelW + 'px 1fr ' + addW + 'px;" data-sec-id="' + escapeHtml(sec.id) + '">';
+      html += '<div class="tt-sec-label">';
+      html += '<div>' + escapeHtml(sec.name) + '</div>';
+      html += '<div class="tt-sec-lanes">';
+      html += '<span class="tt-sec-lane-btn" data-act="lane-minus" title="レーン減">−</span>';
+      html += '<span>' + sec.lanes + ' レーン</span>';
+      html += '<span class="tt-sec-lane-btn" data-act="lane-plus" title="レーン増">＋</span>';
+      html += '</div>';
+      html += '</div>';
+      html += '<div class="tt-sec-body" style="--tt-cell-w:' + cellW + 'px; min-height:' + rowH + 'px;"></div>';
+      html += '<div></div>';
+      html += '</div>';
+    });
+
+    gridEl.innerHTML = html;
+
+    // イベント：レーン増減
+    gridEl.querySelectorAll('.tt-sec-lane-btn').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        const row = btn.closest('[data-sec-id]');
+        if (!row) return;
+        const secId = row.getAttribute('data-sec-id');
+        const sec = tt.sections.find(function(s){ return s.id === secId; });
+        if (!sec) return;
+        if (btn.getAttribute('data-act') === 'lane-plus') sec.lanes = Math.min(5, sec.lanes + 1);
+        else sec.lanes = Math.max(1, sec.lanes - 1);
+        saveToStorage();
+        render();
+      });
+    });
+
+    // イベント：時刻列追加
+    const addBtn = gridEl.querySelector('[data-act="time-add"]');
+    if (addBtn) {
+      addBtn.addEventListener('click', function(){
+        if (tt.timeEnd < 30) {
+          tt.timeEnd += 1;
+          saveToStorage();
+          render();
+        }
+      });
+    }
+
+    // R237 Phase 2: 各セクションにバー描画 + ドラッグイベント
+    gridEl.querySelectorAll('[data-sec-id]').forEach(function(row){
+      const secId = row.getAttribute('data-sec-id');
+      const sec = tt.sections.find(function(s){ return s.id === secId; });
+      if (!sec) return;
+      const body = row.querySelector('.tt-sec-body');
+      if (!body) return;
+      renderBarsInSection(tt, sec, body);
+      bindSectionEvents(tt, sec, body);
+    });
+  }
+
+  // 開始・終了時刻の変更ダイアログ（簡易版）
+  function changeTimeStart(){
+    const dateKey = getCurrentDateKey();
+    if (!dateKey) return;
+    const tt = getTimetableForDate(dateKey);
+    const v = prompt('開始時刻（時、0〜23）：', tt.timeStart);
+    if (v == null) return;
+    const n = parseInt(v, 10);
+    if (isNaN(n) || n < 0 || n > 23) { alert('0〜23 の数字を入れてください'); return; }
+    if (n >= tt.timeEnd) { alert('開始は終了より前にしてください'); return; }
+    tt.timeStart = n;
+    saveToStorage();
+    render();
+  }
+  function changeTimeEnd(){
+    const dateKey = getCurrentDateKey();
+    if (!dateKey) return;
+    const tt = getTimetableForDate(dateKey);
+    const v = prompt('終了時刻（時、' + (tt.timeStart + 1) + '〜30 / 翌朝6時 = 30）：', tt.timeEnd);
+    if (v == null) return;
+    const n = parseInt(v, 10);
+    if (isNaN(n) || n <= tt.timeStart || n > 30) { alert((tt.timeStart + 1) + '〜30 の数字を入れてください'); return; }
+    tt.timeEnd = n;
+    saveToStorage();
+    render();
+  }
+
+  function bindToolbarOnce(){
+    const bs = document.getElementById('tt-btn-time-start');
+    const be = document.getElementById('tt-btn-time-end');
+    if (bs && !bs.__bound) { bs.addEventListener('click', changeTimeStart); bs.__bound = true; }
+    if (be && !be.__bound) { be.addEventListener('click', changeTimeEnd); be.__bound = true; }
+  }
+
+  function renderPublic(){
+    bindToolbarOnce();
+    render();
+  }
+
+  // Firebase reload（他端末からの変更通知時）
+  window.__reloadTimetableByDate = function(){
+    loadFromStorage();
+    if (document.getElementById('tt-grid')) render();
+  };
+
+  window.__renderTimetable = renderPublic;
+  window.__timetableData = function(){ return timetableByDate; };
+
+  // R237 Phase 2: グローバル Delete/Escape/選択解除
+  document.addEventListener('keydown', function(e){
+    const modeTT = document.getElementById('mode-timetable');
+    if (!modeTT || !modeTT.classList.contains('active')) return;
+    const ae = document.activeElement;
+    if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.getAttribute('contenteditable') === 'true')) return;
+    if (e.key === 'Delete' || e.key === 'Backspace') {
+      if (selectedBarId) {
+        const dk = getCurrentDateKey();
+        const tt = getTimetableForDate(dk);
+        if (tt) {
+          tt.bars = tt.bars.filter(function(b){ return b.id !== selectedBarId; });
+          selectedBarId = null;
+          saveToStorage();
+          render();
+        }
+      }
+    }
+    if (e.key === 'Escape') {
+      selectedBarId = null;
+      document.querySelectorAll('.tt-bar.selected').forEach(function(b){ b.classList.remove('selected'); });
+    }
+  });
+  document.addEventListener('mousedown', function(e){
+    const modeTT = document.getElementById('mode-timetable');
+    if (!modeTT || !modeTT.classList.contains('active')) return;
+    if (!e.target.closest('.tt-bar') && !e.target.closest('.tt-sec-body')) {
+      if (selectedBarId) {
+        selectedBarId = null;
+        document.querySelectorAll('.tt-bar.selected').forEach(function(b){ b.classList.remove('selected'); });
+      }
+    }
+  });
+
+  loadFromStorage();
 })();
 </script>
 </body>
