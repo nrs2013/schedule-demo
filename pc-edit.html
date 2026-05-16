@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260516.560000">
+<meta name="build-version" content="20260516.570000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -4875,6 +4875,7 @@
   .tt-paper .tt-grid { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
   /* 紙の中ヘッダ */
   .tt-paper-header {
+    flex: 0 0 64px;
     display: grid;
     grid-template-columns: minmax(0, 2.4fr) minmax(0, 1.1fr) minmax(0, 1.6fr) minmax(0, 1.4fr);
     gap: 8px;
@@ -4884,6 +4885,8 @@
     border-radius: 6px;
     margin-bottom: 6px;
     align-items: center;
+    box-sizing: border-box;
+    overflow: hidden;
   }
   .tt-paper-header .h-cell {
     display: flex;
@@ -4926,18 +4929,20 @@
   }
   /* 紙の中フッタ（大きく主要時刻表示） */
   .tt-paper-footer {
+    flex: 0 0 54px;
     margin-top: 6px;
-    padding: 10px 12px;
+    padding: 8px 12px;
     background: #232323;
     border: 0.5px solid #4a4a4a;
     border-radius: 6px;
     display: flex;
     flex-wrap: wrap;
-    gap: 4px 20px;
+    gap: 4px 18px;
     align-items: baseline;
     justify-content: center;
     font-style: italic;
-    min-height: 38px;
+    box-sizing: border-box;
+    overflow: hidden;
   }
   .tt-paper-footer .ev-item {
     display: inline-flex;
@@ -11730,12 +11735,11 @@ function show(id) {
     CELL_W = Math.max(15, Math.floor(axisW / hours));
   }
   function updateLaneH(tt){
-    // ヘッダ + 時刻軸 + 追加ボタン + フッタ + 余白
-    const reservedH = 70 + 38 + 24 + 60 + 18;
+    // CSS の各要素 flex 値と一致: header 64 + footer 54 + time-row 36 + add-row 26 + 余白 16
+    const reservedH = 64 + 54 + 36 + 26 + 16;  // = 196
     const available = PAPER_INNER_H - reservedH;
     const totalLanes = tt.sections.reduce(function(sum, s){ return sum + (s.lanes || 1); }, 0);
     if (totalLanes > 0) {
-      // セクション・レーンが増えるほど縮む。必ずA4内に収まるよう下限なしに近い
       LANE_H = Math.max(10, Math.floor(available / totalLanes));
       BAR_H = Math.max(7, LANE_H - 4);
       BAR_TOP = Math.max(1, Math.floor((LANE_H - BAR_H) / 2));
@@ -11768,6 +11772,17 @@ function show(id) {
   function getSpanSecIds(bar){
     return Array.isArray(bar.spanSecIds) && bar.spanSecIds.length > 1 ? bar.spanSecIds : null;
   }
+  function isVAll(bar){ return bar && bar.vAll === true; }
+  // 既存データ移行：spanSecIds 持ちバー → vAll: true へ変換
+  function migrateVAll(tt){
+    if (!tt || !Array.isArray(tt.bars)) return;
+    tt.bars.forEach(function(b){
+      if (getSpanSecIds(b) && !b.vAll) {
+        b.vAll = true;
+        delete b.spanSecIds;
+      }
+    });
+  }
 
   function genId(){
     return 'b_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,7);
@@ -11781,7 +11796,7 @@ function show(id) {
 
   function renderBarsInSection(tt, sec, body){
     body.querySelectorAll('.tt-bar.normal').forEach(function(b){ b.remove(); });
-    tt.bars.filter(function(b){ return b.secId === sec.id && !getSpanSecIds(b); }).forEach(function(bar){
+    tt.bars.filter(function(b){ return b.secId === sec.id && !isVAll(b) && !getSpanSecIds(b); }).forEach(function(bar){
       const lane = Math.max(0, Math.min(sec.lanes - 1, bar.lane || 0));
       const left = timeToPixel(bar.start, tt);
       const width = Math.max(SLOT_W(), timeToPixel(bar.end, tt) - left);
@@ -11800,11 +11815,33 @@ function show(id) {
   }
 
   function renderSpanBars(tt, gridEl){
-    // R238c: 縦串バー描画を一旦オフ（挙動が複雑なため再設計予定）
+    // R238g: vAll フラグ方式の縦串バーを描画
     var ov = gridEl.querySelector('.tt-span-overlay');
     if (ov) ov.remove();
+    const newOv = document.createElement('div');
+    newOv.className = 'tt-span-overlay';
+    const timeRow = gridEl.querySelector('.tt-time-row');
+    const addRow = gridEl.querySelector('.tt-sec-add-row');
+    if (!timeRow) return;
+    const topY = timeRow.offsetTop + timeRow.offsetHeight;
+    const bottomY = addRow ? addRow.offsetTop : gridEl.offsetHeight;
+    const height = bottomY - topY;
+    newOv.style.cssText = 'position:absolute; left:' + LABEL_W + 'px; top:' + topY + 'px; height:' + height + 'px; right:' + ADD_W + 'px; pointer-events:none; z-index:6;';
+    tt.bars.filter(function(b){ return isVAll(b); }).forEach(function(bar){
+      const left = timeToPixel(bar.start, tt);
+      const width = Math.max(SLOT_W(), timeToPixel(bar.end, tt) - left);
+      const color = bar.color || 'pink';
+      const el = document.createElement('div');
+      el.className = 'tt-bar span-bar color-' + color + (bar.id === selectedBarId ? ' selected' : '');
+      el.setAttribute('data-bar-id', bar.id);
+      el.style.cssText = 'left:' + left + 'px; width:' + width + 'px; top:0; height:' + height + 'px; pointer-events:auto;';
+      el.innerHTML = '<div class="tt-bar-handle l"></div><div class="tt-bar-text">' + escapeHtml(bar.text || '') + '</div><div class="tt-bar-handle r"></div>';
+      newOv.appendChild(el);
+      bindBarEvents(tt, bar, el, null);
+    });
+    gridEl.appendChild(newOv);
     return;
-    /* 以下、再設計後に有効化
+    /* 旧 spanSecIds ベースの実装はコメントアウト
     const newOv = document.createElement('div');
     newOv.className = 'tt-span-overlay';
     const timeRow = gridEl.querySelector('.tt-time-row');
@@ -12058,6 +12095,20 @@ function show(id) {
     const sep = document.createElement('div');
     sep.className = 'tt-color-menu-sep';
     menu.appendChild(sep);
+    // 全セクション貫通トグル
+    const vToggle = document.createElement('div');
+    vToggle.className = 'tt-color-item' + (bar.vAll ? ' is-current' : '');
+    vToggle.style.cssText = 'background:rgba(184,123,143,0.18); color:#f5d4dc; border-color:#b87b8f; margin-bottom:3px;';
+    vToggle.textContent = (bar.vAll ? '✓ ' : '⇅ ') + '全セクション貫通';
+    vToggle.addEventListener('click', function(){
+      bar.vAll = !bar.vAll;
+      if (bar.vAll && bar.color === 'white') bar.color = 'pink';
+      menu.remove();
+      saveToStorage();
+      render();
+    });
+    menu.appendChild(vToggle);
+
     // 削除
     const del = document.createElement('div');
     del.className = 'tt-color-delete';
@@ -12102,6 +12153,7 @@ function show(id) {
     if (!dateKey) { gridEl.innerHTML = ''; return; }
 
     const tt = getTimetableForDate(dateKey);
+    migrateVAll(tt);  // R238g: 既存データ移行
     const start = tt.timeStart;
     const end = tt.timeEnd;
     const hours = Math.max(1, end - start);
