@@ -5968,20 +5968,25 @@ function show(id) {
     btnRh.classList.toggle('primary',  state.viewMode==='rh');
 
     // D154: 曲順入れ替えを両モードで有効化（セトリ順 / リハ順 どちらからでも並び替え可能）
-    // R224: 行全体ではなく、左端の点々ハンドル(.drag)を mousedown した時のみドラッグ可能にする
+    // R226: ハンドル(.drag)を起点とした dragstart のみ許可。それ以外の要素を掴んでもドラッグ開始しない
     {
       let draggingId = null;
+      let __dragStartFromHandle = false;
       container.querySelectorAll('.pc-row').forEach(function(row){
-        row.setAttribute('draggable', 'false');
+        row.setAttribute('draggable', 'true');
         const handle = row.querySelector('.drag');
         if (handle) {
           handle.style.cursor = 'grab';
-          handle.addEventListener('mousedown', function(){ row.setAttribute('draggable', 'true'); });
-          handle.addEventListener('mouseup',   function(){ row.setAttribute('draggable', 'false'); });
+          // mousedown で「これからのドラッグはハンドル起点」フラグを立てる
+          handle.addEventListener('mousedown', function(e){ __dragStartFromHandle = true; });
         }
+        // 他の場所を mousedown したらフラグを下ろす
+        row.addEventListener('mousedown', function(e){
+          const t = e.target;
+          if (!t || !t.closest || !t.closest('.drag')) __dragStartFromHandle = false;
+        });
         row.addEventListener('dragstart', function(e){
-          // ハンドル以外を起点に dragstart が発火した場合は中止
-          if (row.getAttribute('draggable') !== 'true') { e.preventDefault(); return; }
+          if (!__dragStartFromHandle) { e.preventDefault(); return false; }
           draggingId = +row.getAttribute('data-id');
           row.classList.add('dragging');
           e.dataTransfer.effectAllowed = 'move';
@@ -5989,7 +5994,7 @@ function show(id) {
         });
         row.addEventListener('dragend', function(){
           row.classList.remove('dragging');
-          row.setAttribute('draggable', 'false');
+          __dragStartFromHandle = false;
           container.querySelectorAll('.pc-row.drag-over').forEach(function(r){ r.classList.remove('drag-over'); });
         });
         row.addEventListener('dragover', function(e){
