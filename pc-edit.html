@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260516.510000">
+<meta name="build-version" content="20260516.520000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -4845,6 +4845,64 @@
     background: #1a1a1a;
     color: #e8e6dc;
     min-height: 400px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  /* R238b: A4 横向き紙レイアウト */
+  .tt-paper {
+    width: 297mm;
+    max-width: calc(100vw - 48px);
+    aspect-ratio: 297/210;
+    background: #1a1a1a;
+    border: 1px solid #4a4a4a;
+    padding: 6mm 6mm 4mm;
+    box-sizing: border-box;
+    margin: 0 auto;
+    position: relative;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .tt-paper .tt-grid { flex: 1; min-height: 0; overflow: hidden; }
+  .tt-paper-header {
+    display: grid;
+    grid-template-columns: 2.2fr 1fr 1.6fr 1.4fr;
+    gap: 10px;
+    padding: 8px 10px;
+    background: #232323;
+    border: 0.5px solid #4a4a4a;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    font-size: 12px;
+  }
+  .tt-paper-header .h-cell { display: flex; flex-direction: column; }
+  .tt-paper-header .h-lbl { font-size: 9px; color: #6e6c66; letter-spacing: 0.06em; margin-bottom: 1px; }
+  .tt-paper-header .h-val { font-size: 13px; font-weight: 500; color: #e8e6dc; }
+  .tt-paper-header .h-val.reg { color: #c8a878; font-size: 11px; }
+  .tt-paper-footer {
+    margin-top: 8px;
+    padding: 4px 6px;
+    font-size: 10px;
+    color: #6e6c66;
+    text-align: right;
+    border-top: 0.5px solid #353535;
+  }
+  /* 印刷時 */
+  @media print {
+    @page { size: A4 landscape; margin: 6mm; }
+    body { background: white !important; }
+    body * { visibility: hidden; }
+    .tt-paper, .tt-paper * { visibility: visible; }
+    .tt-paper { position: absolute; left: 0; top: 0; border: none; box-shadow: none; background: white !important; color: black !important; width: 100%; padding: 0; }
+    .tt-paper-header, .tt-time-row, .tt-sec-label, .tt-sec-body, .tt-bar, .tt-tick-line, .tt-tick-label, .tt-tick-sub, .tt-bar-text, .tt-time-corner { background: white !important; color: black !important; border-color: #888 !important; }
+    .tt-bar { background: #fff !important; border: 1px solid #555 !important; }
+    .tt-bar.color-pink { background: #fce4ee !important; border-color: #b66 !important; }
+    .tt-bar.color-amber { background: #fff3d4 !important; border-color: #b80 !important; }
+    .tt-bar.color-gray { background: #eee !important; }
+    .tt-bar.color-accent { background: #f0e0c0 !important; }
+    .tt-toolbar, .tt-help, .tab-bar, .tt-time-add, .tt-sec-lanes, .tt-zoom-group, .tt-bar-handle { display: none !important; }
   }
   .tt-toolbar {
     display: flex;
@@ -5021,6 +5079,41 @@
   .tt-bar-handle.l { left: 0; }
   .tt-bar-handle.r { right: 0; }
   .tt-bar-handle:hover { background: rgba(200,168,120,0.4); }
+  /* R238b: 四隅ハンドル（移動用） */
+  .tt-bar-corner {
+    position: absolute;
+    width: 9px;
+    height: 9px;
+    cursor: move;
+    background: rgba(200,168,120,0.25);
+    border: 1px solid rgba(200,168,120,0.6);
+    border-radius: 2px;
+    z-index: 2;
+  }
+  .tt-bar-corner.tl { top: -1px; left: -1px; }
+  .tt-bar-corner.tr { top: -1px; right: -1px; }
+  .tt-bar-corner.bl { bottom: -1px; left: -1px; }
+  .tt-bar-corner.br { bottom: -1px; right: -1px; }
+  .tt-bar:hover .tt-bar-corner { background: rgba(200,168,120,0.7); }
+  .tt-bar.selected .tt-bar-corner { background: #c8a878; border-color: #c8a878; }
+  .tt-bar-text { cursor: text; }
+  /* R238b: セクション最下部の追加ボタン */
+  .tt-sec-add-row {
+    display: grid;
+    border-top: 0.5px solid #4a4a4a;
+  }
+  .tt-sec-add-cell {
+    padding: 6px;
+    font-size: 11px;
+    color: #c8a878;
+    background: #232323;
+    border-right: 0.5px solid #4a4a4a;
+    text-align: center;
+    cursor: pointer;
+    user-select: none;
+    letter-spacing: 0.04em;
+  }
+  .tt-sec-add-cell:hover { background: #2a2a2a; color: #d4b88a; }
   .tt-bar-ghost {
     position: absolute;
     border-radius: 4px;
@@ -5137,7 +5230,7 @@
   .tt-time-axis { position: relative; height: 100%; overflow: hidden; }
   .tt-tick-line {
     position: absolute;
-    top: 0;
+    top: 28px;        /* ラベル下端から */
     bottom: 0;
     width: 1px;
     background: #555;
@@ -5146,7 +5239,7 @@
   .tt-tick-line.first { background: #777; }
   .tt-tick-mini {
     position: absolute;
-    top: 60%;
+    top: 28px;        /* ラベル下端から */
     bottom: 0;
     width: 0.5px;
     background: #3a3a3a;
@@ -5472,13 +5565,14 @@
               <button class="tt-zoom-btn" id="tt-btn-zoom-in" type="button" title="拡大">+</button>
               <button class="tt-zoom-btn fit" id="tt-btn-zoom-fit" type="button" title="画面に合わせる">FIT</button>
             </div>
-            <button class="tt-btn" id="tt-btn-add-section" type="button">+ セクション追加</button>
             <button class="tt-btn" id="tt-btn-copy-prev" type="button" disabled>前日から複製</button>
             <button class="tt-btn" id="tt-btn-print" type="button" disabled>A4 印刷</button>
           </div>
         </div>
-        <div class="tt-grid-wrap">
+        <div class="tt-paper" id="tt-paper">
+          <div class="tt-paper-header" id="tt-paper-header"></div>
           <div class="tt-grid" id="tt-grid"></div>
+          <div class="tt-paper-footer" id="tt-paper-footer"></div>
         </div>
         <div class="tt-help">
           ✦ <strong style="color:#c8a878;">操作</strong>：セクション内をドラッグで範囲指定 → バー作成 → テキスト入力 → Enter 確定 ／ <strong style="color:#c8a878;">縦串</strong>：上下にまたいでドラッグ → 複数セクション貫通バー ／ バー端ドラッグで伸縮 ／ 中央ドラッグで移動 ／ 右クリックで色変更・削除 ／ 選択 → Delete で削除 ／ セクション名はダブルクリックで変更 ／ 15 分単位スナップ
@@ -11589,7 +11683,9 @@ function show(id) {
       el.className = 'tt-bar normal color-' + color + (bar.id === selectedBarId ? ' selected' : '');
       el.setAttribute('data-bar-id', bar.id);
       el.style.cssText = 'left:' + left + 'px; width:' + width + 'px; top:' + top + 'px; height:' + BAR_H + 'px;';
-      el.innerHTML = '<div class="tt-bar-handle l"></div><div class="tt-bar-text">' + escapeHtml(bar.text || '') + '</div><div class="tt-bar-handle r"></div>';
+      el.innerHTML = '<div class="tt-bar-handle l"></div><div class="tt-bar-text">' + escapeHtml(bar.text || '') + '</div><div class="tt-bar-handle r"></div>' +
+        '<div class="tt-bar-corner tl"></div><div class="tt-bar-corner tr"></div>' +
+        '<div class="tt-bar-corner bl"></div><div class="tt-bar-corner br"></div>';
       body.appendChild(el);
       bindBarEvents(tt, bar, el, sec);
     });
@@ -11625,7 +11721,9 @@ function show(id) {
       el.className = 'tt-bar span-bar color-' + color + (bar.id === selectedBarId ? ' selected' : '');
       el.setAttribute('data-bar-id', bar.id);
       el.style.cssText = 'left:' + left + 'px; width:' + width + 'px; top:' + top + 'px; height:' + height + 'px; pointer-events:auto;';
-      el.innerHTML = '<div class="tt-bar-handle l"></div><div class="tt-bar-text">' + escapeHtml(bar.text || '') + '</div><div class="tt-bar-handle r"></div>';
+      el.innerHTML = '<div class="tt-bar-handle l"></div><div class="tt-bar-text">' + escapeHtml(bar.text || '') + '</div><div class="tt-bar-handle r"></div>' +
+        '<div class="tt-bar-corner tl"></div><div class="tt-bar-corner tr"></div>' +
+        '<div class="tt-bar-corner bl"></div><div class="tt-bar-corner br"></div>';
       newOv.appendChild(el);
       bindBarEvents(tt, bar, el, null);
     });
@@ -11734,53 +11832,62 @@ function show(id) {
     const textEl = el.querySelector('.tt-bar-text');
     const handleL = el.querySelector('.tt-bar-handle.l');
     const handleR = el.querySelector('.tt-bar-handle.r');
+    const corners = el.querySelectorAll('.tt-bar-corner');
 
+    // バー本体クリック = 選択のみ
     el.addEventListener('mousedown', function(e){
       if (e.target === handleL || e.target === handleR) return;
+      if (e.target.classList && e.target.classList.contains('tt-bar-corner')) return;
       if (e.target === textEl && textEl.getAttribute('contenteditable') === 'true') return;
       if (e.button !== 0) return;
       e.stopPropagation();
-      const parent = el.parentElement;
-      const rect = parent.getBoundingClientRect();
-      const startMouseX = e.clientX - rect.left;
-      const startMouseY = e.clientY - rect.top;
-      const initStart = bar.start;
-      const initEnd = bar.end;
-      const initLane = bar.lane || 0;
-      const duration = initEnd - initStart;
-      let dragging = false;
-      function move(ev){
-        const x = ev.clientX - rect.left;
-        const y = ev.clientY - rect.top;
-        const dx = x - startMouseX;
-        const dy = y - startMouseY;
-        if (Math.abs(dx) > 3 || Math.abs(dy) > 3) dragging = true;
-        if (!dragging) return;
-        const newStart = snapTime(pixelToTime(timeToPixel(initStart, tt) + dx, tt), tt.timeStart);
-        const newEnd = newStart + duration;
-        if (newStart >= tt.timeStart && newEnd <= tt.timeEnd) {
-          bar.start = newStart;
-          bar.end = newEnd;
+      selectedBarId = bar.id;
+      document.querySelectorAll('.tt-bar.selected').forEach(function(b){ b.classList.remove('selected'); });
+      el.classList.add('selected');
+    });
+
+    // 四隅ハンドル = 移動
+    corners.forEach(function(c){
+      c.addEventListener('mousedown', function(e){
+        if (e.button !== 0) return;
+        e.stopPropagation();
+        e.preventDefault();
+        const parent = el.parentElement;
+        const rect = parent.getBoundingClientRect();
+        const startMouseX = e.clientX - rect.left;
+        const startMouseY = e.clientY - rect.top;
+        const initStart = bar.start;
+        const initEnd = bar.end;
+        const initLane = bar.lane || 0;
+        const duration = initEnd - initStart;
+        let dragging = false;
+        function move(ev){
+          const x = ev.clientX - rect.left;
+          const y = ev.clientY - rect.top;
+          const dx = x - startMouseX;
+          const dy = y - startMouseY;
+          if (Math.abs(dx) > 2 || Math.abs(dy) > 2) dragging = true;
+          if (!dragging) return;
+          const newStart = snapTime(pixelToTime(timeToPixel(initStart, tt) + dx, tt), tt.timeStart);
+          const newEnd = newStart + duration;
+          if (newStart >= tt.timeStart && newEnd <= tt.timeEnd) {
+            bar.start = newStart;
+            bar.end = newEnd;
+          }
+          if (sec) {
+            const newLane = Math.max(0, Math.min(sec.lanes - 1, initLane + Math.round(dy / LANE_H)));
+            bar.lane = newLane;
+          }
+          render();
         }
-        if (sec) {
-          const newLane = Math.max(0, Math.min(sec.lanes - 1, initLane + Math.round(dy / LANE_H)));
-          bar.lane = newLane;
+        function up(){
+          document.removeEventListener('mousemove', move);
+          document.removeEventListener('mouseup', up);
+          if (dragging) saveToStorage();
         }
-        render();
-      }
-      function up(){
-        document.removeEventListener('mousemove', move);
-        document.removeEventListener('mouseup', up);
-        if (dragging) {
-          saveToStorage();
-        } else {
-          selectedBarId = bar.id;
-          document.querySelectorAll('.tt-bar.selected').forEach(function(b){ b.classList.remove('selected'); });
-          el.classList.add('selected');
-        }
-      }
-      document.addEventListener('mousemove', move);
-      document.addEventListener('mouseup', up);
+        document.addEventListener('mousemove', move);
+        document.addEventListener('mouseup', up);
+      });
     });
 
     textEl.addEventListener('dblclick', function(e){
@@ -11930,7 +12037,7 @@ function show(id) {
 
     // 時刻ヘッダー（時刻ティック方式）
     html += '<div class="tt-time-row" style="display:grid; grid-template-columns:' + LABEL_W + 'px ' + axisW + 'px ' + ADD_W + 'px;">';
-    html += '<div class="tt-time-corner">時刻</div>';
+    html += '<div class="tt-time-corner">TIME</div>';
     html += '<div class="tt-time-axis">';
     for (let h = start; h <= end; h++) {
       const x = (h - start) * cellW;
@@ -11956,7 +12063,6 @@ function show(id) {
       html += '<div class="tt-sec-name" data-sec-id="' + escapeHtml(sec.id) + '" contenteditable="false" title="ダブルクリックで編集">' + escapeHtml(sec.name) + '</div>';
       html += '<div class="tt-sec-lanes">';
       html += '<span class="tt-sec-lane-btn" data-act="lane-minus" title="レーン減">−</span>';
-      html += '<span>' + sec.lanes + ' レーン</span>';
       html += '<span class="tt-sec-lane-btn" data-act="lane-plus" title="レーン増">＋</span>';
       html += '<span class="tt-sec-lane-btn" data-act="sec-delete" title="セクション削除" style="margin-left:4px; color:#d97070;">×</span>';
       html += '</div>';
@@ -11968,8 +12074,18 @@ function show(id) {
       html += '</div>';
     });
 
+    // セクション最下部に追加ボタン
+    html += '<div class="tt-sec-add-row" style="grid-template-columns:' + LABEL_W + 'px 1fr ' + ADD_W + 'px;">';
+    html += '<div class="tt-sec-add-cell" data-act="add-section">＋ セクション追加</div>';
+    html += '<div></div><div></div>';
+    html += '</div>';
+
     gridEl.innerHTML = html;
     gridEl.style.position = 'relative';
+
+    // セクション追加ボタン
+    const addSecCell = gridEl.querySelector('[data-act="add-section"]');
+    if (addSecCell) addSecCell.addEventListener('click', addSection);
 
     // バー描画 + ドラッグイベント
     gridEl.querySelectorAll('[data-sec-id]').forEach(function(row){
