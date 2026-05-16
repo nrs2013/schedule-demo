@@ -5775,6 +5775,41 @@ function show(id) {
     const r = JSON.parse(localStorage.getItem(LS_KEY_REHEARSAL) || 'null');
     if (r && typeof r === 'object') rehearsalByDate = r;
   } catch(e) {}
+  // R235: 起動時マイグレーション。R230 の tek/main 構造を見つけたらフラット化
+  function _r235MigrateRehFlat(dict) {
+    if (!dict || typeof dict !== 'object') return dict;
+    let migrated = false;
+    Object.keys(dict).forEach(function(date){
+      const day = dict[date];
+      if (!day || typeof day !== 'object') return;
+      Object.keys(day).forEach(function(sid){
+        const e = day[sid];
+        if (e && (e.tek || e.main)) {
+          const main = e.main || { rhNo: null, tags: [], memo: '' };
+          const tek  = e.tek  || { rhNo: null, tags: [], memo: '' };
+          const pick = (main.rhNo != null || (main.tags && main.tags.length) || (main.memo && main.memo.trim())) ? main : tek;
+          day[sid] = {
+            rhNo: pick.rhNo == null ? null : pick.rhNo,
+            tags: Array.isArray(pick.tags) ? pick.tags.slice() : [],
+            memo: pick.memo || ''
+          };
+          migrated = true;
+        }
+      });
+    });
+    if (migrated) {
+      try { localStorage.setItem(LS_KEY_REHEARSAL, JSON.stringify(dict)); } catch(e) {}
+      if (window.__db) {
+        try {
+          const encKey = LS_KEY_REHEARSAL.replace(/[.#$/\[\]]/g, '_');
+          window.__db.ref('ls/' + encKey).set({ k: LS_KEY_REHEARSAL, v: JSON.stringify(dict), t: Date.now() });
+        } catch(e) {}
+      }
+      console.log('[R235] reh migrated tek/main -> flat');
+    }
+    return dict;
+  }
+  rehearsalByDate = _r235MigrateRehFlat(rehearsalByDate) || {};
   function saveRehearsals(){
     const s = JSON.stringify(rehearsalByDate);
     try { localStorage.setItem(LS_KEY_REHEARSAL, s); } catch(e) {}
@@ -5795,45 +5830,18 @@ function show(id) {
     }
     return '2026-04-29'; // フォールバック（マスター日付バー読み込み前）
   }
-  // R230: テクリハ／リハーサル分離。各曲ごとに { tek, main } の 2 系統を持つ。
-  //       body.rh-mode-tekuriha で active を切替。旧フラット構造は遅延マイグレーション。
+  // R235: R187 時代のフラット構造に戻す。各曲ごとに { rhNo, tags, memo } 1 個。
   function getRehearsalData(songId){
     const k = getCurrentDateKey();
     if (!rehearsalByDate[k]) rehearsalByDate[k] = {};
     if (!rehearsalByDate[k][songId]) {
-      rehearsalByDate[k][songId] = {
-        tek:  { rhNo: null, tags: [], memo: '' },
-        main: { rhNo: null, tags: [], memo: '' }
-      };
+      rehearsalByDate[k][songId] = { rhNo: null, tags: [], memo: '' };
     }
     const entry = rehearsalByDate[k][songId];
-    if (!entry.tek)  entry.tek  = { rhNo: null, tags: [], memo: '' };
-    if (!entry.main) {
-      entry.main = {
-        rhNo: (entry.rhNo === undefined ? null : entry.rhNo),
-        tags: Array.isArray(entry.tags) ? entry.tags.slice() : [],
-        memo: entry.memo || ''
-      };
-      delete entry.rhNo; delete entry.tags; delete entry.memo;
-    }
-    const isTek = (typeof document !== 'undefined') &&
-                  document.body.classList.contains('rh-mode-tekuriha');
-    // R234: 片側が空なら逆側にフォールバック → R187 時代の「瞬時同期」を見た目上復活
-    let sub = isTek ? entry.tek : entry.main;
-    const other = isTek ? entry.main : entry.tek;
-    const isEmpty = function(s){ return !s || (s.rhNo == null && (!s.tags || !s.tags.length) && !(s.memo && s.memo.trim())); };
-    if (isEmpty(sub) && !isEmpty(other)) sub = other;
-    if (!Array.isArray(sub.tags)) sub.tags = [];
-    return sub;
-  }
-  // R230: reset 用 — モード判定なしで entry 全体を返す
-  function getRehearsalEntry(songId) {
-    const k = getCurrentDateKey();
-    if (!rehearsalByDate[k]) rehearsalByDate[k] = {};
-    if (!rehearsalByDate[k][songId]) {
-      rehearsalByDate[k][songId] = { tek:{rhNo:null,tags:[],memo:''}, main:{rhNo:null,tags:[],memo:''} };
-    }
-    return rehearsalByDate[k][songId];
+    if (!Array.isArray(entry.tags)) entry.tags = [];
+    if (entry.rhNo === undefined) entry.rhNo = null;
+    if (entry.memo === undefined) entry.memo = '';
+    return entry;
   }
 
   const TAGS = [
@@ -6411,31 +6419,14 @@ function show(id) {
   }
 
   // R145: テクリハ / リハーサル それぞれのリセットボタン（曲リストは共通のため、どちらを押しても songs を全削除）/ R150: 「全リハ」を「リハーサル」表記に統一
-  // R230: 曲リストは消さず、現モードの rhNo / tags / memo のみ全曲分クリア。
-  //       テクリハ／リハーサルが完全に独立して動くようになる。
+  // R235: R187 時代のシンプルな実装。リハ計画（rhNo/tags/memo）だけ全曲分クリア、曲リストは残す
   window.__resetRehearsalSongs = function(modeLabel) {
-    var isTek = (modeLabel || '').indexOf('テクリハ') >= 0;
-    var subKey = isTek ? 'tek' : 'main';
-    var msg = (modeLabel || '') + 'のリハ計画（リハ順 / タグ / メモ）をリセットします。\n\n曲リストは残ります。\n' +
-              (isTek ? '（テクリハ側のみクリア、リハーサル側は残ります）' : '（リハーサル側のみクリア、テクリハ側は残ります）') +
-              '\n\n本当にリセットしますか？';
+    var msg = (modeLabel || 'リハーサル') + 'のリハ計画（リハ順 / タグ / メモ）をすべてリセットします。\n\n曲リストは残ります。\n\n本当にリセットしますか？';
     if (!confirm(msg)) return;
     var k = getCurrentDateKey();
     if (rehearsalByDate[k]) {
       Object.keys(rehearsalByDate[k]).forEach(function(songId){
-        var entry = rehearsalByDate[k][songId];
-        if (!entry) return;
-        // tek/main 構造に揃ってない古いエントリも正規化
-        if (!entry.tek)  entry.tek  = { rhNo:null, tags:[], memo:'' };
-        if (!entry.main) entry.main = {
-          rhNo: (entry.rhNo === undefined ? null : entry.rhNo),
-          tags: Array.isArray(entry.tags) ? entry.tags.slice() : [],
-          memo: entry.memo || ''
-        };
-        delete entry.rhNo; delete entry.tags; delete entry.memo;
-        entry[subKey].rhNo = null;
-        entry[subKey].tags = [];
-        entry[subKey].memo = '';
+        rehearsalByDate[k][songId] = { rhNo: null, tags: [], memo: '' };
       });
       if (typeof saveRehearsals === 'function') saveRehearsals();
     }
