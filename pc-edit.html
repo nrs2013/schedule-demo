@@ -5968,11 +5968,20 @@ function show(id) {
     btnRh.classList.toggle('primary',  state.viewMode==='rh');
 
     // D154: 曲順入れ替えを両モードで有効化（セトリ順 / リハ順 どちらからでも並び替え可能）
+    // R224: 行全体ではなく、左端の点々ハンドル(.drag)を mousedown した時のみドラッグ可能にする
     {
       let draggingId = null;
       container.querySelectorAll('.pc-row').forEach(function(row){
-        row.setAttribute('draggable', 'true');
+        row.setAttribute('draggable', 'false');
+        const handle = row.querySelector('.drag');
+        if (handle) {
+          handle.style.cursor = 'grab';
+          handle.addEventListener('mousedown', function(){ row.setAttribute('draggable', 'true'); });
+          handle.addEventListener('mouseup',   function(){ row.setAttribute('draggable', 'false'); });
+        }
         row.addEventListener('dragstart', function(e){
+          // ハンドル以外を起点に dragstart が発火した場合は中止
+          if (row.getAttribute('draggable') !== 'true') { e.preventDefault(); return; }
           draggingId = +row.getAttribute('data-id');
           row.classList.add('dragging');
           e.dataTransfer.effectAllowed = 'move';
@@ -5980,6 +5989,7 @@ function show(id) {
         });
         row.addEventListener('dragend', function(){
           row.classList.remove('dragging');
+          row.setAttribute('draggable', 'false');
           container.querySelectorAll('.pc-row.drag-over').forEach(function(r){ r.classList.remove('drag-over'); });
         });
         row.addEventListener('dragover', function(e){
@@ -6176,7 +6186,7 @@ function show(id) {
       const newSong = {
         id: Date.now(), // 簡易ユニークID
         orderIndex: maxOrder + 1,
-        title: type === 'mc' ? 'MC' : (type === 'event' ? 'VCR' : (type === 'end' ? 'END' : '（タイトル未定）')),
+        title: type === 'mc' ? 'MC' : (type === 'event' ? 'VCR' : (type === 'end' ? 'END' : '')),
         durationSeconds: 0,
         isEvent:  type === 'event',
         isMC:     type === 'mc',
@@ -6349,7 +6359,7 @@ function show(id) {
             id: Date.now() + i,
             orderIndex: order++,
             mNo: mStr,
-            title: title || '（タイトル未定）',
+            title: title || '',
             durationSeconds: dur,
             timeStr: _timeStr,
             isEvent: false,
