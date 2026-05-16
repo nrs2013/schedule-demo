@@ -4847,31 +4847,30 @@
     min-height: 400px;
     display: flex;
     flex-direction: column;
-    align-items: stretch;
+    align-items: center;
   }
-  /* R240: A4 縛り撤去・画面いっぱい */
+  /* R238d: A4 原寸固定 + transform scale */
   .tt-paper-stage {
     width: 100%;
     display: flex;
     justify-content: center;
+    overflow: hidden;
     padding: 4px 0;
   }
   .tt-paper {
-    width: 100%;
-    max-width: 100%;
-    flex: 1 1 auto;
+    width: 297mm;
+    height: 210mm;
+    flex: 0 0 auto;
     background: #1a1a1a;
-    border: 1px solid #2c2c2c;
-    padding: 14px 18px 12px;
+    border: 1px solid #4a4a4a;
+    padding: 7mm 8mm 5mm;
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
-    transform: none !important;
-    box-shadow: none;
+    transform-origin: top center;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.4);
     font-size: 13px;
     position: relative;
-    border-radius: 8px;
-    min-height: 480px;
   }
   .tt-paper .tt-grid { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
   /* 紙の中ヘッダ */
@@ -4921,7 +4920,7 @@
   }
   .tt-paper-header .h-val.phase {
     font-size: 13px;
-    color: #c8a878;
+    color: #d97070;
   }
   .tt-paper-header .h-val.reg {
     font-size: 11px;
@@ -4930,29 +4929,20 @@
   }
   /* 紙の中フッタ（大きく主要時刻表示） */
   .tt-paper-footer {
-    flex: 0 0 auto;
-    min-height: 48px;
-    margin-top: 10px;
-    padding: 10px 14px;
-    background: #161616;
-    border: 0.5px solid #2c2c2c;
-    border-left: 3px solid #e6859f;
+    flex: 0 0 54px;
+    margin-top: 6px;
+    padding: 8px 12px;
+    background: #232323;
+    border: 0.5px solid #4a4a4a;
     border-radius: 6px;
     display: flex;
     flex-wrap: wrap;
-    gap: 8px 20px;
+    gap: 4px 18px;
     align-items: baseline;
-    justify-content: flex-start;
+    justify-content: center;
+    font-style: italic;
     box-sizing: border-box;
-  }
-  .tt-paper-footer::before {
-    content: '本日のメインイベント';
-    font-size: 10px;
-    color: #6e6c66;
-    letter-spacing: 0.1em;
-    font-weight: 500;
-    align-self: center;
-    margin-right: 4px;
+    overflow: hidden;
   }
   .tt-paper-footer .ev-item {
     display: inline-flex;
@@ -5065,9 +5055,9 @@
   }
   .tt-sec-row:last-child { border-bottom: none; }
   .tt-sec-label {
-    background: #161616;
-    border-right: 1px solid #2c2c2c;
-    padding: 8px 6px;
+    background: #232323;
+    border-right: 0.5px solid #4a4a4a;
+    padding: 6px 4px;
     font-size: 13px;
     font-weight: 500;
     color: #e8e6dc;
@@ -5075,9 +5065,8 @@
     align-items: center;
     justify-content: center;
     flex-direction: column;
-    gap: 6px;
+    gap: 4px;
     text-align: center;
-    position: relative;
   }
   .tt-sec-lanes {
     display: flex;
@@ -5085,10 +5074,7 @@
     gap: 3px;
     font-size: 10px;
     color: #6e6c66;
-    opacity: 0;
-    transition: opacity 0.15s ease;
   }
-  .tt-sec-row:hover .tt-sec-lanes { opacity: 1; }
   .tt-sec-lane-btn {
     cursor: pointer;
     width: 18px;
@@ -5138,11 +5124,11 @@
     box-sizing: border-box;
     user-select: none;
   }
-  .tt-bar.color-white  { background: #d8d2c0; border-color: #c8c2b0; color: #1a1a1a; font-weight: 500; }
-  .tt-bar.color-pink   { background: #e6859f; border-color: #c66a86; color: #3a0c1c; font-weight: 500; }
-  .tt-bar.color-amber  { background: #e0a85e; border-color: #c08846; color: #2c1a06; font-weight: 500; }
-  .tt-bar.color-gray   { background: #8a8780; border-color: #6e6c66; color: #1a1a1a; font-weight: 500; }
-  .tt-bar.color-accent { background: #c8a878; border-color: #a88858; color: #1a1a1a; font-weight: 500; }
+  .tt-bar.color-white { background: #2a2a2a; border-color: #4a4a4a; color: #e8e6dc; }
+  .tt-bar.color-pink  { background: rgba(184,123,143,0.25); border-color: #b87b8f; color: #f5d4dc; }
+  .tt-bar.color-amber { background: rgba(212,161,74,0.25); border-color: #d4a14a; color: #f0d9a8; }
+  .tt-bar.color-gray  { background: rgba(120,120,120,0.25); border-color: #4a4a4a; color: #a8a59c; }
+  .tt-bar.color-accent { background: rgba(200,168,120,0.22); border-color: #c8a878; color: #c8a878; }
   .tt-bar.selected { box-shadow: 0 0 0 2px #c8a878; z-index: 2; }
   .tt-bar-text {
     flex: 1;
@@ -5193,18 +5179,12 @@
     z-index: 3;
   }
   .tt-help {
-    margin-top: 10px;
-    font-size: 12px;
-    color: #8e8c86;
-    padding: 8px 12px;
-    line-height: 1.6;
-    background: #161616;
-    border: 0.5px solid #2c2c2c;
-    border-radius: 6px;
+    margin-top: 8px;
+    font-size: 11px;
+    color: #6e6c66;
+    padding: 0 4px;
+    line-height: 1.5;
   }
-  .tt-help-toggle { user-select: none; }
-  .tt-help-toggle:hover { color: #d4b88a !important; }
-  .tt-help-detail { color: #b8b6b0; font-size: 11px; }
   /* R237 Phase 3: 色選択メニュー */
   .tt-color-menu {
     position: fixed;
@@ -5229,11 +5209,11 @@
   }
   .tt-color-item:hover { filter: brightness(1.25); }
   .tt-color-item.is-current { border-color: #c8a878; }
-  .tt-color-item.color-white  { background: #d8d2c0; color: #1a1a1a; border-color: #c8c2b0; font-weight: 500; }
-  .tt-color-item.color-pink   { background: #e6859f; color: #3a0c1c; border-color: #c66a86; font-weight: 500; }
-  .tt-color-item.color-amber  { background: #e0a85e; color: #2c1a06; border-color: #c08846; font-weight: 500; }
-  .tt-color-item.color-gray   { background: #8a8780; color: #1a1a1a; border-color: #6e6c66; font-weight: 500; }
-  .tt-color-item.color-accent { background: #c8a878; color: #1a1a1a; border-color: #a88858; font-weight: 500; }
+  .tt-color-item.color-white { background: #2a2a2a; color: #e8e6dc; border-color: #4a4a4a; }
+  .tt-color-item.color-pink { background: rgba(184,123,143,0.4); color: #f5d4dc; border-color: #b87b8f; }
+  .tt-color-item.color-amber { background: rgba(212,161,74,0.4); color: #f0d9a8; border-color: #d4a14a; }
+  .tt-color-item.color-gray { background: rgba(120,120,120,0.4); color: #a8a59c; border-color: #4a4a4a; }
+  .tt-color-item.color-accent { background: rgba(200,168,120,0.4); color: #c8a878; border-color: #c8a878; }
   .tt-color-menu-sep {
     height: 1px;
     background: #4a4a4a;
@@ -5688,16 +5668,7 @@
           </div>
         </div>
         <div class="tt-help">
-          <span><strong style="color:#c8a878;">ドラッグ</strong>で予定追加 ／ <strong style="color:#c8a878;">バー右クリック</strong>で色・削除 ／ <strong style="color:#c8a878;">バー端ドラッグ</strong>で伸縮 ／ 15 分単位スナップ</span>
-          <a href="#" class="tt-help-toggle" data-act="help-toggle" style="color:#c8a878; margin-left:10px; cursor:pointer; text-decoration:none; font-size:11px;">詳しい操作 ▾</a>
-          <div class="tt-help-detail" style="display:none; margin-top:8px; padding:10px 12px; background:#161616; border:0.5px solid #2c2c2c; border-radius:6px; line-height:1.7;">
-            <div>・セクション内を<strong style="color:#c8a878;">ドラッグ</strong>で範囲指定してバー作成 → テキスト入力 → Enter で確定</div>
-            <div>・上下のセクションをまたいで<strong style="color:#c8a878;">縦ドラッグ</strong>すると複数セクション貫通バー</div>
-            <div>・バーの<strong style="color:#c8a878;">端をドラッグ</strong>で伸縮 ／ <strong style="color:#c8a878;">中央をドラッグ</strong>で移動</div>
-            <div>・<strong style="color:#c8a878;">右クリック</strong>で色変更・削除メニュー</div>
-            <div>・選択中のバーを <strong style="color:#c8a878;">Delete / Backspace</strong> で削除</div>
-            <div>・セクション名は<strong style="color:#c8a878;">ダブルクリック</strong>で変更</div>
-          </div>
+          ✦ <strong style="color:#c8a878;">操作</strong>：セクション内をドラッグで範囲指定 → バー作成 → テキスト入力 → Enter 確定 ／ <strong style="color:#c8a878;">縦串</strong>：上下にまたいでドラッグ → 複数セクション貫通バー ／ バー端ドラッグで伸縮 ／ 中央ドラッグで移動 ／ 右クリックで色変更・削除 ／ 選択 → Delete で削除 ／ セクション名はダブルクリックで変更 ／ 15 分単位スナップ
         </div>
       </div>
     </div>
@@ -11776,29 +11747,43 @@ function show(id) {
 
   function updateCellW(tt){
     const hours = Math.max(1, tt.timeEnd - tt.timeStart);
-    const paper = document.getElementById('tt-paper');
-    const paddingX = 36; // .tt-paper の左右 padding 合計
-    const containerW = paper ? Math.max(600, paper.clientWidth - paddingX) : 900;
-    const axisW = containerW - LABEL_W - ADD_W;
-    const factor = (zoomMode === 'manual') ? paperZoomScale : 1.0;
-    CELL_W = Math.max(28, Math.floor((axisW / hours) * factor));
+    const axisW = PAPER_INNER_W - LABEL_W - ADD_W;
+    CELL_W = Math.max(15, Math.floor(axisW / hours));
   }
   function updateLaneH(tt){
-    // R240: 固定サイズ。バーは十分見やすい高さに
-    LANE_H = 44;
-    BAR_H = 36;
-    BAR_TOP = 4;
+    // CSS の各要素 flex 値と一致: header 64 + footer 54 + time-row 36 + add-row 26 + 余白 16
+    const reservedH = 64 + 54 + 36 + 26 + 16;  // = 196
+    const available = PAPER_INNER_H - reservedH;
+    const totalLanes = tt.sections.reduce(function(sum, s){ return sum + (s.lanes || 1); }, 0);
+    if (totalLanes > 0) {
+      LANE_H = Math.max(10, Math.floor(available / totalLanes));
+      BAR_H = Math.max(7, LANE_H - 4);
+      BAR_TOP = Math.max(1, Math.floor((LANE_H - BAR_H) / 2));
+    }
   }
   function updatePaperScale(){
-    // R240: transform scale を完全撤去。サイズは CSS と updateCellW で決定
-    const paper = document.getElementById('tt-paper');
-    if (paper) paper.style.transform = '';
     const stage = document.getElementById('tt-paper-stage');
-    if (stage) stage.style.height = '';
+    const paper = document.getElementById('tt-paper');
+    if (!stage || !paper) return;
+    const stageW = stage.clientWidth - 16;
+    // ビューポート高さから操作バー・ヘッダ等を引いた利用可能高さ
+    const viewportH = window.innerHeight;
+    const reservedH = 200;  // タブバー + ヘッダ + 操作バー + 余白
+    const availableH = Math.max(280, viewportH - reservedH);
+    let scale;
+    if (zoomMode === 'fit') {
+      // 紙全体が画面に必ず収まる scale（横と縦の制約の最小値）
+      const scaleW = stageW / PAPER_W_PX;
+      const scaleH = availableH / PAPER_H_PX;
+      scale = Math.min(scaleW, scaleH);
+    } else {
+      scale = paperZoomScale;
+    }
+    scale = Math.max(0.2, Math.min(3.0, scale));
+    paper.style.transform = 'scale(' + scale + ')';
+    stage.style.height = (PAPER_H_PX * scale + 8) + 'px';
     const lbl = document.getElementById('tt-zoom-label');
-    if (lbl) lbl.textContent = (zoomMode === 'fit') ? 'FIT' : Math.round(paperZoomScale * 100) + '%';
-    // 再描画して CELL_W を反映
-    if (typeof render === 'function') render();
+    if (lbl) lbl.textContent = (zoomMode === 'fit') ? 'FIT' : Math.round(scale * 100) + '%';
   }
   function getSpanSecIds(bar){
     return Array.isArray(bar.spanSecIds) && bar.spanSecIds.length > 1 ? bar.spanSecIds : null;
@@ -12208,12 +12193,6 @@ function show(id) {
     const end = tt.timeEnd;
     const hours = Math.max(1, end - start);
 
-    // R240: 開始/終了時刻ボタンに現在値を表示
-    const btnStart = document.getElementById('tt-btn-time-start');
-    const btnEnd = document.getElementById('tt-btn-time-end');
-    if (btnStart) btnStart.textContent = '開始 ' + start + ':00';
-    if (btnEnd) btnEnd.textContent = end >= 24 ? '終了 翌' + (end - 24) + ':00' : '終了 ' + end + ':00';
-
     // ヘッダ・フッタ生成（更新は LANE_H 計算より先）
     renderPaperHeader(tt, dateKey);
     renderPaperFooter(tt);
@@ -12429,21 +12408,25 @@ function show(id) {
   }
 
   function zoomIn(){
-    // R240: paperZoomScale はセル幅の倍率（FIT→1.0 基準）
-    if (zoomMode === 'fit') paperZoomScale = 1.0;
+    if (zoomMode === 'fit') {
+      const stage = document.getElementById('tt-paper-stage');
+      paperZoomScale = (stage ? stage.clientWidth - 16 : PAPER_W_PX) / PAPER_W_PX;
+    }
     zoomMode = 'manual';
     paperZoomScale = Math.min(3.0, paperZoomScale * 1.2);
     updatePaperScale();
   }
   function zoomOut(){
-    if (zoomMode === 'fit') paperZoomScale = 1.0;
+    if (zoomMode === 'fit') {
+      const stage = document.getElementById('tt-paper-stage');
+      paperZoomScale = (stage ? stage.clientWidth - 16 : PAPER_W_PX) / PAPER_W_PX;
+    }
     zoomMode = 'manual';
-    paperZoomScale = Math.max(0.5, paperZoomScale / 1.2);
+    paperZoomScale = Math.max(0.25, paperZoomScale / 1.2);
     updatePaperScale();
   }
   function zoomFit(){
     zoomMode = 'fit';
-    paperZoomScale = 1.0;
     updatePaperScale();
   }
   function addSection(){
@@ -12506,29 +12489,16 @@ function show(id) {
       const el = document.getElementById(c.id);
       if (el && !el.__bound) { el.addEventListener('click', c.fn); el.__bound = true; }
     });
-    // R240: 「詳しい操作 ▾」展開トグル
-    const helpToggle = document.querySelector('.tt-help-toggle');
-    if (helpToggle && !helpToggle.__bound) {
-      helpToggle.addEventListener('click', function(e){
-        e.preventDefault();
-        const detail = document.querySelector('.tt-help-detail');
-        if (!detail) return;
-        const isOpen = detail.style.display !== 'none';
-        detail.style.display = isOpen ? 'none' : 'block';
-        helpToggle.textContent = isOpen ? '詳しい操作 ▾' : '閉じる ▴';
-      });
-      helpToggle.__bound = true;
-    }
   }
 
-  // リサイズで再描画（CELL_W 再計算のため）
+  // リサイズで紙の scale を更新（FIT 時）
   var ttResizeTimer = null;
   window.addEventListener('resize', function(){
     if (ttResizeTimer) clearTimeout(ttResizeTimer);
     ttResizeTimer = setTimeout(function(){
       const modeTT = document.getElementById('mode-timetable');
       if (modeTT && modeTT.classList.contains('active')) {
-        render();
+        if (zoomMode === 'fit') updatePaperScale();
       }
     }, 100);
   });
