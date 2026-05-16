@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260516.570000">
+<meta name="build-version" content="20260516.580000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -5281,9 +5281,9 @@
     pointer-events: none;
   }
   /* R238: 時刻ティック（線の真上にラベル） */
-  .tt-time-row { position: relative; height: 36px; background: #232323; border-bottom: 0.5px solid #4a4a4a; }
+  .tt-time-row { position: relative; height: 36px; background: #232323; border-bottom: 0.5px solid #4a4a4a; overflow: visible; }
   .tt-time-corner { width: 110px; padding: 0 6px; font-size: 11px; color: #6e6c66; background: #2a2a2a; border-right: 0.5px solid #4a4a4a; display: flex; align-items: center; justify-content: center; height: 100%; box-sizing: border-box; }
-  .tt-time-axis { position: relative; height: 100%; overflow: hidden; }
+  .tt-time-axis { position: relative; height: 100%; overflow: visible; }
   .tt-tick-line {
     position: absolute;
     top: 28px;
@@ -5641,6 +5641,7 @@
               <button class="tt-zoom-btn fit" id="tt-btn-zoom-fit" type="button" title="画面に合わせる">FIT</button>
             </div>
             <button class="tt-btn" id="tt-btn-copy-prev" type="button" disabled>前日から複製</button>
+            <button class="tt-btn" id="tt-btn-reset-day" type="button" style="color:#d97070;">この日リセット</button>
             <button class="tt-btn" id="tt-btn-print" type="button" disabled>A4 印刷</button>
           </div>
         </div>
@@ -12404,6 +12405,14 @@ function show(id) {
     saveToStorage();
     render();
   }
+  function resetDayTimetable(){
+    const dateKey = getCurrentDateKey();
+    if (!dateKey) return;
+    if (!confirm('この日（' + fmtDateDisplay(dateKey) + '）のタイムテーブルを全部消しますか？\n（バー・セクション・縦串すべてリセット）')) return;
+    delete timetableByDate[dateKey];
+    saveToStorage();
+    render();
+  }
 
   // 開始・終了時刻の変更ダイアログ（簡易版）
   function changeTimeStart(){
@@ -12439,7 +12448,8 @@ function show(id) {
       { id: 'tt-btn-zoom-in',    fn: zoomIn },
       { id: 'tt-btn-zoom-out',   fn: zoomOut },
       { id: 'tt-btn-zoom-fit',   fn: zoomFit },
-      { id: 'tt-btn-add-section',fn: addSection }
+      { id: 'tt-btn-add-section',fn: addSection },
+      { id: 'tt-btn-reset-day',  fn: resetDayTimetable }
     ].forEach(function(c){
       const el = document.getElementById(c.id);
       if (el && !el.__bound) { el.addEventListener('click', c.fn); el.__bound = true; }
