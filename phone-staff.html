@@ -2413,6 +2413,8 @@ function show(id) {
 // R67 P1: 上タブからのテクリハ／全体リハ切替
 function showRehearsalSub(sub) {
   show(sub); // 'rh' or 'tekuriha'
+  // R232: sub 切替時に renderRhCards を呼び直し、tek/main の正しい側を描画
+  if (typeof renderRhCards === 'function') renderRhCards();
 }
 
 function tryUnlock() {
@@ -3017,6 +3019,27 @@ function getActiveSongs() {
   return Array.isArray(sl.songs) ? sl.songs : [];
 }
 
+// R232: PC 側 R230 (tek/main 二系統) に対応。アクティブ sub を lastRehearsalSub で判定
+function getPhoneRhSub() {
+  return (typeof lastRehearsalSub !== 'undefined' && lastRehearsalSub === 'tekuriha') ? 'tek' : 'main';
+}
+// entry を必ず { tek, main } に正規化（旧フラットエントリは main へ移行）
+function normalizeRehEntry(entry) {
+  if (!entry || typeof entry !== 'object') return { tek:{rhNo:null,tags:[],memo:''}, main:{rhNo:null,tags:[],memo:''} };
+  if (!entry.tek) entry.tek = { rhNo:null, tags:[], memo:'' };
+  if (!entry.main) {
+    entry.main = {
+      rhNo: (entry.rhNo === undefined ? null : entry.rhNo),
+      tags: Array.isArray(entry.tags) ? entry.tags.slice() : [],
+      memo: entry.memo || ''
+    };
+    delete entry.rhNo; delete entry.tags; delete entry.memo;
+  }
+  if (!Array.isArray(entry.tek.tags))  entry.tek.tags  = [];
+  if (!Array.isArray(entry.main.tags)) entry.main.tags = [];
+  return entry;
+}
+
 function getRehDictForToday() {
   const dict = loadJSON(LS_KEY_REH_BY_DATE, {});
   const iso = (typeof getCurrentDateIso === 'function') ? getCurrentDateIso() : null;
@@ -3024,13 +3047,25 @@ function getRehDictForToday() {
   return dict[iso] || {};
 }
 
+// renderRhCards から呼ぶ：sub に応じた tags/rhNo/memo を返す
+function getRehView(rehDict, songId) {
+  const raw = rehDict[songId];
+  if (!raw) return { rhNo: null, tags: [], memo: '' };
+  const norm = normalizeRehEntry(raw);
+  const sub  = getPhoneRhSub();
+  return norm[sub] || { rhNo: null, tags: [], memo: '' };
+}
+
 function setRehDictForToday(songId, partial) {
   const dict = loadJSON(LS_KEY_REH_BY_DATE, {});
   const iso = (typeof getCurrentDateIso === 'function') ? getCurrentDateIso() : null;
   if (!iso) return;
   if (!dict[iso]) dict[iso] = {};
-  if (!dict[iso][songId]) dict[iso][songId] = { rhNo: null, tags: [], memo: '' };
-  Object.assign(dict[iso][songId], partial);
+  if (!dict[iso][songId]) dict[iso][songId] = { tek:{rhNo:null,tags:[],memo:''}, main:{rhNo:null,tags:[],memo:''} };
+  const entry = normalizeRehEntry(dict[iso][songId]);
+  const sub = getPhoneRhSub();
+  Object.assign(entry[sub], partial);
+  dict[iso][songId] = entry;
   saveJSON(LS_KEY_REH_BY_DATE, dict);
 }
 
@@ -3039,22 +3074,20 @@ function saveRehTag(songId, tagKey, isOn) {
   const iso = (typeof getCurrentDateIso === 'function') ? getCurrentDateIso() : null;
   if (!iso) return;
   if (!dict[iso]) dict[iso] = {};
-  if (!dict[iso][songId]) dict[iso][songId] = { rhNo: null, tags: [], memo: '' };
-  const tags = Array.isArray(dict[iso][songId].tags) ? dict[iso][songId].tags : [];
+  if (!dict[iso][songId]) dict[iso][songId] = { tek:{rhNo:null,tags:[],memo:''}, main:{rhNo:null,tags:[],memo:''} };
+  const entry = normalizeRehEntry(dict[iso][songId]);
+  const sub = getPhoneRhSub();
+  const tags = entry[sub].tags;
   const idx = tags.indexOf(tagKey);
   if (isOn && idx < 0) tags.push(tagKey);
   if (!isOn && idx >= 0) tags.splice(idx, 1);
-  dict[iso][songId].tags = tags;
+  entry[sub].tags = tags;
+  dict[iso][songId] = entry;
   saveJSON(LS_KEY_REH_BY_DATE, dict);
 }
 
-function saveRehRhNo(songId, rhNo) {
-  setRehDictForToday(songId, { rhNo: rhNo });
-}
-
-function saveRehMemo(songId, memo) {
-  setRehDictForToday(songId, { memo: memo });
-}
+function saveRehRhNo(songId, rhNo) { setRehDictForToday(songId, { rhNo: rhNo }); }
+function saveRehMemo(songId, memo) { setRehDictForToday(songId, { memo: memo }); }
 
 // 8 種タグ定義（PC と同じ）
 const PHONE_TAG_LIST = [
@@ -3108,7 +3141,8 @@ function renderRhCards() {
 
   let html = '';
   songs.forEach((song, i) => {
-    const reh = rehDict[song.id] || { rhNo: null, tags: [], memo: '' };
+    /* R232: PC 側 R230 (tek/main) に対応。アクティブ sub の値を取り出す */
+    const reh = getRehView(rehDict, song.id);
     const mNo = computeMNoPhone(song, songs);
     const time = (song.timeStr != null && song.timeStr !== '') ? song.timeStr
                : (song.durationSeconds != null ? formatTimePhone(song.durationSeconds) : '');

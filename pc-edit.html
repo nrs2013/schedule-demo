@@ -5680,15 +5680,13 @@ function show(id) {
   // songs を active セトリの songs 配列の参照に切替
   songs = setlists.find(function(s){ return s.id === activeSetlistId; }).songs;
   function saveSetlists(){
+    // R232: Firebase 二重書き込み撤去。hooked setItem (L104 付近) が自動で同期するため、
+    //       ここで直接 set すると同一 ref に 2 連続 write が走り echo タイミングが乱れる。
     const s = JSON.stringify(setlists);
     localStorage.setItem(LS_KEY_SETLISTS, s);
-    if (window.__db) {
-      try {
-        const encKey = LS_KEY_SETLISTS.replace(/[.#$/\[\]]/g, '_');
-        window.__db.ref('ls/' + encKey).set({ k: LS_KEY_SETLISTS, v: s, t: Date.now() });
-        window.__lastFbWrite = { time: Date.now(), key: LS_KEY_SETLISTS };
-      } catch(e) {}
-    }
+    window.__lastFbWrite = { time: Date.now(), key: LS_KEY_SETLISTS };
+    // 自分が書いた値を記憶。それと違う echo は古いとみなして reject できるようにする
+    window.__r232LastSetlistsWritten = { value: s, time: Date.now() };
   }
   function setActiveSetlist(id){
     const sl = setlists.find(function(s){ return s.id === id; });
@@ -6011,11 +6009,14 @@ function show(id) {
           const sourceId = draggingId || +e.dataTransfer.getData('text/plain');
           const targetId = +row.getAttribute('data-id');
           if (!sourceId || sourceId === targetId) return;
+          // R232: reorder lock 立て、drift / FB echo の reload を 3 秒間止める
+          window.__r232ReorderLockUntil = Date.now() + 3000;
+          window.__r232SuppressFocusoutRender = true;
           // R227: 編集中の input/contenteditable があれば blur して反映してから並び替え
-          //       これで「ドラッグ直前の編集が並び替え後に間違った曲に書き戻される」事故を防ぐ
           if (document.activeElement && typeof document.activeElement.blur === 'function') {
             document.activeElement.blur();
           }
+          window.__r232SuppressFocusoutRender = false;
           // songs 配列内で source を target の位置に移動
           const srcIdx = songs.findIndex(function(s){ return s.id === sourceId; });
           const tgtIdx = songs.findIndex(function(s){ return s.id === targetId; });
@@ -6027,7 +6028,6 @@ function show(id) {
           songs.splice(insertAt, 0, moved);
           // orderIndex を 1..N で振り直し
           songs.forEach(function(s, i){ s.orderIndex = i + 1; });
-          // R227: 保存（localStorage + Firebase 同期）— Firebase echo で元に戻るのを防ぐ
           if (typeof saveSetlists === 'function') saveSetlists();
           render();
         });
@@ -6160,7 +6160,8 @@ function show(id) {
       if (newVal !== reh.rhNo) {
         reh.rhNo = newVal;
         saveRehearsals();
-        if (state.viewMode === 'rh') {
+        // R232: reorder の blur で焦点が外れて来た focusout は render しない
+        if (state.viewMode === 'rh' && !window.__r232SuppressFocusoutRender) {
           render();
         } else {
           el.value = newVal === null ? '' : String(newVal);
@@ -6455,10 +6456,22 @@ function show(id) {
   // localStorage の最新 setlists を読んで in-memory に反映し、songs 参照も再バインドして再描画する。
   window.__reloadSetlists = function() {
     try {
+      // R232: drop 直後 3 秒間は reload を完全停止
+      if (window.__r232ReorderLockUntil && Date.now() < window.__r232ReorderLockUntil) {
+        console.warn('[R232] __reloadSetlists skip: reorder lock');
+        return;
+      }
       const v = localStorage.getItem(LS_KEY_SETLISTS);
       if (!v) return;
       const next = JSON.parse(v);
       if (!Array.isArray(next) || next.length === 0) return;
+      // R232: 直近 5 秒以内の「自分の write した値」と LS が違うなら echo が古いとみなして skip
+      if (window.__r232LastSetlistsWritten
+          && (Date.now() - window.__r232LastSetlistsWritten.time) < 5000
+          && window.__r232LastSetlistsWritten.value !== v) {
+        console.warn('[R232] __reloadSetlists skip: stale echo');
+        return;
+      }
       // R173: 安全ガード — LS のアクティブセトリが in-memory より曲数が少ない場合は
       //       「Firebase 同期が in-memory より遅れて到着した」可能性が高いので、reload を skip。
       //       これで Excel 取込で in-memory に新曲を入れた直後の LS 上書きを防ぐ。
@@ -6470,6 +6483,19 @@ function show(id) {
             && _nextActive.songs.length < _curActive.songs.length) {
           console.warn('[R173] __reloadSetlists skip: LS has fewer songs than memory (cur=' + _curActive.songs.length + ', next=' + _nextActive.songs.length + ')');
           return;
+        }
+        // R232: 曲数同じだが順序違い、かつ直近5秒以内に write した場合 → 古い echo の可能性が高いので skip
+        if (_curActive && _nextActive
+            && Array.isArray(_curActive.songs) && Array.isArray(_nextActive.songs)
+            && _curActive.songs.length === _nextActive.songs.length
+            && window.__r232LastSetlistsWritten
+            && (Date.now() - window.__r232LastSetlistsWritten.time) < 5000) {
+          const curOrder  = _curActive.songs.map(function(s){return s.id;}).join(',');
+          const nextOrder = _nextActive.songs.map(function(s){return s.id;}).join(',');
+          if (curOrder !== nextOrder) {
+            console.warn('[R232] __reloadSetlists skip: order mismatch within 5s of write');
+            return;
+          }
         }
       } catch(_) {}
       // setlists 配列の中身を入れ替え（外部参照は壊さない）
@@ -6505,6 +6531,8 @@ function show(id) {
   // R157: 1 秒おきの drift 検知（setlists 版、R100 の rehearsalByDate と同じ仕組み）
   setInterval(function(){
     if (_r172IsEditing()) return; // R172
+    // R232: reorder lock 中は drift 検知も停止
+    if (window.__r232ReorderLockUntil && Date.now() < window.__r232ReorderLockUntil) return;
     try {
       const v = localStorage.getItem(LS_KEY_SETLISTS);
       if (!v) return;
