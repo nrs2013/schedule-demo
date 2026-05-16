@@ -6011,6 +6011,11 @@ function show(id) {
           const sourceId = draggingId || +e.dataTransfer.getData('text/plain');
           const targetId = +row.getAttribute('data-id');
           if (!sourceId || sourceId === targetId) return;
+          // R227: 編集中の input/contenteditable があれば blur して反映してから並び替え
+          //       これで「ドラッグ直前の編集が並び替え後に間違った曲に書き戻される」事故を防ぐ
+          if (document.activeElement && typeof document.activeElement.blur === 'function') {
+            document.activeElement.blur();
+          }
           // songs 配列内で source を target の位置に移動
           const srcIdx = songs.findIndex(function(s){ return s.id === sourceId; });
           const tgtIdx = songs.findIndex(function(s){ return s.id === targetId; });
@@ -6022,6 +6027,8 @@ function show(id) {
           songs.splice(insertAt, 0, moved);
           // orderIndex を 1..N で振り直し
           songs.forEach(function(s, i){ s.orderIndex = i + 1; });
+          // R227: 保存（localStorage + Firebase 同期）— Firebase echo で元に戻るのを防ぐ
+          if (typeof saveSetlists === 'function') saveSetlists();
           render();
         });
       });
