@@ -5896,7 +5896,7 @@ function show(id) {
     return ''
       + '<div class="pc-row' + isCurrent + specialCls + '" data-id="' + song.id + '">'
       +   '<div class="drag" title="ドラッグで並び替え（実装予定）">⋮⋮</div>'
-      +   '<input class="m-no" type="text" data-field="mNo" data-id="' + song.id + '" value="' + escHtml(mNo) + '" placeholder="M#" title="クリックで編集">'
+      +   '<input class="m-no" type="text" data-field="mNo" data-id="' + song.id + '" value="' + escHtml(mNo) + '" placeholder="" title="クリックで編集">'
       +   '<div class="title-cell" contenteditable="true" data-field="title" data-id="' + song.id + '" title="クリックで曲名編集">' + escHtml(song.title) + '</div>'
       +   '<input class="time-cell" type="text" data-field="timeStr" data-id="' + song.id + '" value="' + escHtml(time) + '" placeholder="0:00" title="クリックで時間編集">'
       +   '<input class="rh-no' + rhCls + '" type="text" inputmode="numeric" maxlength="3" data-id="' + song.id + '" data-field="rhNo" value="' + (reh.rhNo === null ? '' : escHtml(String(reh.rhNo))) + '" placeholder="×" title="数字を入力 ／ 空欄＝リハなし ／ Enterで確定">'
