@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260516.500000">
+<meta name="build-version" content="20260516.510000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -5078,6 +5078,120 @@
     color: #d97070;
   }
   .tt-color-delete:hover { background: rgba(217,112,112,0.15); }
+  /* R238: セクション名編集 */
+  .tt-sec-name {
+    outline: none;
+    cursor: text;
+    padding: 2px 4px;
+    border-radius: 3px;
+    min-width: 60px;
+  }
+  .tt-sec-name:hover { background: rgba(255,255,255,0.04); }
+  .tt-sec-name[contenteditable="true"] {
+    background: rgba(200,168,120,0.15);
+    border: 1px solid #c8a878;
+    cursor: text;
+  }
+  /* R238: ズーム操作 */
+  .tt-zoom-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 0;
+    background: #232323;
+    border: 0.5px solid #353535;
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .tt-zoom-btn {
+    padding: 6px 10px;
+    background: transparent;
+    color: #e8e6dc;
+    border: none;
+    cursor: pointer;
+    font-size: 13px;
+    line-height: 1;
+  }
+  .tt-zoom-btn:hover { background: #2a2a2a; color: #c8a878; }
+  .tt-zoom-btn.fit { font-size: 11px; padding: 6px 8px; }
+  .tt-zoom-label {
+    padding: 6px 8px;
+    font-size: 11px;
+    color: #a8a59c;
+    min-width: 40px;
+    text-align: center;
+    border-left: 0.5px solid #353535;
+    border-right: 0.5px solid #353535;
+  }
+  /* R238: 縦串バー */
+  .tt-bar.span-bar {
+    z-index: 4;
+    border-width: 1.5px;
+  }
+  .tt-span-overlay {
+    position: absolute;
+    pointer-events: none;
+  }
+  /* R238: 時刻ティック（線の真上にラベル） */
+  .tt-time-row { position: relative; height: 36px; background: #232323; border-bottom: 0.5px solid #4a4a4a; }
+  .tt-time-corner { width: 110px; padding: 0 6px; font-size: 11px; color: #6e6c66; background: #2a2a2a; border-right: 0.5px solid #4a4a4a; display: flex; align-items: center; justify-content: center; height: 100%; box-sizing: border-box; }
+  .tt-time-axis { position: relative; height: 100%; overflow: hidden; }
+  .tt-tick-line {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: #555;
+    pointer-events: none;
+  }
+  .tt-tick-line.first { background: #777; }
+  .tt-tick-mini {
+    position: absolute;
+    top: 60%;
+    bottom: 0;
+    width: 0.5px;
+    background: #3a3a3a;
+    pointer-events: none;
+  }
+  .tt-tick-label {
+    position: absolute;
+    top: 6px;
+    transform: translateX(-50%);
+    font-size: 12px;
+    font-weight: 500;
+    color: #e8e6dc;
+    background: #232323;
+    padding: 0 5px;
+    pointer-events: none;
+    letter-spacing: 0.02em;
+    line-height: 1.1;
+  }
+  .tt-tick-sub {
+    position: absolute;
+    top: 21px;
+    transform: translateX(-50%);
+    font-size: 9px;
+    color: #6e6c66;
+    pointer-events: none;
+    letter-spacing: 0.02em;
+  }
+  .tt-time-add {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 36px;
+    background: #2a2a2a;
+    color: #c8a878;
+    font-size: 18px;
+    cursor: pointer;
+    border-left: 0.5px dashed #4a4a4a;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 5;
+  }
+  .tt-time-add:hover { background: #353535; }
 </style>
 
 
@@ -5202,7 +5316,7 @@
         <button class="parent-tab no-children active" data-parent="schedule">CALENDAR</button>
         <button class="parent-tab" data-parent="day-schedule">DAY SCHEDULE</button>
         <button class="parent-tab" data-parent="rehearsal">REHEARSAL</button>
-        <button class="parent-tab no-children" data-parent="timetable">タイムテーブル</button>
+        <button class="parent-tab no-children" data-parent="timetable">TIME SCHEDULE</button>
         <button class="parent-tab no-children" data-parent="hotel">HOTEL</button>
         <button class="parent-tab no-children" data-parent="info">INFO</button>
       </div>
@@ -5352,6 +5466,13 @@
           <div class="tt-toolbar-actions">
             <button class="tt-btn" id="tt-btn-time-start" type="button">開始時刻</button>
             <button class="tt-btn" id="tt-btn-time-end" type="button">終了時刻</button>
+            <div class="tt-zoom-group">
+              <button class="tt-zoom-btn" id="tt-btn-zoom-out" type="button" title="縮小">−</button>
+              <span class="tt-zoom-label" id="tt-zoom-label">FIT</span>
+              <button class="tt-zoom-btn" id="tt-btn-zoom-in" type="button" title="拡大">+</button>
+              <button class="tt-zoom-btn fit" id="tt-btn-zoom-fit" type="button" title="画面に合わせる">FIT</button>
+            </div>
+            <button class="tt-btn" id="tt-btn-add-section" type="button">+ セクション追加</button>
             <button class="tt-btn" id="tt-btn-copy-prev" type="button" disabled>前日から複製</button>
             <button class="tt-btn" id="tt-btn-print" type="button" disabled>A4 印刷</button>
           </div>
@@ -5360,7 +5481,7 @@
           <div class="tt-grid" id="tt-grid"></div>
         </div>
         <div class="tt-help">
-          ✦ <strong style="color:#c8a878;">操作</strong>：セクション内をドラッグで範囲指定 → そのままバー作成 → テキスト入力 → Enter で確定 ／ バー端をドラッグで伸縮 ／ バー中央ドラッグで移動 ／ クリックで選択 → Delete で削除 ／ 15 分単位でスナップ
+          ✦ <strong style="color:#c8a878;">操作</strong>：セクション内をドラッグで範囲指定 → バー作成 → テキスト入力 → Enter 確定 ／ <strong style="color:#c8a878;">縦串</strong>：上下にまたいでドラッグ → 複数セクション貫通バー ／ バー端ドラッグで伸縮 ／ 中央ドラッグで移動 ／ 右クリックで色変更・削除 ／ 選択 → Delete で削除 ／ セクション名はダブルクリックで変更 ／ 15 分単位スナップ
         </div>
       </div>
     </div>
@@ -11415,14 +11536,36 @@ function show(id) {
     });
   }
 
-  /* ── R237 Phase 2: バー描画・ドラッグ・編集 ─────────────────────────── */
-  const CELL_W = 60;
+  /* ── R238: バー描画・ドラッグ・編集・ズーム・縦串・セクション編集 ─────────────────────────── */
+  let CELL_W = 60;
   const SLOTS_PER_HOUR = 4;
-  const SLOT_W = CELL_W / SLOTS_PER_HOUR;
+  function SLOT_W(){ return CELL_W / SLOTS_PER_HOUR; }
   const LANE_H = 40;
   const BAR_H = 32;
   const BAR_TOP = 4;
+  const LABEL_W = 110;
+  const ADD_W = 36;
   let selectedBarId = null;
+  let zoomMode = 'fit';        // 'fit' or 'manual'
+  let userZoomScale = 1.0;     // 手動倍率
+
+  function getZoomFitCellW(hours){
+    const wrap = document.querySelector('#mode-timetable .tt-grid-wrap');
+    const viewportW = wrap ? wrap.clientWidth - 30 : 1100;
+    const available = viewportW - LABEL_W - ADD_W;
+    const calc = Math.floor(available / hours);
+    return Math.max(20, Math.min(180, calc));
+  }
+  function updateCellW(tt){
+    const hours = Math.max(1, tt.timeEnd - tt.timeStart);
+    if (zoomMode === 'fit') CELL_W = getZoomFitCellW(hours);
+    else CELL_W = Math.max(20, Math.min(360, 60 * userZoomScale));
+    const lbl = document.getElementById('tt-zoom-label');
+    if (lbl) lbl.textContent = (zoomMode === 'fit') ? 'FIT' : Math.round((CELL_W / 60) * 100) + '%';
+  }
+  function getSpanSecIds(bar){
+    return Array.isArray(bar.spanSecIds) && bar.spanSecIds.length > 1 ? bar.spanSecIds : null;
+  }
 
   function genId(){
     return 'b_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,7);
@@ -11435,21 +11578,58 @@ function show(id) {
   function timeToPixel(t, tt){ return (t - tt.timeStart) * CELL_W; }
 
   function renderBarsInSection(tt, sec, body){
-    body.querySelectorAll('.tt-bar').forEach(function(b){ b.remove(); });
-    tt.bars.filter(function(b){ return b.secId === sec.id; }).forEach(function(bar){
+    body.querySelectorAll('.tt-bar.normal').forEach(function(b){ b.remove(); });
+    tt.bars.filter(function(b){ return b.secId === sec.id && !getSpanSecIds(b); }).forEach(function(bar){
       const lane = Math.max(0, Math.min(sec.lanes - 1, bar.lane || 0));
       const left = timeToPixel(bar.start, tt);
-      const width = Math.max(SLOT_W, timeToPixel(bar.end, tt) - left);
+      const width = Math.max(SLOT_W(), timeToPixel(bar.end, tt) - left);
       const top = lane * LANE_H + BAR_TOP;
       const color = bar.color || 'white';
       const el = document.createElement('div');
-      el.className = 'tt-bar color-' + color + (bar.id === selectedBarId ? ' selected' : '');
+      el.className = 'tt-bar normal color-' + color + (bar.id === selectedBarId ? ' selected' : '');
       el.setAttribute('data-bar-id', bar.id);
       el.style.cssText = 'left:' + left + 'px; width:' + width + 'px; top:' + top + 'px; height:' + BAR_H + 'px;';
       el.innerHTML = '<div class="tt-bar-handle l"></div><div class="tt-bar-text">' + escapeHtml(bar.text || '') + '</div><div class="tt-bar-handle r"></div>';
       body.appendChild(el);
       bindBarEvents(tt, bar, el, sec);
     });
+  }
+
+  function renderSpanBars(tt, gridEl){
+    var ov = gridEl.querySelector('.tt-span-overlay');
+    if (ov) ov.remove();
+    const newOv = document.createElement('div');
+    newOv.className = 'tt-span-overlay';
+    const timeRow = gridEl.querySelector('.tt-time-row');
+    const headerH = timeRow ? timeRow.offsetHeight : 36;
+    newOv.style.cssText = 'position:absolute; left:' + LABEL_W + 'px; top:' + headerH + 'px; right:' + ADD_W + 'px; bottom:0; pointer-events:none; z-index:6;';
+    // セクション位置計算
+    const secPos = {};
+    let cumY = 0;
+    tt.sections.forEach(function(sec){
+      const rowH = LANE_H * sec.lanes;
+      secPos[sec.id] = { top: cumY, height: rowH };
+      cumY += rowH + 1;
+    });
+    tt.bars.filter(function(b){ return getSpanSecIds(b); }).forEach(function(bar){
+      const ids = bar.spanSecIds;
+      const ps = ids.map(function(sid){ return secPos[sid]; }).filter(function(p){ return p; });
+      if (ps.length === 0) return;
+      const top = ps[0].top;
+      const bottom = ps[ps.length-1].top + ps[ps.length-1].height;
+      const height = bottom - top;
+      const left = timeToPixel(bar.start, tt);
+      const width = Math.max(SLOT_W(), timeToPixel(bar.end, tt) - left);
+      const color = bar.color || 'pink';
+      const el = document.createElement('div');
+      el.className = 'tt-bar span-bar color-' + color + (bar.id === selectedBarId ? ' selected' : '');
+      el.setAttribute('data-bar-id', bar.id);
+      el.style.cssText = 'left:' + left + 'px; width:' + width + 'px; top:' + top + 'px; height:' + height + 'px; pointer-events:auto;';
+      el.innerHTML = '<div class="tt-bar-handle l"></div><div class="tt-bar-text">' + escapeHtml(bar.text || '') + '</div><div class="tt-bar-handle r"></div>';
+      newOv.appendChild(el);
+      bindBarEvents(tt, bar, el, null);
+    });
+    gridEl.appendChild(newOv);
   }
 
   function bindSectionEvents(tt, sec, body){
@@ -11463,38 +11643,77 @@ function show(id) {
       const startY = e.clientY - rect.top;
       const startTime = snapTime(pixelToTime(startX, tt), tt.timeStart);
       const lane = Math.max(0, Math.min(sec.lanes - 1, Math.floor(startY / LANE_H)));
-      let curEnd = startTime + 0.25;
+      let curEnd = startTime;
+      let curSecIds = [sec.id];
+      let isDragging = false;
       const ghost = document.createElement('div');
       ghost.className = 'tt-bar-ghost';
-      ghost.style.cssText = 'left:' + timeToPixel(startTime, tt) + 'px; width:' + SLOT_W + 'px; top:' + (lane * LANE_H + BAR_TOP) + 'px; height:' + BAR_H + 'px;';
+      ghost.style.cssText = 'left:' + timeToPixel(startTime, tt) + 'px; width:' + SLOT_W() + 'px; top:' + (lane * LANE_H + BAR_TOP) + 'px; height:' + BAR_H + 'px;';
       body.appendChild(ghost);
       function move(ev){
         const x = ev.clientX - rect.left;
+        const y = ev.clientY - rect.top;
+        const dx = x - startX;
+        const dy = y - startY;
+        if (Math.abs(dx) > 5 || Math.abs(dy) > LANE_H * 0.5) isDragging = true;
         const t = snapTime(pixelToTime(x, tt), tt.timeStart);
-        curEnd = t > startTime ? t : (startTime + 0.25);
+        curEnd = t > startTime ? t : startTime;
         const st = Math.min(startTime, curEnd);
-        const et = Math.max(st + 0.25, curEnd);
+        const et = Math.max(st + (isDragging ? 0.25 : 0), curEnd);
         const left = timeToPixel(st, tt);
-        const width = Math.max(SLOT_W, timeToPixel(et, tt) - left);
+        const width = Math.max(SLOT_W(), timeToPixel(et, tt) - left);
         ghost.style.left = left + 'px';
         ghost.style.width = width + 'px';
+        // 縦串検知
+        const elUnder = document.elementFromPoint(ev.clientX, ev.clientY);
+        if (elUnder) {
+          const otherRow = elUnder.closest('[data-sec-id]');
+          if (otherRow) {
+            const otherId = otherRow.getAttribute('data-sec-id');
+            if (otherId !== sec.id) {
+              const startIdx = tt.sections.findIndex(function(s){ return s.id === sec.id; });
+              const endIdx = tt.sections.findIndex(function(s){ return s.id === otherId; });
+              if (startIdx >= 0 && endIdx >= 0) {
+                const lo = Math.min(startIdx, endIdx);
+                const hi = Math.max(startIdx, endIdx);
+                curSecIds = tt.sections.slice(lo, hi + 1).map(function(s){ return s.id; });
+                if (curSecIds.length > 1) {
+                  ghost.style.background = 'rgba(184,123,143,0.3)';
+                  ghost.style.borderColor = '#b87b8f';
+                  isDragging = true;
+                }
+              }
+            } else {
+              curSecIds = [sec.id];
+              ghost.style.background = '';
+              ghost.style.borderColor = '';
+            }
+          }
+        }
       }
       function up(){
         document.removeEventListener('mousemove', move);
         document.removeEventListener('mouseup', up);
         ghost.remove();
+        // ワンクリック対策：ドラッグしてないなら何もしない
+        if (!isDragging) return;
         let st = Math.min(startTime, curEnd);
         let et = Math.max(startTime, curEnd);
         if (et - st < 0.25) et = st + 0.25;
         if (et > tt.timeEnd) et = tt.timeEnd;
         if (st < tt.timeStart) st = tt.timeStart;
-        const newBar = { id: genId(), secId: sec.id, lane: lane, start: st, end: et, text: '', color: 'white' };
+        const newBar = {
+          id: genId(), secId: sec.id, lane: lane,
+          start: st, end: et, text: '',
+          color: curSecIds.length > 1 ? 'pink' : 'white'
+        };
+        if (curSecIds.length > 1) newBar.spanSecIds = curSecIds.slice();
         tt.bars.push(newBar);
         selectedBarId = newBar.id;
         saveToStorage();
-        renderBarsInSection(tt, sec, body);
+        render();
         setTimeout(function(){
-          const tx = body.querySelector('[data-bar-id="' + newBar.id + '"] .tt-bar-text');
+          const tx = document.querySelector('[data-bar-id="' + newBar.id + '"] .tt-bar-text');
           if (tx) {
             tx.setAttribute('contenteditable', 'true');
             tx.focus();
@@ -11521,8 +11740,8 @@ function show(id) {
       if (e.target === textEl && textEl.getAttribute('contenteditable') === 'true') return;
       if (e.button !== 0) return;
       e.stopPropagation();
-      const body = el.parentElement;
-      const rect = body.getBoundingClientRect();
+      const parent = el.parentElement;
+      const rect = parent.getBoundingClientRect();
       const startMouseX = e.clientX - rect.left;
       const startMouseY = e.clientY - rect.top;
       const initStart = bar.start;
@@ -11543,9 +11762,11 @@ function show(id) {
           bar.start = newStart;
           bar.end = newEnd;
         }
-        const newLane = Math.max(0, Math.min(sec.lanes - 1, initLane + Math.round(dy / LANE_H)));
-        bar.lane = newLane;
-        renderBarsInSection(tt, sec, body);
+        if (sec) {
+          const newLane = Math.max(0, Math.min(sec.lanes - 1, initLane + Math.round(dy / LANE_H)));
+          bar.lane = newLane;
+        }
+        render();
       }
       function up(){
         document.removeEventListener('mousemove', move);
@@ -11588,8 +11809,8 @@ function show(id) {
         if (e.button !== 0) return;
         e.stopPropagation();
         e.preventDefault();
-        const body = el.parentElement;
-        const rect = body.getBoundingClientRect();
+        const parent = el.parentElement;
+        const rect = parent.getBoundingClientRect();
         const initStart = bar.start;
         const initEnd = bar.end;
         function move(ev){
@@ -11600,7 +11821,7 @@ function show(id) {
           } else {
             if (t > initStart + 0.24 && t <= tt.timeEnd) bar.end = t;
           }
-          renderBarsInSection(tt, sec, body);
+          render();
         }
         function up(){
           document.removeEventListener('mousemove', move);
@@ -11644,10 +11865,7 @@ function show(id) {
         bar.color = c.key;
         menu.remove();
         saveToStorage();
-        const dk = getCurrentDateKey();
-        const tt = getTimetableForDate(dk);
-        const body = document.querySelector('[data-sec-id="' + sec.id + '"] .tt-sec-body');
-        if (body) renderBarsInSection(tt, sec, body);
+        render();
       });
       menu.appendChild(item);
     });
@@ -11702,69 +11920,58 @@ function show(id) {
     const start = tt.timeStart;
     const end = tt.timeEnd;
     const hours = Math.max(1, end - start);
-    const cellW = 60;
-    const labelW = 110;
-    const laneH = 40;
-    const addW = 36;
+
+    // ズーム反映
+    updateCellW(tt);
+    const cellW = CELL_W;
+    const axisW = hours * cellW;
 
     let html = '';
 
-    // 時刻ヘッダー
-    html += '<div class="tt-time-row" style="grid-template-columns:' + labelW + 'px repeat(' + hours + ',' + cellW + 'px) ' + addW + 'px;">';
+    // 時刻ヘッダー（時刻ティック方式）
+    html += '<div class="tt-time-row" style="display:grid; grid-template-columns:' + LABEL_W + 'px ' + axisW + 'px ' + ADD_W + 'px;">';
     html += '<div class="tt-time-corner">時刻</div>';
-    for (let h = start; h < end; h++) {
-      html += '<div class="tt-time-cell">' + fmtHour(h) + '</div>';
+    html += '<div class="tt-time-axis">';
+    for (let h = start; h <= end; h++) {
+      const x = (h - start) * cellW;
+      const first = (h === start) ? ' first' : '';
+      html += '<div class="tt-tick-line' + first + '" style="left:' + x + 'px;"></div>';
+      html += '<div class="tt-tick-label" style="left:' + x + 'px;">' + fmtHour(h) + '</div>';
+      if (h < end) {
+        html += '<div class="tt-tick-sub" style="left:' + (x + cellW * 0.5) + 'px;">30</div>';
+        html += '<div class="tt-tick-mini" style="left:' + (x + cellW * 0.25) + 'px;"></div>';
+        html += '<div class="tt-tick-mini" style="left:' + (x + cellW * 0.5) + 'px;"></div>';
+        html += '<div class="tt-tick-mini" style="left:' + (x + cellW * 0.75) + 'px;"></div>';
+      }
     }
+    html += '</div>';
     html += '<div class="tt-time-add" data-act="time-add" title="終了時刻を 1 時間延ばす">+</div>';
     html += '</div>';
 
     // セクション行
     tt.sections.forEach(function(sec){
-      const rowH = laneH * sec.lanes;
-      html += '<div class="tt-sec-row" style="grid-template-columns:' + labelW + 'px 1fr ' + addW + 'px;" data-sec-id="' + escapeHtml(sec.id) + '">';
+      const rowH = LANE_H * sec.lanes;
+      html += '<div class="tt-sec-row" style="display:grid; grid-template-columns:' + LABEL_W + 'px ' + axisW + 'px ' + ADD_W + 'px;" data-sec-id="' + escapeHtml(sec.id) + '">';
       html += '<div class="tt-sec-label">';
-      html += '<div>' + escapeHtml(sec.name) + '</div>';
+      html += '<div class="tt-sec-name" data-sec-id="' + escapeHtml(sec.id) + '" contenteditable="false" title="ダブルクリックで編集">' + escapeHtml(sec.name) + '</div>';
       html += '<div class="tt-sec-lanes">';
       html += '<span class="tt-sec-lane-btn" data-act="lane-minus" title="レーン減">−</span>';
       html += '<span>' + sec.lanes + ' レーン</span>';
       html += '<span class="tt-sec-lane-btn" data-act="lane-plus" title="レーン増">＋</span>';
+      html += '<span class="tt-sec-lane-btn" data-act="sec-delete" title="セクション削除" style="margin-left:4px; color:#d97070;">×</span>';
       html += '</div>';
       html += '</div>';
-      html += '<div class="tt-sec-body" style="--tt-cell-w:' + cellW + 'px; min-height:' + rowH + 'px;"></div>';
+      const slotW = cellW / SLOTS_PER_HOUR;
+      const bgStyle = 'background-image: linear-gradient(to right, #4a4a4a 0.5px, transparent 0.5px), linear-gradient(to right, rgba(255,255,255,0.05) 0.5px, transparent 0.5px); background-size:' + cellW + 'px 100%,' + slotW + 'px 100%; background-position: 0 0, 0 0;';
+      html += '<div class="tt-sec-body" style="min-height:' + rowH + 'px; ' + bgStyle + '"></div>';
       html += '<div></div>';
       html += '</div>';
     });
 
     gridEl.innerHTML = html;
+    gridEl.style.position = 'relative';
 
-    // イベント：レーン増減
-    gridEl.querySelectorAll('.tt-sec-lane-btn').forEach(function(btn){
-      btn.addEventListener('click', function(){
-        const row = btn.closest('[data-sec-id]');
-        if (!row) return;
-        const secId = row.getAttribute('data-sec-id');
-        const sec = tt.sections.find(function(s){ return s.id === secId; });
-        if (!sec) return;
-        if (btn.getAttribute('data-act') === 'lane-plus') sec.lanes = Math.min(5, sec.lanes + 1);
-        else sec.lanes = Math.max(1, sec.lanes - 1);
-        saveToStorage();
-        render();
-      });
-    });
-
-    // イベント：時刻列追加
-    const addBtn = gridEl.querySelector('[data-act="time-add"]');
-    if (addBtn) {
-      addBtn.addEventListener('click', function(){
-        if (tt.timeEnd < 30) {
-          tt.timeEnd += 1;
-          saveToStorage();
-          render();
-        }
-      });
-    }
-
-    // R237 Phase 2: 各セクションにバー描画 + ドラッグイベント
+    // バー描画 + ドラッグイベント
     gridEl.querySelectorAll('[data-sec-id]').forEach(function(row){
       const secId = row.getAttribute('data-sec-id');
       const sec = tt.sections.find(function(s){ return s.id === secId; });
@@ -11774,6 +11981,111 @@ function show(id) {
       renderBarsInSection(tt, sec, body);
       bindSectionEvents(tt, sec, body);
     });
+
+    // 縦串バー描画
+    renderSpanBars(tt, gridEl);
+
+    // レーン増減 + セクション削除
+    gridEl.querySelectorAll('.tt-sec-lane-btn').forEach(function(btn){
+      btn.addEventListener('click', function(e){
+        e.stopPropagation();
+        const row = btn.closest('[data-sec-id]');
+        if (!row) return;
+        const secId = row.getAttribute('data-sec-id');
+        const sec = tt.sections.find(function(s){ return s.id === secId; });
+        if (!sec) return;
+        const act = btn.getAttribute('data-act');
+        if (act === 'lane-plus') sec.lanes = Math.min(5, sec.lanes + 1);
+        else if (act === 'lane-minus') sec.lanes = Math.max(1, sec.lanes - 1);
+        else if (act === 'sec-delete') {
+          if (!confirm('セクション「' + sec.name + '」を削除しますか？\nこのセクションのバーも消えます。')) return;
+          tt.sections = tt.sections.filter(function(s){ return s.id !== secId; });
+          tt.bars = tt.bars.filter(function(b){
+            const spans = getSpanSecIds(b);
+            if (spans) {
+              const ns = spans.filter(function(id){ return id !== secId; });
+              if (ns.length === 0) return false;
+              if (ns.length > 1) { b.spanSecIds = ns; }
+              else { b.spanSecIds = undefined; b.secId = ns[0]; }
+              return true;
+            }
+            return b.secId !== secId;
+          });
+        }
+        saveToStorage();
+        render();
+      });
+    });
+
+    // 時刻列追加
+    const addBtn = gridEl.querySelector('[data-act="time-add"]');
+    if (addBtn) {
+      addBtn.addEventListener('click', function(){
+        if (tt.timeEnd < 30) { tt.timeEnd += 1; saveToStorage(); render(); }
+      });
+    }
+
+    // セクション名編集
+    gridEl.querySelectorAll('.tt-sec-name').forEach(function(nameEl){
+      nameEl.addEventListener('dblclick', function(e){
+        e.stopPropagation();
+        nameEl.setAttribute('contenteditable', 'true');
+        nameEl.focus();
+        const range = document.createRange();
+        range.selectNodeContents(nameEl);
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+      });
+      nameEl.addEventListener('blur', function(){
+        if (nameEl.getAttribute('contenteditable') !== 'true') return;
+        nameEl.setAttribute('contenteditable', 'false');
+        const secId = nameEl.getAttribute('data-sec-id');
+        const sec = tt.sections.find(function(s){ return s.id === secId; });
+        if (sec) {
+          const newName = nameEl.textContent.trim();
+          if (newName) { sec.name = newName; saveToStorage(); }
+          else { nameEl.textContent = sec.name; }
+        }
+      });
+      nameEl.addEventListener('keydown', function(e){
+        if (e.key === 'Enter') { e.preventDefault(); nameEl.blur(); }
+        if (e.key === 'Escape') {
+          const secId = nameEl.getAttribute('data-sec-id');
+          const sec = tt.sections.find(function(s){ return s.id === secId; });
+          if (sec) nameEl.textContent = sec.name;
+          nameEl.blur();
+        }
+      });
+    });
+  }
+
+  function zoomIn(){
+    if (zoomMode === 'fit') userZoomScale = CELL_W / 60;
+    zoomMode = 'manual';
+    userZoomScale = Math.min(6, userZoomScale * 1.25);
+    render();
+  }
+  function zoomOut(){
+    if (zoomMode === 'fit') userZoomScale = CELL_W / 60;
+    zoomMode = 'manual';
+    userZoomScale = Math.max(0.4, userZoomScale / 1.25);
+    render();
+  }
+  function zoomFit(){
+    zoomMode = 'fit';
+    render();
+  }
+  function addSection(){
+    const dateKey = getCurrentDateKey();
+    if (!dateKey) return;
+    const tt = getTimetableForDate(dateKey);
+    const name = prompt('新しいセクション名（例：レーザー、ダンサー、衣装）：', 'NEW SECTION');
+    if (!name) return;
+    const newId = 'sec-' + Date.now().toString(36);
+    tt.sections.push({ id: newId, name: name.trim(), lanes: 1 });
+    saveToStorage();
+    render();
   }
 
   // 開始・終了時刻の変更ダイアログ（簡易版）
@@ -11804,11 +12116,30 @@ function show(id) {
   }
 
   function bindToolbarOnce(){
-    const bs = document.getElementById('tt-btn-time-start');
-    const be = document.getElementById('tt-btn-time-end');
-    if (bs && !bs.__bound) { bs.addEventListener('click', changeTimeStart); bs.__bound = true; }
-    if (be && !be.__bound) { be.addEventListener('click', changeTimeEnd); be.__bound = true; }
+    [
+      { id: 'tt-btn-time-start', fn: changeTimeStart },
+      { id: 'tt-btn-time-end',   fn: changeTimeEnd },
+      { id: 'tt-btn-zoom-in',    fn: zoomIn },
+      { id: 'tt-btn-zoom-out',   fn: zoomOut },
+      { id: 'tt-btn-zoom-fit',   fn: zoomFit },
+      { id: 'tt-btn-add-section',fn: addSection }
+    ].forEach(function(c){
+      const el = document.getElementById(c.id);
+      if (el && !el.__bound) { el.addEventListener('click', c.fn); el.__bound = true; }
+    });
   }
+
+  // リサイズで FIT モードのとき再描画
+  var ttResizeTimer = null;
+  window.addEventListener('resize', function(){
+    if (ttResizeTimer) clearTimeout(ttResizeTimer);
+    ttResizeTimer = setTimeout(function(){
+      const modeTT = document.getElementById('mode-timetable');
+      if (modeTT && modeTT.classList.contains('active') && zoomMode === 'fit') {
+        render();
+      }
+    }, 200);
+  });
 
   function renderPublic(){
     bindToolbarOnce();
