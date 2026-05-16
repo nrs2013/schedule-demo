@@ -5680,13 +5680,16 @@ function show(id) {
   // songs を active セトリの songs 配列の参照に切替
   songs = setlists.find(function(s){ return s.id === activeSetlistId; }).songs;
   function saveSetlists(){
-    // R232: Firebase 二重書き込み撤去。hooked setItem (L104 付近) が自動で同期するため、
-    //       ここで直接 set すると同一 ref に 2 連続 write が走り echo タイミングが乱れる。
+    // R233: Firebase 直接書き込みも残す（hooked setItem だけだと同期が機能しないため復活）
     const s = JSON.stringify(setlists);
     localStorage.setItem(LS_KEY_SETLISTS, s);
-    window.__lastFbWrite = { time: Date.now(), key: LS_KEY_SETLISTS };
-    // 自分が書いた値を記憶。それと違う echo は古いとみなして reject できるようにする
-    window.__r232LastSetlistsWritten = { value: s, time: Date.now() };
+    if (window.__db) {
+      try {
+        const encKey = LS_KEY_SETLISTS.replace(/[.#$/\[\]]/g, '_');
+        window.__db.ref('ls/' + encKey).set({ k: LS_KEY_SETLISTS, v: s, t: Date.now() });
+        window.__lastFbWrite = { time: Date.now(), key: LS_KEY_SETLISTS };
+      } catch(e) {}
+    }
   }
   function setActiveSetlist(id){
     const sl = setlists.find(function(s){ return s.id === id; });
@@ -5815,7 +5818,11 @@ function show(id) {
     }
     const isTek = (typeof document !== 'undefined') &&
                   document.body.classList.contains('rh-mode-tekuriha');
-    const sub = isTek ? entry.tek : entry.main;
+    // R234: 片側が空なら逆側にフォールバック → R187 時代の「瞬時同期」を見た目上復活
+    let sub = isTek ? entry.tek : entry.main;
+    const other = isTek ? entry.main : entry.tek;
+    const isEmpty = function(s){ return !s || (s.rhNo == null && (!s.tags || !s.tags.length) && !(s.memo && s.memo.trim())); };
+    if (isEmpty(sub) && !isEmpty(other)) sub = other;
     if (!Array.isArray(sub.tags)) sub.tags = [];
     return sub;
   }
@@ -6456,22 +6463,15 @@ function show(id) {
   // localStorage の最新 setlists を読んで in-memory に反映し、songs 参照も再バインドして再描画する。
   window.__reloadSetlists = function() {
     try {
-      // R232: drop 直後 3 秒間は reload を完全停止
+      // R233: reorder lock のみ残す（reject ロジックは全体同期を阻害するため撤去）
       if (window.__r232ReorderLockUntil && Date.now() < window.__r232ReorderLockUntil) {
-        console.warn('[R232] __reloadSetlists skip: reorder lock');
+        console.warn('[R233] __reloadSetlists skip: reorder lock');
         return;
       }
       const v = localStorage.getItem(LS_KEY_SETLISTS);
       if (!v) return;
       const next = JSON.parse(v);
       if (!Array.isArray(next) || next.length === 0) return;
-      // R232: 直近 5 秒以内の「自分の write した値」と LS が違うなら echo が古いとみなして skip
-      if (window.__r232LastSetlistsWritten
-          && (Date.now() - window.__r232LastSetlistsWritten.time) < 5000
-          && window.__r232LastSetlistsWritten.value !== v) {
-        console.warn('[R232] __reloadSetlists skip: stale echo');
-        return;
-      }
       // R173: 安全ガード — LS のアクティブセトリが in-memory より曲数が少ない場合は
       //       「Firebase 同期が in-memory より遅れて到着した」可能性が高いので、reload を skip。
       //       これで Excel 取込で in-memory に新曲を入れた直後の LS 上書きを防ぐ。
@@ -6483,19 +6483,6 @@ function show(id) {
             && _nextActive.songs.length < _curActive.songs.length) {
           console.warn('[R173] __reloadSetlists skip: LS has fewer songs than memory (cur=' + _curActive.songs.length + ', next=' + _nextActive.songs.length + ')');
           return;
-        }
-        // R232: 曲数同じだが順序違い、かつ直近5秒以内に write した場合 → 古い echo の可能性が高いので skip
-        if (_curActive && _nextActive
-            && Array.isArray(_curActive.songs) && Array.isArray(_nextActive.songs)
-            && _curActive.songs.length === _nextActive.songs.length
-            && window.__r232LastSetlistsWritten
-            && (Date.now() - window.__r232LastSetlistsWritten.time) < 5000) {
-          const curOrder  = _curActive.songs.map(function(s){return s.id;}).join(',');
-          const nextOrder = _nextActive.songs.map(function(s){return s.id;}).join(',');
-          if (curOrder !== nextOrder) {
-            console.warn('[R232] __reloadSetlists skip: order mismatch within 5s of write');
-            return;
-          }
         }
       } catch(_) {}
       // setlists 配列の中身を入れ替え（外部参照は壊さない）

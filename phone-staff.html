@@ -3048,12 +3048,16 @@ function getRehDictForToday() {
 }
 
 // renderRhCards から呼ぶ：sub に応じた tags/rhNo/memo を返す
+// R234: 片側が空なら逆側にフォールバック → R187 時代の「瞬時同期」を見た目上復活
 function getRehView(rehDict, songId) {
   const raw = rehDict[songId];
   if (!raw) return { rhNo: null, tags: [], memo: '' };
   const norm = normalizeRehEntry(raw);
   const sub  = getPhoneRhSub();
-  return norm[sub] || { rhNo: null, tags: [], memo: '' };
+  const primary = norm[sub] || { rhNo: null, tags: [], memo: '' };
+  const other   = norm[sub === 'tek' ? 'main' : 'tek'] || { rhNo: null, tags: [], memo: '' };
+  const isEmpty = function(s){ return !s || (s.rhNo == null && (!s.tags || !s.tags.length) && !(s.memo && s.memo.trim())); };
+  return (isEmpty(primary) && !isEmpty(other)) ? other : primary;
 }
 
 function setRehDictForToday(songId, partial) {
