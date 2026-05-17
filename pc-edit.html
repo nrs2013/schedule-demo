@@ -12395,7 +12395,7 @@ function show(id) {
     if (ov) ov.remove();
     const newOv = document.createElement('div');
     newOv.className = 'tt-span-overlay';
-    newOv.style.cssText = 'position:absolute; left:0; top:0; right:0; bottom:0; pointer-events:none; z-index:6;';
+    newOv.style.cssText = 'position:absolute; left:0; top:0; right:0; bottom:0; pointer-events:none; z-index:2;'; /* R262: 縦串overlay は個別バー(z-index:5)より下の階層に置く */
 
     tt.bars.filter(function(b){ return getSpanSecIds(b); }).forEach(function(bar){
       const spanIds = bar.spanSecIds;
@@ -12463,6 +12463,12 @@ function show(id) {
             if (newIds.length < 1) return;
             // 単品化はしない（2 セクション以上維持）
             if (newIds.length === 1) return;
+            // R262: 上下端ハンドルでセクション増減する時も、新しい spanSecIds で他バーと重ならないかチェック
+            const isOverlap = overlapsAnyBar(tt, {
+              start: bar.start, end: bar.end, lane: 0,
+              secId: bar.secId, spanSecIds: newIds
+            }, bar.id);
+            if (isOverlap) return;
             bar.spanSecIds = newIds;
             render();
           }
@@ -13499,7 +13505,13 @@ function show(id) {
         const sec = tt.sections.find(function(s){ return s.id === bar.secId; });
         if (sec) {
           const newLane = (bar.lane || 0) + (e.key === 'ArrowUp' ? -1 : 1);
-          bar.lane = Math.max(0, Math.min(sec.lanes - 1, newLane));
+          const clamped = Math.max(0, Math.min(sec.lanes - 1, newLane));
+          // R262: レーン移動でも他バーとの重なりチェック
+          const isOverlap = overlapsAnyBar(tt, {
+            start: bar.start, end: bar.end, lane: clamped,
+            secId: bar.secId, spanSecIds: bar.spanSecIds
+          }, bar.id);
+          if (!isOverlap) bar.lane = clamped;
           e.preventDefault();
           saveToStorage(); render(); return;
         }

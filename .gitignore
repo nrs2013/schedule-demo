@@ -1,8 +1,25 @@
 
-# 引き継ぎ書（PAT含む可能性があるので除外）
+# 引き継ぎ書（PAT 含む可能性があるので絶対 push しない）— macOS NFD/NFC ゆらぎもカバー
 *引き継ぎ*.md
+*引き継き*.md
+*引継ぎ*.md
+*引継き*.md
 *HANDOFF*.md
 *handoff*.md
+*-handoff.md
+
+# 個人作業メモ・セットアップ手順（push しない）
+*作業ログ*.md
+*作業*.md
+R[0-9]*-作業*.md
+R[0-9]*-R[0-9]*-*.md
+LINE連携*.md
+LINE*.md
+*セットアップ手順*.md
+*セットアップ*.md
 
 # watcher テスト
 _watcher_test.txt
+
+# バックアップ HTML（手元の世代管理用、リモートには上げない）
+pc-edit-r[0-9]*.html
