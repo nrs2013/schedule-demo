@@ -5480,15 +5480,16 @@
     z-index: 4;
     border-width: 0;
     background-color: transparent !important;
-    box-shadow: inset 3px 0 0 var(--span-edge, #ff588c), inset -3px 0 0 var(--span-edge, #ff588c);
+    box-shadow: inset 3px 0 0 var(--span-edge, #c89098), inset -3px 0 0 var(--span-edge, #c89098);
     opacity: 1;
     pointer-events: none;
   }
-  .tt-bar.span-bar.color-pink   { --span-edge: #ff588c; background: rgba(255,88,140,0.10) !important; }
-  .tt-bar.span-bar.color-white  { --span-edge: #ffd444; background: rgba(255,212,68,0.10) !important; }
-  .tt-bar.span-bar.color-amber  { --span-edge: #f5a828; background: rgba(245,168,40,0.10) !important; }
-  .tt-bar.span-bar.color-gray   { --span-edge: #7ed848; background: rgba(126,216,72,0.10) !important; }
-  .tt-bar.span-bar.color-accent { --span-edge: #3aa0e0; background: rgba(58,160,224,0.10) !important; }
+  /* R254: 縦串バーのフチ＆中身も muted 色へ統一 */
+  .tt-bar.span-bar.color-pink   { --span-edge: #c89098; background: rgba(200,144,152,0.08) !important; }
+  .tt-bar.span-bar.color-white  { --span-edge: #d4c9a8; background: rgba(212,201,168,0.06) !important; }
+  .tt-bar.span-bar.color-amber  { --span-edge: #c8a078; background: rgba(200,160,120,0.07) !important; }
+  .tt-bar.span-bar.color-gray   { --span-edge: #9aac98; background: rgba(154,172,152,0.07) !important; }
+  .tt-bar.span-bar.color-accent { --span-edge: #8a9eb4; background: rgba(138,158,180,0.07) !important; }
   .tt-bar.span-bar .tt-bar-text {
     background: rgba(20,20,20,0.92);
     padding: 6px 12px;
@@ -12373,29 +12374,35 @@ function show(id) {
         const left = timeToPixel(st, tt);
         const width = Math.max(SLOT_W(), timeToPixel(et, tt) - left);
 
-        // R252: 縦串検知：通ったセクションだけを span に追加
+        // R253: 縦串検知を厳格に
+        //  - マウスが開始セクション内（多少のマージン込）→ 絶対に単品
+        //  - 開始セクションを完全に超えた → 通り過ぎたセクションだけ縦串
         const mouseY = ev.clientY;
-        const wasSpanning = isSpanning;
-        // 通っているセクション群を計算
-        const secRows = gridEl.querySelectorAll('[data-sec-id]');
-        const passedSecIds = [];
         const startTop = startSecBodyRect.top;
         const startBot = startSecBodyRect.bottom;
-        const mTop = Math.min(startTop, mouseY);
-        const mBot = Math.max(startBot, mouseY);
-        secRows.forEach(function(row){
-          const rId = row.getAttribute('data-sec-id');
-          const r = row.getBoundingClientRect();
-          // 重なり判定：行の中央が範囲内なら通った扱い
-          const rMid = (r.top + r.bottom) / 2;
-          if (rMid >= mTop - LANE_H * 0.2 && rMid <= mBot + LANE_H * 0.2) {
-            passedSecIds.push(rId);
-          }
-        });
-        // 必ず開始セクションは含む
-        if (passedSecIds.indexOf(sec.id) === -1) passedSecIds.push(sec.id);
-        spanSecIds = passedSecIds;
-        isSpanning = passedSecIds.length >= 2;
+        const MARGIN = 4; // 微小なマウス揺れを許容する余白(px)
+        const insideStart = (mouseY >= startTop - MARGIN && mouseY <= startBot + MARGIN);
+        if (insideStart) {
+          isSpanning = false;
+          spanSecIds = [sec.id];
+        } else {
+          // 開始セクションを完全に超えた
+          const isDownward = (mouseY > startBot);
+          const passedSecIds = [sec.id];
+          const secRows = gridEl.querySelectorAll('[data-sec-id]');
+          secRows.forEach(function(row){
+            const rId = row.getAttribute('data-sec-id');
+            if (rId === sec.id) return;
+            const r = row.getBoundingClientRect();
+            const rMid = (r.top + r.bottom) / 2;
+            const passed = isDownward
+              ? (rMid > startBot && rMid < mouseY)   // 下に向かって：rMid が開始の下〜マウスの間
+              : (rMid > mouseY && rMid < startTop); // 上に向かって：rMid がマウス〜開始の上の間
+            if (passed) passedSecIds.push(rId);
+          });
+          spanSecIds = passedSecIds;
+          isSpanning = passedSecIds.length >= 2;
+        }
 
         if (isSpanning) {
           // ghost を gridEl に移して、通ったセクションだけ縦に伸ばす
@@ -12663,6 +12670,20 @@ function show(id) {
       render();
     });
     menu.appendChild(vToggle);
+
+    // R253: メインイベント（フッター表示）トグル
+    const fToggle = document.createElement('div');
+    const isInFooter = !!bar.inFooter;
+    fToggle.className = 'tt-color-item' + (isInFooter ? ' is-current' : '');
+    fToggle.style.cssText = 'background:rgba(255,212,68,0.18); color:#f5e8b8; border-color:#d8a800; margin-bottom:3px;';
+    fToggle.textContent = isInFooter ? '✓ メインイベントから外す' : '⭐ メインイベントに追加';
+    fToggle.addEventListener('click', function(){
+      bar.inFooter = !bar.inFooter;
+      menu.remove();
+      saveToStorage();
+      render();
+    });
+    menu.appendChild(fToggle);
 
     // 削除
     const del = document.createElement('div');
@@ -12940,15 +12961,12 @@ function show(id) {
   function renderPaperFooter(tt){
     const el = document.getElementById('tt-paper-footer');
     if (!el) return;
-    const KEY_WORDS = /^(RH|通しRH|テクリハ|開場|開演|本番)/;
+    // R253: 「⭐ メインイベント追加」フラグが付いたバーだけを表示（手動選択式）
     const major = tt.bars
-      .filter(function(b){
-        const t = (b.text || '').trim();
-        return b.color === 'pink' || KEY_WORDS.test(t);
-      })
+      .filter(function(b){ return b.inFooter === true; })
       .sort(function(a,b){ return a.start - b.start; });
     if (major.length === 0) {
-      el.innerHTML = '<span class="ev-empty">下部の大きな表示は、ピンク色のバー（RH／開場／開演など）を追加すると自動で出ます</span>';
+      el.innerHTML = '<span class="ev-empty">バーを右クリック →「⭐ メインイベントに追加」で、ここに自由に並べられます</span>';
       return;
     }
     el.innerHTML = major.map(function(b){
@@ -13036,39 +13054,67 @@ function show(id) {
       const el = document.getElementById(c.id);
       if (el && !el.__bound) { el.addEventListener('click', c.fn); el.__bound = true; }
     });
-    // R250: 印刷直前に A4 ピッタリのスケール計算（1度だけ登録）
+    // R250+R253: 印刷直前に LANE_H を拡大して縦も埋める＋A4 にスケール
     if (!window.__ttPrintHookBound) {
       window.__ttPrintHookBound = true;
       var __prevPaperStyle = null;
+      var __origLaneH = null;
+      var __origBarH = null;
+      var __origBarTop = null;
       window.addEventListener('beforeprint', function(){
         const paper = document.getElementById('tt-paper');
         if (!paper) return;
         __prevPaperStyle = paper.getAttribute('style') || '';
-        // R251: A4 landscape ピッタリ＝隙間ゼロ。非均一スケールで上下左右ぴったり
-        // @page margin: 2mm を設定済み → ページ内 293mm × 206mm
-        const PAGE_W_MM = 293, PAGE_H_MM = 206;
-        const MM_TO_PX = 96 / 25.4;
-        const pageWpx = PAGE_W_MM * MM_TO_PX;
-        const pageHpx = PAGE_H_MM * MM_TO_PX;
+        const dk = (typeof getCurrentDateKey === 'function') ? getCurrentDateKey() : null;
+        const tt = dk ? getTimetableForDate(dk) : null;
+        // 1. レーン総数を計算
+        if (tt && Array.isArray(tt.sections)) {
+          const totalLanes = tt.sections.reduce(function(s,sec){ return s + (sec.lanes || 1); }, 0) || 1;
+          // 2. A4 横利用可能サイズ（@page margin: 2mm 想定 / 293mm × 206mm）
+          const PAGE_W_MM = 293, PAGE_H_MM = 206;
+          const MM_TO_PX = 96 / 25.4;
+          const pageWpx = PAGE_W_MM * MM_TO_PX;
+          const pageHpx = PAGE_H_MM * MM_TO_PX;
+          // 3. ヘッダ + 時刻軸 + フッタの固定領域 ≒ 170px
+          const fixed = 170;
+          const availableY = pageHpx - fixed;
+          // 4. レーン高さを大きく設定
+          __origLaneH = LANE_H; __origBarH = BAR_H; __origBarTop = BAR_TOP;
+          LANE_H = Math.max(44, Math.floor(availableY / totalLanes));
+          BAR_H = Math.max(36, LANE_H - 8);
+          BAR_TOP = Math.max(2, Math.floor((LANE_H - BAR_H) / 2));
+          // 再描画
+          if (typeof render === 'function') render();
+        }
+        // 5. スケール適用（横方向のフィット用）
+        const PAGE_W_MM2 = 293, PAGE_H_MM2 = 206;
+        const MM_TO_PX2 = 96 / 25.4;
+        const pageWpx2 = PAGE_W_MM2 * MM_TO_PX2;
+        const pageHpx2 = PAGE_H_MM2 * MM_TO_PX2;
         const paperW = paper.scrollWidth;
         const paperH = paper.scrollHeight;
-        // 横は均一スケール、縦は別スケールで隙間を埋める（軽い縦伸び OK）
-        const sx = pageWpx / paperW;
-        const sy = pageHpx / paperH;
+        const sx = pageWpx2 / paperW;
+        const sy = pageHpx2 / paperH;
         paper.style.transformOrigin = 'top left';
-        // 横は等倍、縦は伸ばす。横が overflow しない範囲で
-        const safeSx = Math.min(sx, 1.5);
-        const safeSy = Math.min(sy, 2.0);
-        paper.style.transform = 'scaleX(' + safeSx + ') scaleY(' + safeSy + ')';
+        paper.style.transform = 'scaleX(' + sx + ') scaleY(' + sy + ')';
       });
       window.addEventListener('afterprint', function(){
         const paper = document.getElementById('tt-paper');
-        if (!paper) return;
-        if (__prevPaperStyle !== null) {
-          paper.setAttribute('style', __prevPaperStyle);
-          __prevPaperStyle = null;
-        } else {
-          paper.style.transform = '';
+        if (paper) {
+          if (__prevPaperStyle !== null) {
+            paper.setAttribute('style', __prevPaperStyle);
+            __prevPaperStyle = null;
+          } else {
+            paper.style.transform = '';
+          }
+        }
+        // レーン高さを戻す
+        if (__origLaneH !== null) {
+          LANE_H = __origLaneH;
+          BAR_H = __origBarH;
+          BAR_TOP = __origBarTop;
+          __origLaneH = null;
+          if (typeof render === 'function') render();
         }
       });
     }
