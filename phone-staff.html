@@ -219,12 +219,13 @@
     border-radius: 3px;
     border: 1px solid;
   }
-  .tour-date-label.setup    { color: #a8a8d8; border-color: rgba(168,168,216,0.5); background: rgba(168,168,216,0.10); }
-  .tour-date-label.rehearsal{ color: #b8d9b0; border-color: rgba(126,194,122,0.5); background: rgba(126,194,122,0.10); }
-  .tour-date-label.bagari   { color: #f0d8a0; border-color: rgba(230,200,112,0.5); background: rgba(230,200,112,0.10); }
-  .tour-date-label.gp       { color: #f5b06a; border-color: rgba(200,168,120,0.5);  background: rgba(200,168,120,0.10); }
-  .tour-date-label.show     { color: #f0a09c; border-color: rgba(224,122,95,0.6);  background: rgba(224,122,95,0.12); }
-  .tour-date-label.off      { color: #787878; border-color: rgba(120,120,120,0.45); background: rgba(120,120,120,0.08); }
+  /* R260: muted トーンに統一 */
+  .tour-date-label.setup    { color: #c8c4b0; border-color: rgba(184,168,128,0.5); background: rgba(184,168,128,0.10); }
+  .tour-date-label.rehearsal{ color: #c0c8b0; border-color: rgba(138,160,120,0.5); background: rgba(138,160,120,0.10); }
+  .tour-date-label.bagari   { color: #c8b8a0; border-color: rgba(176,138,94,0.5);  background: rgba(176,138,94,0.10); }
+  .tour-date-label.gp       { color: #c8b8a0; border-color: rgba(160,138,110,0.5); background: rgba(160,138,110,0.10); }
+  .tour-date-label.show     { color: #ccb4ba; border-color: rgba(176,122,134,0.6); background: rgba(176,122,134,0.12); }
+  .tour-date-label.off      { color: #888880; border-color: rgba(120,120,120,0.40); background: rgba(120,120,120,0.06); }
 
   /* ── 日付選択モーダル ───────── */
   .tour-date-modal {
@@ -1733,11 +1734,12 @@
     min-width: 0;
     box-sizing: border-box;
   }
-  .cal-event-pill.show  { background: rgba(224,122,95,0.30); color: #f5a89c; font-weight: 500; }
-  .cal-event-pill.rh    { background: rgba(126,194,122,0.22); color: #b8d9b0; }
-  .cal-event-pill.tek   { background: rgba(110,198,200,0.22); color: #a8dcde; }
-  .cal-event-pill.setup { background: rgba(184,149,88,0.32);  color: #e8c890; }
-  .cal-event-pill.stay  { background: rgba(168,168,160,0.10); color: #787878; font-weight: 500; }
+  /* R260: 書類向け muted 配色（pc-edit と統一） */
+  .cal-event-pill.show  { background: rgba(176,122,134,0.28); color: #e8d4d8; font-weight: 500; }
+  .cal-event-pill.rh    { background: rgba(138,160,120,0.22); color: #cad8c0; }
+  .cal-event-pill.tek   { background: rgba(108,138,160,0.22); color: #c8d2dc; }
+  .cal-event-pill.setup { background: rgba(184,168,128,0.24); color: #d8ccb0; }
+  .cal-event-pill.stay  { background: rgba(156,149,176,0.12); color: #a8a4b0; font-weight: 500; }
   /* R201: PC版D60と同じ "width: calc(100% + Npx)" 方式で連結。
      セル padding 3px + grid gap 1px = 4px の谷を、+8px で確実に跨ぐ
      R203: テキスト空の bar-mid/bar-end が height:2px に潰れる対策で min-height:12px */
