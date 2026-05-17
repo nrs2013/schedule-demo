@@ -4979,20 +4979,125 @@
   .tt-paper-footer .ev-time { color: #e8e6dc; font-feature-settings: 'tnum'; }
   .tt-paper-footer .ev-sep { color: #4a4a4a; padding: 0 4px; }
   .tt-paper-footer .ev-empty { font-size: 11px; color: #6e6c66; font-style: normal; }
-  /* 印刷時 */
+  /* R250+R251: A4 印刷 全面リライト（隙間ゼロ・洗練配色） */
   @media print {
-    @page { size: A4 landscape; margin: 6mm; }
-    body { background: white !important; }
+    @page { size: A4 landscape; margin: 2mm; }
+    html, body { background: white !important; margin: 0 !important; padding: 0 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
     body * { visibility: hidden; }
     .tt-paper, .tt-paper * { visibility: visible; }
-    .tt-paper { position: absolute; left: 0; top: 0; border: none; box-shadow: none; background: white !important; color: black !important; width: 100%; padding: 0; }
-    .tt-paper-header, .tt-time-row, .tt-sec-label, .tt-sec-body, .tt-bar, .tt-tick-line, .tt-tick-label, .tt-tick-sub, .tt-bar-text, .tt-time-corner { background: white !important; color: black !important; border-color: #888 !important; }
-    .tt-bar { background: #fff !important; border: 1px solid #555 !important; }
-    .tt-bar.color-pink { background: #fce4ee !important; border-color: #b66 !important; }
-    .tt-bar.color-amber { background: #fff3d4 !important; border-color: #b80 !important; }
-    .tt-bar.color-gray { background: #eee !important; }
-    .tt-bar.color-accent { background: #f0e0c0 !important; }
-    .tt-toolbar, .tt-help, .tab-bar, .tt-time-add, .tt-sec-lanes, .tt-zoom-group, .tt-bar-handle, .tt-legend, .tt-now-line { display: none !important; }
+    .tt-paper {
+      position: absolute !important;
+      left: 0 !important; top: 0 !important;
+      width: 293mm !important;  /* A4 landscape 297 - 2*2 margin */
+      max-width: 293mm !important;
+      min-height: 206mm !important;
+      background: white !important;
+      color: #111 !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      border: none !important;
+      box-shadow: none !important;
+      border-radius: 0 !important;
+      transform-origin: top left !important;
+      display: flex !important;
+      flex-direction: column !important;
+    }
+    /* === ヘッダー（B&W 洗練）=== */
+    .tt-paper-header {
+      background: white !important;
+      border: 1.5px solid #1a1a1a !important;
+      border-radius: 6px !important;
+      padding: 8px 16px !important;
+      margin-bottom: 3mm !important;
+      page-break-inside: avoid;
+      min-height: auto !important;
+      flex: 0 0 auto !important;
+    }
+    .tt-paper-header .h-lbl { color: #666 !important; letter-spacing: 0.14em !important; font-weight: 600 !important; }
+    .tt-paper-header .h-val { color: #111 !important; }
+    .tt-paper-header .h-val.title { color: #000 !important; font-weight: 700 !important; }
+    .tt-paper-header .h-val.date { color: #1a1a1a !important; font-weight: 700 !important; }
+    .tt-paper-header .h-val.phase { color: #333 !important; font-weight: 600 !important; }
+    /* === 時刻軸 === */
+    .tt-time-row { background: white !important; border-bottom: 1.5px solid #1a1a1a !important; }
+    .tt-time-corner { background: white !important; color: #111 !important; border-right: 1.5px solid #1a1a1a !important; font-weight: 700 !important; letter-spacing: 0.1em !important; }
+    .tt-tick-label { color: #111 !important; background: white !important; font-weight: 700 !important; font-size: 11px !important; font-feature-settings: 'tnum' !important; }
+    .tt-tick-sub { color: #555 !important; background: white !important; font-weight: 500 !important; font-size: 9px !important; font-feature-settings: 'tnum' !important; }
+    .tt-tick-sub-mini { color: #888 !important; background: white !important; font-weight: 500 !important; font-size: 8px !important; font-feature-settings: 'tnum' !important; }
+    .tt-tick-line { background: #1a1a1a !important; width: 0.5px !important; }
+    .tt-tick-line.first { background: #000 !important; }
+    .tt-tick-mini { background: #ddd !important; }
+    .tt-tick-mini.half { background: #999 !important; }
+    /* === セクション === */
+    .tt-sec-row { border-bottom: 0.5px solid #999 !important; }
+    .tt-sec-label {
+      background: white !important;
+      color: #111 !important;
+      border-right: 1.5px solid #1a1a1a !important;
+      font-weight: 700 !important;
+      padding: 8px 12px !important;
+      letter-spacing: 0.04em !important;
+    }
+    .tt-sec-body {
+      background: white !important;
+      background-image:
+        linear-gradient(to right, #1a1a1a 0.4px, transparent 0.4px),
+        linear-gradient(to right, #d8d8d8 0.3px, transparent 0.3px) !important;
+    }
+    /* === 単品バー：白＋細いダーク枠（重要度ごとに微差）=== */
+    .tt-bar { color: #111 !important; font-weight: 500 !important; border-radius: 4px !important; box-shadow: none !important; }
+    .tt-bar.color-white  { background: white !important; border: 1px solid #888 !important; color: #111 !important; }
+    .tt-bar.color-amber  { background: #f0f0ec !important; border: 1px solid #555 !important; color: #111 !important; }
+    .tt-bar.color-gray   { background: #e8e8e4 !important; border: 1px solid #666 !important; color: #111 !important; }
+    .tt-bar.color-accent { background: white !important; border: 1.5px dashed #555 !important; color: #111 !important; }
+    /* ピンク = 本番系 → 黒塗り＋白文字 で最強の強調 */
+    .tt-bar.color-pink {
+      background: #1a1a1a !important;
+      border: 1px solid #000 !important;
+      color: #ffffff !important;
+      font-weight: 600 !important;
+    }
+    .tt-bar.color-pink .tt-bar-text { color: #fff !important; }
+    /* === 縦串バー：太い黒枠＋白カード（参考 PDF の「Rehearsal」「OPEN 16:30〜」枠を踏襲）=== */
+    .tt-bar.span-bar {
+      background: white !important;
+      border: 2px solid #1a1a1a !important;
+      border-radius: 6px !important;
+      box-shadow: none !important;
+      opacity: 1 !important;
+    }
+    .tt-bar.span-bar .tt-bar-text {
+      background: transparent !important;
+      color: #111 !important;
+      border: none !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      padding: 4px 10px !important;
+    }
+    .tt-span-title { color: #000 !important; font-weight: 700 !important; letter-spacing: 0.06em !important; font-size: 12px !important; }
+    .tt-span-time { color: #333 !important; opacity: 1 !important; font-weight: 500 !important; }
+    /* === フッター === */
+    .tt-paper-footer {
+      background: white !important;
+      border: 1.5px solid #1a1a1a !important;
+      border-radius: 6px !important;
+      margin-top: 3mm !important;
+      padding: 6px 14px !important;
+      page-break-inside: avoid;
+    }
+    .tt-paper-footer::before { color: #555 !important; font-weight: 600 !important; }
+    .tt-paper-footer .ev-item { color: #111 !important; }
+    .tt-paper-footer .ev-name { color: #000 !important; font-weight: 700 !important; }
+    .tt-paper-footer .ev-time { color: #1a1a1a !important; font-weight: 500 !important; }
+    .tt-paper-footer .ev-sep { color: #888 !important; }
+    .tt-paper-footer .ev-empty { display: none !important; }
+    /* === 画面専用の要素は隠す === */
+    .tt-toolbar, .tt-help, .tab-bar, .tt-time-add, .tt-sec-lanes,
+    .tt-zoom-group, .tt-bar-handle, .tt-legend, .tt-now-line,
+    .tt-bar-ghost, .tt-hover-cursor, .tt-sec-add-row,
+    .master-date-bar, .pc-header, .tt-bar-corner { display: none !important; }
+    /* INFO や CALENDAR タブの中身も隠す */
+    .mode-content:not(#mode-timetable) { display: none !important; }
   }
   /* R245: ツールバー洗練 */
   .tt-toolbar {
@@ -5106,17 +5211,7 @@
     text-align: center;
     position: relative;
   }
-  /* R243: セクション名に左フチで部門色 */
-  .tt-sec-row[data-sec-id="sec-stage"] .tt-sec-label   { box-shadow: inset 4px 0 0 #d8a800; }
-  .tt-sec-row[data-sec-id="sec-light"] .tt-sec-label   { box-shadow: inset 4px 0 0 #ffd444; }
-  .tt-sec-row[data-sec-id="sec-video"] .tt-sec-label   { box-shadow: inset 4px 0 0 #3aa0e0; }
-  .tt-sec-row[data-sec-id="sec-pa"] .tt-sec-label      { box-shadow: inset 4px 0 0 #f5a828; }
-  .tt-sec-row[data-sec-id="sec-fx"] .tt-sec-label      { box-shadow: inset 4px 0 0 #ff588c; }
-  .tt-sec-row[data-sec-id="sec-power"] .tt-sec-label   { box-shadow: inset 4px 0 0 #b87b8f; }
-  .tt-sec-row[data-sec-id="sec-rec"] .tt-sec-label     { box-shadow: inset 4px 0 0 #7ed848; }
-  .tt-sec-row[data-sec-id="sec-cast"] .tt-sec-label    { box-shadow: inset 4px 0 0 #c8a878; }
-  .tt-sec-row[data-sec-id="sec-note"] .tt-sec-label    { box-shadow: inset 4px 0 0 #888780; }
-  .tt-sec-row[data-sec-id="sec-staff"] .tt-sec-label   { box-shadow: inset 4px 0 0 #b8a8d8; }
+  /* R251: 部門色マーカーは撤去（落ち着いた印象優先）*/
   .tt-sec-lanes {
     display: flex;
     align-items: center;
@@ -5202,12 +5297,12 @@
     box-shadow: 0 2px 6px rgba(0,0,0,0.4);
     z-index: 3;
   }
-  /* R241: カレンダーと色を統一・ビビッド化 */
-  .tt-bar.color-white  { background: #ffd444; border-color: #d8a800; color: #2a1a00; font-weight: 500; }
-  .tt-bar.color-pink   { background: #ff588c; border-color: #d83870; color: #3a0c1c; font-weight: 500; }
-  .tt-bar.color-amber  { background: #f5a828; border-color: #c88010; color: #2c1a06; font-weight: 500; }
-  .tt-bar.color-gray   { background: #7ed848; border-color: #5cb828; color: #0e2a00; font-weight: 500; }
-  .tt-bar.color-accent { background: #3aa0e0; border-color: #1c80c0; color: #001a3a; font-weight: 500; }
+  /* R251: 落ち着いた muted 大人配色 */
+  .tt-bar.color-white  { background: #d4c9a8; border-color: #b8ad8c; color: #3a2e10; font-weight: 500; }
+  .tt-bar.color-pink   { background: #c89098; border-color: #a07078; color: #3a1820; font-weight: 500; }
+  .tt-bar.color-amber  { background: #c8a078; border-color: #a88058; color: #3a2410; font-weight: 500; }
+  .tt-bar.color-gray   { background: #9aac98; border-color: #7c8c7a; color: #1e2c1c; font-weight: 500; }
+  .tt-bar.color-accent { background: #8a9eb4; border-color: #6c8094; color: #102030; font-weight: 500; }
   .tt-bar.selected {
     box-shadow: 0 0 0 2px #c8a878, 0 0 14px rgba(200,168,120,0.35);
     z-index: 4;
@@ -5318,11 +5413,11 @@
   }
   .tt-color-item:hover { filter: brightness(1.25); }
   .tt-color-item.is-current { border-color: #c8a878; }
-  .tt-color-item.color-white  { background: #ffd444; color: #2a1a00; border-color: #d8a800; font-weight: 500; }
-  .tt-color-item.color-pink   { background: #ff588c; color: #3a0c1c; border-color: #d83870; font-weight: 500; }
-  .tt-color-item.color-amber  { background: #f5a828; color: #2c1a06; border-color: #c88010; font-weight: 500; }
-  .tt-color-item.color-gray   { background: #7ed848; color: #0e2a00; border-color: #5cb828; font-weight: 500; }
-  .tt-color-item.color-accent { background: #3aa0e0; color: #001a3a; border-color: #1c80c0; font-weight: 500; }
+  .tt-color-item.color-white  { background: #d4c9a8; color: #3a2e10; border-color: #b8ad8c; font-weight: 500; }
+  .tt-color-item.color-pink   { background: #c89098; color: #3a1820; border-color: #a07078; font-weight: 500; }
+  .tt-color-item.color-amber  { background: #c8a078; color: #3a2410; border-color: #a88058; font-weight: 500; }
+  .tt-color-item.color-gray   { background: #9aac98; color: #1e2c1c; border-color: #7c8c7a; font-weight: 500; }
+  .tt-color-item.color-accent { background: #8a9eb4; color: #102030; border-color: #6c8094; font-weight: 500; }
   .tt-color-menu-sep {
     height: 1px;
     background: #4a4a4a;
@@ -5531,11 +5626,11 @@
     font-weight: 500;
     letter-spacing: 0.04em;
   }
-  .tt-legend-chip.color-white  { background: #ffd444; color: #2a1a00; }
-  .tt-legend-chip.color-pink   { background: #ff588c; color: #3a0c1c; }
-  .tt-legend-chip.color-amber  { background: #f5a828; color: #2c1a06; }
-  .tt-legend-chip.color-gray   { background: #7ed848; color: #0e2a00; }
-  .tt-legend-chip.color-accent { background: #3aa0e0; color: #001a3a; }
+  .tt-legend-chip.color-white  { background: #d4c9a8; color: #3a2e10; }
+  .tt-legend-chip.color-pink   { background: #c89098; color: #3a1820; }
+  .tt-legend-chip.color-amber  { background: #c8a078; color: #3a2410; }
+  .tt-legend-chip.color-gray   { background: #9aac98; color: #1e2c1c; }
+  .tt-legend-chip.color-accent { background: #8a9eb4; color: #102030; }
   /* R244: 今の時刻ライン（今日だけ表示） */
   .tt-now-line {
     position: absolute;
@@ -12036,13 +12131,14 @@ function show(id) {
     return Array.isArray(bar.spanSecIds) && bar.spanSecIds.length > 1 ? bar.spanSecIds : null;
   }
   function isVAll(bar){ return bar && bar.vAll === true; }
-  // 既存データ移行：spanSecIds 持ちバー → vAll: true へ変換
+  function isSpanBar(bar){ return isVAll(bar) || (getSpanSecIds(bar) !== null); }
+  // R252: vAll は撤去方針。既存の vAll バーは「全セクション貫通の spanSecIds」に変換
   function migrateVAll(tt){
-    if (!tt || !Array.isArray(tt.bars)) return;
+    if (!tt || !Array.isArray(tt.bars) || !Array.isArray(tt.sections)) return;
     tt.bars.forEach(function(b){
-      if (getSpanSecIds(b) && !b.vAll) {
-        b.vAll = true;
-        delete b.spanSecIds;
+      if (b.vAll === true) {
+        b.spanSecIds = tt.sections.map(function(s){ return s.id; });
+        delete b.vAll;
       }
     });
   }
@@ -12081,11 +12177,11 @@ function show(id) {
   function getDefaultColorForSection(secId){
     return SECTION_DEFAULT_COLOR[secId] || 'white';
   }
-  /* R249: 重なり判定（縦串は無視） */
+  /* R249→R252: 重なり判定（縦串バーは無視） */
   function overlapsOther(tt, secId, lane, st, et, ignoreBarId){
     return tt.bars.some(function(b){
       if (b.id === ignoreBarId) return false;
-      if (b.vAll) return false;
+      if (getSpanSecIds(b)) return false; // 縦串バーは無視
       if (b.secId !== secId) return false;
       if ((b.lane||0) !== (lane||0)) return false;
       return !(b.end <= st || b.start >= et);
@@ -12094,7 +12190,7 @@ function show(id) {
   /* R249: 重ならない範囲に縮める（end の方を縮めるか、start を進める） */
   function fitNonOverlap(tt, secId, lane, st, et, ignoreBarId){
     const others = tt.bars
-      .filter(function(b){ return !b.vAll && b.secId === secId && (b.lane||0) === (lane||0) && b.id !== ignoreBarId; })
+      .filter(function(b){ return !getSpanSecIds(b) && b.secId === secId && (b.lane||0) === (lane||0) && b.id !== ignoreBarId; })
       .sort(function(a,b){ return a.start - b.start; });
     // 後方の最寄りバーで et を制限
     const next = others.find(function(b){ return b.start >= st && b.start < et; });
@@ -12144,39 +12240,32 @@ function show(id) {
   }
 
   function renderSpanBars(tt, gridEl){
-    // R238g: vAll フラグ方式の縦串バーを描画
+    // R252: spanSecIds 方式の部分縦串バー描画
     var ov = gridEl.querySelector('.tt-span-overlay');
     if (ov) ov.remove();
     const newOv = document.createElement('div');
     newOv.className = 'tt-span-overlay';
-    const timeRow = gridEl.querySelector('.tt-time-row');
-    const addRow = gridEl.querySelector('.tt-sec-add-row');
-    const secRows = gridEl.querySelectorAll('.tt-sec-row');
-    const lastSec = secRows.length > 0 ? secRows[secRows.length - 1] : null;
-    if (!timeRow) return;
-    const topY = timeRow.offsetTop + timeRow.offsetHeight;
-    let bottomY;
-    if (lastSec) {
-      bottomY = lastSec.offsetTop + lastSec.offsetHeight;
-    } else if (addRow) {
-      bottomY = addRow.offsetTop;
-    } else {
-      bottomY = gridEl.offsetHeight;
-    }
-    const height = Math.max(40, bottomY - topY);
-    newOv.style.cssText = 'position:absolute; left:' + LABEL_W + 'px; top:' + topY + 'px; height:' + height + 'px; right:' + ADD_W + 'px; pointer-events:none; z-index:6;';
-    tt.bars.filter(function(b){ return isVAll(b); }).forEach(function(bar){
-      const left = timeToPixel(bar.start, tt);
-      const width = Math.max(SLOT_W(), timeToPixel(bar.end, tt) - left);
+    newOv.style.cssText = 'position:absolute; left:0; top:0; right:0; bottom:0; pointer-events:none; z-index:6;';
+
+    tt.bars.filter(function(b){ return getSpanSecIds(b); }).forEach(function(bar){
+      const spanIds = bar.spanSecIds;
+      const rows = spanIds.map(function(sid){ return gridEl.querySelector('[data-sec-id="' + sid + '"]'); }).filter(function(r){ return r; });
+      if (rows.length === 0) return;
+      const tops = rows.map(function(r){ return r.offsetTop; });
+      const bots = rows.map(function(r){ return r.offsetTop + r.offsetHeight; });
+      const topY = Math.min.apply(null, tops);
+      const botY = Math.max.apply(null, bots);
+      const height = botY - topY;
+      const leftPx = LABEL_W + timeToPixel(bar.start, tt);
+      const widthPx = Math.max(SLOT_W(), timeToPixel(bar.end, tt) - timeToPixel(bar.start, tt));
       const color = bar.color || 'pink';
       const el = document.createElement('div');
       el.className = 'tt-bar span-bar color-' + color + (bar.id === selectedBarId ? ' selected' : '');
       el.setAttribute('data-bar-id', bar.id);
-      el.style.cssText = 'left:' + left + 'px; width:' + width + 'px; top:0; height:' + height + 'px; pointer-events:auto;';
-      // R248: 縦串バーには時刻自動表示（タイトル＋時刻範囲）
+      el.style.cssText = 'position:absolute; left:' + leftPx + 'px; top:' + topY + 'px; width:' + widthPx + 'px; height:' + height + 'px; pointer-events:auto;';
       const timeLabel = fmtTimeFromHour(bar.start) + '〜' + fmtTimeFromHour(bar.end);
       const title = (bar.text || '').trim();
-      el.title = (title || '(無題)') + '  ' + timeLabel;
+      el.title = (title || '(無題)') + '  ' + timeLabel + '  ／ ' + spanIds.length + ' セクション';
       el.innerHTML = '<div class="tt-bar-handle l"></div>' +
         '<div class="tt-bar-text">' +
           (title ? '<span class="tt-span-title">' + escapeHtml(title) + '</span>' : '<span class="tt-span-title-empty">無題</span>') +
@@ -12263,6 +12352,7 @@ function show(id) {
       let curEnd = startTime;
       let isDragging = false;
       let isSpanning = false;  // R247: 縦串作成中フラグ
+      let spanSecIds = [sec.id]; // R252: 通ったセクション群（部分縦串用）
       const startSecBodyRect = body.getBoundingClientRect();
       const gridEl = document.getElementById('tt-grid');
       const ghost = document.createElement('div');
@@ -12283,33 +12373,52 @@ function show(id) {
         const left = timeToPixel(st, tt);
         const width = Math.max(SLOT_W(), timeToPixel(et, tt) - left);
 
-        // R247: 縦串検知：マウスが開始セクションの外（上 or 下）に LANE_H 以上はみ出したら縦串扱い
+        // R252: 縦串検知：通ったセクションだけを span に追加
         const mouseY = ev.clientY;
         const wasSpanning = isSpanning;
-        if (mouseY < startSecBodyRect.top - LANE_H * 0.5 || mouseY > startSecBodyRect.bottom + LANE_H * 0.5) {
-          isSpanning = true;
-        } else if (mouseY >= startSecBodyRect.top - LANE_H * 0.1 && mouseY <= startSecBodyRect.bottom + LANE_H * 0.1) {
-          isSpanning = false;
-        }
+        // 通っているセクション群を計算
+        const secRows = gridEl.querySelectorAll('[data-sec-id]');
+        const passedSecIds = [];
+        const startTop = startSecBodyRect.top;
+        const startBot = startSecBodyRect.bottom;
+        const mTop = Math.min(startTop, mouseY);
+        const mBot = Math.max(startBot, mouseY);
+        secRows.forEach(function(row){
+          const rId = row.getAttribute('data-sec-id');
+          const r = row.getBoundingClientRect();
+          // 重なり判定：行の中央が範囲内なら通った扱い
+          const rMid = (r.top + r.bottom) / 2;
+          if (rMid >= mTop - LANE_H * 0.2 && rMid <= mBot + LANE_H * 0.2) {
+            passedSecIds.push(rId);
+          }
+        });
+        // 必ず開始セクションは含む
+        if (passedSecIds.indexOf(sec.id) === -1) passedSecIds.push(sec.id);
+        spanSecIds = passedSecIds;
+        isSpanning = passedSecIds.length >= 2;
 
         if (isSpanning) {
-          // ghost を gridEl に移して縦に全セクション分伸ばす
+          // ghost を gridEl に移して、通ったセクションだけ縦に伸ばす
           if (!ghostInGrid) {
             body.removeChild(ghost);
             gridEl.appendChild(ghost);
             ghostInGrid = true;
             ghost.classList.add('span');
           }
-          const timeRow = gridEl.querySelector('.tt-time-row');
-          const lastSec = gridEl.querySelectorAll('.tt-sec-row');
-          const tTop = timeRow ? (timeRow.offsetTop + timeRow.offsetHeight) : 0;
-          const lastEl = lastSec.length ? lastSec[lastSec.length - 1] : null;
-          const bBottom = lastEl ? (lastEl.offsetTop + lastEl.offsetHeight) : gridEl.offsetHeight;
+          // 通った範囲の top/bottom を計算
+          let topMin = Infinity, botMax = 0;
+          spanSecIds.forEach(function(sid){
+            const r = gridEl.querySelector('[data-sec-id="' + sid + '"]');
+            if (r) {
+              topMin = Math.min(topMin, r.offsetTop);
+              botMax = Math.max(botMax, r.offsetTop + r.offsetHeight);
+            }
+          });
           ghost.style.left = (LABEL_W + left) + 'px';
-          ghost.style.top = tTop + 'px';
+          ghost.style.top = topMin + 'px';
           ghost.style.width = width + 'px';
-          ghost.style.height = (bBottom - tTop) + 'px';
-          ghost.textContent = '🎯 縦串バー  ' + fmtTimeFromHour(st) + ' 〜 ' + fmtTimeFromHour(et);
+          ghost.style.height = (botMax - topMin) + 'px';
+          ghost.textContent = '🎯 ' + spanSecIds.length + ' セクション貫通  ' + fmtTimeFromHour(st) + ' 〜 ' + fmtTimeFromHour(et);
         } else {
           // 単独セクション内のゴースト表示
           if (ghostInGrid) {
@@ -12347,10 +12456,13 @@ function show(id) {
         const newBar = {
           id: genId(), secId: sec.id, lane: lane,
           start: st, end: et, text: '',
-          // R249: セクション既定色を使用（縦串は常にピンク）
-          color: isSpanning ? 'pink' : getDefaultColorForSection(sec.id),
-          vAll: isSpanning  // R247: 縦串なら true
+          // R252: 縦串はピンク、単品はセクション色
+          color: isSpanning ? 'pink' : getDefaultColorForSection(sec.id)
         };
+        // R252: 部分縦串：通ったセクション群を保存（2 以上の場合のみ）
+        if (isSpanning && spanSecIds.length >= 2) {
+          newBar.spanSecIds = spanSecIds.slice();
+        }
         tt.bars.push(newBar);
         selectedBarId = newBar.id;
         saveToStorage();
@@ -12406,7 +12518,7 @@ function show(id) {
         // R249: 縦串以外は他バーと重ならないようにする
         let targetLane = bar.lane || 0;
         if (sec) targetLane = Math.max(0, Math.min(sec.lanes - 1, initLane + Math.round(dy / LANE_H)));
-        const isOverlap = !bar.vAll && overlapsOther(tt, bar.secId, targetLane, newStart, newEnd, bar.id);
+        const isOverlap = !getSpanSecIds(bar) && overlapsOther(tt, bar.secId, targetLane, newStart, newEnd, bar.id);
         if (newStart >= tt.timeStart && newEnd <= tt.timeEnd && !isOverlap) {
           bar.start = newStart;
           bar.end = newEnd;
@@ -12466,12 +12578,12 @@ function show(id) {
           // R249: 縦串以外は他バーと重ならないように
           if (side === 'l') {
             if (t < bar.end - 0.24 && t >= tt.timeStart) {
-              const isOk = bar.vAll || !overlapsOther(tt, bar.secId, bar.lane||0, t, bar.end, bar.id);
+              const isOk = getSpanSecIds(bar) || !overlapsOther(tt, bar.secId, bar.lane||0, t, bar.end, bar.id);
               if (isOk) bar.start = t;
             }
           } else {
             if (t > bar.start + 0.24 && t <= tt.timeEnd) {
-              const isOk = bar.vAll || !overlapsOther(tt, bar.secId, bar.lane||0, bar.start, t, bar.id);
+              const isOk = getSpanSecIds(bar) || !overlapsOther(tt, bar.secId, bar.lane||0, bar.start, t, bar.id);
               if (isOk) bar.end = t;
             }
           }
@@ -12527,14 +12639,25 @@ function show(id) {
     const sep = document.createElement('div');
     sep.className = 'tt-color-menu-sep';
     menu.appendChild(sep);
-    // 全セクション貫通トグル
+    // R252: 縦串トグル（部分縦串と単品を切り替え）
     const vToggle = document.createElement('div');
-    vToggle.className = 'tt-color-item' + (bar.vAll ? ' is-current' : '');
+    const isSpan = !!getSpanSecIds(bar);
+    vToggle.className = 'tt-color-item' + (isSpan ? ' is-current' : '');
     vToggle.style.cssText = 'background:rgba(184,123,143,0.18); color:#f5d4dc; border-color:#b87b8f; margin-bottom:3px;';
-    vToggle.textContent = (bar.vAll ? '✓ ' : '⇅ ') + '全セクション貫通';
+    vToggle.textContent = isSpan ? '✓ 縦串バーをやめる（単品化）' : '⇅ 全セクション貫通にする';
     vToggle.addEventListener('click', function(){
-      bar.vAll = !bar.vAll;
-      if (bar.vAll && bar.color === 'white') bar.color = 'pink';
+      const dk = getCurrentDateKey();
+      const ttCur = getTimetableForDate(dk);
+      if (!ttCur) return;
+      if (isSpan) {
+        // 単品化：今のセクション、レーン 0 に戻す
+        delete bar.spanSecIds;
+        bar.lane = 0;
+      } else {
+        // 全セクションを spanSecIds に
+        bar.spanSecIds = ttCur.sections.map(function(s){ return s.id; });
+        if (bar.color === 'white') bar.color = 'pink';
+      }
       menu.remove();
       saveToStorage();
       render();
@@ -12913,6 +13036,42 @@ function show(id) {
       const el = document.getElementById(c.id);
       if (el && !el.__bound) { el.addEventListener('click', c.fn); el.__bound = true; }
     });
+    // R250: 印刷直前に A4 ピッタリのスケール計算（1度だけ登録）
+    if (!window.__ttPrintHookBound) {
+      window.__ttPrintHookBound = true;
+      var __prevPaperStyle = null;
+      window.addEventListener('beforeprint', function(){
+        const paper = document.getElementById('tt-paper');
+        if (!paper) return;
+        __prevPaperStyle = paper.getAttribute('style') || '';
+        // R251: A4 landscape ピッタリ＝隙間ゼロ。非均一スケールで上下左右ぴったり
+        // @page margin: 2mm を設定済み → ページ内 293mm × 206mm
+        const PAGE_W_MM = 293, PAGE_H_MM = 206;
+        const MM_TO_PX = 96 / 25.4;
+        const pageWpx = PAGE_W_MM * MM_TO_PX;
+        const pageHpx = PAGE_H_MM * MM_TO_PX;
+        const paperW = paper.scrollWidth;
+        const paperH = paper.scrollHeight;
+        // 横は均一スケール、縦は別スケールで隙間を埋める（軽い縦伸び OK）
+        const sx = pageWpx / paperW;
+        const sy = pageHpx / paperH;
+        paper.style.transformOrigin = 'top left';
+        // 横は等倍、縦は伸ばす。横が overflow しない範囲で
+        const safeSx = Math.min(sx, 1.5);
+        const safeSy = Math.min(sy, 2.0);
+        paper.style.transform = 'scaleX(' + safeSx + ') scaleY(' + safeSy + ')';
+      });
+      window.addEventListener('afterprint', function(){
+        const paper = document.getElementById('tt-paper');
+        if (!paper) return;
+        if (__prevPaperStyle !== null) {
+          paper.setAttribute('style', __prevPaperStyle);
+          __prevPaperStyle = null;
+        } else {
+          paper.style.transform = '';
+        }
+      });
+    }
     // R240: 「詳しい操作 ▾」展開トグル
     const helpToggle = document.querySelector('.tt-help-toggle');
     if (helpToggle && !helpToggle.__bound) {
@@ -13004,7 +13163,7 @@ function show(id) {
         if (ns < tt.timeStart) ns = tt.timeStart;
         if (ns + dur > tt.timeEnd) ns = tt.timeEnd - dur;
         // R249: 縦串以外は重なり防止
-        const isOverlap = !bar.vAll && overlapsOther(tt, bar.secId, bar.lane||0, ns, ns + dur, bar.id);
+        const isOverlap = !getSpanSecIds(bar) && overlapsOther(tt, bar.secId, bar.lane||0, ns, ns + dur, bar.id);
         if (!isOverlap) {
           bar.start = ns;
           bar.end = ns + dur;
