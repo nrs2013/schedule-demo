@@ -5141,9 +5141,38 @@
   }
   .tt-btn:hover { background: #292929; border-color: #c8a878; color: #f0e0c0; }
   .tt-btn:active { background: #353535; }
-  .tt-btn:disabled { opacity: 0.35; cursor: not-allowed; }
-  .tt-btn.primary { background: #c8a878; color: #1a1a1a; border-color: #c8a878; font-weight: 600; }
-  .tt-btn.primary:hover { background: #d4b88a; color: #1a1a1a; }
+  .tt-btn:disabled { opacity: 0.35; cursor: not-allowed; filter: saturate(0.4); }
+  .tt-btn.primary { background: linear-gradient(180deg, #ffe066 0%, #d8a800 100%); color: #2a1a00; border-color: #d8a800; font-weight: 600; }
+  .tt-btn.primary:hover { background: linear-gradient(180deg, #ffec80 0%, #e8b820 100%); color: #1a0f00; }
+  /* R263: カレンダーバー5色のパレットを借りた vivid アクションボタン（軽めグラデ） */
+  .tt-btn.act-time {
+    background: linear-gradient(180deg, #5fb5e8 0%, #2080c0 100%);
+    color: #fff; border-color: #1c80c0; font-weight: 600;
+    text-shadow: 0 1px 1px rgba(0,0,0,0.25);
+  }
+  .tt-btn.act-time:hover { background: linear-gradient(180deg, #7ac4ef 0%, #3aa0e0 100%); border-color: #3aa0e0; color: #fff; }
+  .tt-btn.act-copy {
+    background: linear-gradient(180deg, #95e860 0%, #5cb828 100%);
+    color: #0e2a00; border-color: #5cb828; font-weight: 600;
+  }
+  .tt-btn.act-copy:hover { background: linear-gradient(180deg, #a8ee78 0%, #6cc838 100%); border-color: #7ed848; color: #0e2a00; }
+  .tt-btn.act-copy:disabled { filter: saturate(0.3); opacity: 0.4; }
+  .tt-btn.act-danger {
+    background: linear-gradient(180deg, #ff7aa3 0%, #d83870 100%);
+    color: #fff; border-color: #c02860; font-weight: 600;
+    text-shadow: 0 1px 1px rgba(0,0,0,0.25);
+  }
+  .tt-btn.act-danger:hover { background: linear-gradient(180deg, #ff8eb3 0%, #e84880 100%); border-color: #ff588c; color: #fff; }
+  .tt-btn.act-primary {
+    background: linear-gradient(180deg, #ffc060 0%, #c88010 100%);
+    color: #2a1a00; border-color: #c88010; font-weight: 600;
+    text-shadow: 0 1px 1px rgba(255,255,255,0.15);
+  }
+  .tt-btn.act-primary:hover { background: linear-gradient(180deg, #ffd280 0%, #e09020 100%); border-color: #f5a828; color: #2a1a00; }
+  /* zoom ボタン群もちょい vivid に */
+  .tt-zoom-group { border-color: #4a4a4a; }
+  .tt-zoom-btn:hover { background: linear-gradient(180deg, #3aa0e0 0%, #1c80c0 100%); color: #fff; }
+  .tt-zoom-btn.fit:hover { background: linear-gradient(180deg, #ffc060 0%, #c88010 100%); color: #2a1a00; }
   .tt-grid-wrap {
     background: #232323;
     border: 0.5px solid #353535;
@@ -5373,15 +5402,17 @@
   .tt-sec-add-cell {
     padding: 6px;
     font-size: 11px;
-    color: #c8a878;
-    background: #232323;
-    border-right: 0.5px solid #4a4a4a;
+    /* R263: vivid グリーンで「追加」を主張（控えめグラデ） */
+    color: #0e2a00;
+    background: linear-gradient(180deg, #95e860 0%, #5cb828 100%);
+    border-right: 0.5px solid #5cb828;
     text-align: center;
     cursor: pointer;
     user-select: none;
+    font-weight: 600;
     letter-spacing: 0.04em;
   }
-  .tt-sec-add-cell:hover { background: #2a2a2a; color: #d4b88a; }
+  .tt-sec-add-cell:hover { background: linear-gradient(180deg, #a8ee78 0%, #6cc838 100%); color: #0e2a00; border-right-color: #7ed848; filter: brightness(1.05); }
   .tt-bar-ghost {
     position: absolute;
     border-radius: 5px;
@@ -6088,17 +6119,17 @@
             <span class="tt-toolbar-date" id="tt-date-display">—</span>
           </div>
           <div class="tt-toolbar-actions">
-            <button class="tt-btn" id="tt-btn-time-start" type="button">開始時刻</button>
-            <button class="tt-btn" id="tt-btn-time-end" type="button">終了時刻</button>
+            <button class="tt-btn act-time" id="tt-btn-time-start" type="button">開始時刻</button>
+            <button class="tt-btn act-time" id="tt-btn-time-end" type="button">終了時刻</button>
             <div class="tt-zoom-group">
               <button class="tt-zoom-btn" id="tt-btn-zoom-out" type="button" title="縮小">−</button>
               <span class="tt-zoom-label" id="tt-zoom-label">FIT</span>
               <button class="tt-zoom-btn" id="tt-btn-zoom-in" type="button" title="拡大">+</button>
               <button class="tt-zoom-btn fit" id="tt-btn-zoom-fit" type="button" title="画面に合わせる">FIT</button>
             </div>
-            <button class="tt-btn" id="tt-btn-copy-prev" type="button" disabled>前日から複製</button>
-            <button class="tt-btn" id="tt-btn-reset-day" type="button" style="color:#d97070;">この日リセット</button>
-            <button class="tt-btn" id="tt-btn-print" type="button">📄 PDF 出力</button>
+            <button class="tt-btn act-copy" id="tt-btn-copy-prev" type="button" disabled>前日から複製</button>
+            <button class="tt-btn act-danger" id="tt-btn-reset-day" type="button">この日リセット</button>
+            <button class="tt-btn act-primary" id="tt-btn-print" type="button">📄 PDF 出力</button>
           </div>
         </div>
         <div class="tt-paper-stage" id="tt-paper-stage">
