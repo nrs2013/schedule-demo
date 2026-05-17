@@ -4874,17 +4874,19 @@
     min-height: 480px;
   }
   .tt-paper .tt-grid { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
-  /* 紙の中ヘッダ */
+  /* R245: 紙の中ヘッダ：横長で押し出し */
   .tt-paper-header {
-    flex: 0 0 64px;
+    flex: 0 0 auto;
+    min-height: 70px;
     display: grid;
-    grid-template-columns: minmax(0, 2.4fr) minmax(0, 1.1fr) minmax(0, 1.6fr) minmax(0, 1.4fr);
-    gap: 8px;
-    padding: 8px 12px;
-    background: linear-gradient(180deg, #232323 0%, #1d1d1d 100%);
-    border: 0.5px solid #4a4a4a;
-    border-radius: 6px;
-    margin-bottom: 6px;
+    grid-template-columns: minmax(0, 2.4fr) minmax(0, 1.3fr) minmax(0, 1.4fr) minmax(0, 1.2fr);
+    gap: 14px;
+    padding: 12px 18px;
+    background: linear-gradient(180deg, #242424 0%, #1c1c1c 100%);
+    border: 0.5px solid #3a3a3a;
+    border-left: 4px solid #c8a878;
+    border-radius: 8px;
+    margin-bottom: 10px;
     align-items: center;
     box-sizing: border-box;
     overflow: hidden;
@@ -4898,30 +4900,37 @@
   }
   .tt-paper-header .h-lbl {
     font-size: 10px;
-    color: #6e6c66;
-    letter-spacing: 0.08em;
-    margin-bottom: 2px;
-    font-weight: 500;
+    color: #8a8780;
+    letter-spacing: 0.14em;
+    margin-bottom: 4px;
+    font-weight: 600;
+    text-transform: uppercase;
   }
   .tt-paper-header .h-val {
-    font-size: 16px;
+    font-size: 17px;
     font-weight: 500;
     color: #e8e6dc;
     overflow: hidden;
     text-overflow: ellipsis;
+    line-height: 1.25;
   }
   .tt-paper-header .h-val.title {
-    font-size: 18px;
-    color: #e8e6dc;
+    font-size: 22px;
+    font-weight: 600;
+    color: #f0e8d4;
+    letter-spacing: 0.02em;
   }
   .tt-paper-header .h-val.date {
-    font-size: 18px;
+    font-size: 24px;
+    font-weight: 600;
     color: #c8a878;
     font-feature-settings: 'tnum';
+    letter-spacing: 0.02em;
   }
   .tt-paper-header .h-val.phase {
-    font-size: 13px;
-    color: #c8a878;
+    font-size: 15px;
+    color: #d4b88a;
+    font-weight: 500;
   }
   .tt-paper-header .h-val.reg {
     font-size: 11px;
@@ -4983,32 +4992,50 @@
     .tt-bar.color-amber { background: #fff3d4 !important; border-color: #b80 !important; }
     .tt-bar.color-gray { background: #eee !important; }
     .tt-bar.color-accent { background: #f0e0c0 !important; }
-    .tt-toolbar, .tt-help, .tab-bar, .tt-time-add, .tt-sec-lanes, .tt-zoom-group, .tt-bar-handle { display: none !important; }
+    .tt-toolbar, .tt-help, .tab-bar, .tt-time-add, .tt-sec-lanes, .tt-zoom-group, .tt-bar-handle, .tt-legend, .tt-now-line { display: none !important; }
   }
+  /* R245: ツールバー洗練 */
   .tt-toolbar {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 12px;
+    margin-bottom: 14px;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 10px;
+    padding: 6px 0;
   }
-  .tt-toolbar-info { display: flex; align-items: center; gap: 12px; }
-  .tt-toolbar-label { font-size: 13px; color: #c8a878; font-weight: 500; letter-spacing: 0.04em; }
-  .tt-toolbar-date { font-size: 14px; color: #e8e6dc; font-weight: 500; }
-  .tt-toolbar-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+  .tt-toolbar-info { display: flex; align-items: baseline; gap: 14px; }
+  .tt-toolbar-label {
+    font-size: 11px;
+    color: #c8a878;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+  .tt-toolbar-date {
+    font-size: 16px;
+    color: #f0e8d4;
+    font-weight: 600;
+    font-feature-settings: 'tnum';
+    letter-spacing: 0.02em;
+  }
+  .tt-toolbar-actions { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
   .tt-btn {
     font-size: 12px;
-    padding: 6px 12px;
-    background: #232323;
-    color: #e8e6dc;
+    padding: 7px 13px;
+    background: #1f1f1f;
+    color: #d8d4c4;
     border: 0.5px solid #353535;
     border-radius: 6px;
     cursor: pointer;
+    transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+    font-weight: 500;
+    letter-spacing: 0.02em;
   }
-  .tt-btn:hover { background: #2a2a2a; border-color: #c8a878; color: #c8a878; }
-  .tt-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-  .tt-btn.primary { background: #c8a878; color: #1a1a1a; border-color: #c8a878; font-weight: 500; }
+  .tt-btn:hover { background: #292929; border-color: #c8a878; color: #f0e0c0; }
+  .tt-btn:active { background: #353535; }
+  .tt-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+  .tt-btn.primary { background: #c8a878; color: #1a1a1a; border-color: #c8a878; font-weight: 600; }
   .tt-btn.primary:hover { background: #d4b88a; color: #1a1a1a; }
   .tt-grid-wrap {
     background: #232323;
@@ -5067,7 +5094,7 @@
   .tt-sec-label {
     background: #161616;
     border-right: 1px solid #2c2c2c;
-    padding: 8px 6px;
+    padding: 8px 6px 8px 10px;
     font-size: 13px;
     font-weight: 500;
     color: #e8e6dc;
@@ -5079,6 +5106,17 @@
     text-align: center;
     position: relative;
   }
+  /* R243: セクション名に左フチで部門色 */
+  .tt-sec-row[data-sec-id="sec-stage"] .tt-sec-label   { box-shadow: inset 4px 0 0 #d8a800; }
+  .tt-sec-row[data-sec-id="sec-light"] .tt-sec-label   { box-shadow: inset 4px 0 0 #ffd444; }
+  .tt-sec-row[data-sec-id="sec-video"] .tt-sec-label   { box-shadow: inset 4px 0 0 #3aa0e0; }
+  .tt-sec-row[data-sec-id="sec-pa"] .tt-sec-label      { box-shadow: inset 4px 0 0 #f5a828; }
+  .tt-sec-row[data-sec-id="sec-fx"] .tt-sec-label      { box-shadow: inset 4px 0 0 #ff588c; }
+  .tt-sec-row[data-sec-id="sec-power"] .tt-sec-label   { box-shadow: inset 4px 0 0 #b87b8f; }
+  .tt-sec-row[data-sec-id="sec-rec"] .tt-sec-label     { box-shadow: inset 4px 0 0 #7ed848; }
+  .tt-sec-row[data-sec-id="sec-cast"] .tt-sec-label    { box-shadow: inset 4px 0 0 #c8a878; }
+  .tt-sec-row[data-sec-id="sec-note"] .tt-sec-label    { box-shadow: inset 4px 0 0 #888780; }
+  .tt-sec-row[data-sec-id="sec-staff"] .tt-sec-label   { box-shadow: inset 4px 0 0 #b8a8d8; }
   .tt-sec-lanes {
     display: flex;
     align-items: center;
@@ -5108,7 +5146,27 @@
     position: relative;
     background-image: linear-gradient(to right, #353535 0.5px, transparent 0.5px);
     background-size: var(--tt-cell-w, 60px) 100%;
+    transition: background-color 0.15s ease;
   }
+  .tt-sec-row:nth-child(even) .tt-sec-body { background-color: rgba(255,255,255,0.012); }
+  .tt-sec-row:nth-child(even) .tt-sec-label { background: #1a1a1a; }
+  .tt-sec-body:hover { background-color: rgba(200,168,120,0.04); }
+  .tt-sec-body:empty::after,
+  .tt-sec-body:not(:has(.tt-bar))::after {
+    content: 'ここをドラッグで予定を追加';
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #4a4847;
+    font-size: 11px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+  .tt-sec-body:hover:empty::after,
+  .tt-sec-body:not(:has(.tt-bar)):hover::after { opacity: 1; }
   .tt-phase1-note {
     margin-top: 12px;
     padding: 10px 14px;
@@ -5124,8 +5182,8 @@
   .tt-sec-body { cursor: crosshair; user-select: none; }
   .tt-bar {
     position: absolute;
-    border-radius: 4px;
-    padding: 0 6px;
+    border-radius: 5px;
+    padding: 0 8px;
     display: flex;
     align-items: center;
     font-size: 12px;
@@ -5137,6 +5195,12 @@
     overflow: hidden;
     box-sizing: border-box;
     user-select: none;
+    transition: filter 0.12s ease, box-shadow 0.12s ease;
+  }
+  .tt-bar:not(.span-bar):hover {
+    filter: brightness(1.08);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+    z-index: 3;
   }
   /* R241: カレンダーと色を統一・ビビッド化 */
   .tt-bar.color-white  { background: #ffd444; border-color: #d8a800; color: #2a1a00; font-weight: 500; }
@@ -5144,7 +5208,13 @@
   .tt-bar.color-amber  { background: #f5a828; border-color: #c88010; color: #2c1a06; font-weight: 500; }
   .tt-bar.color-gray   { background: #7ed848; border-color: #5cb828; color: #0e2a00; font-weight: 500; }
   .tt-bar.color-accent { background: #3aa0e0; border-color: #1c80c0; color: #001a3a; font-weight: 500; }
-  .tt-bar.selected { box-shadow: 0 0 0 2px #c8a878; z-index: 2; }
+  .tt-bar.selected {
+    box-shadow: 0 0 0 2px #c8a878, 0 0 14px rgba(200,168,120,0.35);
+    z-index: 4;
+    filter: brightness(1.06);
+  }
+  .tt-bar-time { font-weight: 600; opacity: 0.78; font-feature-settings: 'tnum'; margin-right: 2px; }
+  .tt-bar-dur { font-weight: 500; opacity: 0.7; font-size: 10px; }
   .tt-bar-text {
     flex: 1;
     overflow: hidden;
@@ -5187,12 +5257,30 @@
   .tt-sec-add-cell:hover { background: #2a2a2a; color: #d4b88a; }
   .tt-bar-ghost {
     position: absolute;
-    border-radius: 4px;
-    background: rgba(200,168,120,0.25);
-    border: 1.5px dashed #c8a878;
+    border-radius: 5px;
+    background: rgba(200,168,120,0.30);
+    border: 2px dashed #d4b88a;
     pointer-events: none;
-    z-index: 3;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: #d4b88a;
+    font-weight: 500;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.6);
   }
+  /* R247: 縦串ゴースト */
+  .tt-bar-ghost.span {
+    background: rgba(255,88,140,0.18);
+    border: 2px dashed #ff588c;
+    color: #ffd0dd;
+    font-size: 13px;
+    align-items: flex-start;
+    padding-top: 8px;
+    z-index: 8;
+  }
+  .tt-bar-handle:hover { background: rgba(255,255,255,0.18); }
   .tt-help {
     margin-top: 10px;
     font-size: 12px;
@@ -5307,12 +5395,39 @@
   .tt-bar.span-bar.color-gray   { --span-edge: #7ed848; background: rgba(126,216,72,0.10) !important; }
   .tt-bar.span-bar.color-accent { --span-edge: #3aa0e0; background: rgba(58,160,224,0.10) !important; }
   .tt-bar.span-bar .tt-bar-text {
-    background: rgba(20,20,20,0.85);
-    padding: 2px 6px;
-    border-radius: 3px;
+    background: rgba(20,20,20,0.92);
+    padding: 6px 12px;
+    border-radius: 5px;
     color: #f0e8d8;
     font-weight: 500;
     pointer-events: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    align-items: center;
+    line-height: 1.2;
+    white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+  }
+  /* R248: 縦串バー内のタイトル＋時刻表示 */
+  .tt-span-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #f5d4dc;
+    letter-spacing: 0.04em;
+  }
+  .tt-span-title-empty {
+    font-size: 12px;
+    color: #8e8a78;
+    font-style: italic;
+  }
+  .tt-span-time {
+    font-size: 11px;
+    font-weight: 500;
+    color: #ffd4dc;
+    opacity: 0.85;
+    font-feature-settings: 'tnum';
+    letter-spacing: 0.04em;
   }
   .tt-bar.span-bar.selected {
     box-shadow: inset 3px 0 0 #c8a878, inset -3px 0 0 #c8a878, 0 0 0 2px #c8a878;
@@ -5365,31 +5480,124 @@
   .tt-tick-label.last { transform: translateX(-100%); padding-right: 0; }
   .tt-tick-sub {
     position: absolute;
-    top: 21px;
+    top: 19px;
     transform: translateX(-50%);
-    font-size: 9px;
-    color: #b0a890;
+    font-size: 10px;
+    color: #d4c8a8;
     pointer-events: none;
     letter-spacing: 0;
-    font-weight: 500;
+    font-weight: 600;
     background: #1a1a1a;
-    padding: 0 1px;
+    padding: 0 2px;
     line-height: 1;
   }
   .tt-tick-sub-mini {
     position: absolute;
-    top: 22px;
+    top: 20px;
     transform: translateX(-50%);
-    font-size: 8px;
-    color: #666;
+    font-size: 9px;
+    color: #8e8a78;
     pointer-events: none;
     background: #1a1a1a;
     padding: 0 1px;
     line-height: 1;
+    font-weight: 500;
   }
-  /* CELL_W が狭い時はサブメモリ自動非表示（重なり防止） */
+  /* R244: 閾値下げて 15/30/45 を出来る限り表示 */
   .tt-time-axis.compact .tt-tick-sub-mini { display: none; }
   .tt-time-axis.ultra-compact .tt-tick-sub { display: none; }
+  /* R244: 色凡例 */
+  .tt-legend {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 10px;
+    margin: 0 0 10px;
+    padding: 8px 12px;
+    background: #161616;
+    border: 0.5px solid #2c2c2c;
+    border-radius: 6px;
+  }
+  .tt-legend-label {
+    font-size: 11px;
+    color: #6e6c66;
+    letter-spacing: 0.05em;
+    margin-right: 4px;
+  }
+  .tt-legend-chip {
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+  }
+  .tt-legend-chip.color-white  { background: #ffd444; color: #2a1a00; }
+  .tt-legend-chip.color-pink   { background: #ff588c; color: #3a0c1c; }
+  .tt-legend-chip.color-amber  { background: #f5a828; color: #2c1a06; }
+  .tt-legend-chip.color-gray   { background: #7ed848; color: #0e2a00; }
+  .tt-legend-chip.color-accent { background: #3aa0e0; color: #001a3a; }
+  /* R244: 今の時刻ライン（今日だけ表示） */
+  .tt-now-line {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #ff4060;
+    z-index: 6;
+    pointer-events: none;
+    box-shadow: 0 0 8px rgba(255,64,96,0.6);
+  }
+  .tt-now-line::before {
+    content: '今';
+    position: absolute;
+    top: 2px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #ff4060;
+    color: #fff;
+    font-size: 10px;
+    padding: 2px 5px;
+    border-radius: 3px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+    animation: tt-now-pulse 2s ease-in-out infinite;
+  }
+  @keyframes tt-now-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255,64,96,0.55); }
+    50%      { box-shadow: 0 0 0 6px rgba(255,64,96,0.0); }
+  }
+  /* R246: 新規バーの fade-in */
+  @keyframes tt-bar-in {
+    from { opacity: 0; transform: scale(0.96); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+  .tt-bar.normal { animation: tt-bar-in 0.18s ease-out; }
+  /* R246: マウス位置時刻インジケータ */
+  .tt-hover-cursor {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: rgba(200,168,120,0.4);
+    pointer-events: none;
+    z-index: 5;
+  }
+  .tt-hover-cursor::after {
+    content: attr(data-time);
+    position: absolute;
+    top: -22px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #c8a878;
+    color: #1a1a1a;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 1px 5px;
+    border-radius: 3px;
+    white-space: nowrap;
+    font-feature-settings: 'tnum';
+  }
   .tt-time-add {
     position: absolute;
     right: 0;
@@ -5690,8 +5898,16 @@
             </div>
             <button class="tt-btn" id="tt-btn-copy-prev" type="button" disabled>前日から複製</button>
             <button class="tt-btn" id="tt-btn-reset-day" type="button" style="color:#d97070;">この日リセット</button>
-            <button class="tt-btn" id="tt-btn-print" type="button" disabled>A4 印刷</button>
+            <button class="tt-btn" id="tt-btn-print" type="button">A4 印刷</button>
           </div>
+        </div>
+        <div class="tt-legend">
+          <span class="tt-legend-label">色の意味：</span>
+          <span class="tt-legend-chip color-pink">本番</span>
+          <span class="tt-legend-chip color-white">仕込み・作業</span>
+          <span class="tt-legend-chip color-amber">場当たり・PA</span>
+          <span class="tt-legend-chip color-gray">リハ</span>
+          <span class="tt-legend-chip color-accent">テクリハ</span>
         </div>
         <div class="tt-paper-stage" id="tt-paper-stage">
           <div class="tt-paper" id="tt-paper">
@@ -5709,7 +5925,10 @@
             <div>・バーの<strong style="color:#c8a878;">端をドラッグ</strong>で伸縮 ／ <strong style="color:#c8a878;">中央をドラッグ</strong>で移動</div>
             <div>・<strong style="color:#c8a878;">右クリック</strong>で色変更・削除メニュー</div>
             <div>・選択中のバーを <strong style="color:#c8a878;">Delete / Backspace</strong> で削除</div>
+            <div>・選択中のバーを <strong style="color:#c8a878;">←→ キー</strong>で 15 分ずつ移動（<strong style="color:#c8a878;">Shift+←→</strong> で 1 時間）</div>
+            <div>・選択中のバーを <strong style="color:#c8a878;">↑↓ キー</strong>でレーン移動（同一セクション内の上下）</div>
             <div>・セクション名は<strong style="color:#c8a878;">ダブルクリック</strong>で変更</div>
+            <div>・マウスを乗せると<strong style="color:#c8a878;">時刻インジケータ</strong>がリアルタイム表示</div>
           </div>
         </div>
       </div>
@@ -11827,9 +12046,63 @@ function show(id) {
       }
     });
   }
+  /* R249b: 既存バーの色をセクション既定色へ移行（1 度だけ） */
+  function migrateBarColors(tt){
+    if (!tt || tt._colorMigratedR249) return;
+    if (Array.isArray(tt.bars)) {
+      tt.bars.forEach(function(b){
+        if (b.vAll) return; // 縦串はそのまま
+        if (!b.color || b.color === 'white') {
+          b.color = (typeof getDefaultColorForSection === 'function')
+            ? getDefaultColorForSection(b.secId)
+            : (b.color || 'white');
+        }
+      });
+    }
+    tt._colorMigratedR249 = true;
+  }
 
   function genId(){
     return 'b_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,7);
+  }
+  /* R249: セクション別の既定色（バー新規作成時の自動色） */
+  const SECTION_DEFAULT_COLOR = {
+    'sec-stage': 'white',    // 仕込み（黄）
+    'sec-light': 'amber',    // 照明（オレンジ）
+    'sec-video': 'accent',   // 映像（青）
+    'sec-pa':    'amber',    // PA/MP（オレンジ）
+    'sec-fx':    'pink',     // 特効（ピンク）
+    'sec-power': 'gray',     // 電源（緑）
+    'sec-rec':   'accent',   // 収録/カメラ（青）
+    'sec-cast':  'pink',     // CAST（ピンク）
+    'sec-note':  'white',    // 備考（黄）
+    'sec-staff': 'gray'      // アルバイト（緑）
+  };
+  function getDefaultColorForSection(secId){
+    return SECTION_DEFAULT_COLOR[secId] || 'white';
+  }
+  /* R249: 重なり判定（縦串は無視） */
+  function overlapsOther(tt, secId, lane, st, et, ignoreBarId){
+    return tt.bars.some(function(b){
+      if (b.id === ignoreBarId) return false;
+      if (b.vAll) return false;
+      if (b.secId !== secId) return false;
+      if ((b.lane||0) !== (lane||0)) return false;
+      return !(b.end <= st || b.start >= et);
+    });
+  }
+  /* R249: 重ならない範囲に縮める（end の方を縮めるか、start を進める） */
+  function fitNonOverlap(tt, secId, lane, st, et, ignoreBarId){
+    const others = tt.bars
+      .filter(function(b){ return !b.vAll && b.secId === secId && (b.lane||0) === (lane||0) && b.id !== ignoreBarId; })
+      .sort(function(a,b){ return a.start - b.start; });
+    // 後方の最寄りバーで et を制限
+    const next = others.find(function(b){ return b.start >= st && b.start < et; });
+    if (next) et = next.start;
+    // 前方の最寄りバーで st を制限
+    const prev = others.slice().reverse().find(function(b){ return b.end <= et && b.end > st; });
+    if (prev) st = prev.end;
+    return { st: st, et: et };
   }
   function snapTime(t, start){
     const slot = Math.round((t - start) * SLOTS_PER_HOUR);
@@ -11857,7 +12130,12 @@ function show(id) {
       el.className = 'tt-bar normal color-' + color + (bar.id === selectedBarId ? ' selected' : '');
       el.setAttribute('data-bar-id', bar.id);
       el.style.cssText = 'left:' + left + 'px; width:' + width + 'px; top:' + top + 'px; height:' + BAR_H + 'px;';
-      el.innerHTML = '<div class="tt-bar-handle l"></div><div class="tt-bar-text">' + escapeHtml(bar.text || '') + '</div><div class="tt-bar-handle r"></div>' +
+      // R248: 単品バーは時刻表示なし。テキストのみ。tooltip にだけ時刻を入れる
+      const timeLabel = fmtTimeFromHour(bar.start) + '〜' + fmtTimeFromHour(bar.end);
+      el.title = (bar.text || '(無題)') + '  ' + timeLabel;
+      el.innerHTML = '<div class="tt-bar-handle l"></div>' +
+        '<div class="tt-bar-text">' + escapeHtml(bar.text || '') + '</div>' +
+        '<div class="tt-bar-handle r"></div>' +
         '<div class="tt-bar-corner tl"></div><div class="tt-bar-corner tr"></div>' +
         '<div class="tt-bar-corner bl"></div><div class="tt-bar-corner br"></div>';
       body.appendChild(el);
@@ -11895,7 +12173,16 @@ function show(id) {
       el.className = 'tt-bar span-bar color-' + color + (bar.id === selectedBarId ? ' selected' : '');
       el.setAttribute('data-bar-id', bar.id);
       el.style.cssText = 'left:' + left + 'px; width:' + width + 'px; top:0; height:' + height + 'px; pointer-events:auto;';
-      el.innerHTML = '<div class="tt-bar-handle l"></div><div class="tt-bar-text">' + escapeHtml(bar.text || '') + '</div><div class="tt-bar-handle r"></div>';
+      // R248: 縦串バーには時刻自動表示（タイトル＋時刻範囲）
+      const timeLabel = fmtTimeFromHour(bar.start) + '〜' + fmtTimeFromHour(bar.end);
+      const title = (bar.text || '').trim();
+      el.title = (title || '(無題)') + '  ' + timeLabel;
+      el.innerHTML = '<div class="tt-bar-handle l"></div>' +
+        '<div class="tt-bar-text">' +
+          (title ? '<span class="tt-span-title">' + escapeHtml(title) + '</span>' : '<span class="tt-span-title-empty">無題</span>') +
+          '<span class="tt-span-time">' + timeLabel + '</span>' +
+        '</div>' +
+        '<div class="tt-bar-handle r"></div>';
       newOv.appendChild(el);
       bindBarEvents(tt, bar, el, null);
     });
@@ -11942,6 +12229,28 @@ function show(id) {
   function bindSectionEvents(tt, sec, body){
     if (body.__bound) return;
     body.__bound = true;
+    // R246: マウスホバー時刻インジケータ
+    body.addEventListener('mousemove', function(e){
+      if (e.buttons) return; // ドラッグ中は表示しない
+      const scale = getPaperScale();
+      const rect = body.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / scale;
+      if (x < 0) return;
+      const t = snapTime(pixelToTime(x, tt), tt.timeStart);
+      const px = timeToPixel(t, tt);
+      let cur = body.__hoverCur;
+      if (!cur) {
+        cur = document.createElement('div');
+        cur.className = 'tt-hover-cursor';
+        body.appendChild(cur);
+        body.__hoverCur = cur;
+      }
+      cur.style.left = px + 'px';
+      cur.setAttribute('data-time', fmtTimeFromHour(t));
+    });
+    body.addEventListener('mouseleave', function(){
+      if (body.__hoverCur) { body.__hoverCur.remove(); body.__hoverCur = null; }
+    });
     body.addEventListener('mousedown', function(e){
       if (e.button !== 0) return;
       if (e.target.closest('.tt-bar')) return;
@@ -11952,12 +12261,15 @@ function show(id) {
       const startTime = snapTime(pixelToTime(startX, tt), tt.timeStart);
       const lane = Math.max(0, Math.min(sec.lanes - 1, Math.floor(startY / LANE_H)));
       let curEnd = startTime;
-      let curSecIds = [sec.id];
       let isDragging = false;
+      let isSpanning = false;  // R247: 縦串作成中フラグ
+      const startSecBodyRect = body.getBoundingClientRect();
+      const gridEl = document.getElementById('tt-grid');
       const ghost = document.createElement('div');
       ghost.className = 'tt-bar-ghost';
       ghost.style.cssText = 'left:' + timeToPixel(startTime, tt) + 'px; width:' + SLOT_W() + 'px; top:' + (lane * LANE_H + BAR_TOP) + 'px; height:' + BAR_H + 'px;';
       body.appendChild(ghost);
+      let ghostInGrid = false;  // ghost が grid 配下に移動してるか
       function move(ev){
         const x = (ev.clientX - rect.left) / scale;
         const y = (ev.clientY - rect.top) / scale;
@@ -11970,14 +12282,55 @@ function show(id) {
         const et = Math.max(st + (isDragging ? 0.25 : 0), curEnd);
         const left = timeToPixel(st, tt);
         const width = Math.max(SLOT_W(), timeToPixel(et, tt) - left);
-        ghost.style.left = left + 'px';
-        ghost.style.width = width + 'px';
-        // R238c: 縦串検知一旦オフ
+
+        // R247: 縦串検知：マウスが開始セクションの外（上 or 下）に LANE_H 以上はみ出したら縦串扱い
+        const mouseY = ev.clientY;
+        const wasSpanning = isSpanning;
+        if (mouseY < startSecBodyRect.top - LANE_H * 0.5 || mouseY > startSecBodyRect.bottom + LANE_H * 0.5) {
+          isSpanning = true;
+        } else if (mouseY >= startSecBodyRect.top - LANE_H * 0.1 && mouseY <= startSecBodyRect.bottom + LANE_H * 0.1) {
+          isSpanning = false;
+        }
+
+        if (isSpanning) {
+          // ghost を gridEl に移して縦に全セクション分伸ばす
+          if (!ghostInGrid) {
+            body.removeChild(ghost);
+            gridEl.appendChild(ghost);
+            ghostInGrid = true;
+            ghost.classList.add('span');
+          }
+          const timeRow = gridEl.querySelector('.tt-time-row');
+          const lastSec = gridEl.querySelectorAll('.tt-sec-row');
+          const tTop = timeRow ? (timeRow.offsetTop + timeRow.offsetHeight) : 0;
+          const lastEl = lastSec.length ? lastSec[lastSec.length - 1] : null;
+          const bBottom = lastEl ? (lastEl.offsetTop + lastEl.offsetHeight) : gridEl.offsetHeight;
+          ghost.style.left = (LABEL_W + left) + 'px';
+          ghost.style.top = tTop + 'px';
+          ghost.style.width = width + 'px';
+          ghost.style.height = (bBottom - tTop) + 'px';
+          ghost.textContent = '🎯 縦串バー  ' + fmtTimeFromHour(st) + ' 〜 ' + fmtTimeFromHour(et);
+        } else {
+          // 単独セクション内のゴースト表示
+          if (ghostInGrid) {
+            gridEl.removeChild(ghost);
+            body.appendChild(ghost);
+            ghostInGrid = false;
+            ghost.classList.remove('span');
+          }
+          ghost.style.left = left + 'px';
+          ghost.style.top = (lane * LANE_H + BAR_TOP) + 'px';
+          ghost.style.width = width + 'px';
+          ghost.style.height = BAR_H + 'px';
+          if (isDragging && typeof fmtTimeFromHour === 'function') {
+            ghost.textContent = fmtTimeFromHour(st) + ' 〜 ' + fmtTimeFromHour(et);
+          }
+        }
       }
       function up(){
         document.removeEventListener('mousemove', move);
         document.removeEventListener('mouseup', up);
-        ghost.remove();
+        if (ghostInGrid) gridEl.removeChild(ghost); else ghost.remove();
         // ワンクリック対策：ドラッグしてないなら何もしない
         if (!isDragging) return;
         let st = Math.min(startTime, curEnd);
@@ -11985,10 +12338,18 @@ function show(id) {
         if (et - st < 0.25) et = st + 0.25;
         if (et > tt.timeEnd) et = tt.timeEnd;
         if (st < tt.timeStart) st = tt.timeStart;
+        // R249: 縦串以外は他のバーと重ならないように縮める
+        if (!isSpanning) {
+          const fit = fitNonOverlap(tt, sec.id, lane, st, et, null);
+          st = fit.st; et = fit.et;
+          if (et - st < 0.25) return; // 隙間が無い → 諦め
+        }
         const newBar = {
           id: genId(), secId: sec.id, lane: lane,
           start: st, end: et, text: '',
-          color: 'white'
+          // R249: セクション既定色を使用（縦串は常にピンク）
+          color: isSpanning ? 'pink' : getDefaultColorForSection(sec.id),
+          vAll: isSpanning  // R247: 縦串なら true
         };
         tt.bars.push(newBar);
         selectedBarId = newBar.id;
@@ -12042,13 +12403,14 @@ function show(id) {
         if (!dragging) return;
         const newStart = snapTime(pixelToTime(timeToPixel(initStart, tt) + dx, tt), tt.timeStart);
         const newEnd = newStart + duration;
-        if (newStart >= tt.timeStart && newEnd <= tt.timeEnd) {
+        // R249: 縦串以外は他バーと重ならないようにする
+        let targetLane = bar.lane || 0;
+        if (sec) targetLane = Math.max(0, Math.min(sec.lanes - 1, initLane + Math.round(dy / LANE_H)));
+        const isOverlap = !bar.vAll && overlapsOther(tt, bar.secId, targetLane, newStart, newEnd, bar.id);
+        if (newStart >= tt.timeStart && newEnd <= tt.timeEnd && !isOverlap) {
           bar.start = newStart;
           bar.end = newEnd;
-        }
-        if (sec) {
-          const newLane = Math.max(0, Math.min(sec.lanes - 1, initLane + Math.round(dy / LANE_H)));
-          bar.lane = newLane;
+          if (sec) bar.lane = targetLane;
         }
         render();
       }
@@ -12101,10 +12463,17 @@ function show(id) {
         function move(ev){
           const x = (ev.clientX - rect.left) / scale;
           const t = snapTime(pixelToTime(x, tt), tt.timeStart);
+          // R249: 縦串以外は他バーと重ならないように
           if (side === 'l') {
-            if (t < initEnd - 0.24 && t >= tt.timeStart) bar.start = t;
+            if (t < bar.end - 0.24 && t >= tt.timeStart) {
+              const isOk = bar.vAll || !overlapsOther(tt, bar.secId, bar.lane||0, t, bar.end, bar.id);
+              if (isOk) bar.start = t;
+            }
           } else {
-            if (t > initStart + 0.24 && t <= tt.timeEnd) bar.end = t;
+            if (t > bar.start + 0.24 && t <= tt.timeEnd) {
+              const isOk = bar.vAll || !overlapsOther(tt, bar.secId, bar.lane||0, bar.start, t, bar.id);
+              if (isOk) bar.end = t;
+            }
           }
           render();
         }
@@ -12216,7 +12585,13 @@ function show(id) {
     if (!dateKey) { gridEl.innerHTML = ''; return; }
 
     const tt = getTimetableForDate(dateKey);
+    const wasMigrated = tt._colorMigratedR249;
     migrateVAll(tt);  // R238g: 既存データ移行
+    migrateBarColors(tt);  // R249b: 既存色をセクション色へ
+    if (!wasMigrated && tt._colorMigratedR249) {
+      // 移行が今走った → 保存して同期
+      try { saveToStorage(); } catch(e){}
+    }
     const start = tt.timeStart;
     const end = tt.timeEnd;
     const hours = Math.max(1, end - start);
@@ -12240,7 +12615,8 @@ function show(id) {
     let html = '';
 
     // 時刻ヘッダー（時刻ティック方式）。狭い時はサブメモリ自動非表示
-    const axisCls = cellW < 30 ? ' ultra-compact' : (cellW < 50 ? ' compact' : '');
+    // R244: 閾値下げて 15/30/45 を出来る限り表示
+    const axisCls = cellW < 22 ? ' ultra-compact' : (cellW < 38 ? ' compact' : '');
     html += '<div class="tt-time-row" style="display:grid; grid-template-columns:' + LABEL_W + 'px ' + axisW + 'px ' + ADD_W + 'px;">';
     html += '<div class="tt-time-corner">TIME</div>';
     html += '<div class="tt-time-axis' + axisCls + '">';
@@ -12309,6 +12685,23 @@ function show(id) {
 
     // 縦串バー描画
     renderSpanBars(tt, gridEl);
+
+    // R244: 今日なら現在時刻を縦ラインで示す
+    try {
+      const now = new Date();
+      const todayKey = now.getFullYear() + '-' + pad2(now.getMonth()+1) + '-' + pad2(now.getDate());
+      if (todayKey === dateKey) {
+        const nowFractionalHour = now.getHours() + now.getMinutes()/60 + (now.getHours() < tt.timeStart && tt.timeEnd > 24 ? 24 : 0);
+        if (nowFractionalHour >= tt.timeStart && nowFractionalHour <= tt.timeEnd) {
+          const oldLine = gridEl.querySelector('.tt-now-line');
+          if (oldLine) oldLine.remove();
+          const nowLine = document.createElement('div');
+          nowLine.className = 'tt-now-line';
+          nowLine.style.left = (LABEL_W + (nowFractionalHour - tt.timeStart) * cellW) + 'px';
+          gridEl.appendChild(nowLine);
+        }
+      }
+    } catch(e) { /* noop */ }
 
     // レーン増減 + セクション削除
     gridEl.querySelectorAll('.tt-sec-lane-btn').forEach(function(btn){
@@ -12514,7 +12907,8 @@ function show(id) {
       { id: 'tt-btn-zoom-out',   fn: zoomOut },
       { id: 'tt-btn-zoom-fit',   fn: zoomFit },
       { id: 'tt-btn-add-section',fn: addSection },
-      { id: 'tt-btn-reset-day',  fn: resetDayTimetable }
+      { id: 'tt-btn-reset-day',  fn: resetDayTimetable },
+      { id: 'tt-btn-print',      fn: function(){ window.print(); } }
     ].forEach(function(c){
       const el = document.getElementById(c.id);
       if (el && !el.__bound) { el.addEventListener('click', c.fn); el.__bound = true; }
@@ -12582,6 +12976,42 @@ function show(id) {
     if (e.key === 'Escape') {
       selectedBarId = null;
       document.querySelectorAll('.tt-bar.selected').forEach(function(b){ b.classList.remove('selected'); });
+    }
+    // R246: 矢印キーで選択中バーを 15 分単位で移動 / Shift+矢印で 1 時間
+    if (selectedBarId && (e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+      const dk = getCurrentDateKey();
+      const tt = getTimetableForDate(dk);
+      if (!tt) return;
+      const bar = tt.bars.find(function(b){ return b.id === selectedBarId; });
+      if (!bar) return;
+      const step = e.shiftKey ? 1.0 : 0.25;
+      let dt = 0;
+      if (e.key === 'ArrowLeft') dt = -step;
+      else if (e.key === 'ArrowRight') dt = step;
+      else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+        // 上下：レーン移動
+        const sec = tt.sections.find(function(s){ return s.id === bar.secId; });
+        if (sec) {
+          const newLane = (bar.lane || 0) + (e.key === 'ArrowUp' ? -1 : 1);
+          bar.lane = Math.max(0, Math.min(sec.lanes - 1, newLane));
+          e.preventDefault();
+          saveToStorage(); render(); return;
+        }
+      }
+      if (dt !== 0) {
+        const dur = bar.end - bar.start;
+        let ns = bar.start + dt;
+        if (ns < tt.timeStart) ns = tt.timeStart;
+        if (ns + dur > tt.timeEnd) ns = tt.timeEnd - dur;
+        // R249: 縦串以外は重なり防止
+        const isOverlap = !bar.vAll && overlapsOther(tt, bar.secId, bar.lane||0, ns, ns + dur, bar.id);
+        if (!isOverlap) {
+          bar.start = ns;
+          bar.end = ns + dur;
+        }
+        e.preventDefault();
+        saveToStorage(); render();
+      }
     }
   });
   document.addEventListener('mousedown', function(e){
