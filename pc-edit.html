@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260518.640000">
+<meta name="build-version" content="20260518.660000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -6119,6 +6119,7 @@
             <div>・選択中のバーを <strong style="color:#c8a878;">Delete / Backspace</strong> で削除</div>
             <div>・選択中のバーを <strong style="color:#c8a878;">←→ キー</strong>で 15 分ずつ移動（<strong style="color:#c8a878;">Shift+←→</strong> で 1 時間）</div>
             <div>・選択中のバーを <strong style="color:#c8a878;">↑↓ キー</strong>でレーン移動（同一セクション内の上下）</div>
+            <div>・<strong style="color:#c8a878;">⌘+Z / Ctrl+Z</strong> でアンドゥ（直前の操作を取り消し、最大 25 件）／ <strong style="color:#c8a878;">⌘+Shift+Z</strong> でリドゥ</div>
             <div>・セクション名は<strong style="color:#c8a878;">ダブルクリック</strong>で変更</div>
             <div>・マウスを乗せると<strong style="color:#c8a878;">時刻インジケータ</strong>がリアルタイム表示</div>
           </div>
@@ -12120,6 +12121,81 @@ function show(id) {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(timetableByDate));
     } catch(e) { /* noop */ }
+    // R266: 変更があるたびにアンドゥ用 snapshot を積む
+    pushHistoryForCurrent();
+  }
+
+  /* ── R266: タイムテーブルのアンドゥ／リドゥ（Cmd+Z / Cmd+Shift+Z） ─────────
+     日付別に履歴を持つ。最大 25 件まで。
+     saveToStorage が呼ばれるたびに自動で snapshot を積む。 */
+  const TT_HISTORY_MAX = 25;
+  let ttHistoryByDate = {};   // { dateKey: [snapshotJSON, ...] }
+  let ttRedoByDate = {};      // { dateKey: [snapshotJSON, ...] }
+  let ttSkipHistory = false;  // アンドゥ実行中は積まないためのフラグ
+
+  function ttSnap(tt){
+    return JSON.stringify({
+      timeStart: tt.timeStart,
+      timeEnd: tt.timeEnd,
+      sections: tt.sections,
+      bars: tt.bars
+    });
+  }
+  function pushHistoryForCurrent(){
+    if (ttSkipHistory) return;
+    const dk = getCurrentDateKey();
+    if (!dk) return;
+    const tt = timetableByDate[dk];
+    if (!tt) return;
+    const snap = ttSnap(tt);
+    if (!ttHistoryByDate[dk]) ttHistoryByDate[dk] = [];
+    const list = ttHistoryByDate[dk];
+    if (list.length > 0 && list[list.length-1] === snap) return; // 同一は積まない
+    list.push(snap);
+    if (list.length > TT_HISTORY_MAX) list.shift();
+    ttRedoByDate[dk] = []; // 新しい操作で redo は失効
+  }
+  function applySnap(dk, snap){
+    const obj = JSON.parse(snap);
+    const tt = timetableByDate[dk];
+    if (!tt) return;
+    tt.timeStart = obj.timeStart;
+    tt.timeEnd = obj.timeEnd;
+    tt.sections = obj.sections;
+    tt.bars = obj.bars;
+  }
+  function ttUndo(){
+    const dk = getCurrentDateKey();
+    if (!dk) return;
+    const list = ttHistoryByDate[dk] || [];
+    if (list.length < 2) return; // 「今の状態」と「ひとつ前」で 2 要素必要
+    const current = list.pop();
+    if (!ttRedoByDate[dk]) ttRedoByDate[dk] = [];
+    ttRedoByDate[dk].push(current);
+    if (ttRedoByDate[dk].length > TT_HISTORY_MAX) ttRedoByDate[dk].shift();
+    const prev = list[list.length - 1];
+    ttSkipHistory = true;
+    applySnap(dk, prev);
+    saveToStorage();
+    ttSkipHistory = false;
+    clearSel();
+    render();
+  }
+  function ttRedo(){
+    const dk = getCurrentDateKey();
+    if (!dk) return;
+    const redoList = ttRedoByDate[dk] || [];
+    if (redoList.length === 0) return;
+    const snap = redoList.pop();
+    if (!ttHistoryByDate[dk]) ttHistoryByDate[dk] = [];
+    ttHistoryByDate[dk].push(snap);
+    if (ttHistoryByDate[dk].length > TT_HISTORY_MAX) ttHistoryByDate[dk].shift();
+    ttSkipHistory = true;
+    applySnap(dk, snap);
+    saveToStorage();
+    ttSkipHistory = false;
+    clearSel();
+    render();
   }
 
   function pad2(n){ return String(n).padStart(2, '0'); }
@@ -13470,6 +13546,13 @@ function show(id) {
     if (!modeTT || !modeTT.classList.contains('active')) return;
     const ae = document.activeElement;
     if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.getAttribute('contenteditable') === 'true')) return;
+    // R266: Cmd+Z でアンドゥ / Cmd+Shift+Z でリドゥ
+    if ((e.metaKey || e.ctrlKey) && (e.key === 'z' || e.key === 'Z')) {
+      e.preventDefault();
+      if (e.shiftKey) ttRedo();
+      else ttUndo();
+      return;
+    }
     // R259: マルチ選択対応 — 選択中の全バーを一括処理
     if (e.key === 'Delete' || e.key === 'Backspace') {
       const ids = new Set(selectedBarIds);
