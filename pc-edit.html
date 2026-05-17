@@ -5138,11 +5138,12 @@
     box-sizing: border-box;
     user-select: none;
   }
-  .tt-bar.color-white  { background: #d8d2c0; border-color: #c8c2b0; color: #1a1a1a; font-weight: 500; }
-  .tt-bar.color-pink   { background: #e6859f; border-color: #c66a86; color: #3a0c1c; font-weight: 500; }
-  .tt-bar.color-amber  { background: #e0a85e; border-color: #c08846; color: #2c1a06; font-weight: 500; }
-  .tt-bar.color-gray   { background: #8a8780; border-color: #6e6c66; color: #1a1a1a; font-weight: 500; }
-  .tt-bar.color-accent { background: #c8a878; border-color: #a88858; color: #1a1a1a; font-weight: 500; }
+  /* R241: カレンダーと色を統一・ビビッド化 */
+  .tt-bar.color-white  { background: #ffd444; border-color: #d8a800; color: #2a1a00; font-weight: 500; }
+  .tt-bar.color-pink   { background: #ff588c; border-color: #d83870; color: #3a0c1c; font-weight: 500; }
+  .tt-bar.color-amber  { background: #f5a828; border-color: #c88010; color: #2c1a06; font-weight: 500; }
+  .tt-bar.color-gray   { background: #7ed848; border-color: #5cb828; color: #0e2a00; font-weight: 500; }
+  .tt-bar.color-accent { background: #3aa0e0; border-color: #1c80c0; color: #001a3a; font-weight: 500; }
   .tt-bar.selected { box-shadow: 0 0 0 2px #c8a878; z-index: 2; }
   .tt-bar-text {
     flex: 1;
@@ -5229,11 +5230,11 @@
   }
   .tt-color-item:hover { filter: brightness(1.25); }
   .tt-color-item.is-current { border-color: #c8a878; }
-  .tt-color-item.color-white  { background: #d8d2c0; color: #1a1a1a; border-color: #c8c2b0; font-weight: 500; }
-  .tt-color-item.color-pink   { background: #e6859f; color: #3a0c1c; border-color: #c66a86; font-weight: 500; }
-  .tt-color-item.color-amber  { background: #e0a85e; color: #2c1a06; border-color: #c08846; font-weight: 500; }
-  .tt-color-item.color-gray   { background: #8a8780; color: #1a1a1a; border-color: #6e6c66; font-weight: 500; }
-  .tt-color-item.color-accent { background: #c8a878; color: #1a1a1a; border-color: #a88858; font-weight: 500; }
+  .tt-color-item.color-white  { background: #ffd444; color: #2a1a00; border-color: #d8a800; font-weight: 500; }
+  .tt-color-item.color-pink   { background: #ff588c; color: #3a0c1c; border-color: #d83870; font-weight: 500; }
+  .tt-color-item.color-amber  { background: #f5a828; color: #2c1a06; border-color: #c88010; font-weight: 500; }
+  .tt-color-item.color-gray   { background: #7ed848; color: #0e2a00; border-color: #5cb828; font-weight: 500; }
+  .tt-color-item.color-accent { background: #3aa0e0; color: #001a3a; border-color: #1c80c0; font-weight: 500; }
   .tt-color-menu-sep {
     height: 1px;
     background: #4a4a4a;
@@ -5291,21 +5292,33 @@
     border-left: 0.5px solid #353535;
     border-right: 0.5px solid #353535;
   }
-  /* R238: 縦串バー（重なり対策：半透明、選択/ホバー時にハイライト） */
+  /* R241: 縦串バー（中身は超薄め、フチで主張） */
   .tt-bar.span-bar {
     z-index: 4;
-    border-width: 1.5px;
-    opacity: 0.45;
+    border-width: 0;
+    background-color: transparent !important;
+    box-shadow: inset 3px 0 0 var(--span-edge, #ff588c), inset -3px 0 0 var(--span-edge, #ff588c);
+    opacity: 1;
+    pointer-events: none;
   }
-  .tt-bar.span-bar:hover {
-    opacity: 0.85;
-    z-index: 8;
+  .tt-bar.span-bar.color-pink   { --span-edge: #ff588c; background: rgba(255,88,140,0.10) !important; }
+  .tt-bar.span-bar.color-white  { --span-edge: #ffd444; background: rgba(255,212,68,0.10) !important; }
+  .tt-bar.span-bar.color-amber  { --span-edge: #f5a828; background: rgba(245,168,40,0.10) !important; }
+  .tt-bar.span-bar.color-gray   { --span-edge: #7ed848; background: rgba(126,216,72,0.10) !important; }
+  .tt-bar.span-bar.color-accent { --span-edge: #3aa0e0; background: rgba(58,160,224,0.10) !important; }
+  .tt-bar.span-bar .tt-bar-text {
+    background: rgba(20,20,20,0.85);
+    padding: 2px 6px;
+    border-radius: 3px;
+    color: #f0e8d8;
+    font-weight: 500;
+    pointer-events: auto;
   }
   .tt-bar.span-bar.selected {
-    opacity: 1;
+    box-shadow: inset 3px 0 0 #c8a878, inset -3px 0 0 #c8a878, 0 0 0 2px #c8a878;
     z-index: 10;
-    box-shadow: 0 0 0 2px #c8a878;
   }
+  .tt-bar.span-bar .tt-bar-handle { pointer-events: auto; }
   .tt-span-overlay {
     position: absolute;
     pointer-events: none;
@@ -12123,11 +12136,11 @@ function show(id) {
     menu.style.left = x + 'px';
     menu.style.top = y + 'px';
     const colors = [
-      { key: 'white',  name: '白（作業）' },
+      { key: 'white',  name: '黄色（仕込み・作業）' },
       { key: 'pink',   name: 'ピンク（本番）' },
-      { key: 'amber',  name: 'アンバー（PA等）' },
-      { key: 'gray',   name: 'グレー（休止）' },
-      { key: 'accent', name: 'クリーム（強調）' }
+      { key: 'amber',  name: 'オレンジ（場当たり・PA）' },
+      { key: 'gray',   name: '緑（リハ）' },
+      { key: 'accent', name: '青（テクリハ）' }
     ];
     colors.forEach(function(c){
       const item = document.createElement('div');
