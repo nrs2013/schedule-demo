@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260519.740000">
+<meta name="build-version" content="20260519.750000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -5149,7 +5149,7 @@
   }
   .tt-grid {
     background: #1a1a1a;
-    border: 0.5px solid #353535;
+    border: 1px solid #4a4a4a;
     border-radius: 6px;
     overflow: hidden;
     min-width: max-content;
@@ -5189,14 +5189,15 @@
     user-select: none;
   }
   .tt-time-add:hover { background: #353535; }
+  /* R275: セクション境界線・ラベル分離線をしっかり見える太さに */
   .tt-sec-row {
     display: grid;
-    border-bottom: 0.5px solid #2c2c2c;
+    border-bottom: 1px solid #3a3a3a;
   }
   .tt-sec-row:last-child { border-bottom: none; }
   .tt-sec-label {
     background: #161616;
-    border-right: 0.5px solid #232323;
+    border-right: 1px solid #3a3a3a;
     padding: 8px 6px 8px 10px;
     font-size: 13px;
     font-weight: 500;
@@ -5265,9 +5266,10 @@
     line-height: 1;
   }
   .tt-sec-lane-btn:hover { background: #353535; color: #c8a878; }
+  /* R275: グリッド内部の縦線（時間境界）を 1px に太く */
   .tt-sec-body {
     position: relative;
-    background-image: linear-gradient(to right, #353535 0.5px, transparent 0.5px);
+    background-image: linear-gradient(to right, #4a4a4a 1px, transparent 1px);
     background-size: var(--tt-cell-w, 60px) 100%;
     transition: background-color 0.15s ease;
   }
@@ -5328,12 +5330,12 @@
   }
   /* R271: タイムテーブルバーをカレンダーと完全同値に揃える（0.42-0.55 系）。
      文字色は濃いまま（書き込みが見える）、編集中はさらに白背景に。 */
-  /* R273: 個別バー 5 色を完全に同じ透明度（0.40）に統一。R271 で white だけ 0.42、他 0.50-0.55 でバラついていたのを直す */
-  .tt-bar.color-white  { background: rgba(255,212,68,0.40); border: 1px solid rgba(255,212,68,0.85); color: #2a1a00; font-weight: 600; }
-  .tt-bar.color-pink   { background: rgba(255,88,140,0.40); border: 1px solid rgba(255,88,140,0.85); color: #3a0c1c; font-weight: 600; }
-  .tt-bar.color-amber  { background: rgba(245,168,40,0.40); border: 1px solid rgba(245,168,40,0.85); color: #2c1a06; font-weight: 600; }
-  .tt-bar.color-gray   { background: rgba(126,216,72,0.40); border: 1px solid rgba(126,216,72,0.85); color: #0e2a00; font-weight: 600; }
-  .tt-bar.color-accent { background: rgba(58,160,224,0.40); border: 1px solid rgba(58,160,224,0.85); color: #001a3a; font-weight: 600; }
+  /* R275: 個別バー 5 色 — 線を 1.5px・フル彩度でしっかり見える太さに（透明度 0.40 はキープ） */
+  .tt-bar.color-white  { background: rgba(255,212,68,0.40); border: 1.5px solid rgba(255,212,68,1.0); color: #2a1a00; font-weight: 600; }
+  .tt-bar.color-pink   { background: rgba(255,88,140,0.40); border: 1.5px solid rgba(255,88,140,1.0); color: #3a0c1c; font-weight: 600; }
+  .tt-bar.color-amber  { background: rgba(245,168,40,0.40); border: 1.5px solid rgba(245,168,40,1.0); color: #2c1a06; font-weight: 600; }
+  .tt-bar.color-gray   { background: rgba(126,216,72,0.40); border: 1.5px solid rgba(126,216,72,1.0); color: #0e2a00; font-weight: 600; }
+  .tt-bar.color-accent { background: rgba(58,160,224,0.40); border: 1.5px solid rgba(58,160,224,1.0); color: #001a3a; font-weight: 600; }
   /* R274: 編集モード — バー全体に琥珀リング、内側の編集 span は白背景＋黒文字でくっきり */
   .tt-bar.tt-bar-editing {
     box-shadow: 0 0 0 2px #f5c878, 0 0 22px rgba(245,200,120,0.55) !important;
@@ -5581,13 +5583,12 @@
     pointer-events: none;
     border-radius: 4px;
   }
-  /* R273: 縦串バーは個別バーと同じ RGB に統一、ただし下レイヤーなので透明度を一段下げる
-     これで「外線濃く・中はうっすら下地が透ける」スタイリッシュな統一感を実現 */
-  .tt-bar.span-bar.color-white  { background: rgba(255,212,68,0.22) !important; border: 1px solid rgba(255,212,68,0.70) !important; }
-  .tt-bar.span-bar.color-pink   { background: rgba(255,88,140,0.25) !important; border: 1px solid rgba(255,88,140,0.70) !important; }
-  .tt-bar.span-bar.color-amber  { background: rgba(245,168,40,0.25) !important; border: 1px solid rgba(245,168,40,0.70) !important; }
-  .tt-bar.span-bar.color-gray   { background: rgba(126,216,72,0.22) !important; border: 1px solid rgba(126,216,72,0.70) !important; }
-  .tt-bar.span-bar.color-accent { background: rgba(58,160,224,0.25) !important; border: 1px solid rgba(58,160,224,0.70) !important; }
+  /* R275: 縦串バーも 1.5px・フル彩度に揃える。透明度は薄め（下レイヤーの存在感） */
+  .tt-bar.span-bar.color-white  { background: rgba(255,212,68,0.22) !important; border: 1.5px solid rgba(255,212,68,0.90) !important; }
+  .tt-bar.span-bar.color-pink   { background: rgba(255,88,140,0.25) !important; border: 1.5px solid rgba(255,88,140,0.90) !important; }
+  .tt-bar.span-bar.color-amber  { background: rgba(245,168,40,0.25) !important; border: 1.5px solid rgba(245,168,40,0.90) !important; }
+  .tt-bar.span-bar.color-gray   { background: rgba(126,216,72,0.22) !important; border: 1.5px solid rgba(126,216,72,0.90) !important; }
+  .tt-bar.span-bar.color-accent { background: rgba(58,160,224,0.25) !important; border: 1.5px solid rgba(58,160,224,0.90) !important; }
   /* R268: 縦串バーのラベルは縦串バー内部の上端（または下端）に置く。幅は内容ぶん。
      上端レーンに個別バーが乗って文字がぶつかる場合は JS が下端へ自動退避する。 */
   .tt-bar.span-bar .tt-bar-text {
@@ -5669,26 +5670,26 @@
     position: absolute;
     pointer-events: none;
   }
-  /* R238: 時刻ティック（線の真上にラベル） */
-  .tt-time-row { position: relative; height: 36px; background: #232323; border-bottom: 0.5px solid #353535; overflow: visible; }
-  .tt-time-corner { width: 110px; padding: 0 6px; font-size: 11px; color: #6e6c66; background: #2a2a2a; border-right: 0.5px solid #353535; display: flex; align-items: center; justify-content: center; height: 100%; box-sizing: border-box; }
+  /* R238+R275: 時刻ティック（線の真上にラベル）— 線をしっかり見える太さに */
+  .tt-time-row { position: relative; height: 36px; background: #232323; border-bottom: 1px solid #4a4a4a; overflow: visible; }
+  .tt-time-corner { width: 110px; padding: 0 6px; font-size: 11px; color: #6e6c66; background: #2a2a2a; border-right: 1px solid #4a4a4a; display: flex; align-items: center; justify-content: center; height: 100%; box-sizing: border-box; }
   .tt-time-axis { position: relative; height: 100%; overflow: visible; }
-  /* R261: 時刻軸の縦線を細く・淡く */
+  /* R275: 時刻軸の縦線を 1px に太く・明るく — グリッドの構造がしっかり見えるように */
   .tt-tick-line {
     position: absolute;
     top: 28px;
     bottom: 0;
-    width: 0.5px;
-    background: #4a4a4a;
+    width: 1px;
+    background: #6a6864;
     pointer-events: none;
   }
-  .tt-tick-line.first { background: #5a5a5a; }
+  .tt-tick-line.first { background: #8a8884; width: 1px; }
   .tt-tick-mini {
     position: absolute;
     top: 30px;
     bottom: 0;
-    width: 0.5px;
-    background: #2c2c2c;
+    width: 1px;
+    background: #3e3c38;
     pointer-events: none;
   }
   .tt-tick-mini.half {
@@ -12995,10 +12996,10 @@ function show(id) {
       document.addEventListener('mouseup', up);
     });
 
-    // R274: バー全体のダブルクリックで編集モード（個別バー・縦串バー共通、無題でも確定後でも動く）
+    // R274+R275: バー全体のダブルクリックで編集モード。何度でも書き直し可能。
+    // ハンドル以外、時刻 span を含むどこをダブルクリックしても再編集できる。
     el.addEventListener('dblclick', function(e){
       if (e.target.closest('.tt-bar-handle')) return;
-      if (e.target.closest('.tt-span-time')) return;
       e.stopPropagation();
       e.preventDefault();
       startEdit(bar, el);
@@ -13254,7 +13255,7 @@ function show(id) {
       html += '</div>';
       html += '</div>';
       const slotW = cellW / SLOTS_PER_HOUR;
-      const bgStyle = 'background-image: linear-gradient(to right, #4a4a4a 0.5px, transparent 0.5px), linear-gradient(to right, rgba(255,255,255,0.05) 0.5px, transparent 0.5px); background-size:' + cellW + 'px 100%,' + slotW + 'px 100%; background-position: 0 0, 0 0;';
+      const bgStyle = 'background-image: linear-gradient(to right, #5a5856 1px, transparent 1px), linear-gradient(to right, rgba(255,255,255,0.08) 1px, transparent 1px); background-size:' + cellW + 'px 100%,' + slotW + 'px 100%; background-position: 0 0, 0 0;';
       html += '<div class="tt-sec-body" style="min-height:' + rowH + 'px; ' + bgStyle + '"></div>';
       html += '<div></div>';
       html += '</div>';
@@ -13287,21 +13288,10 @@ function show(id) {
     // 縦串バー描画
     renderSpanBars(tt, gridEl);
 
-    // R244: 今日なら現在時刻を縦ラインで示す
+    // R275: 「今」インジケータは撤去（のむさん指示）
     try {
-      const now = new Date();
-      const todayKey = now.getFullYear() + '-' + pad2(now.getMonth()+1) + '-' + pad2(now.getDate());
-      if (todayKey === dateKey) {
-        const nowFractionalHour = now.getHours() + now.getMinutes()/60 + (now.getHours() < tt.timeStart && tt.timeEnd > 24 ? 24 : 0);
-        if (nowFractionalHour >= tt.timeStart && nowFractionalHour <= tt.timeEnd) {
-          const oldLine = gridEl.querySelector('.tt-now-line');
-          if (oldLine) oldLine.remove();
-          const nowLine = document.createElement('div');
-          nowLine.className = 'tt-now-line';
-          nowLine.style.left = (LABEL_W + (nowFractionalHour - tt.timeStart) * cellW) + 'px';
-          gridEl.appendChild(nowLine);
-        }
-      }
+      const oldLine = gridEl.querySelector('.tt-now-line');
+      if (oldLine) oldLine.remove();
     } catch(e) { /* noop */ }
 
     // レーン増減 + セクション削除
