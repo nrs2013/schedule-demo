@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260518.690000">
+<meta name="build-version" content="20260518.710000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="apple-touch-icon" href="favicon.svg">
 <title>SCHEDULE STUDIO — STAFF</title>
@@ -219,13 +219,13 @@
     border-radius: 3px;
     border: 1px solid;
   }
-  /* R269: ビビッド復帰（外線濃く・中半透明） */
-  .tour-date-label.setup    { color: #fff5d0; border-color: rgba(255,212,68,0.85); background: rgba(255,212,68,0.30); }
-  .tour-date-label.rehearsal{ color: #e0f5d0; border-color: rgba(126,216,72,0.85); background: rgba(126,216,72,0.32); }
-  .tour-date-label.bagari   { color: #fff0d0; border-color: rgba(245,168,40,0.85); background: rgba(245,168,40,0.32); }
-  .tour-date-label.gp       { color: #f5dcba; border-color: rgba(216,160,108,0.85); background: rgba(216,160,108,0.32); }
-  .tour-date-label.show     { color: #ffd8e4; border-color: rgba(255,88,140,0.85); background: rgba(255,88,140,0.34); }
-  .tour-date-label.off      { color: #b8b8b0; border-color: rgba(120,120,120,0.55); background: rgba(120,120,120,0.14); }
+  /* R271: PC pc-cal-pill と完全同値（0.42-0.55） */
+  .tour-date-label.setup    { color: #fff5d0; border-color: rgba(255,212,68,0.85); background: rgba(255,212,68,0.42); }
+  .tour-date-label.rehearsal{ color: #e0f5d0; border-color: rgba(126,216,72,0.85); background: rgba(126,216,72,0.50); }
+  .tour-date-label.bagari   { color: #fff0d0; border-color: rgba(245,168,40,0.85); background: rgba(245,168,40,0.55); }
+  .tour-date-label.gp       { color: #f5dcba; border-color: rgba(216,160,108,0.85); background: rgba(216,160,108,0.50); }
+  .tour-date-label.show     { color: #ffe0ec; border-color: rgba(255,88,140,0.85); background: rgba(255,88,140,0.55); }
+  .tour-date-label.off      { color: #b8b8b0; border-color: rgba(120,120,120,0.55); background: rgba(120,120,120,0.18); }
 
   /* ── 日付選択モーダル ───────── */
   .tour-date-modal {
@@ -1734,12 +1734,12 @@
     min-width: 0;
     box-sizing: border-box;
   }
-  /* R269: ビビッド復帰（外線濃く・中半透明、PC 側と色値完全一致） */
-  .cal-event-pill.show  { background: rgba(255,88,140,0.42); color: #ffd8e4; border: 1px solid rgba(255,88,140,0.85); font-weight: 500; }
-  .cal-event-pill.rh    { background: rgba(126,216,72,0.40); color: #e0f5d0; border: 1px solid rgba(126,216,72,0.85); }
-  .cal-event-pill.tek   { background: rgba(58,160,224,0.42); color: #d8eef8; border: 1px solid rgba(58,160,224,0.85); }
-  .cal-event-pill.setup { background: rgba(255,212,68,0.38); color: #fff5d0; border: 1px solid rgba(255,212,68,0.85); }
-  .cal-event-pill.stay  { background: rgba(184,168,216,0.30); color: #ece4f5; border: 1px solid rgba(184,168,216,0.70); font-weight: 500; }
+  /* R271: PC pc-cal-pill と完全同値（0.42-0.55） */
+  .cal-event-pill.show  { background: rgba(255,88,140,0.55); color: #ffe0ec; border: 1px solid rgba(255,88,140,0.85); font-weight: 500; }
+  .cal-event-pill.rh    { background: rgba(126,216,72,0.50); color: #e0f5d0; border: 1px solid rgba(126,216,72,0.85); }
+  .cal-event-pill.tek   { background: rgba(58,160,224,0.55); color: #d8eef8; border: 1px solid rgba(58,160,224,0.85); }
+  .cal-event-pill.setup { background: rgba(255,212,68,0.42); color: #fff5d0; border: 1px solid rgba(255,212,68,0.85); }
+  .cal-event-pill.stay  { background: rgba(184,168,216,0.42); color: #ece4f5; border: 1px solid rgba(184,168,216,0.75); font-weight: 500; }
   /* R201: PC版D60と同じ "width: calc(100% + Npx)" 方式で連結。
      セル padding 3px + grid gap 1px = 4px の谷を、+8px で確実に跨ぐ
      R203: テキスト空の bar-mid/bar-end が height:2px に潰れる対策で min-height:12px */
