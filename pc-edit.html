@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260518.690000">
+<meta name="build-version" content="20260518.700000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -5330,12 +5330,15 @@
     box-shadow: 0 2px 6px rgba(0,0,0,0.4);
     z-index: 6;
   }
-  /* R269: タイムテーブルバーをカレンダーと同じ「外線濃く・中半透明」スタイルに統一 */
-  .tt-bar.color-white  { background: rgba(255,212,68,0.38); border: 1px solid rgba(255,212,68,0.85); color: #fff5d0; font-weight: 500; }
-  .tt-bar.color-pink   { background: rgba(255,88,140,0.42); border: 1px solid rgba(255,88,140,0.85); color: #ffd8e4; font-weight: 500; }
-  .tt-bar.color-amber  { background: rgba(245,168,40,0.42); border: 1px solid rgba(245,168,40,0.85); color: #fff0d0; font-weight: 500; }
-  .tt-bar.color-gray   { background: rgba(126,216,72,0.40); border: 1px solid rgba(126,216,72,0.85); color: #e0f5d0; font-weight: 500; }
-  .tt-bar.color-accent { background: rgba(58,160,224,0.42); border: 1px solid rgba(58,160,224,0.85); color: #d8eef8; font-weight: 500; }
+  /* R270: タイムテーブルバーは「外線＋中半透明」だが、書き込み文字が読めるよう文字色は濃く戻す。
+     カレンダーパレット（テキスト編集なし）と違い、こちらはユーザーが入力するテキストが主役。 */
+  .tt-bar.color-white  { background: rgba(255,212,68,0.42); border: 1px solid rgba(255,212,68,0.95); color: #2a1a00; font-weight: 600; }
+  .tt-bar.color-pink   { background: rgba(255,88,140,0.45); border: 1px solid rgba(255,88,140,0.95); color: #3a0c1c; font-weight: 600; }
+  .tt-bar.color-amber  { background: rgba(245,168,40,0.45); border: 1px solid rgba(245,168,40,0.95); color: #2c1a06; font-weight: 600; }
+  .tt-bar.color-gray   { background: rgba(126,216,72,0.45); border: 1px solid rgba(126,216,72,0.95); color: #0e2a00; font-weight: 600; }
+  .tt-bar.color-accent { background: rgba(58,160,224,0.45); border: 1px solid rgba(58,160,224,0.95); color: #001a3a; font-weight: 600; }
+  /* R270: 編集中（contenteditable=true）は背景を一段濃くしてさらに読みやすく */
+  .tt-bar .tt-bar-text[contenteditable="true"] { background: rgba(255,255,255,0.85) !important; color: #1a1a1a !important; border-radius: 3px; padding: 0 4px; }
   .tt-bar.selected {
     box-shadow: 0 0 0 2px #c8a878, 0 0 14px rgba(200,168,120,0.35);
     z-index: 7; /* R261: 選択中の個別バーは更に前へ */
