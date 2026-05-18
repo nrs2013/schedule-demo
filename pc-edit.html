@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260519.731000">
+<meta name="build-version" content="20260519.740000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -5334,10 +5334,40 @@
   .tt-bar.color-amber  { background: rgba(245,168,40,0.40); border: 1px solid rgba(245,168,40,0.85); color: #2c1a06; font-weight: 600; }
   .tt-bar.color-gray   { background: rgba(126,216,72,0.40); border: 1px solid rgba(126,216,72,0.85); color: #0e2a00; font-weight: 600; }
   .tt-bar.color-accent { background: rgba(58,160,224,0.40); border: 1px solid rgba(58,160,224,0.85); color: #001a3a; font-weight: 600; }
-  /* R270/R271: 編集中（contenteditable=true）は背景を一段濃くしてさらに読みやすく */
-  .tt-bar .tt-bar-text[contenteditable="true"],
-  .tt-bar .tt-span-title[contenteditable="true"],
-  .tt-bar .tt-span-title-empty[contenteditable="true"] { background: rgba(255,255,255,0.92) !important; color: #1a1a1a !important; border-radius: 3px; padding: 0 4px; outline: 2px solid rgba(255,255,255,0.6); }
+  /* R274: 編集モード — バー全体に琥珀リング、内側の編集 span は白背景＋黒文字でくっきり */
+  .tt-bar.tt-bar-editing {
+    box-shadow: 0 0 0 2px #f5c878, 0 0 22px rgba(245,200,120,0.55) !important;
+    z-index: 9 !important;
+    filter: brightness(1.10);
+  }
+  .tt-bar.tt-bar-editing .tt-bar-text[contenteditable="true"],
+  .tt-bar.tt-bar-editing .tt-span-title[contenteditable="true"] {
+    background: rgba(255,255,255,0.96) !important;
+    color: #1a1a1a !important;
+    font-weight: 600 !important;
+    border-radius: 3px;
+    padding: 0 6px;
+    outline: none !important;
+    caret-color: #c8a878;
+    cursor: text;
+  }
+  /* R274: 空テキスト時のプレースホルダ「予定名…」 */
+  .tt-bar.normal .tt-bar-text:empty::before,
+  .tt-bar.normal .tt-bar-text[contenteditable="true"]:empty::before {
+    content: '予定名…';
+    color: rgba(0,0,0,0.40);
+    font-style: italic;
+    font-weight: 400;
+    pointer-events: none;
+  }
+  .tt-bar.span-bar .tt-span-title:empty::before,
+  .tt-bar.span-bar .tt-span-title[contenteditable="true"]:empty::before {
+    content: '予定名…';
+    color: rgba(120,120,120,0.7);
+    font-style: italic;
+    font-weight: 400;
+    pointer-events: none;
+  }
   .tt-bar.selected {
     box-shadow: 0 0 0 2px #c8a878, 0 0 14px rgba(200,168,120,0.35);
     z-index: 7; /* R261: 選択中の個別バーは更に前へ */
@@ -6124,19 +6154,27 @@
           </div>
         </div>
         <div class="tt-help">
-          <span><strong style="color:#c8a878;">ドラッグ</strong>で予定追加 ／ <strong style="color:#c8a878;">バー右クリック</strong>で色・削除 ／ <strong style="color:#c8a878;">バー端ドラッグ</strong>で伸縮 ／ 15 分単位スナップ</span>
+          <span><strong style="color:#f5c878;">ドラッグ</strong>で予定追加 → そのまま<strong style="color:#f5c878;">文字を入力</strong> → <strong style="color:#f5c878;">Enter</strong> で確定</span>
           <a href="#" class="tt-help-toggle" data-act="help-toggle" style="color:#c8a878; margin-left:10px; cursor:pointer; text-decoration:none; font-size:11px;">詳しい操作 ▾</a>
           <div class="tt-help-detail" style="display:none; margin-top:8px; padding:10px 12px; background:#161616; border:0.5px solid #2c2c2c; border-radius:6px; line-height:1.7;">
-            <div>・セクション内を<strong style="color:#c8a878;">ドラッグ</strong>で範囲指定してバー作成 → テキスト入力 → Enter で確定</div>
-            <div>・上下のセクションをまたいで<strong style="color:#c8a878;">縦ドラッグ</strong>すると複数セクション貫通バー</div>
+            <div style="color:#f5c878; font-weight:600; margin-bottom:6px;">基本フロー（Excel より簡単）</div>
+            <div>・セクション内を<strong style="color:#c8a878;">ドラッグ</strong> → 自動で編集モードに入る → <strong style="color:#c8a878;">そのまま文字入力</strong> → <strong style="color:#c8a878;">Enter</strong> で確定</div>
+            <div>・既存バーを<strong style="color:#c8a878;">ダブルクリック</strong> または選択中に <strong style="color:#c8a878;">Enter / F2</strong> で再編集</div>
+            <div>・編集中は <strong style="color:#c8a878;">Enter</strong> 確定 ／ <strong style="color:#c8a878;">Escape</strong> キャンセル ／ クリックアウトで自動確定</div>
+            <div style="color:#f5c878; font-weight:600; margin-top:10px; margin-bottom:6px;">バー操作</div>
             <div>・バーの<strong style="color:#c8a878;">端をドラッグ</strong>で伸縮 ／ <strong style="color:#c8a878;">中央をドラッグ</strong>で移動</div>
+            <div>・上下のセクションをまたいで<strong style="color:#c8a878;">縦ドラッグ</strong>すると複数セクション貫通バー（縦串）</div>
             <div>・<strong style="color:#c8a878;">右クリック</strong>で色変更・削除メニュー</div>
             <div>・選択中のバーを <strong style="color:#c8a878;">Delete / Backspace</strong> で削除</div>
-            <div>・選択中のバーを <strong style="color:#c8a878;">←→ キー</strong>で 15 分ずつ移動（<strong style="color:#c8a878;">Shift+←→</strong> で 1 時間）</div>
-            <div>・選択中のバーを <strong style="color:#c8a878;">↑↓ キー</strong>でレーン移動（同一セクション内の上下）</div>
-            <div>・<strong style="color:#c8a878;">⌘+Z / Ctrl+Z</strong> でアンドゥ（直前の操作を取り消し、最大 25 件）／ <strong style="color:#c8a878;">⌘+Shift+Z</strong> でリドゥ</div>
-            <div>・セクション名は<strong style="color:#c8a878;">ダブルクリック</strong>で変更</div>
+            <div>・選択中のバーを <strong style="color:#c8a878;">←→ キー</strong>で 15 分ずつ移動（<strong style="color:#c8a878;">Shift+←→</strong> で 1 時間）／ <strong style="color:#c8a878;">↑↓ キー</strong>でレーン移動</div>
+            <div>・<strong style="color:#c8a878;">⌘+クリック</strong>で複数バー同時選択</div>
+            <div style="color:#f5c878; font-weight:600; margin-top:10px; margin-bottom:6px;">セクション操作</div>
+            <div>・セクション名<strong style="color:#c8a878;">ダブルクリック</strong>で変更 ／ 左端 <strong style="color:#c8a878;">⋮⋮</strong> ドラッグで並び替え</div>
+            <div>・右端の <strong style="color:#c8a878;">− ＋</strong> でレーン増減 ／ <strong style="color:#c8a878;">×</strong> で削除 ／ 最下部 <strong style="color:#c8a878;">＋ セクション追加</strong> で新規</div>
+            <div style="color:#f5c878; font-weight:600; margin-top:10px; margin-bottom:6px;">その他</div>
+            <div>・<strong style="color:#c8a878;">⌘+Z / Ctrl+Z</strong> でアンドゥ（最大 25 件）／ <strong style="color:#c8a878;">⌘+Shift+Z</strong> でリドゥ</div>
             <div>・マウスを乗せると<strong style="color:#c8a878;">時刻インジケータ</strong>がリアルタイム表示</div>
+            <div>・<strong style="color:#c8a878;">📄 PDF 出力</strong>で白黒の A4 印刷向け版を出力（線の太さ・実線/破線で 5 色を識別）</div>
           </div>
         </div>
       </div>
@@ -12513,6 +12551,82 @@ function show(id) {
     }
   }
 
+  /* R274: 編集モードを 1 つの関数に統一。個別バー・縦串バー・無題状態・確定後再編集すべて同じパスを通る。
+     呼ばれるタイミング：(1) ドラッグで新規バー作成直後 (2) バーをダブルクリック (3) バー選択中に Enter キー */
+  function getEditTarget(el){
+    if (!el) return null;
+    if (el.classList.contains('span-bar')) {
+      let t = el.querySelector('.tt-span-title');
+      if (!t) {
+        // 「無題」状態：tt-span-title-empty を tt-span-title に差し替えて編集可能にする
+        const empty = el.querySelector('.tt-span-title-empty');
+        if (empty) {
+          const newSpan = document.createElement('span');
+          newSpan.className = 'tt-span-title';
+          newSpan.textContent = '';
+          empty.parentNode.replaceChild(newSpan, empty);
+          t = newSpan;
+        }
+      }
+      return t || el.querySelector('.tt-bar-text');
+    }
+    return el.querySelector('.tt-bar-text');
+  }
+  function startEdit(bar, el){
+    if (!el || !bar) return;
+    // 他に編集中のバーがあれば先に確定させる
+    document.querySelectorAll('.tt-bar.tt-bar-editing').forEach(function(other){
+      if (other === el) return;
+      const otherTarget = other.querySelector('[contenteditable="true"]');
+      if (otherTarget) otherTarget.blur();
+    });
+    const target = getEditTarget(el);
+    if (!target) return;
+    el.classList.add('tt-bar-editing');
+    target.setAttribute('contenteditable', 'true');
+    // フォーカス → 全選択
+    setTimeout(function(){
+      try {
+        target.focus();
+        const range = document.createRange();
+        range.selectNodeContents(target);
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+      } catch(e){}
+    }, 0);
+
+    let done = false;
+    function finalize(saveValue){
+      if (done) return;
+      done = true;
+      try { target.setAttribute('contenteditable', 'false'); } catch(e){}
+      el.classList.remove('tt-bar-editing');
+      if (saveValue) {
+        const newText = target.textContent.trim();
+        if (newText !== bar.text) {
+          bar.text = newText;
+          saveToStorage();
+        }
+      }
+      render();
+    }
+    function onBlur(){ finalize(true); }
+    function onKeyDown(e){
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        finalize(true);
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        target.textContent = bar.text || '';
+        finalize(false);
+      }
+      e.stopPropagation(); // バー全体の keydown（Delete 等）と競合させない
+    }
+    target.addEventListener('blur', onBlur, {once: true});
+    target.addEventListener('keydown', onKeyDown);
+  }
+
   function renderSpanBars(tt, gridEl){
     // R252: spanSecIds 方式の部分縦串バー描画
     var ov = gridEl.querySelector('.tt-span-overlay');
@@ -12808,18 +12922,11 @@ function show(id) {
         selectedBarId = newBar.id;
         saveToStorage();
         render();
+        // R274: 作成直後は即編集モード（startEdit 経由で個別/縦串/無題すべて同じパス）
         setTimeout(function(){
-          const tx = document.querySelector('[data-bar-id="' + newBar.id + '"] .tt-bar-text');
-          if (tx) {
-            tx.setAttribute('contenteditable', 'true');
-            tx.focus();
-            const range = document.createRange();
-            range.selectNodeContents(tx);
-            const sel = window.getSelection();
-            sel.removeAllRanges();
-            sel.addRange(range);
-          }
-        }, 30);
+          const elNew = document.querySelector('[data-bar-id="' + newBar.id + '"]');
+          if (elNew) startEdit(newBar, elNew);
+        }, 50);
       }
       document.addEventListener('mousemove', move);
       document.addEventListener('mouseup', up);
@@ -12827,19 +12934,15 @@ function show(id) {
   }
 
   function bindBarEvents(tt, bar, el, sec){
-    const textEl = el.querySelector('.tt-bar-text');
     const handleL = el.querySelector('.tt-bar-handle.l');
     const handleR = el.querySelector('.tt-bar-handle.r');
-    // R271: 縦串バーはタイトル span だけ編集対象。時刻 span は触らせない。
-    const isSpan = el.classList.contains('span-bar');
-    const editEl = isSpan
-      ? (el.querySelector('.tt-span-title') || el.querySelector('.tt-span-title-empty') || textEl)
-      : textEl;
 
     // バー本体ドラッグ = 移動／クリックのみ = 選択
     el.addEventListener('mousedown', function(e){
       if (e.target === handleL || e.target === handleR) return;
-      if ((e.target === editEl || editEl.contains(e.target)) && editEl.getAttribute('contenteditable') === 'true') return;
+      if (e.target.closest('.tt-bar-handle')) return;
+      // R274: 編集中はドラッグ移動しない（textEl 内部クリックを許可）
+      if (el.classList.contains('tt-bar-editing')) return;
       if (e.button !== 0) return;
       e.stopPropagation();
       const scale = getPaperScale();
@@ -12861,7 +12964,6 @@ function show(id) {
         if (!dragging) return;
         const newStart = snapTime(pixelToTime(timeToPixel(initStart, tt) + dx, tt), tt.timeStart);
         const newEnd = newStart + duration;
-        // R261: 単品も縦串も他バーと重ならないようチェック
         let targetLane = bar.lane || 0;
         if (sec) targetLane = Math.max(0, Math.min(sec.lanes - 1, initLane + Math.round(dy / LANE_H)));
         const isOverlap = overlapsAnyBar(tt, {
@@ -12881,7 +12983,6 @@ function show(id) {
         if (dragging) {
           saveToStorage();
         } else {
-          // R259: Cmd/Ctrl 押し→マルチ選択トグル
           if (ev && (ev.metaKey || ev.ctrlKey)) {
             toggleSel(bar.id);
           } else {
@@ -12894,26 +12995,13 @@ function show(id) {
       document.addEventListener('mouseup', up);
     });
 
-    // R271: editEl（個別バーなら textEl、縦串バーなら .tt-span-title）に編集ハンドラを bind
-    editEl.addEventListener('dblclick', function(e){
+    // R274: バー全体のダブルクリックで編集モード（個別バー・縦串バー共通、無題でも確定後でも動く）
+    el.addEventListener('dblclick', function(e){
+      if (e.target.closest('.tt-bar-handle')) return;
+      if (e.target.closest('.tt-span-time')) return;
       e.stopPropagation();
-      editEl.setAttribute('contenteditable', 'true');
-      editEl.focus();
-      const range = document.createRange();
-      range.selectNodeContents(editEl);
-      const sel = window.getSelection();
-      sel.removeAllRanges();
-      sel.addRange(range);
-    });
-    editEl.addEventListener('blur', function(){
-      if (editEl.getAttribute('contenteditable') !== 'true') return;
-      editEl.setAttribute('contenteditable', 'false');
-      bar.text = editEl.textContent.trim();
-      saveToStorage();
-    });
-    editEl.addEventListener('keydown', function(e){
-      if (e.key === 'Enter') { e.preventDefault(); editEl.blur(); }
-      if (e.key === 'Escape') { editEl.textContent = bar.text || ''; editEl.blur(); }
+      e.preventDefault();
+      startEdit(bar, el);
     });
 
     function startResize(side){
@@ -13608,6 +13696,19 @@ function show(id) {
       if (e.shiftKey) ttRedo();
       else ttUndo();
       return;
+    }
+    // R274: 選択中バーで Enter キー → 即編集モード（マウスでダブルクリック不要）
+    if (selectedBarId && (e.key === 'Enter' || e.key === 'F2')) {
+      const dk = getCurrentDateKey();
+      const tt = getTimetableForDate(dk);
+      if (!tt) return;
+      const bar = tt.bars.find(function(b){ return b.id === selectedBarId; });
+      const elBar = document.querySelector('[data-bar-id="' + selectedBarId + '"]');
+      if (bar && elBar && typeof startEdit === 'function') {
+        e.preventDefault();
+        startEdit(bar, elBar);
+        return;
+      }
     }
     // R259: マルチ選択対応 — 選択中の全バーを一括処理
     if (e.key === 'Delete' || e.key === 'Backspace') {
