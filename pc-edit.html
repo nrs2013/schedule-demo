@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260519.751000">
+<meta name="build-version" content="20260519.760000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -5330,12 +5330,12 @@
   }
   /* R271: タイムテーブルバーをカレンダーと完全同値に揃える（0.42-0.55 系）。
      文字色は濃いまま（書き込みが見える）、編集中はさらに白背景に。 */
-  /* R275: 個別バー 5 色 — 線を 1.5px・フル彩度でしっかり見える太さに（透明度 0.40 はキープ） */
-  .tt-bar.color-white  { background: rgba(255,212,68,0.40); border: 1.5px solid rgba(255,212,68,1.0); color: #2a1a00; font-weight: 600; }
-  .tt-bar.color-pink   { background: rgba(255,88,140,0.40); border: 1.5px solid rgba(255,88,140,1.0); color: #3a0c1c; font-weight: 600; }
-  .tt-bar.color-amber  { background: rgba(245,168,40,0.40); border: 1.5px solid rgba(245,168,40,1.0); color: #2c1a06; font-weight: 600; }
-  .tt-bar.color-gray   { background: rgba(126,216,72,0.40); border: 1.5px solid rgba(126,216,72,1.0); color: #0e2a00; font-weight: 600; }
-  .tt-bar.color-accent { background: rgba(58,160,224,0.40); border: 1.5px solid rgba(58,160,224,1.0); color: #001a3a; font-weight: 600; }
+  /* R276: 個別バー 5 色 — 白文字 + 黒シャドウで読みやすく */
+  .tt-bar.color-white  { background: rgba(255,212,68,0.40); border: 1.5px solid rgba(255,212,68,1.0); color: #ffffff; font-weight: 600; text-shadow: 0 0 4px rgba(0,0,0,0.85), 0 1px 2px rgba(0,0,0,0.7); }
+  .tt-bar.color-pink   { background: rgba(255,88,140,0.40); border: 1.5px solid rgba(255,88,140,1.0); color: #ffffff; font-weight: 600; text-shadow: 0 0 4px rgba(0,0,0,0.85), 0 1px 2px rgba(0,0,0,0.7); }
+  .tt-bar.color-amber  { background: rgba(245,168,40,0.40); border: 1.5px solid rgba(245,168,40,1.0); color: #ffffff; font-weight: 600; text-shadow: 0 0 4px rgba(0,0,0,0.85), 0 1px 2px rgba(0,0,0,0.7); }
+  .tt-bar.color-gray   { background: rgba(126,216,72,0.40); border: 1.5px solid rgba(126,216,72,1.0); color: #ffffff; font-weight: 600; text-shadow: 0 0 4px rgba(0,0,0,0.85), 0 1px 2px rgba(0,0,0,0.7); }
+  .tt-bar.color-accent { background: rgba(58,160,224,0.40); border: 1.5px solid rgba(58,160,224,1.0); color: #ffffff; font-weight: 600; text-shadow: 0 0 4px rgba(0,0,0,0.85), 0 1px 2px rgba(0,0,0,0.7); }
   /* R274: 編集モード — バー全体に琥珀リング、内側の編集 span は白背景＋黒文字でくっきり */
   .tt-bar.tt-bar-editing {
     box-shadow: 0 0 0 2px #f5c878, 0 0 22px rgba(245,200,120,0.55) !important;
@@ -5589,20 +5589,20 @@
   .tt-bar.span-bar.color-amber  { background: rgba(245,168,40,0.25) !important; border: 1.5px solid rgba(245,168,40,0.90) !important; }
   .tt-bar.span-bar.color-gray   { background: rgba(126,216,72,0.22) !important; border: 1.5px solid rgba(126,216,72,0.90) !important; }
   .tt-bar.span-bar.color-accent { background: rgba(58,160,224,0.25) !important; border: 1.5px solid rgba(58,160,224,0.90) !important; }
-  /* R268: 縦串バーのラベルは縦串バー内部の上端（または下端）に置く。幅は内容ぶん。
-     上端レーンに個別バーが乗って文字がぶつかる場合は JS が下端へ自動退避する。 */
+  /* R276: 縦串バーのラベル — バー幅より大きくてもいいので max-width を撤廃して全文表示。
+     白文字＋黒帯背景で読みやすく、隣のバーに少しはみ出しても黒帯が不透明なので干渉なし。 */
   .tt-bar.span-bar .tt-bar-text {
     pointer-events: auto;
     position: absolute;
     top: 4px;
     left: 8px;
     width: max-content;
-    max-width: calc(100% - 16px);
+    /* max-width 撤廃：バー幅より大きくてもラベルを途切れさせない */
     height: 24px;
     background: rgba(16,16,16,0.94);
     padding: 0 10px;
     border-radius: 4px;
-    color: #f0e8d8;
+    color: #ffffff;
     font-weight: 500;
     display: inline-flex;
     flex-direction: row;
@@ -5610,11 +5610,10 @@
     align-items: center;
     line-height: 1.1;
     white-space: nowrap;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.45), 0 0 0 0.5px rgba(0,0,0,0.5);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.55), 0 0 0 0.5px rgba(0,0,0,0.6);
     cursor: move;
     box-sizing: border-box;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    overflow: visible;
     z-index: 7;
   }
   .tt-bar.span-bar .tt-span-time { margin-left: 8px; }
@@ -12583,18 +12582,31 @@ function show(id) {
   }
   function startEdit(bar, el){
     if (!el || !bar) return;
-    // 他に編集中のバーがあれば先に確定させる
+    // R276: 他のバーが編集中なら強制的に解除（テキストは可能なら保存）
     document.querySelectorAll('.tt-bar.tt-bar-editing').forEach(function(other){
       if (other === el) return;
       const otherTarget = other.querySelector('[contenteditable="true"]');
-      if (otherTarget) otherTarget.blur();
+      if (otherTarget) {
+        try {
+          const otherBarId = other.getAttribute('data-bar-id');
+          // データ反映は __ttSaveBarText に任せる（render が連鎖するのを避けるため flush しないで done フラグだけ立てる）
+          otherTarget.setAttribute('contenteditable', 'false');
+        } catch(e){}
+        other.classList.remove('tt-bar-editing');
+      }
     });
+    // R276: 自分が既に編集中だった場合も状態をリセットしてから再起動
+    if (el.classList.contains('tt-bar-editing')) {
+      el.classList.remove('tt-bar-editing');
+      const existing = el.querySelector('[contenteditable="true"]');
+      if (existing) existing.setAttribute('contenteditable', 'false');
+    }
     const target = getEditTarget(el);
     if (!target) return;
     el.classList.add('tt-bar-editing');
     target.setAttribute('contenteditable', 'true');
-    // フォーカス → 全選択
-    setTimeout(function(){
+    // R276: フォーカス → 全選択（実機ではマウスのダブルクリック直後に確実に当たる）
+    function applyFocus(){
       try {
         target.focus();
         const range = document.createRange();
@@ -12603,17 +12615,22 @@ function show(id) {
         sel.removeAllRanges();
         sel.addRange(range);
       } catch(e){}
-    }, 0);
+    }
+    // requestAnimationFrame で確実に render 後に focus
+    if (typeof requestAnimationFrame === 'function') requestAnimationFrame(applyFocus);
+    else setTimeout(applyFocus, 0);
 
     let done = false;
     function finalize(saveValue){
       if (done) return;
       done = true;
+      target.removeEventListener('blur', onBlur);
+      target.removeEventListener('keydown', onKeyDown);
       try { target.setAttribute('contenteditable', 'false'); } catch(e){}
       el.classList.remove('tt-bar-editing');
       if (saveValue) {
         const newText = target.textContent.trim();
-        if (newText !== bar.text) {
+        if (newText !== (bar.text || '')) {
           bar.text = newText;
           saveToStorage();
         }
@@ -12624,15 +12641,18 @@ function show(id) {
     function onKeyDown(e){
       if (e.key === 'Enter') {
         e.preventDefault();
+        e.stopPropagation();
         finalize(true);
       } else if (e.key === 'Escape') {
         e.preventDefault();
+        e.stopPropagation();
         target.textContent = bar.text || '';
         finalize(false);
+      } else {
+        e.stopPropagation(); // Delete / Backspace 等がバー削除に伝わるのを防ぐ
       }
-      e.stopPropagation(); // バー全体の keydown（Delete 等）と競合させない
     }
-    target.addEventListener('blur', onBlur, {once: true});
+    target.addEventListener('blur', onBlur);
     target.addEventListener('keydown', onKeyDown);
   }
 
