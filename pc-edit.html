@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260519.783000">
+<meta name="build-version" content="20260519.784000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -5348,12 +5348,22 @@
     z-index: 8;
     overflow: visible;
   }
-  /* R278d: 個別バー hover/selected/編集中はラベルがバー右にはみ出して全文表示 */
+  /* R278d+R278e: 個別バー hover/selected はラベルが内容幅まで広がってバー右に飛び出す。
+     黒帯背景＋影で読みやすく、後ろのバーに被っても識別可能 */
   .tt-bar.normal:hover .tt-bar-text,
   .tt-bar.normal.selected .tt-bar-text {
     overflow: visible;
     text-overflow: clip;
     white-space: nowrap;
+    flex: 0 0 auto;
+    width: max-content;
+    background: rgba(20,20,20,0.92);
+    padding: 2px 8px;
+    margin-left: -8px;
+    border-radius: 3px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.45);
+    position: relative;
+    z-index: 11;
   }
   .tt-bar.normal.selected { overflow: visible; }
   /* R278: 個別バー 5 色 — グラデ＋上端ハイライト＋外側影で奥行き。文字は白＋黒シャドウで視認性 */
