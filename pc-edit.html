@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260519.772000">
+<meta name="build-version" content="20260519.780000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -3091,23 +3091,28 @@
     letter-spacing: 0.04em;
     cursor: grab;
     user-select: none;
-    transition: transform 0.1s, opacity 0.12s;
+    transition: transform 0.15s cubic-bezier(0.4,0,0.2,1), box-shadow 0.15s ease, filter 0.15s ease, opacity 0.12s;
     border: 1px solid transparent;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.16), 0 1px 3px rgba(0,0,0,0.25);
+  }
+  .cal-event-block:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.10);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.26), 0 5px 14px rgba(0,0,0,0.4);
   }
   .cal-event-block:active { cursor: grabbing; transform: scale(0.96); }
   .cal-event-block.dragging { opacity: 0.4; }
-  /* R255: カレンダーイベント色を書類向け muted へ統一 */
-  /* R271: パレットとカレンダー貼り後（.pc-cal-pill）と完全同値に揃える（0.50-0.55 系） */
-  .cal-event-block.show   { background: rgba(255,88,140,0.55);  color: #ffe0ec; border-color: rgba(255,88,140,0.85); }
-  .cal-event-block.genchi { background: rgba(245,168,40,0.55);  color: #fff0d0; border-color: rgba(245,168,40,0.85); }
-  .cal-event-block.setup  { background: rgba(255,212,68,0.42);  color: #fff5d0; border-color: rgba(255,212,68,0.85); }
-  .cal-event-block.tek    { background: rgba(58,160,224,0.55);  color: #d8eef8; border-color: rgba(58,160,224,0.85); }
-  .cal-event-block.rh     { background: rgba(126,216,72,0.50);  color: #e0f5d0; border-color: rgba(126,216,72,0.85); }
-  .cal-event-block.stay   { background: rgba(184,168,216,0.42); color: #ece4f5; border-color: rgba(184,168,216,0.75); }
-  .cal-event-block.off    { background: rgba(184,168,216,0.20); color: #c8b8e0; border-color: rgba(184,168,216,0.50); }
-  .cal-event-block.koya   { background: rgba(216,160,108,0.50); color: #f5dcba; border-color: rgba(216,160,108,0.80); }
-  .cal-event-block.pre    { background: rgba(122,200,184,0.50); color: #d4f0e8; border-color: rgba(122,200,184,0.80); }
-  .cal-event-block.back   { background: rgba(216,138,170,0.50); color: #f5cad8; border-color: rgba(216,138,170,0.80); }
+  /* R278: パレット側も pill と同色＋グラデで完全同質感 */
+  .cal-event-block.show   { background: linear-gradient(168deg, rgba(255,88,140,0.62) 0%, rgba(255,88,140,0.42) 100%);   color: #ffe0ec; border-color: rgba(255,88,140,0.85); }
+  .cal-event-block.genchi { background: linear-gradient(168deg, rgba(245,168,40,0.62) 0%, rgba(245,168,40,0.42) 100%);   color: #fff0d0; border-color: rgba(245,168,40,0.85); }
+  .cal-event-block.setup  { background: linear-gradient(168deg, rgba(255,212,68,0.50) 0%, rgba(255,212,68,0.32) 100%);   color: #fff5d0; border-color: rgba(255,212,68,0.85); }
+  .cal-event-block.tek    { background: linear-gradient(168deg, rgba(58,160,224,0.62) 0%, rgba(58,160,224,0.42) 100%);   color: #d8eef8; border-color: rgba(58,160,224,0.85); }
+  .cal-event-block.rh     { background: linear-gradient(168deg, rgba(126,216,72,0.58) 0%, rgba(126,216,72,0.38) 100%);   color: #e0f5d0; border-color: rgba(126,216,72,0.85); }
+  .cal-event-block.stay   { background: linear-gradient(168deg, rgba(184,168,216,0.50) 0%, rgba(184,168,216,0.30) 100%); color: #ece4f5; border-color: rgba(184,168,216,0.75); }
+  .cal-event-block.off    { background: linear-gradient(168deg, rgba(184,168,216,0.26) 0%, rgba(184,168,216,0.12) 100%); color: #c8b8e0; border-color: rgba(184,168,216,0.50); }
+  .cal-event-block.koya   { background: linear-gradient(168deg, rgba(216,160,108,0.58) 0%, rgba(216,160,108,0.38) 100%); color: #f5dcba; border-color: rgba(216,160,108,0.80); }
+  .cal-event-block.pre    { background: linear-gradient(168deg, rgba(122,200,184,0.58) 0%, rgba(122,200,184,0.38) 100%); color: #d4f0e8; border-color: rgba(122,200,184,0.80); }
+  .cal-event-block.back   { background: linear-gradient(168deg, rgba(216,138,170,0.58) 0%, rgba(216,138,170,0.38) 100%); color: #f5cad8; border-color: rgba(216,138,170,0.80); }
   .cal-event-block-add {
     flex-basis: 100%;
     background: transparent;
@@ -3848,20 +3853,25 @@
     text-align: center;
     line-height: 1.2;
     border: 1px solid transparent;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 1px 2px rgba(0,0,0,0.18);
+    transition: transform 0.15s cubic-bezier(0.4,0,0.2,1), box-shadow 0.15s ease, filter 0.15s ease;
   }
-  /* D84: カレンダー pill — ステージ照明フィルター式 */
-  .pc-cal-pill.show   { background: rgba(255,88,140,0.55);  color: #ffe0ec; border-color: rgba(255,88,140,0.85); font-weight: 600; }
-  .pc-cal-pill.genchi { background: rgba(245,168,40,0.55);  color: #fff0d0; border-color: rgba(245,168,40,0.85); }
-  .pc-cal-pill.setup  { background: rgba(255,212,68,0.42);  color: #fff5d0; border-color: rgba(255,212,68,0.85); }
-  .pc-cal-pill.tek    { background: rgba(58,160,224,0.55);  color: #d8eef8; border-color: rgba(58,160,224,0.85); }
-  .pc-cal-pill.rh     { background: rgba(126,216,72,0.50);  color: #e0f5d0; border-color: rgba(126,216,72,0.85); }
-  /* D64/D84: stay 系（移動/休）— Light Lavender。連結時にも見えるよう alpha 高め */
-  .pc-cal-pill.stay   { background: rgba(184,168,216,0.42); color: #ece4f5; font-weight: 500; border-color: rgba(184,168,216,0.75); }
-  /* R277b: パレット側（.cal-event-block）にあって貼付後（.pc-cal-pill）に欠けていた 4 種を追加。これでパレット⇔貼付後で完全同色 */
-  .pc-cal-pill.off    { background: rgba(184,168,216,0.20); color: #c8b8e0; border-color: rgba(184,168,216,0.50); }
-  .pc-cal-pill.koya   { background: rgba(216,160,108,0.50); color: #f5dcba; border-color: rgba(216,160,108,0.80); }
-  .pc-cal-pill.pre    { background: rgba(122,200,184,0.50); color: #d4f0e8; border-color: rgba(122,200,184,0.80); }
-  .pc-cal-pill.back   { background: rgba(216,138,170,0.50); color: #f5cad8; border-color: rgba(216,138,170,0.80); }
+  .pc-cal-pill:hover {
+    transform: translateY(-0.5px);
+    filter: brightness(1.08);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.22), 0 3px 8px rgba(0,0,0,0.32);
+  }
+  /* R278: カレンダー pill — グラデーションで奥行き（背景値はパレットと同色相を保持） */
+  .pc-cal-pill.show   { background: linear-gradient(168deg, rgba(255,88,140,0.62) 0%, rgba(255,88,140,0.42) 100%);   color: #ffe0ec; border-color: rgba(255,88,140,0.85); font-weight: 600; }
+  .pc-cal-pill.genchi { background: linear-gradient(168deg, rgba(245,168,40,0.62) 0%, rgba(245,168,40,0.42) 100%);   color: #fff0d0; border-color: rgba(245,168,40,0.85); }
+  .pc-cal-pill.setup  { background: linear-gradient(168deg, rgba(255,212,68,0.50) 0%, rgba(255,212,68,0.32) 100%);   color: #fff5d0; border-color: rgba(255,212,68,0.85); }
+  .pc-cal-pill.tek    { background: linear-gradient(168deg, rgba(58,160,224,0.62) 0%, rgba(58,160,224,0.42) 100%);   color: #d8eef8; border-color: rgba(58,160,224,0.85); }
+  .pc-cal-pill.rh     { background: linear-gradient(168deg, rgba(126,216,72,0.58) 0%, rgba(126,216,72,0.38) 100%);   color: #e0f5d0; border-color: rgba(126,216,72,0.85); }
+  .pc-cal-pill.stay   { background: linear-gradient(168deg, rgba(184,168,216,0.50) 0%, rgba(184,168,216,0.30) 100%); color: #ece4f5; font-weight: 500; border-color: rgba(184,168,216,0.75); }
+  .pc-cal-pill.off    { background: linear-gradient(168deg, rgba(184,168,216,0.26) 0%, rgba(184,168,216,0.12) 100%); color: #c8b8e0; border-color: rgba(184,168,216,0.50); }
+  .pc-cal-pill.koya   { background: linear-gradient(168deg, rgba(216,160,108,0.58) 0%, rgba(216,160,108,0.38) 100%); color: #f5dcba; border-color: rgba(216,160,108,0.80); }
+  .pc-cal-pill.pre    { background: linear-gradient(168deg, rgba(122,200,184,0.58) 0%, rgba(122,200,184,0.38) 100%); color: #d4f0e8; border-color: rgba(122,200,184,0.80); }
+  .pc-cal-pill.back   { background: linear-gradient(168deg, rgba(216,138,170,0.58) 0%, rgba(216,138,170,0.38) 100%); color: #f5cad8; border-color: rgba(216,138,170,0.80); }
   /* R54: 連続イベントを横バー化（同会場・同種別で繋がってる感を出す） */
   /* 隣のセルとの隙間を margin で詰めて視覚的に1本の帯に見せる */
   .pc-cal-pill.bar-start {
@@ -5308,12 +5318,12 @@
     line-height: 1.5;
   }
 
-  /* ── R237 Phase 2: バー ─────────────────────────── */
+  /* ── R237 Phase 2 + R278: バー（Excel より気持ちいい質感） ─────────────────────────── */
   .tt-sec-body { cursor: crosshair; user-select: none; }
   .tt-bar {
     position: absolute;
-    border-radius: 4px;
-    padding: 0 8px;
+    border-radius: 5px;
+    padding: 0 10px;
     display: flex;
     align-items: center;
     font-size: 12px;
@@ -5325,22 +5335,24 @@
     overflow: hidden;
     box-sizing: border-box;
     user-select: none;
-    transition: filter 0.12s ease, box-shadow 0.12s ease;
-    z-index: 5; /* R261: 個別バーは縦串バー（z-index:1）より上 */
+    letter-spacing: 0.02em;
+    font-feature-settings: 'tnum', 'palt';
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.14), 0 1px 3px rgba(0,0,0,0.30);
+    transition: transform 0.18s cubic-bezier(0.4,0,0.2,1), box-shadow 0.18s cubic-bezier(0.4,0,0.2,1), filter 0.18s ease, background 0.18s ease;
+    z-index: 5;
   }
-  .tt-bar:not(.span-bar):hover {
-    filter: brightness(1.08);
-    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+  .tt-bar:not(.span-bar):not(.tt-bar-editing):hover {
+    transform: translateY(-1px);
+    filter: brightness(1.10);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.22), 0 4px 12px rgba(0,0,0,0.45);
     z-index: 6;
   }
-  /* R271: タイムテーブルバーをカレンダーと完全同値に揃える（0.42-0.55 系）。
-     文字色は濃いまま（書き込みが見える）、編集中はさらに白背景に。 */
-  /* R276: 個別バー 5 色 — 白文字 + 黒シャドウで読みやすく */
-  .tt-bar.color-white  { background: rgba(255,212,68,0.40); border: 1.5px solid rgba(255,212,68,1.0); color: #ffffff; font-weight: 600; text-shadow: 0 0 4px rgba(0,0,0,0.85), 0 1px 2px rgba(0,0,0,0.7); }
-  .tt-bar.color-pink   { background: rgba(255,88,140,0.40); border: 1.5px solid rgba(255,88,140,1.0); color: #ffffff; font-weight: 600; text-shadow: 0 0 4px rgba(0,0,0,0.85), 0 1px 2px rgba(0,0,0,0.7); }
-  .tt-bar.color-amber  { background: rgba(245,168,40,0.40); border: 1.5px solid rgba(245,168,40,1.0); color: #ffffff; font-weight: 600; text-shadow: 0 0 4px rgba(0,0,0,0.85), 0 1px 2px rgba(0,0,0,0.7); }
-  .tt-bar.color-gray   { background: rgba(126,216,72,0.40); border: 1.5px solid rgba(126,216,72,1.0); color: #ffffff; font-weight: 600; text-shadow: 0 0 4px rgba(0,0,0,0.85), 0 1px 2px rgba(0,0,0,0.7); }
-  .tt-bar.color-accent { background: rgba(58,160,224,0.40); border: 1.5px solid rgba(58,160,224,1.0); color: #ffffff; font-weight: 600; text-shadow: 0 0 4px rgba(0,0,0,0.85), 0 1px 2px rgba(0,0,0,0.7); }
+  /* R278: 個別バー 5 色 — グラデ＋上端ハイライト＋外側影で奥行き。文字は白＋黒シャドウで視認性 */
+  .tt-bar.color-white  { background: linear-gradient(168deg, rgba(255,212,68,0.50) 0%, rgba(255,212,68,0.30) 100%); border: 1.5px solid rgba(255,212,68,1.0); color: #ffffff; font-weight: 600; text-shadow: 0 0 4px rgba(0,0,0,0.85), 0 1px 2px rgba(0,0,0,0.7); }
+  .tt-bar.color-pink   { background: linear-gradient(168deg, rgba(255,88,140,0.50) 0%, rgba(255,88,140,0.30) 100%); border: 1.5px solid rgba(255,88,140,1.0); color: #ffffff; font-weight: 600; text-shadow: 0 0 4px rgba(0,0,0,0.85), 0 1px 2px rgba(0,0,0,0.7); }
+  .tt-bar.color-amber  { background: linear-gradient(168deg, rgba(245,168,40,0.50) 0%, rgba(245,168,40,0.30) 100%); border: 1.5px solid rgba(245,168,40,1.0); color: #ffffff; font-weight: 600; text-shadow: 0 0 4px rgba(0,0,0,0.85), 0 1px 2px rgba(0,0,0,0.7); }
+  .tt-bar.color-gray   { background: linear-gradient(168deg, rgba(126,216,72,0.50) 0%, rgba(126,216,72,0.30) 100%); border: 1.5px solid rgba(126,216,72,1.0); color: #ffffff; font-weight: 600; text-shadow: 0 0 4px rgba(0,0,0,0.85), 0 1px 2px rgba(0,0,0,0.7); }
+  .tt-bar.color-accent { background: linear-gradient(168deg, rgba(58,160,224,0.50) 0%, rgba(58,160,224,0.30) 100%); border: 1.5px solid rgba(58,160,224,1.0); color: #ffffff; font-weight: 600; text-shadow: 0 0 4px rgba(0,0,0,0.85), 0 1px 2px rgba(0,0,0,0.7); }
   /* R274: 編集モード — バー全体に琥珀リング、内側の編集 span は白背景＋黒文字でくっきり */
   .tt-bar.tt-bar-editing {
     box-shadow: 0 0 0 2px #f5c878, 0 0 22px rgba(245,200,120,0.55) !important;
@@ -5383,9 +5395,10 @@
     text-shadow: none !important;
   }
   .tt-bar.selected {
-    box-shadow: 0 0 0 2px #c8a878, 0 0 14px rgba(200,168,120,0.35);
-    z-index: 7; /* R261: 選択中の個別バーは更に前へ */
-    filter: brightness(1.06);
+    /* R278: 選択中の琥珀リング — 2 段グロー＋上端ハイライト維持で立体感 */
+    box-shadow: 0 0 0 2px #c8a878, 0 0 16px rgba(200,168,120,0.55), 0 0 30px rgba(200,168,120,0.25), inset 0 1px 0 rgba(255,255,255,0.28);
+    z-index: 7;
+    filter: brightness(1.10);
   }
   .tt-bar-time { font-weight: 600; opacity: 0.78; font-feature-settings: 'tnum'; margin-right: 2px; }
   .tt-bar-dur { font-weight: 500; opacity: 0.7; font-size: 10px; }
@@ -5595,24 +5608,22 @@
     pointer-events: none;
     border-radius: 4px;
   }
-  /* R275: 縦串バーも 1.5px・フル彩度に揃える。透明度は薄め（下レイヤーの存在感） */
-  .tt-bar.span-bar.color-white  { background: rgba(255,212,68,0.22) !important; border: 1.5px solid rgba(255,212,68,0.90) !important; }
-  .tt-bar.span-bar.color-pink   { background: rgba(255,88,140,0.25) !important; border: 1.5px solid rgba(255,88,140,0.90) !important; }
-  .tt-bar.span-bar.color-amber  { background: rgba(245,168,40,0.25) !important; border: 1.5px solid rgba(245,168,40,0.90) !important; }
-  .tt-bar.span-bar.color-gray   { background: rgba(126,216,72,0.22) !important; border: 1.5px solid rgba(126,216,72,0.90) !important; }
-  .tt-bar.span-bar.color-accent { background: rgba(58,160,224,0.25) !important; border: 1.5px solid rgba(58,160,224,0.90) !important; }
-  /* R276: 縦串バーのラベル — バー幅より大きくてもいいので max-width を撤廃して全文表示。
-     白文字＋黒帯背景で読みやすく、隣のバーに少しはみ出しても黒帯が不透明なので干渉なし。 */
+  /* R278: 縦串バーもグラデで奥行き — 下レイヤーらしく薄め、上端だけ明るく */
+  .tt-bar.span-bar.color-white  { background: linear-gradient(180deg, rgba(255,212,68,0.30) 0%, rgba(255,212,68,0.15) 100%) !important; border: 1.5px solid rgba(255,212,68,0.90) !important; }
+  .tt-bar.span-bar.color-pink   { background: linear-gradient(180deg, rgba(255,88,140,0.32) 0%, rgba(255,88,140,0.18) 100%) !important; border: 1.5px solid rgba(255,88,140,0.90) !important; }
+  .tt-bar.span-bar.color-amber  { background: linear-gradient(180deg, rgba(245,168,40,0.32) 0%, rgba(245,168,40,0.18) 100%) !important; border: 1.5px solid rgba(245,168,40,0.90) !important; }
+  .tt-bar.span-bar.color-gray   { background: linear-gradient(180deg, rgba(126,216,72,0.30) 0%, rgba(126,216,72,0.15) 100%) !important; border: 1.5px solid rgba(126,216,72,0.90) !important; }
+  .tt-bar.span-bar.color-accent { background: linear-gradient(180deg, rgba(58,160,224,0.32) 0%, rgba(58,160,224,0.18) 100%) !important; border: 1.5px solid rgba(58,160,224,0.90) !important; }
+  /* R276+R278: 縦串バーラベル — 黒帯にもグラデ＋影で奥行き、白文字 */
   .tt-bar.span-bar .tt-bar-text {
     pointer-events: auto;
     position: absolute;
     top: 4px;
     left: 8px;
     width: max-content;
-    /* max-width 撤廃：バー幅より大きくてもラベルを途切れさせない */
     height: 24px;
-    background: rgba(16,16,16,0.94);
-    padding: 0 10px;
+    background: linear-gradient(180deg, rgba(28,28,28,0.96) 0%, rgba(12,12,12,0.94) 100%);
+    padding: 0 12px;
     border-radius: 4px;
     color: #ffffff;
     font-weight: 500;
@@ -5622,11 +5633,12 @@
     align-items: center;
     line-height: 1.1;
     white-space: nowrap;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.55), 0 0 0 0.5px rgba(0,0,0,0.6);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.10), 0 0 0 0.5px rgba(0,0,0,0.7);
     cursor: move;
     box-sizing: border-box;
     overflow: visible;
     z-index: 7;
+    letter-spacing: 0.04em;
   }
   .tt-bar.span-bar .tt-span-time { margin-left: 8px; }
   /* R268: 下端退避モード */
