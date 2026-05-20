@@ -23,3 +23,5 @@ _watcher_test.txt
 
 # バックアップ HTML（手元の世代管理用、リモートには上げない）
 pc-edit-r[0-9]*.html
+*-backup.html
+*.backup-*
