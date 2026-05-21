@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260519.800000">
+<meta name="build-version" content="20260520.940000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -5343,31 +5343,15 @@
     transition: transform 0.18s cubic-bezier(0.4,0,0.2,1), box-shadow 0.18s cubic-bezier(0.4,0,0.2,1), filter 0.18s ease, background 0.18s ease;
     z-index: 5;
   }
-  .tt-bar:not(.span-bar):not(.tt-bar-editing):hover {
+  /* R281e-D: 選択中は hover の浮き上がりを抑制（amber リングと二重に動かない） */
+  .tt-bar:not(.span-bar):not(.tt-bar-editing):not(.selected):hover {
     transform: translateY(-1px);
     filter: brightness(1.10);
     box-shadow: inset 0 1px 0 rgba(255,255,255,0.22), 0 4px 12px rgba(0,0,0,0.45);
     z-index: 8;
-    overflow: visible;
   }
-  /* R278d+R278e: 個別バー hover/selected はラベルが内容幅まで広がってバー右に飛び出す。
-     黒帯背景＋影で読みやすく、後ろのバーに被っても識別可能 */
-  .tt-bar.normal:hover .tt-bar-text,
-  .tt-bar.normal.selected .tt-bar-text {
-    overflow: visible;
-    text-overflow: clip;
-    white-space: nowrap;
-    flex: 0 0 auto;
-    width: max-content;
-    background: rgba(20,20,20,0.92);
-    padding: 2px 8px;
-    margin-left: -8px;
-    border-radius: 3px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.45);
-    position: relative;
-    z-index: 11;
-  }
-  .tt-bar.normal.selected { overflow: visible; }
+  /* R281b: 個別バーの hover/selected で文字をバー外にこぼさない。
+     ellipsis のまま収め、フルテキストは tooltip(el.title) で確認できる */
   /* R278: 個別バー 5 色 — グラデ＋上端ハイライト＋外側影で奥行き。文字は白＋黒シャドウで視認性 */
   .tt-bar.color-white  { background: linear-gradient(168deg, rgba(255,212,68,0.50) 0%, rgba(255,212,68,0.30) 100%); border: 1.5px solid rgba(255,212,68,1.0); color: #ffffff; font-weight: 600; text-shadow: 0 0 4px rgba(0,0,0,0.85), 0 1px 2px rgba(0,0,0,0.7); }
   .tt-bar.color-pink   { background: linear-gradient(168deg, rgba(255,88,140,0.50) 0%, rgba(255,88,140,0.30) 100%); border: 1.5px solid rgba(255,88,140,1.0); color: #ffffff; font-weight: 600; text-shadow: 0 0 4px rgba(0,0,0,0.85), 0 1px 2px rgba(0,0,0,0.7); }
@@ -5494,6 +5478,44 @@
     z-index: 8;
   }
   .tt-bar-handle:hover { background: rgba(255,255,255,0.18); }
+
+  /* R281e-A: ドラッグ／リサイズ中の時刻HUD（カーソル横に固定追従） */
+  .tt-drag-hud {
+    position: fixed;
+    pointer-events: none;
+    background: rgba(20,20,20,0.92);
+    color: #f5c878;
+    font-family: 'JetBrains Mono', 'Consolas', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    padding: 5px 10px;
+    border-radius: 4px;
+    border: 0.5px solid rgba(245,200,120,0.55);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.55);
+    z-index: 99999;
+    white-space: nowrap;
+    font-feature-settings: 'tnum';
+  }
+  .tt-drag-hud .tt-hud-dur {
+    color: rgba(255,255,255,0.75);
+    margin-left: 6px;
+    font-weight: 500;
+  }
+
+  /* R281e-B: 選択中バーのリサイズハンドルを可視化（触れる場所が見える） */
+  .tt-bar.selected .tt-bar-handle.l { box-shadow: inset 2px 0 0 rgba(245,200,120,0.65); }
+  .tt-bar.selected .tt-bar-handle.r { box-shadow: inset -2px 0 0 rgba(245,200,120,0.65); }
+  .tt-bar.selected .tt-bar-handle.l:hover,
+  .tt-bar.selected .tt-bar-handle.r:hover { background: rgba(245,200,120,0.30); }
+  .tt-bar.span-bar.selected .tt-bar-handle.t { box-shadow: inset 0 2px 0 rgba(245,200,120,0.65); }
+  .tt-bar.span-bar.selected .tt-bar-handle.b { box-shadow: inset 0 -2px 0 rgba(245,200,120,0.65); }
+
+  /* R281e-C: ドラッグ中は全要素 grabbing カーソル（つかんでる感） */
+  body.tt-dragging, body.tt-dragging * { cursor: grabbing !important; }
+  /* リサイズ中だけは ew/ns に */
+  body.tt-resizing-h, body.tt-resizing-h * { cursor: ew-resize !important; }
+  body.tt-resizing-v, body.tt-resizing-v * { cursor: ns-resize !important; }
   .tt-help {
     margin-top: 10px;
     font-size: 12px;
@@ -5638,76 +5660,59 @@
   .tt-bar.span-bar.color-amber  { background: linear-gradient(180deg, rgba(245,168,40,0.32) 0%, rgba(245,168,40,0.18) 100%) !important; border: 1.5px solid rgba(245,168,40,0.90) !important; }
   .tt-bar.span-bar.color-gray   { background: linear-gradient(180deg, rgba(126,216,72,0.30) 0%, rgba(126,216,72,0.15) 100%) !important; border: 1.5px solid rgba(126,216,72,0.90) !important; }
   .tt-bar.span-bar.color-accent { background: linear-gradient(180deg, rgba(58,160,224,0.32) 0%, rgba(58,160,224,0.18) 100%) !important; border: 1.5px solid rgba(58,160,224,0.90) !important; }
-  /* R278b: 縦串バーは .tt-bar 全般の overflow:hidden を上書きしてラベルがバー幅を超えても全文表示。
-     .tt-span-title の ellipsis も撤廃 — ラベル自体が max-content なので必要ない。 */
-  .tt-bar.span-bar { overflow: visible !important; }
-  .tt-bar.span-bar .tt-span-title,
-  .tt-bar.span-bar .tt-span-title-empty {
-    overflow: visible !important;
-    text-overflow: clip !important;
-    max-width: none !important;
-  }
-  /* R279: 縦串バーラベル — 黒帯感を緩めて半透明＋微 backdrop-filter で品の良いガラス質感。
-     バー本体の半透明色と調和、文字はシャドウで読みやすく */
+  /* R281b: 縦串バーのラベルは「バーの真ん中に大きく」表示。バーからはみ出さない（ellipsis）。
+     glassy pill は撤廃 — バー本体の色グラデの上に強いテキストシャドウで読みやすく。 */
+  .tt-bar.span-bar { overflow: hidden !important; }
   .tt-bar.span-bar .tt-bar-text {
     pointer-events: auto;
     position: absolute;
-    top: 4px;
-    left: 8px;
-    width: max-content;
-    height: 24px;
-    background: rgba(18,18,18,0.65);
-    -webkit-backdrop-filter: blur(6px) saturate(1.2);
-    backdrop-filter: blur(6px) saturate(1.2);
-    padding: 0 12px;
-    border-radius: 4px;
-    color: #ffffff;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.7);
-    font-weight: 500;
-    display: inline-flex;
-    flex-direction: row;
-    gap: 10px;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
     align-items: center;
-    line-height: 1.1;
-    white-space: nowrap;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.40), inset 0 1px 0 rgba(255,255,255,0.12), 0 0 0 0.5px rgba(255,255,255,0.08);
+    justify-content: center;
+    padding: 8px 14px;
+    gap: 4px;
+    background: transparent;
     cursor: move;
     box-sizing: border-box;
-    overflow: visible;
+    overflow: hidden;
     z-index: 7;
-    letter-spacing: 0.04em;
   }
-  .tt-bar.span-bar .tt-span-time { margin-left: 8px; }
-  /* R268: 下端退避モード */
-  .tt-bar.span-bar .tt-bar-text.tt-label-bottom {
-    top: auto;
-    bottom: 4px;
-  }
-  /* R248: 縦串バー内のタイトル＋時刻表示 */
-  .tt-span-title {
-    font-size: 13px;
-    font-weight: 600;
-    color: #f5e8d8;
-    letter-spacing: 0.04em;
-    flex: 0 1 auto;
+  /* タイトル：バー高さに応じて 18〜26px、はみ出しは ellipsis */
+  .tt-bar.span-bar .tt-span-title,
+  .tt-bar.span-bar .tt-span-title-empty {
+    font-size: clamp(16px, 1.8vw, 24px);
+    font-weight: 700;
+    color: #ffffff;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.85), 0 0 8px rgba(0,0,0,0.55);
+    letter-spacing: 0.06em;
+    max-width: 100%;
+    white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    text-align: center;
+    line-height: 1.15;
+    flex: 0 1 auto;
   }
-  .tt-span-title-empty {
-    font-size: 12px;
-    color: #8e8a78;
+  .tt-bar.span-bar .tt-span-title-empty {
     font-style: italic;
+    font-weight: 500;
+    opacity: 0.75;
   }
-  .tt-span-time {
+  /* 時刻：タイトルの下に小さく */
+  .tt-bar.span-bar .tt-span-time {
     font-size: 11px;
     font-weight: 500;
-    color: #c8c4b0;
-    opacity: 0.85;
+    color: rgba(255,255,255,0.92);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.7);
     font-feature-settings: 'tnum';
-    letter-spacing: 0.04em;
+    letter-spacing: 0.06em;
     flex: 0 0 auto;
-    margin-left: auto;
+    margin-left: 0;
   }
+  /* R281b: 旧 R268 下端退避モードは中央配置で不要に。互換のため空ルール残し */
+  .tt-bar.span-bar .tt-bar-text.tt-label-bottom { /* noop */ }
   /* R256+R275b: 縦串バーの上下リサイズハンドル — ラベル(z=7)より上に出して必ず掴める。
      左右もラベル中央寄せのため掴みやすい範囲に。 */
   .tt-bar-handle.t, .tt-bar-handle.b {
@@ -6210,7 +6215,7 @@
               <button class="tt-zoom-btn" id="tt-btn-zoom-in" type="button" title="拡大">+</button>
               <button class="tt-zoom-btn fit" id="tt-btn-zoom-fit" type="button" title="画面に合わせる">FIT</button>
             </div>
-            <button class="tt-btn" id="tt-btn-copy-prev" type="button" disabled>前日から複製</button>
+            <button class="tt-btn" id="tt-btn-copy-prev" type="button">前日から複製</button>
             <button class="tt-btn" id="tt-btn-reset-day" type="button" style="color:#d97070;">この日リセット</button>
             <button class="tt-btn" id="tt-btn-print" type="button">📄 PDF 出力</button>
           </div>
@@ -6228,8 +6233,8 @@
           <div class="tt-help-detail" style="display:none; margin-top:8px; padding:10px 12px; background:#161616; border:0.5px solid #2c2c2c; border-radius:6px; line-height:1.7;">
             <div style="color:#f5c878; font-weight:600; margin-bottom:6px;">基本フロー（Excel より簡単）</div>
             <div>・セクション内を<strong style="color:#c8a878;">ドラッグ</strong> → 自動で編集モードに入る → <strong style="color:#c8a878;">そのまま文字入力</strong> → <strong style="color:#c8a878;">Enter</strong> で確定</div>
-            <div>・既存バーを<strong style="color:#c8a878;">クリック1回</strong>で即編集モードに入って書き直せる</div>
-            <div>・編集中は <strong style="color:#c8a878;">Enter</strong> 確定 ／ <strong style="color:#c8a878;">Escape</strong> キャンセル ／ バー外クリックで自動確定</div>
+            <div>・既存バーを<strong style="color:#c8a878;">クリック</strong>で選択 → <strong style="color:#c8a878;">もう一度クリック</strong>（または <strong style="color:#c8a878;">F2 / Enter / ダブルクリック</strong>）で編集モード</div>
+            <div>・編集中は <strong style="color:#c8a878;">Enter</strong> 確定 ／ <strong style="color:#c8a878;">Escape</strong> キャンセル ／ バー外クリックで自動確定（IME 変換中の Enter は安全に無視）</div>
             <div style="color:#f5c878; font-weight:600; margin-top:10px; margin-bottom:6px;">バー操作</div>
             <div>・バーの<strong style="color:#c8a878;">端をドラッグ</strong>で伸縮 ／ <strong style="color:#c8a878;">中央をドラッグ</strong>で移動</div>
             <div>・上下のセクションをまたいで<strong style="color:#c8a878;">縦ドラッグ</strong>すると複数セクション貫通バー（縦串）</div>
@@ -12510,7 +12515,7 @@ function show(id) {
      - 縦串 vs 単品: 縦串が跨ぐ全セクションに対し、単品が同セクションかつ時間重なり
      - 縦串 vs 縦串: spanSecIds に共通セクションがあり時間重なり
   */
-  function overlapsAnyBar(tt, candidate, ignoreBarId){
+  function overlapsAnyBar(tt, candidate, ignoreBarId, ignoreBarIdSet){
     const candSpan = Array.isArray(candidate.spanSecIds) && candidate.spanSecIds.length > 1
       ? candidate.spanSecIds : null;
     const candSecs = candSpan ? candSpan : [candidate.secId];
@@ -12519,6 +12524,7 @@ function show(id) {
     const candSecSet = new Set(candSecs);
     return tt.bars.some(function(b){
       if (b.id === ignoreBarId) return false;
+      if (ignoreBarIdSet && ignoreBarIdSet.has(b.id)) return false;
       // 時間が重ならなければ即除外
       if (b.end <= candidate.start || b.start >= candidate.end) return false;
       const span = getSpanSecIds(b);
@@ -12664,20 +12670,27 @@ function show(id) {
     }
     const target = getEditTarget(el);
     if (!target) return;
+    // R281d: 元々空のバーだったか記憶（finalize で空のままなら自動削除）
+    const wasEmpty = !(bar.text && bar.text.trim());
     el.classList.add('tt-bar-editing');
     target.setAttribute('contenteditable', 'true');
-    // R276: フォーカス → 全選択（実機ではマウスのダブルクリック直後に確実に当たる）
+    // R281d: 新規入力（空バー）は全選択して即上書きできる体験。
+    //        既存テキストありは末尾にキャレット（Excel F2 と同じ）— 1 文字打って既存が消える事故を防ぐ。
     function applyFocus(){
       try {
         target.focus();
         const range = document.createRange();
-        range.selectNodeContents(target);
         const sel = window.getSelection();
+        if (wasEmpty) {
+          range.selectNodeContents(target);
+        } else {
+          range.selectNodeContents(target);
+          range.collapse(false); // 末尾にキャレット
+        }
         sel.removeAllRanges();
         sel.addRange(range);
       } catch(e){}
     }
-    // requestAnimationFrame で確実に render 後に focus
     if (typeof requestAnimationFrame === 'function') requestAnimationFrame(applyFocus);
     else setTimeout(applyFocus, 0);
 
@@ -12687,24 +12700,43 @@ function show(id) {
       done = true;
       target.removeEventListener('blur', onBlur);
       target.removeEventListener('keydown', onKeyDown);
+      target.removeEventListener('compositionstart', onCompStart);
+      target.removeEventListener('compositionend', onCompEnd);
       try { target.setAttribute('contenteditable', 'false'); } catch(e){}
       el.classList.remove('tt-bar-editing');
-      if (saveValue) {
-        const newText = target.textContent.trim();
-        if (newText !== (bar.text || '')) {
-          bar.text = newText;
+      const newText = (saveValue ? target.textContent.trim() : (bar.text || ''));
+      // R281d: 元々空 && 編集後も空（保存・キャンセル問わず）→ ゴミバーを自動削除
+      if (wasEmpty && !newText) {
+        const dk = getCurrentDateKey();
+        const tt = dk ? getTimetableForDate(dk) : null;
+        if (tt && Array.isArray(tt.bars)) {
+          tt.bars = tt.bars.filter(function(b){ return b.id !== bar.id; });
           saveToStorage();
+          if (el && el.parentNode) el.parentNode.removeChild(el);
+          // 縦串バーは overlay 配下なので、念のため render で正規描画
+          if (getSpanSecIds(bar)) render();
         }
+        return;
       }
-      render();
+      if (saveValue && newText !== (bar.text || '')) {
+        bar.text = newText;
+        saveToStorage();
+      }
+      // R281: テキスト更新だけなら render() しない（外クリック吸収を防ぐ）。
     }
     function onBlur(){ finalize(true); }
+    // R281: IME composition 中は確定 Enter を Process キーとして扱い、編集を抜けない
+    let composing = false;
+    function onCompStart(){ composing = true; }
+    function onCompEnd(){ composing = false; }
     function onKeyDown(e){
-      if (e.key === 'Enter') {
+      // IME 変換確定の Enter は無視（e.isComposing / keyCode 229 / Process）
+      const imeEnter = e.isComposing || e.keyCode === 229 || e.key === 'Process' || composing;
+      if (e.key === 'Enter' && !imeEnter) {
         e.preventDefault();
         e.stopPropagation();
         finalize(true);
-      } else if (e.key === 'Escape') {
+      } else if (e.key === 'Escape' && !imeEnter) {
         e.preventDefault();
         e.stopPropagation();
         target.textContent = bar.text || '';
@@ -12715,6 +12747,8 @@ function show(id) {
     }
     target.addEventListener('blur', onBlur);
     target.addEventListener('keydown', onKeyDown);
+    target.addEventListener('compositionstart', onCompStart);
+    target.addEventListener('compositionend', onCompEnd);
   }
 
   function renderSpanBars(tt, gridEl){
@@ -12800,12 +12834,26 @@ function show(id) {
             }, bar.id);
             if (isOverlap) return;
             bar.spanSecIds = newIds;
-            render();
+            // R281c: render() を呼ばず、このバーの top/height だけ直接更新
+            const rows = newIds.map(function(sid){ return gridEl.querySelector('[data-sec-id="' + sid + '"]'); }).filter(function(r){ return r; });
+            if (rows.length) {
+              const tops = rows.map(function(r){ return r.offsetTop; });
+              const bots = rows.map(function(r){ return r.offsetTop + r.offsetHeight; });
+              const topY = Math.min.apply(null, tops);
+              const botY = Math.max.apply(null, bots);
+              el.style.top = topY + 'px';
+              el.style.height = (botY - topY) + 'px';
+            }
+            // R281e-A/C: 時刻HUD（縦串はセクション数も併記）＋ ns-resize カーソル
+            if (typeof ttSetDragClass === 'function' && !document.body.classList.contains('tt-resizing-v')) ttSetDragClass('tt-resizing-v');
+            ttShowHud(ev.clientX, ev.clientY, bar.start, bar.end);
           }
           function up(){
             document.removeEventListener('mousemove', move);
             document.removeEventListener('mouseup', up);
+            ttHideHud(); ttSetDragClass(null);
             saveToStorage();
+            render(); // 確定後に正規描画
           }
           document.addEventListener('mousemove', move);
           document.addEventListener('mouseup', up);
@@ -12964,6 +13012,9 @@ function show(id) {
           ghost.style.width = width + 'px';
           ghost.style.height = (botMax - topMin) + 'px';
           ghost.textContent = '🎯 ' + spanSecIds.length + ' セクション貫通  ' + fmtTimeFromHour(st) + ' 〜 ' + fmtTimeFromHour(et);
+          // R281e-A/C: HUD + grabbing
+          if (typeof ttSetDragClass === 'function' && !document.body.classList.contains('tt-dragging')) ttSetDragClass('tt-dragging');
+          ttShowHud(ev.clientX, ev.clientY, st, et);
         } else {
           // 単独セクション内のゴースト表示
           if (ghostInGrid) {
@@ -12979,11 +13030,17 @@ function show(id) {
           if (isDragging && typeof fmtTimeFromHour === 'function') {
             ghost.textContent = fmtTimeFromHour(st) + ' 〜 ' + fmtTimeFromHour(et);
           }
+          // R281e-A/C: HUD + grabbing
+          if (isDragging) {
+            if (typeof ttSetDragClass === 'function' && !document.body.classList.contains('tt-dragging')) ttSetDragClass('tt-dragging');
+            ttShowHud(ev.clientX, ev.clientY, st, et);
+          }
         }
       }
       function up(){
         document.removeEventListener('mousemove', move);
         document.removeEventListener('mouseup', up);
+        ttHideHud(); ttSetDragClass(null);
         if (ghostInGrid) gridEl.removeChild(ghost); else ghost.remove();
         // ワンクリック対策：ドラッグしてないなら何もしない
         if (!isDragging) return;
@@ -13045,6 +13102,14 @@ function show(id) {
       const initLane = bar.lane || 0;
       const duration = initEnd - initStart;
       let dragging = false;
+      // R281: クリック前にこのバーが既に選択されていたか記憶（Excel スタイル：再クリックで編集）
+      const wasSelected = el.classList.contains('selected');
+      // R281d: dblclick が後から発火した場合に setTimeout の startEdit を取り消すための ID 保持
+      let pendingEditTimer = null;
+      el.__pendingEditTimerHolder = function(){ return pendingEditTimer; };
+      el.__cancelPendingEdit = function(){
+        if (pendingEditTimer) { clearTimeout(pendingEditTimer); pendingEditTimer = null; }
+      };
       function move(ev){
         const x = (ev.clientX - rect.left) / scale;
         const y = (ev.clientY - rect.top) / scale;
@@ -13064,26 +13129,52 @@ function show(id) {
           bar.start = newStart;
           bar.end = newEnd;
           if (sec) bar.lane = targetLane;
+          // R281c: render() を呼ばず、このバー本体だけ style 直接更新。
+          //        他バー・縦串overlay は触らないので一切ちらつかない。
+          const isSpan = el.classList.contains('span-bar');
+          const leftBase = isSpan ? LABEL_W : 0;
+          const newLeftPx = leftBase + timeToPixel(newStart, tt);
+          const newWidthPx = Math.max(SLOT_W(), timeToPixel(newEnd, tt) - timeToPixel(newStart, tt));
+          el.style.left = newLeftPx + 'px';
+          el.style.width = newWidthPx + 'px';
+          if (sec && !isSpan) {
+            el.style.top = (targetLane * LANE_H + BAR_TOP) + 'px';
+          }
         }
-        render();
+        // R281e-A/C: ドラッグ中の時刻HUD と grabbing カーソル
+        if (dragging) {
+          if (typeof ttSetDragClass === 'function' && !document.body.classList.contains('tt-dragging')) ttSetDragClass('tt-dragging');
+          ttShowHud(ev.clientX, ev.clientY, bar.start, bar.end);
+        }
       }
       function up(ev){
         document.removeEventListener('mousemove', move);
         document.removeEventListener('mouseup', up);
+        ttHideHud(); ttSetDragClass(null);
         if (dragging) {
           saveToStorage();
+          render(); // 確定後だけ正規描画（縦串の追従、placeSpanLabel 等）
         } else {
-          // R280: click 時は render() を呼ばず DOM class 直接更新（dblclick 検出を壊さない）。
-          //       シングルクリックで即編集モードに突入する → ダブルクリック不要、Excel より直接的。
+          // R281: Excel スタイル — 1 回目クリックで選択／既に選択中のバーをもう一度クリックで編集モード。
+          //       render() を呼ばず DOM class 直接更新（dblclick 検出を壊さない＋外クリック吸収を防ぐ）。
           if (ev && (ev.metaKey || ev.ctrlKey)) {
             toggleSel(bar.id);
             el.classList.toggle('selected');
+          } else if (wasSelected) {
+            // 既選択バーの再クリック → 編集モードへ（マウスだけで完結）
+            // R281d: 他バーの .selected ring も DOM から外して、視覚と内部状態を一致
+            selectOne(bar.id);
+            document.querySelectorAll('.tt-bar.selected').forEach(function(b){ if (b !== el) b.classList.remove('selected'); });
+            // R281d: dblclick が直後に来たら clearTimeout で潰せるよう ID 保持
+            pendingEditTimer = setTimeout(function(){
+              pendingEditTimer = null;
+              startEdit(bar, el);
+            }, 0);
           } else {
+            // 未選択 → 選択だけ。ここで startEdit に入らないことが R281 の肝
             selectOne(bar.id);
             document.querySelectorAll('.tt-bar.selected').forEach(function(b){ if (b !== el) b.classList.remove('selected'); });
             el.classList.add('selected');
-            // 即編集モードに入る（シングルクリック → 書ける）
-            setTimeout(function(){ startEdit(bar, el); }, 0);
           }
         }
       }
@@ -13097,6 +13188,8 @@ function show(id) {
       if (e.target.closest('.tt-bar-handle')) return;
       e.stopPropagation();
       e.preventDefault();
+      // R281d: 直前の click 経由 setTimeout(startEdit) を取り消して二重発火回避
+      if (typeof el.__cancelPendingEdit === 'function') el.__cancelPendingEdit();
       startEdit(bar, el);
     });
 
@@ -13131,12 +13224,21 @@ function show(id) {
               if (isOk) bar.end = t;
             }
           }
-          render();
+          // R281c: render() ではなく、このバーの style だけ直接更新（ちらつき防止）
+          const isSpan = el.classList.contains('span-bar');
+          const leftBase = isSpan ? LABEL_W : 0;
+          el.style.left = (leftBase + timeToPixel(bar.start, tt)) + 'px';
+          el.style.width = Math.max(SLOT_W(), timeToPixel(bar.end, tt) - timeToPixel(bar.start, tt)) + 'px';
+          // R281e-A/C: 時刻HUD ＋ ew-resize カーソル
+          if (typeof ttSetDragClass === 'function' && !document.body.classList.contains('tt-resizing-h')) ttSetDragClass('tt-resizing-h');
+          ttShowHud(ev.clientX, ev.clientY, bar.start, bar.end);
         }
         function up(){
           document.removeEventListener('mousemove', move);
           document.removeEventListener('mouseup', up);
+          ttHideHud(); ttSetDragClass(null);
           saveToStorage();
+          render(); // 確定後に正規描画
         }
         document.addEventListener('mousemove', move);
         document.addEventListener('mouseup', up);
@@ -13290,6 +13392,9 @@ function show(id) {
     const start = tt.timeStart;
     const end = tt.timeEnd;
     const hours = Math.max(1, end - start);
+
+    // R281: 日付が変わるたびに「前日から複製」ボタンの活性状態を更新
+    if (typeof updateCopyPrevBtnState === 'function') updateCopyPrevBtnState();
 
     // R240: 開始/終了時刻ボタンに現在値を表示
     const btnStart = document.getElementById('tt-btn-time-start');
@@ -13541,6 +13646,37 @@ function show(id) {
     if (hh >= 24) hh -= 24;
     return hh + ':' + String(mm).padStart(2, '0');
   }
+
+  // R281e-A: ドラッグ／リサイズ中の時刻HUD（カーソル付近に追従）
+  let __ttHudEl = null;
+  function ttShowHud(clientX, clientY, startH, endH){
+    if (!__ttHudEl) {
+      __ttHudEl = document.createElement('div');
+      __ttHudEl.className = 'tt-drag-hud';
+      document.body.appendChild(__ttHudEl);
+    }
+    const durMin = Math.max(0, Math.round((endH - startH) * 60));
+    const durText = durMin >= 60 ? Math.floor(durMin/60) + 'h' + (durMin%60 ? (durMin%60) + 'm' : '') : durMin + 'm';
+    __ttHudEl.innerHTML = fmtTimeFromHour(startH) + ' – ' + fmtTimeFromHour(endH) +
+      '<span class="tt-hud-dur">(' + durText + ')</span>';
+    // カーソルの右上に少しずらして配置（はみ出し時は左へ反転）
+    let x = clientX + 14;
+    let y = clientY - 28;
+    const w = __ttHudEl.offsetWidth || 160;
+    if (x + w > window.innerWidth - 4) x = clientX - w - 14;
+    if (y < 4) y = clientY + 18;
+    __ttHudEl.style.left = x + 'px';
+    __ttHudEl.style.top = y + 'px';
+  }
+  function ttHideHud(){
+    if (__ttHudEl && __ttHudEl.parentNode) __ttHudEl.parentNode.removeChild(__ttHudEl);
+    __ttHudEl = null;
+  }
+  // R281e-C: body にドラッグ／リサイズ中クラスを付ける（grabbing カーソル）
+  function ttSetDragClass(mode){
+    document.body.classList.remove('tt-dragging','tt-resizing-h','tt-resizing-v');
+    if (mode) document.body.classList.add(mode);
+  }
   function getActiveConcertTitle(){
     try {
       const raw = localStorage.getItem('schedule-studio:concerts:v1');
@@ -13624,6 +13760,51 @@ function show(id) {
     render();
   }
 
+  // R281: 前日から複製 — 前日 timetable をディープコピーして当日に置換
+  function prevDateKey(dateKey){
+    if (!dateKey) return null;
+    const parts = dateKey.split('-');
+    if (parts.length !== 3) return null;
+    const d = new Date(parseInt(parts[0],10), parseInt(parts[1],10)-1, parseInt(parts[2],10));
+    if (isNaN(d.getTime())) return null;
+    d.setDate(d.getDate() - 1);
+    return d.getFullYear() + '-' + pad2(d.getMonth()+1) + '-' + pad2(d.getDate());
+  }
+  function copyPrevDay(){
+    const dateKey = getCurrentDateKey();
+    if (!dateKey) { alert('日付が選ばれていません'); return; }
+    const prevKey = prevDateKey(dateKey);
+    const prev = prevKey ? timetableByDate[prevKey] : null;
+    if (!prev || !Array.isArray(prev.bars) || (prev.bars.length === 0 && (!Array.isArray(prev.sections) || prev.sections.length === 0))) {
+      alert('前日（' + (prevKey ? fmtDateDisplay(prevKey) : '?') + '）のタイムテーブルがありません');
+      return;
+    }
+    const cur = timetableByDate[dateKey];
+    const hasCur = cur && Array.isArray(cur.bars) && cur.bars.length > 0;
+    const msg = hasCur
+      ? 'この日（' + fmtDateDisplay(dateKey) + '）の現在の内容を破棄して、前日（' + fmtDateDisplay(prevKey) + '）の内容で上書きします。よろしいですか？'
+      : '前日（' + fmtDateDisplay(prevKey) + '）の内容を、この日（' + fmtDateDisplay(dateKey) + '）にコピーします。';
+    if (!confirm(msg)) return;
+    // ディープコピー + bar ID 振り直し（履歴の id 衝突を避ける）
+    const cloned = JSON.parse(JSON.stringify(prev));
+    if (Array.isArray(cloned.bars)) {
+      cloned.bars.forEach(function(b){ b.id = genId(); });
+    }
+    timetableByDate[dateKey] = cloned;
+    saveToStorage();
+    render();
+  }
+  // 「前日から複製」ボタンの活性状態を更新（前日がある日だけ enable）
+  function updateCopyPrevBtnState(){
+    const btn = document.getElementById('tt-btn-copy-prev');
+    if (!btn) return;
+    const dk = getCurrentDateKey();
+    const pk = dk ? prevDateKey(dk) : null;
+    const has = pk && timetableByDate[pk] && Array.isArray(timetableByDate[pk].bars) && timetableByDate[pk].bars.length > 0;
+    btn.disabled = !has;
+    btn.title = has ? '前日（' + fmtDateDisplay(pk) + '）の内容をコピー' : '前日のタイムテーブルがありません';
+  }
+
   // 開始・終了時刻の変更ダイアログ（簡易版）
   function changeTimeStart(){
     const dateKey = getCurrentDateKey();
@@ -13652,19 +13833,22 @@ function show(id) {
   }
 
   function bindToolbarOnce(){
+    // R281: 架空の tt-btn-add-section は削除（実体は [data-act="add-section"] で別 bind）。
+    //       tt-btn-copy-prev を追加し、活性状態は updateCopyPrevBtnState() で随時更新。
     [
       { id: 'tt-btn-time-start', fn: changeTimeStart },
       { id: 'tt-btn-time-end',   fn: changeTimeEnd },
       { id: 'tt-btn-zoom-in',    fn: zoomIn },
       { id: 'tt-btn-zoom-out',   fn: zoomOut },
       { id: 'tt-btn-zoom-fit',   fn: zoomFit },
-      { id: 'tt-btn-add-section',fn: addSection },
+      { id: 'tt-btn-copy-prev',  fn: copyPrevDay },
       { id: 'tt-btn-reset-day',  fn: resetDayTimetable },
       { id: 'tt-btn-print',      fn: function(){ window.print(); } }
     ].forEach(function(c){
       const el = document.getElementById(c.id);
       if (el && !el.__bound) { el.addEventListener('click', c.fn); el.__bound = true; }
     });
+    updateCopyPrevBtnState();
     // R250+R253: 印刷直前に LANE_H を拡大して縦も埋める＋A4 にスケール
     if (!window.__ttPrintHookBound) {
       window.__ttPrintHookBound = true;
@@ -13816,49 +14000,67 @@ function show(id) {
       clearSel();
       render();
     }
-    // R246: 矢印キーで選択中バーを 15 分単位で移動 / Shift+矢印で 1 時間
+    // R246+R281d: 矢印キーで選択中バーを 15 分単位で移動 / Shift+矢印で 1 時間。
+    //             複数選択（Cmd+クリック）にも対応：全員一括移動、1個でも置けない位置があれば全体却下。
     if (selectedBarId && (e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
       const dk = getCurrentDateKey();
       const tt = getTimetableForDate(dk);
       if (!tt) return;
-      const bar = tt.bars.find(function(b){ return b.id === selectedBarId; });
-      if (!bar) return;
+      // 対象バー集合（selectedBarIds + selectedBarId）
+      const ids = new Set(selectedBarIds);
+      if (selectedBarId) ids.add(selectedBarId);
+      const targetBars = tt.bars.filter(function(b){ return ids.has(b.id); });
+      if (targetBars.length === 0) return;
+      const isHoriz = (e.key === 'ArrowLeft' || e.key === 'ArrowRight');
       const step = e.shiftKey ? 1.0 : 0.25;
-      let dt = 0;
-      if (e.key === 'ArrowLeft') dt = -step;
-      else if (e.key === 'ArrowRight') dt = step;
-      else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
-        // 上下：レーン移動
-        const sec = tt.sections.find(function(s){ return s.id === bar.secId; });
-        if (sec) {
-          const newLane = (bar.lane || 0) + (e.key === 'ArrowUp' ? -1 : 1);
-          const clamped = Math.max(0, Math.min(sec.lanes - 1, newLane));
-          // R262: レーン移動でも他バーとの重なりチェック
-          const isOverlap = overlapsAnyBar(tt, {
-            start: bar.start, end: bar.end, lane: clamped,
-            secId: bar.secId, spanSecIds: bar.spanSecIds
-          }, bar.id);
-          if (!isOverlap) bar.lane = clamped;
+
+      if (isHoriz) {
+        const dt = (e.key === 'ArrowLeft' ? -step : step);
+        // 全バーが時間範囲内に収まり、かつ他バー（選択中以外）と重ならないかチェック
+        const proposed = targetBars.map(function(b){
+          const dur = b.end - b.start;
+          return { bar: b, newStart: b.start + dt, newEnd: b.end + dt, dur: dur };
+        });
+        const allInRange = proposed.every(function(p){
+          return p.newStart >= tt.timeStart && p.newEnd <= tt.timeEnd;
+        });
+        const anyOverlap = proposed.some(function(p){
+          return overlapsAnyBar(tt, {
+            start: p.newStart, end: p.newEnd, lane: p.bar.lane||0,
+            secId: p.bar.secId, spanSecIds: p.bar.spanSecIds
+          }, null, ids);
+        });
+        if (allInRange && !anyOverlap) {
+          proposed.forEach(function(p){ p.bar.start = p.newStart; p.bar.end = p.newEnd; });
           e.preventDefault();
-          saveToStorage(); render(); return;
+          saveToStorage(); render();
+        } else {
+          e.preventDefault(); // ページスクロール抑止
         }
+        return;
       }
-      if (dt !== 0) {
-        const dur = bar.end - bar.start;
-        let ns = bar.start + dt;
-        if (ns < tt.timeStart) ns = tt.timeStart;
-        if (ns + dur > tt.timeEnd) ns = tt.timeEnd - dur;
-        // R261: 単品も縦串も重なり防止
-        const isOverlap = overlapsAnyBar(tt, {
-          start: ns, end: ns + dur, lane: bar.lane||0,
-          secId: bar.secId, spanSecIds: bar.spanSecIds
-        }, bar.id);
-        if (!isOverlap) {
-          bar.start = ns;
-          bar.end = ns + dur;
-        }
+      // 上下：レーン移動（単品バーのみ対象。縦串はスキップ）
+      const delta = (e.key === 'ArrowUp' ? -1 : 1);
+      const proposed = targetBars.map(function(b){
+        if (getSpanSecIds(b)) return { bar: b, newLane: b.lane||0, sec: null }; // 縦串はそのまま
+        const sec = tt.sections.find(function(s){ return s.id === b.secId; });
+        if (!sec) return { bar: b, newLane: b.lane||0, sec: null };
+        const nl = Math.max(0, Math.min(sec.lanes - 1, (b.lane||0) + delta));
+        return { bar: b, newLane: nl, sec: sec };
+      });
+      const anyOverlap = proposed.some(function(p){
+        if (!p.sec) return false;
+        return overlapsAnyBar(tt, {
+          start: p.bar.start, end: p.bar.end, lane: p.newLane,
+          secId: p.bar.secId, spanSecIds: p.bar.spanSecIds
+        }, null, ids);
+      });
+      if (!anyOverlap) {
+        proposed.forEach(function(p){ if (p.sec) p.bar.lane = p.newLane; });
         e.preventDefault();
         saveToStorage(); render();
+      } else {
+        e.preventDefault();
       }
     }
   });
