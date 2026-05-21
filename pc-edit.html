@@ -4992,10 +4992,10 @@
   .tt-paper-footer .ev-time { color: #e8e6dc; font-feature-settings: 'tnum'; }
   .tt-paper-footer .ev-sep { color: #4a4a4a; padding: 0 4px; }
   .tt-paper-footer .ev-empty { font-size: 11px; color: #6e6c66; font-style: normal; }
-  /* R250+R251+R279: A4 完全フィット印刷 — 上下左右ゼロ余白で A4 横向き全面に */
+  /* R250+R251+R279+R280b: A4 完全フィット印刷 — paper は自然な高さで描画し、JS の transform で A4 全面に伸ばす */
   @media print {
     @page { size: A4 landscape; margin: 0; }
-    html, body { background: white !important; margin: 0 !important; padding: 0 !important; width: 297mm !important; height: 210mm !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    html, body { background: white !important; margin: 0 !important; padding: 0 !important; width: 297mm !important; height: 210mm !important; overflow: hidden !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
     body * { visibility: hidden; }
     .tt-paper, .tt-paper * { visibility: visible; }
     .tt-paper {
@@ -5003,9 +5003,9 @@
       left: 0 !important; top: 0 !important;
       width: 297mm !important;
       max-width: 297mm !important;
-      height: 210mm !important;
-      min-height: 210mm !important;
-      max-height: 210mm !important;
+      height: auto !important;
+      min-height: 0 !important;
+      max-height: none !important;
       background: white !important;
       color: #111 !important;
       padding: 0 !important;
@@ -5016,7 +5016,7 @@
       transform-origin: top left !important;
       display: flex !important;
       flex-direction: column !important;
-      overflow: hidden !important;
+      overflow: visible !important;
     }
     /* R259: PDF 時、グリッド全体を白に。ADD 列も白 */
     .tt-grid { background: white !important; border: 0.5px solid #1a1a1a !important; }
