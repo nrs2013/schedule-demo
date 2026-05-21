@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260521.165606">
+<meta name="build-version" content="20260521.180000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -13856,32 +13856,26 @@ function show(id) {
       var __origLaneH = null;
       var __origBarH = null;
       var __origBarTop = null;
-      window.addEventListener('beforeprint', function(){
+      /* R281h: print layout 処理を関数化して window 経由でテスト/実印刷両方から呼べるように */
+      function __applyPrintLayout(){
         const paper = document.getElementById('tt-paper');
         if (!paper) return;
         __prevPaperStyle = paper.getAttribute('style') || '';
         const dk = (typeof getCurrentDateKey === 'function') ? getCurrentDateKey() : null;
         const tt = dk ? getTimetableForDate(dk) : null;
-        // 1. レーン総数を計算
         if (tt && Array.isArray(tt.sections)) {
           const totalLanes = tt.sections.reduce(function(s,sec){ return s + (sec.lanes || 1); }, 0) || 1;
-          // 2. R279: A4 完全フィット（@page margin: 0 / 297mm × 210mm）
           const PAGE_W_MM = 297, PAGE_H_MM = 210;
           const MM_TO_PX = 96 / 25.4;
-          const pageWpx = PAGE_W_MM * MM_TO_PX;
           const pageHpx = PAGE_H_MM * MM_TO_PX;
-          // 3. ヘッダ + 時刻軸 + フッタの固定領域 ≒ 170px
           const fixed = 170;
           const availableY = pageHpx - fixed;
-          // 4. レーン高さを大きく設定
           __origLaneH = LANE_H; __origBarH = BAR_H; __origBarTop = BAR_TOP;
           LANE_H = Math.max(44, Math.floor(availableY / totalLanes));
           BAR_H = Math.max(36, LANE_H - 8);
           BAR_TOP = Math.max(2, Math.floor((LANE_H - BAR_H) / 2));
-          // 再描画
           if (typeof render === 'function') render();
         }
-        // 5. スケール適用（横方向のフィット用）
         const PAGE_W_MM2 = 297, PAGE_H_MM2 = 210;
         const MM_TO_PX2 = 96 / 25.4;
         const pageWpx2 = PAGE_W_MM2 * MM_TO_PX2;
@@ -13892,8 +13886,8 @@ function show(id) {
         const sy = pageHpx2 / paperH;
         paper.style.transformOrigin = 'top left';
         paper.style.transform = 'scaleX(' + sx + ') scaleY(' + sy + ')';
-      });
-      window.addEventListener('afterprint', function(){
+      }
+      function __restorePrintLayout(){
         const paper = document.getElementById('tt-paper');
         if (paper) {
           if (__prevPaperStyle !== null) {
@@ -13903,7 +13897,6 @@ function show(id) {
             paper.style.transform = '';
           }
         }
-        // レーン高さを戻す
         if (__origLaneH !== null) {
           LANE_H = __origLaneH;
           BAR_H = __origBarH;
@@ -13911,7 +13904,11 @@ function show(id) {
           __origLaneH = null;
           if (typeof render === 'function') render();
         }
-      });
+      }
+      window.addEventListener('beforeprint', __applyPrintLayout);
+      window.addEventListener('afterprint', __restorePrintLayout);
+      window.__applyPrintLayout = __applyPrintLayout;
+      window.__restorePrintLayout = __restorePrintLayout;
     }
     // R240: 「詳しい操作 ▾」展開トグル
     const helpToggle = document.querySelector('.tt-help-toggle');
