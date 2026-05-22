@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260521.310000">
+<meta name="build-version" content="20260521.320000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -6246,13 +6246,22 @@
     position: relative;
     height: 360px;
     overflow: hidden;
+    padding: 8px;
     display: flex; align-items: center; justify-content: center;
+  }
+  /* R295: scaled wrapper で実寸 box を確保。中の stage が transform:scale で縮むだけにする */
+  .pdf-preview-shrink {
+    position: relative;
+    background: #ffffff;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.6);
+    overflow: hidden;
   }
   .pdf-preview-stage {
     transform-origin: top left;
     background: #ffffff;
     color: #000;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.6);
+    position: absolute;
+    left: 0; top: 0;
   }
   .pdf-preview-empty {
     color: rgba(255,255,255,0.4);
@@ -15016,14 +15025,17 @@ function show(id) {
       return '<div id="tt-pdf-root"><style>' + TT_PDF_CSS + '</style>' + pages + '</div>';
     }
 
+    // R295: プレビューを scaled wrapper で正しく box 確保（はみ出し解消）
     function renderPreview(){
       const stage = document.getElementById('pdf-preview-stage');
+      const shrink = document.getElementById('pdf-preview-shrink');
       const empty = document.getElementById('pdf-preview-empty');
       const cap = document.getElementById('pdf-preview-caption');
-      if (!stage || !empty) return;
+      if (!stage || !shrink || !empty) return;
       stage.innerHTML = '';
       if (pdfSelectedDates.length === 0) {
-        stage.style.cssText = '';
+        stage.style.cssText = 'transform-origin:top left; position:absolute; left:0; top:0;';
+        shrink.style.cssText = 'display:none;';
         empty.style.display = '';
         if (cap) cap.innerHTML = '&nbsp;';
         return;
@@ -15033,12 +15045,17 @@ function show(id) {
       const PX_PER_MM = 96 / 25.4;
       const paperWpx = 297 * PX_PER_MM;
       const paperHpx = 210 * PX_PER_MM;
-      const frame = stage.parentElement;
-      const frameW = frame ? frame.clientWidth - 8 : 600;
-      const frameH = 360;
-      const scale = Math.min(frameW / paperWpx, frameH / paperHpx) * 0.96;
+      const frame = shrink.parentElement;
+      const frameW = (frame ? frame.clientWidth : 600) - 16;  // padding
+      const frameH = 360 - 16;
+      const scale = Math.min(frameW / paperWpx, frameH / paperHpx);
+      const scaledW = paperWpx * scale;
+      const scaledH = paperHpx * scale;
+      // 外側 wrapper は scaled サイズで box 確保 → flex center で正しくセンタリング
+      shrink.style.cssText = 'position:relative; background:#fff; box-shadow:0 4px 24px rgba(0,0,0,0.6); overflow:hidden; width:' + scaledW + 'px; height:' + scaledH + 'px;';
+      // 内側 stage は元寸 box で transform:scale
       stage.style.cssText = 'width:' + paperWpx + 'px; height:' + paperHpx + 'px; transform:scale(' + scale +
-                            '); transform-origin: top left; background:#fff;';
+                            '); transform-origin: top left; background:#fff; position:absolute; left:0; top:0;';
       stage.innerHTML = buildTtPdfRootHtml([firstDate]);
       if (cap) cap.textContent = '1 / ' + pdfSelectedDates.length + ' ページ目  ・  A4 横  ・  ' + fmtDateLabel(firstDate);
     }
@@ -15054,6 +15071,19 @@ function show(id) {
       });
     }
 
+    // R295: jsPDF を html2pdf bundle から取り出す（v0.10.1 bundle は window.jspdf.jsPDF を expose）
+    function getJsPDFCtor(){
+      if (window.jspdf && window.jspdf.jsPDF) return window.jspdf.jsPDF;
+      if (window.jsPDF) return window.jsPDF;
+      // フォールバック: html2pdf chain から無理やり取る
+      try {
+        const tmpWorker = window.html2pdf && window.html2pdf();
+        if (tmpWorker && tmpWorker.toPdf) return null;  // 取れないなら null 返して 1 ページ html2pdf 経路に
+      } catch(e){}
+      return null;
+    }
+
+    // R295: PDF 書き出しを 1 日 1 ページずつ手動分割（pagebreak が html2canvas 経由で効かない問題を回避）
     async function exportPdf(){
       const exportBtn = document.getElementById('pdf-btn-export');
       const cancelBtn = document.getElementById('pdf-btn-cancel');
@@ -15071,41 +15101,116 @@ function show(id) {
       }
       try { await document.fonts.ready; } catch(e){}
 
-      progress.textContent = 'ページを構築中...';
-      const tmp = document.createElement('div');
-      tmp.style.cssText = 'position:fixed; left:-9999px; top:0; background:#fff;';
-      tmp.innerHTML = buildTtPdfRootHtml(pdfSelectedDates);
-      document.body.appendChild(tmp);
-
       const dateStr = pdfSelectedDates.length === 1
         ? pdfSelectedDates[0]
         : (pdfSelectedDates[0] + '_to_' + pdfSelectedDates[pdfSelectedDates.length - 1]);
       const filename = 'schedule_' + dateStr + '.pdf';
-      const opt = {
-        margin: 0,
-        filename: filename,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: {
-          scale: 2,
-          useCORS: true,
-          letterRendering: true,
-          backgroundColor: '#ffffff',
-          windowWidth: Math.round(297 * 96 / 25.4)
-        },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
-        pagebreak: { mode: ['css', 'legacy'] }
-      };
-      progress.textContent = 'PDF をエンコード中...';
+
+      const PX_PER_MM = 96 / 25.4;
+      const paperWpx = 297 * PX_PER_MM;
+      const paperHpx = 210 * PX_PER_MM;
+
+      const html2canvasFn = window.html2canvas;
+      const JsPDF = getJsPDFCtor();
+
+      if (!html2canvasFn || !JsPDF) {
+        // フォールバック: html2pdf を 1 日ずつ呼び、ワーカー chain で結合
+        try {
+          await exportPdfHtml2pdfFallback(filename, progress);
+        } catch(e) {
+          progress.textContent = 'エラー: ' + (e && e.message ? e.message : 'PDF 生成失敗');
+          console.error('[PDF Export]', e);
+        } finally {
+          exportBtn.disabled = false; if (cancelBtn) cancelBtn.disabled = false;
+        }
+        return;
+      }
+
+      // 本筋: html2canvas + jsPDF を直叩きで 1 日 1 ページ
+      const pdf = new JsPDF({ unit: 'mm', format: 'a4', orientation: 'landscape' });
+      let cleanup = null;
       try {
-        await html2pdf().set(opt).from(tmp.querySelector('#tt-pdf-root')).save();
+        for (let i = 0; i < pdfSelectedDates.length; i++) {
+          progress.textContent = (i + 1) + ' / ' + pdfSelectedDates.length + ' 日目を生成中...';
+          const wrap = document.createElement('div');
+          // html2canvas はオフスクリーン (left:-99999px) でも問題なく拾うが、
+          // 念のため通常座標で width 固定 + visibility:hidden は使わない（hidden は描画されない）
+          wrap.style.cssText = 'position:fixed; left:-99999px; top:0; width:' + paperWpx + 'px; background:#fff; z-index:-1;';
+          wrap.innerHTML = buildTtPdfRootHtml([pdfSelectedDates[i]]);
+          document.body.appendChild(wrap);
+          cleanup = wrap;
+          // フォントと layout が落ち着くのを 1 frame 待つ
+          await new Promise(function(r){ requestAnimationFrame(function(){ requestAnimationFrame(r); }); });
+          const target = wrap.querySelector('.tt-pdf-page');
+          if (!target) { wrap.remove(); cleanup = null; continue; }
+          const canvas = await html2canvasFn(target, {
+            scale: 2,
+            useCORS: true,
+            letterRendering: true,
+            backgroundColor: '#ffffff',
+            width: paperWpx,
+            height: paperHpx,
+            windowWidth: paperWpx,
+            windowHeight: paperHpx,
+            logging: false
+          });
+          wrap.remove(); cleanup = null;
+          const imgData = canvas.toDataURL('image/jpeg', 0.95);
+          if (i > 0) pdf.addPage('a4', 'landscape');
+          pdf.addImage(imgData, 'JPEG', 0, 0, 297, 210, undefined, 'FAST');
+        }
+        progress.textContent = 'PDF を保存中...';
+        pdf.save(filename);
         progress.textContent = '完了！  ' + filename;
       } catch(e) {
-        progress.textContent = 'エラー: ' + (e && e.message ? e.message : 'PDF 生成に失敗しました');
+        progress.textContent = 'エラー: ' + (e && e.message ? e.message : 'PDF 生成失敗');
         console.error('[PDF Export]', e);
+        if (cleanup && cleanup.parentNode) cleanup.remove();
       } finally {
-        tmp.remove();
         exportBtn.disabled = false; if (cancelBtn) cancelBtn.disabled = false;
       }
+    }
+
+    // フォールバック: jsPDF / html2canvas が window に無い古い bundle 用
+    async function exportPdfHtml2pdfFallback(filename, progress){
+      const PX_PER_MM = 96 / 25.4;
+      const paperWpx = 297 * PX_PER_MM;
+      const opt = {
+        margin: 0, filename: filename,
+        image: { type: 'jpeg', quality: 0.95 },
+        html2canvas: { scale: 2, useCORS: true, letterRendering: true,
+                       backgroundColor: '#ffffff', windowWidth: paperWpx },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+      };
+      let worker = null;
+      for (let i = 0; i < pdfSelectedDates.length; i++) {
+        progress.textContent = (i + 1) + ' / ' + pdfSelectedDates.length + ' 日目を生成中...';
+        const wrap = document.createElement('div');
+        wrap.style.cssText = 'position:fixed; left:-99999px; top:0; width:' + paperWpx + 'px; background:#fff;';
+        wrap.innerHTML = buildTtPdfRootHtml([pdfSelectedDates[i]]);
+        document.body.appendChild(wrap);
+        const target = wrap.querySelector('.tt-pdf-page');
+        if (i === 0) {
+          worker = html2pdf().set(opt).from(target).toPdf();
+        } else {
+          worker = worker.get('pdf').then(function(pdf){
+            pdf.addPage('a4', 'landscape');
+            return html2pdf().set(opt).from(target).toCanvas().get('canvas').then(function(canvas){
+              const imgData = canvas.toDataURL('image/jpeg', 0.95);
+              pdf.addImage(imgData, 'JPEG', 0, 0, 297, 210);
+              return pdf;
+            });
+          });
+        }
+        // worker が完了する前に DOM を消すと描画が壊れるので、後始末は最後にまとめて
+      }
+      progress.textContent = 'PDF を保存中...';
+      await worker.save();
+      progress.textContent = '完了！  ' + filename;
+      // 後始末: position:fixed left:-99999px の wrap を全部消す
+      document.querySelectorAll('div[style*="-99999px"]').forEach(function(el){
+        if (el.querySelector('.tt-pdf-page')) el.remove();
+      });
     }
 
     function openModal(){
@@ -15184,7 +15289,9 @@ function show(id) {
       <div class="pdf-preview-section">
         <p class="pdf-section-label">プレビュー（1 ページ目）</p>
         <div class="pdf-preview-frame">
-          <div class="pdf-preview-stage" id="pdf-preview-stage"></div>
+          <div class="pdf-preview-shrink" id="pdf-preview-shrink">
+            <div class="pdf-preview-stage" id="pdf-preview-stage"></div>
+          </div>
           <div class="pdf-preview-empty" id="pdf-preview-empty">日付を選ぶとプレビューされます</div>
         </div>
         <div class="pdf-preview-caption" id="pdf-preview-caption">　</div>
