@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260521.200000">
+<meta name="build-version" content="20260521.210000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -5660,62 +5660,106 @@
   .tt-bar.span-bar.color-amber  { background: linear-gradient(180deg, rgba(245,168,40,0.32) 0%, rgba(245,168,40,0.18) 100%) !important; border: 1.5px solid rgba(245,168,40,0.90) !important; }
   .tt-bar.span-bar.color-gray   { background: linear-gradient(180deg, rgba(126,216,72,0.30) 0%, rgba(126,216,72,0.15) 100%) !important; border: 1.5px solid rgba(126,216,72,0.90) !important; }
   .tt-bar.span-bar.color-accent { background: linear-gradient(180deg, rgba(58,160,224,0.32) 0%, rgba(58,160,224,0.18) 100%) !important; border: 1.5px solid rgba(58,160,224,0.90) !important; }
-  /* R282: 縦串バーラベルを縦書きで全文表示。文字サイズは通常（13px）、縦に並ぶので
-     縦長バーに収まりやすい。タイトル＋時刻が縦に流れる。 */
+  /* R284: 縦串バーラベルを動的に最適表示。デフォルト横書き大きな文字、入らなければ縦書き→改行→小さく。
+     JS の fitSpanLabel() で .layout-h / .layout-v / .layout-wrap / .layout-small クラスを切替。 */
   .tt-bar.span-bar { overflow: hidden !important; }
   .tt-bar.span-bar .tt-bar-text {
     pointer-events: auto;
     position: absolute;
     inset: 0;
     display: flex;
-    flex-direction: row;
-    align-items: flex-start;
+    flex-direction: column;
+    align-items: center;
     justify-content: center;
-    padding: 10px 4px;
-    gap: 8px;
+    padding: 8px 10px;
+    gap: 4px;
     background: transparent;
     cursor: move;
     box-sizing: border-box;
     overflow: hidden;
     z-index: 7;
-    writing-mode: vertical-rl;
-    text-orientation: upright;
   }
-  /* タイトル：通常サイズ、縦書きで全文表示。バー高さに収まらなければ ellipsis */
+  /* タイトル base：CSS 変数で font-size 制御、デフォルトは大きめ */
   .tt-bar.span-bar .tt-span-title,
   .tt-bar.span-bar .tt-span-title-empty {
-    font-size: 13px;
-    font-weight: 600;
+    font-size: var(--span-label-fs, 18px);
+    font-weight: 700;
     color: #ffffff;
     text-shadow: 0 1px 3px rgba(0,0,0,0.85), 0 0 8px rgba(0,0,0,0.55);
-    letter-spacing: 0.08em;
+    letter-spacing: 0.06em;
+    line-height: 1.15;
+    text-align: center;
+    flex: 0 1 auto;
+    max-width: 100%;
     max-height: 100%;
     overflow: hidden;
-    text-overflow: ellipsis;
-    line-height: 1.05;
-    flex: 0 1 auto;
-    /* 縦書き中の数字・半角は立てる（upright を継承） */
   }
   .tt-bar.span-bar .tt-span-title-empty {
     font-style: italic;
     font-weight: 500;
     opacity: 0.75;
   }
-  /* 時刻：縦書き、半角数字は mixed で読みやすく傾ける */
   .tt-bar.span-bar .tt-span-time {
     font-size: 11px;
     font-weight: 500;
-    color: rgba(255,255,255,0.85);
+    color: rgba(255,255,255,0.92);
     text-shadow: 0 1px 2px rgba(0,0,0,0.7);
     font-feature-settings: 'tnum';
-    letter-spacing: 0.04em;
+    letter-spacing: 0.06em;
     line-height: 1.05;
     flex: 0 0 auto;
-    margin-left: 0;
+  }
+
+  /* layout-h: 横書き 1 行（広くて短い文字向け） */
+  .tt-bar.span-bar.layout-h .tt-bar-text { flex-direction: column; }
+  .tt-bar.span-bar.layout-h .tt-span-title,
+  .tt-bar.span-bar.layout-h .tt-span-title-empty {
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  /* layout-wrap: 横書きで折り返し（中程度の幅、複数語に対応） */
+  .tt-bar.span-bar.layout-wrap .tt-bar-text { flex-direction: column; }
+  .tt-bar.span-bar.layout-wrap .tt-span-title,
+  .tt-bar.span-bar.layout-wrap .tt-span-title-empty {
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
+
+  /* layout-v: 縦書き（縦長バーに長文を縦に並べる） */
+  .tt-bar.span-bar.layout-v .tt-bar-text {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 10px 4px;
+    gap: 8px;
+    writing-mode: vertical-rl;
+    text-orientation: upright;
+  }
+  .tt-bar.span-bar.layout-v .tt-span-title,
+  .tt-bar.span-bar.layout-v .tt-span-title-empty {
+    white-space: nowrap;
+  }
+  .tt-bar.span-bar.layout-v .tt-span-time {
     writing-mode: vertical-rl;
     text-orientation: mixed;
   }
-  /* R282: 編集中だけ横書きに戻す（タイピング体験が普通に） */
+
+  /* layout-small: 文字小さめ＋折り返し（最終手段） */
+  .tt-bar.span-bar.layout-small .tt-bar-text { flex-direction: column; }
+  .tt-bar.span-bar.layout-small .tt-span-title,
+  .tt-bar.span-bar.layout-small .tt-span-title-empty {
+    font-size: 11px !important;
+    line-height: 1.1;
+    white-space: normal;
+    word-break: break-all;
+  }
+  .tt-bar.span-bar.layout-small .tt-span-time {
+    font-size: 9px;
+  }
+
+  /* 編集中は強制的に横書き＋デフォルト（タイピング体験を素直に） */
   .tt-bar.span-bar.tt-bar-editing .tt-bar-text,
   .tt-bar.span-bar.tt-bar-editing .tt-span-title,
   .tt-bar.span-bar.tt-bar-editing .tt-span-title-empty,
@@ -12610,6 +12654,52 @@ function show(id) {
     });
   }
 
+  /* R284: 縦串バーラベルを動的に最適 layout 化。
+     優先順位：(1) 横書き 1 行で入る → layout-h
+              (2) 縦書き 1 列で入る → layout-v
+              (3) 折り返しで入る → layout-wrap
+              (4) どれもダメ → layout-small（11px 折り返し） */
+  function fitSpanLabel(spanEl, bar){
+    if (!spanEl || !bar) return;
+    if (spanEl.classList.contains('tt-bar-editing')) return;
+    const title = ((bar.text || '').trim()) || '無題';
+    const textLen = title.length;
+    const rect = spanEl.getBoundingClientRect();
+    const w = rect.width;
+    const h = rect.height;
+    spanEl.classList.remove('layout-h','layout-v','layout-wrap','layout-small');
+    const FS = 18;
+    const CHAR_W = FS * 0.65;   // 全角概算幅
+    const CHAR_H = FS * 1.2;
+    const PAD_X = 24;            // 左右 padding 合計
+    const PAD_Y = 50;            // 時刻表示＋上下 padding
+    const effW = Math.max(0, w - PAD_X);
+    const effH = Math.max(0, h - PAD_Y);
+    // (1) 横書き 1 行で入る？
+    if (textLen * CHAR_W <= effW) {
+      spanEl.classList.add('layout-h');
+      spanEl.style.setProperty('--span-label-fs', FS + 'px');
+      return;
+    }
+    // (2) 縦書き 1 列で入る？
+    if (textLen * CHAR_H <= effH) {
+      spanEl.classList.add('layout-v');
+      spanEl.style.setProperty('--span-label-fs', FS + 'px');
+      return;
+    }
+    // (3) 横書き折り返しで入る？
+    const charsPerLine = Math.max(1, Math.floor(effW / CHAR_W));
+    const linesNeeded = Math.ceil(textLen / charsPerLine);
+    if (linesNeeded * CHAR_H <= effH) {
+      spanEl.classList.add('layout-wrap');
+      spanEl.style.setProperty('--span-label-fs', FS + 'px');
+      return;
+    }
+    // (4) 最終手段：小さい文字＋折り返し
+    spanEl.classList.add('layout-small');
+    spanEl.style.removeProperty('--span-label-fs');
+  }
+
   /* R268: 縦串バーのラベルが個別バーと文字位置で重なるときだけ、ラベルを下端へ退避する。
      判定対象は「縦串バーの最上段（または最下段）セクションの lane 0」の個別バーで、
      X 範囲が縦串バーと重なるもの。 */
@@ -12880,6 +12970,12 @@ function show(id) {
       if (handleB) handleB.addEventListener('mousedown', startVResize('b'));
     });
     gridEl.appendChild(newOv);
+    // R284: 全縦串バーに対して fitSpanLabel を実行（DOM 追加後に measure）
+    newOv.querySelectorAll('.tt-bar.span-bar').forEach(function(el){
+      const id = el.getAttribute('data-bar-id');
+      const bar = tt.bars.find(function(b){ return b.id === id; });
+      if (bar) fitSpanLabel(el, bar);
+    });
     return;
     /* 旧 spanSecIds ベースの実装はコメントアウト
     const newOv = document.createElement('div');
