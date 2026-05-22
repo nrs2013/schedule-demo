@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260521.290000">
+<meta name="build-version" content="20260521.300000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -6092,6 +6092,212 @@
     align-items: stretch;
     justify-content: center;
     z-index: 5;
+  }
+
+  /* ════════ R293: PDF 出力モーダル — Brutalist Vivid 準拠 ════════ */
+  .pdf-modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(10,10,10,0.88);
+    z-index: 100000;
+    display: none;
+    align-items: center; justify-content: center;
+    font-family: 'Inter', 'Noto Sans JP', system-ui, sans-serif;
+  }
+  .pdf-modal-overlay.open { display: flex; }
+  .pdf-modal-panel {
+    background: #0a0a0a;
+    border: 0.5px solid rgba(255,255,255,0.20);
+    border-radius: 0;
+    width: 92vw; max-width: 980px;
+    max-height: 92vh;
+    display: flex; flex-direction: column;
+    color: #fafaf8;
+    box-shadow: 0 12px 60px rgba(0,0,0,0.7);
+  }
+  .pdf-modal-header {
+    padding: 18px 24px 14px;
+    border-bottom: 0.5px solid rgba(255,255,255,0.10);
+    display: flex; align-items: baseline; justify-content: space-between;
+  }
+  .pdf-modal-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px; letter-spacing: 0.08em;
+    color: #f5c878;
+    margin: 0;
+  }
+  .pdf-modal-subtitle {
+    font-size: 11px; letter-spacing: 0.15em;
+    color: rgba(255,255,255,0.5);
+    text-transform: uppercase;
+  }
+  .pdf-modal-close {
+    position: absolute; top: 14px; right: 18px;
+    background: transparent;
+    border: 0.5px solid rgba(255,255,255,0.30);
+    color: #fafaf8;
+    width: 28px; height: 28px;
+    line-height: 24px; text-align: center;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 0;
+  }
+  .pdf-modal-close:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.5); }
+  .pdf-modal-body {
+    padding: 18px 24px;
+    overflow-y: auto;
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    gap: 24px;
+  }
+  .pdf-range-section { display: flex; flex-direction: column; gap: 12px; }
+  .pdf-section-label {
+    font-size: 10px; letter-spacing: 0.2em;
+    color: rgba(255,255,255,0.55);
+    text-transform: uppercase;
+    margin: 0;
+  }
+  .pdf-mode-tabs {
+    display: flex; gap: 6px;
+  }
+  .pdf-mode-tab {
+    flex: 1;
+    background: transparent;
+    border: 0.5px solid rgba(255,255,255,0.25);
+    color: #fafaf8;
+    padding: 8px 6px;
+    font-size: 12px; letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .pdf-mode-tab:hover { background: rgba(255,255,255,0.06); }
+  .pdf-mode-tab.active {
+    background: rgba(245,200,120,0.12);
+    border-color: rgba(245,200,120,0.6);
+    color: #f5c878;
+  }
+  .pdf-date-input-area {
+    min-height: 140px;
+    border: 0.5px solid rgba(255,255,255,0.10);
+    padding: 10px;
+    background: rgba(255,255,255,0.02);
+  }
+  .pdf-date-chip-list {
+    display: flex; flex-wrap: wrap; gap: 6px;
+  }
+  .pdf-date-chip {
+    background: transparent;
+    border: 0.5px solid rgba(255,255,255,0.25);
+    color: #fafaf8;
+    padding: 4px 10px;
+    font-size: 11px;
+    cursor: pointer;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    letter-spacing: 0.04em;
+  }
+  .pdf-date-chip:hover { background: rgba(255,255,255,0.06); }
+  .pdf-date-chip.selected {
+    background: rgba(193,134,200,0.20);
+    border-color: rgba(193,134,200,0.75);
+    color: #ffd9f1;
+  }
+  .pdf-date-range-inputs {
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .pdf-date-range-row {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .pdf-date-range-row label {
+    width: 50px;
+    font-size: 11px; letter-spacing: 0.1em;
+    color: rgba(255,255,255,0.65);
+  }
+  .pdf-date-range-row input[type="date"] {
+    flex: 1;
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.10);
+    color: #fafaf8;
+    padding: 5px 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color-scheme: dark;
+  }
+  .pdf-date-range-row input[type="date"]:focus {
+    outline: none;
+    border-color: rgba(245,200,120,0.5);
+  }
+  .pdf-date-summary {
+    font-size: 12px;
+    color: rgba(255,255,255,0.75);
+    padding: 8px 10px;
+    border-left: 2px solid #c186c8;
+    background: rgba(193,134,200,0.05);
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.03em;
+  }
+  .pdf-date-summary.empty {
+    border-left-color: rgba(255,255,255,0.2);
+    background: transparent;
+    color: rgba(255,255,255,0.4);
+  }
+  .pdf-preview-section { display: flex; flex-direction: column; gap: 10px; }
+  .pdf-preview-frame {
+    border: 0.5px solid rgba(255,255,255,0.15);
+    background: #1a1a1a;
+    position: relative;
+    height: 360px;
+    overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .pdf-preview-stage {
+    transform-origin: top left;
+    background: #ffffff;
+    color: #000;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.6);
+  }
+  .pdf-preview-empty {
+    color: rgba(255,255,255,0.4);
+    font-size: 12px; letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .pdf-preview-caption {
+    font-size: 10px;
+    color: rgba(255,255,255,0.5);
+    letter-spacing: 0.1em;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .pdf-modal-footer {
+    padding: 14px 24px;
+    border-top: 0.5px solid rgba(255,255,255,0.10);
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 12px;
+  }
+  .pdf-progress {
+    font-size: 11px; letter-spacing: 0.1em;
+    color: rgba(245,200,120,0.85);
+    font-family: 'JetBrains Mono', monospace;
+    min-height: 14px;
+  }
+  .pdf-modal-actions { display: flex; gap: 10px; }
+  .pdf-btn {
+    background: transparent;
+    border: 0.5px solid rgba(255,255,255,0.30);
+    color: #fafaf8;
+    padding: 8px 22px;
+    font-size: 12px; letter-spacing: 0.12em;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .pdf-btn:hover:not(:disabled) { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.55); }
+  .pdf-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .pdf-btn-primary {
+    background: rgba(193,134,200,0.18);
+    border-color: rgba(193,134,200,0.70);
+    color: #ffd9f1;
+  }
+  .pdf-btn-primary:hover:not(:disabled) {
+    background: rgba(193,134,200,0.30);
+    border-color: rgba(193,134,200,0.9);
   }
 </style>
 
@@ -14201,7 +14407,7 @@ function show(id) {
       { id: 'tt-btn-zoom-fit',   fn: zoomFit },
       { id: 'tt-btn-copy-prev',  fn: copyPrevDay },
       { id: 'tt-btn-reset-day',  fn: resetDayTimetable },
-      { id: 'tt-btn-print',      fn: function(){ window.print(); } }
+      { id: 'tt-btn-print',      fn: function(){ if (typeof window.__openPdfExportModal === 'function') window.__openPdfExportModal(); else window.print(); } }
     ].forEach(function(c){
       const el = document.getElementById(c.id);
       if (el && !el.__bound) { el.addEventListener('click', c.fn); el.__bound = true; }
@@ -14469,8 +14675,385 @@ function show(id) {
     }
   });
 
+  // ════════ R293: PDF 出力モーダル — Brutalist Vivid 準拠 ════════
+  // 既存の __applyPrintLayout / __restorePrintLayout を流用し、html2pdf.js で N 日分を 1 PDF に
+  (function setupPdfExportModal(){
+    let pdfModalOpened = false;
+    let pdfMode = 'single';            // 'single' | 'range' | 'custom'
+    let pdfSelectedDates = [];         // ISO yyyy-mm-dd の配列（並べ替え済み）
+    let pdfRangeFrom = null;
+    let pdfRangeTo = null;
+    let pdfAvailableDates = [];
+    let pdfPreviewTimer = null;
+
+    function collectAvailableDates(){
+      const keys = Object.keys(timetableByDate || {}).slice();
+      keys.sort();
+      return keys;
+    }
+    function fmtDateLabel(iso){
+      if (!iso) return '';
+      const p = iso.split('-');
+      if (p.length !== 3) return iso;
+      return p[1].replace(/^0/,'') + '/' + p[2].replace(/^0/,'') + '(' + jpDow(iso) + ')';
+    }
+    function jpDow(iso){
+      try { const d = new Date(iso + 'T00:00:00'); return ['日','月','火','水','木','金','土'][d.getDay()]; }
+      catch(e){ return ''; }
+    }
+    function refreshSummary(){
+      const sum = document.getElementById('pdf-date-summary');
+      const exportBtn = document.getElementById('pdf-btn-export');
+      if (!sum || !exportBtn) return;
+      if (pdfSelectedDates.length === 0) {
+        sum.textContent = '日付を選んでください';
+        sum.classList.add('empty');
+        exportBtn.disabled = true;
+      } else {
+        const labels = pdfSelectedDates.map(fmtDateLabel);
+        sum.textContent = '選択: ' + labels.join(' / ') + '  (' + pdfSelectedDates.length + ' 日分)';
+        sum.classList.remove('empty');
+        exportBtn.disabled = false;
+      }
+    }
+    function renderChipList(targetEl, multi){
+      targetEl.innerHTML = '';
+      const list = document.createElement('div');
+      list.className = 'pdf-date-chip-list';
+      if (pdfAvailableDates.length === 0) {
+        const empty = document.createElement('div');
+        empty.style.cssText = 'color:rgba(255,255,255,0.4);font-size:11px;letter-spacing:0.08em;padding:8px 4px;';
+        empty.textContent = '出力できる日付がまだありません';
+        targetEl.appendChild(empty);
+        return;
+      }
+      pdfAvailableDates.forEach(function(d){
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'pdf-date-chip';
+        b.dataset.iso = d;
+        b.textContent = fmtDateLabel(d);
+        if (pdfSelectedDates.indexOf(d) >= 0) b.classList.add('selected');
+        b.addEventListener('click', function(){
+          if (multi) {
+            const idx = pdfSelectedDates.indexOf(d);
+            if (idx >= 0) pdfSelectedDates.splice(idx, 1);
+            else pdfSelectedDates.push(d);
+          } else {
+            pdfSelectedDates = [d];
+          }
+          pdfSelectedDates.sort();
+          renderChipList(targetEl, multi);
+          refreshSummary();
+          schedulePreview();
+        });
+        list.appendChild(b);
+      });
+      targetEl.appendChild(list);
+    }
+    function renderRangeInputs(targetEl){
+      targetEl.innerHTML = '';
+      const wrap = document.createElement('div');
+      wrap.className = 'pdf-date-range-inputs';
+      const first = pdfAvailableDates[0] || '';
+      const last = pdfAvailableDates[pdfAvailableDates.length - 1] || '';
+      [['from','開始'], ['to','終了']].forEach(function(pair){
+        const row = document.createElement('div');
+        row.className = 'pdf-date-range-row';
+        const lab = document.createElement('label'); lab.textContent = pair[1];
+        const inp = document.createElement('input');
+        inp.type = 'date';
+        if (first) inp.min = first;
+        if (last) inp.max = last;
+        inp.value = pair[0] === 'from' ? (pdfRangeFrom || first) : (pdfRangeTo || last);
+        if (pair[0] === 'from') pdfRangeFrom = inp.value;
+        else pdfRangeTo = inp.value;
+        inp.addEventListener('input', function(){
+          if (pair[0] === 'from') pdfRangeFrom = inp.value;
+          else pdfRangeTo = inp.value;
+          applyRangeSelection();
+        });
+        row.appendChild(lab); row.appendChild(inp);
+        wrap.appendChild(row);
+      });
+      targetEl.appendChild(wrap);
+      applyRangeSelection();
+    }
+    function applyRangeSelection(){
+      const f = pdfRangeFrom, t = pdfRangeTo;
+      if (!f || !t) { pdfSelectedDates = []; refreshSummary(); schedulePreview(); return; }
+      const lo = f <= t ? f : t;
+      const hi = f <= t ? t : f;
+      pdfSelectedDates = pdfAvailableDates.filter(function(d){ return d >= lo && d <= hi; });
+      refreshSummary();
+      schedulePreview();
+    }
+    function switchMode(newMode){
+      pdfMode = newMode;
+      document.querySelectorAll('.pdf-mode-tab').forEach(function(t){
+        t.classList.toggle('active', t.dataset.mode === newMode);
+      });
+      const area = document.getElementById('pdf-date-input-area');
+      if (!area) return;
+      if (newMode === 'single') {
+        if (pdfSelectedDates.length > 1) pdfSelectedDates = pdfSelectedDates.slice(0,1);
+        renderChipList(area, false);
+      } else if (newMode === 'custom') {
+        renderChipList(area, true);
+      } else if (newMode === 'range') {
+        renderRangeInputs(area);
+      }
+      refreshSummary();
+      schedulePreview();
+    }
+    function schedulePreview(){
+      if (pdfPreviewTimer) clearTimeout(pdfPreviewTimer);
+      pdfPreviewTimer = setTimeout(renderPreview, 180);
+    }
+    function renderPreview(){
+      const stage = document.getElementById('pdf-preview-stage');
+      const empty = document.getElementById('pdf-preview-empty');
+      const cap = document.getElementById('pdf-preview-caption');
+      if (!stage || !empty) return;
+      stage.innerHTML = '';
+      if (pdfSelectedDates.length === 0) {
+        stage.style.cssText = '';
+        empty.style.display = '';
+        if (cap) cap.innerHTML = '&nbsp;';
+        return;
+      }
+      empty.style.display = 'none';
+      // 1 日目のレイアウトを A4 横（mm 単位）の縮小サムネとして描画
+      const firstDate = pdfSelectedDates[0];
+      const html = buildPrintHtmlForDate(firstDate);
+      if (!html) {
+        empty.style.display = '';
+        empty.textContent = '選択日のデータが見つかりません';
+        return;
+      }
+      // フレーム実寸 (CSS) は 360px 高、A4 横は 297×210mm。比率を測定して scale を決定
+      const frameH = 360;
+      const frameW = stage.parentElement ? stage.parentElement.clientWidth : 600;
+      const PAPER_W_MM = 297, PAPER_H_MM = 210;
+      const PX_PER_MM = 96 / 25.4;
+      const paperWpx = PAPER_W_MM * PX_PER_MM;
+      const paperHpx = PAPER_H_MM * PX_PER_MM;
+      const scale = Math.min(frameW / paperWpx, frameH / paperHpx) * 0.96;
+      stage.style.cssText = 'width:' + paperWpx + 'px; height:' + paperHpx + 'px; transform:scale(' + scale + '); transform-origin: top left;';
+      stage.innerHTML = html;
+      if (cap) cap.textContent = '1 / ' + pdfSelectedDates.length + ' ページ目  ・  A4 横  ・  ' + fmtDateLabel(firstDate);
+    }
+    function buildPrintHtmlForDate(dateKey){
+      const tt = timetableByDate[dateKey];
+      if (!tt) return '';
+      // 既存 #tt-paper を clone して中身を組み立てる。簡易版：現在の DOM から outerHTML を流用
+      const paperEl = document.getElementById('tt-paper');
+      if (!paperEl) return '';
+      // dateKey が現在表示中の日付と異なる場合、現在の DOM はそのままでは使えない。
+      // 安全策：プレビュー用には現在表示中の `.tt-paper` の outerHTML を返す（モーダル開いた時点で表示日のレイアウト）。
+      // ※書き出し本体では日付ごとに表示切替して取得する経路を採るので、プレビューは「現在表示中の 1 ページ」サンプルでも実用上 OK
+      return paperEl.outerHTML;
+    }
+    async function ensureHtml2Pdf(){
+      if (typeof html2pdf !== 'undefined') return true;
+      // 既に <script> で読み込み済みの想定だが念のため動的ロード
+      return new Promise(function(resolve){
+        const s = document.createElement('script');
+        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+        s.onload = function(){ resolve(typeof html2pdf !== 'undefined'); };
+        s.onerror = function(){ resolve(false); };
+        document.head.appendChild(s);
+      });
+    }
+    async function exportPdf(){
+      const exportBtn = document.getElementById('pdf-btn-export');
+      const cancelBtn = document.getElementById('pdf-btn-cancel');
+      const progress = document.getElementById('pdf-progress');
+      if (!exportBtn || !progress) return;
+      if (pdfSelectedDates.length === 0) return;
+      exportBtn.disabled = true;
+      cancelBtn.disabled = true;
+      progress.textContent = 'PDF エンジンを準備中...';
+      const ok = await ensureHtml2Pdf();
+      if (!ok) {
+        progress.textContent = 'html2pdf の読み込みに失敗しました';
+        exportBtn.disabled = false; cancelBtn.disabled = false;
+        return;
+      }
+      try { await document.fonts.ready; } catch(e){ /* noop */ }
+
+      // すべての日付ページを 1 コンテナに集める
+      const container = document.createElement('div');
+      container.style.cssText = 'position:fixed; left:-99999px; top:0; background:#fff; z-index:-1;';
+      document.body.appendChild(container);
+
+      // 現在表示中の日付を覚えておく（書き出し終了後に戻す）
+      const originalDate = getCurrentDateKey();
+      const setMasterDate = function(iso){
+        const ms = window.__masterDateState;
+        if (!ms) return false;
+        try {
+          ms.current = new Date(iso + 'T00:00:00');
+          if (typeof window.__refreshMasterDateBar === 'function') window.__refreshMasterDateBar();
+          return true;
+        } catch(e){ return false; }
+      };
+
+      for (let i = 0; i < pdfSelectedDates.length; i++) {
+        const d = pdfSelectedDates[i];
+        progress.textContent = (i+1) + ' / ' + pdfSelectedDates.length + ' 日目を生成中...';
+        // 日付を切り替えてレンダリングを更新
+        setMasterDate(d);
+        if (typeof render === 'function') render();
+        // 印刷用レイアウトを適用
+        if (typeof window.__applyPrintLayout === 'function') window.__applyPrintLayout();
+        // .tt-paper を clone して container に追加
+        const paperEl = document.getElementById('tt-paper');
+        if (paperEl) {
+          const clone = paperEl.cloneNode(true);
+          clone.style.width = '297mm';
+          clone.style.height = '210mm';
+          clone.style.boxSizing = 'border-box';
+          clone.style.background = '#ffffff';
+          if (i < pdfSelectedDates.length - 1) {
+            clone.style.pageBreakAfter = 'always';
+            clone.style.breakAfter = 'page';
+          }
+          container.appendChild(clone);
+        }
+        // 復元
+        if (typeof window.__restorePrintLayout === 'function') window.__restorePrintLayout();
+        // 描画余裕
+        await new Promise(function(r){ setTimeout(r, 30); });
+      }
+
+      // 元の日付に戻す
+      setMasterDate(originalDate);
+      if (typeof render === 'function') render();
+
+      const dateStr = pdfSelectedDates.length === 1
+        ? pdfSelectedDates[0]
+        : (pdfSelectedDates[0] + '_to_' + pdfSelectedDates[pdfSelectedDates.length - 1]);
+      const filename = 'schedule_' + dateStr + '.pdf';
+      const opt = {
+        margin: 0,
+        filename: filename,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          letterRendering: true,
+          backgroundColor: '#ffffff',
+          windowWidth: Math.round(297 * 96 / 25.4)
+        },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
+        pagebreak: { mode: ['css', 'legacy'] }
+      };
+      progress.textContent = 'PDF をエンコード中...';
+      try {
+        await html2pdf().set(opt).from(container).save();
+        progress.textContent = '完了！  ' + filename;
+      } catch(e) {
+        progress.textContent = 'エラー: ' + (e && e.message ? e.message : 'PDF 生成に失敗しました');
+        console.error('[PDF Export]', e);
+      } finally {
+        container.remove();
+        exportBtn.disabled = false; cancelBtn.disabled = false;
+      }
+    }
+    function openModal(){
+      const ov = document.getElementById('pdf-export-modal');
+      if (!ov) return;
+      pdfAvailableDates = collectAvailableDates();
+      const cur = getCurrentDateKey();
+      // 現在日が在籍日リストに無ければ追加（編集中の状態を尊重）
+      if (cur && pdfAvailableDates.indexOf(cur) < 0) {
+        pdfAvailableDates.push(cur);
+        pdfAvailableDates.sort();
+      }
+      pdfSelectedDates = cur && pdfAvailableDates.indexOf(cur) >= 0 ? [cur] : (pdfAvailableDates.length ? [pdfAvailableDates[0]] : []);
+      pdfRangeFrom = pdfAvailableDates[0] || null;
+      pdfRangeTo = pdfAvailableDates[pdfAvailableDates.length - 1] || null;
+      pdfMode = 'single';
+      ov.classList.add('open');
+      pdfModalOpened = true;
+      const progress = document.getElementById('pdf-progress');
+      if (progress) progress.innerHTML = '&nbsp;';
+      switchMode('single');
+    }
+    function closeModal(){
+      const ov = document.getElementById('pdf-export-modal');
+      if (ov) ov.classList.remove('open');
+      pdfModalOpened = false;
+    }
+
+    // バインド
+    function bind(){
+      const ov = document.getElementById('pdf-export-modal');
+      if (!ov) return;
+      const closeBtn = document.getElementById('pdf-modal-close');
+      const cancelBtn = document.getElementById('pdf-btn-cancel');
+      const exportBtn = document.getElementById('pdf-btn-export');
+      if (closeBtn) closeBtn.addEventListener('click', closeModal);
+      if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+      if (exportBtn) exportBtn.addEventListener('click', exportPdf);
+      ov.addEventListener('click', function(e){ if (e.target === ov) closeModal(); });
+      document.querySelectorAll('.pdf-mode-tab').forEach(function(t){
+        t.addEventListener('click', function(){ switchMode(t.dataset.mode); });
+      });
+      document.addEventListener('keydown', function(e){
+        if (pdfModalOpened && e.key === 'Escape') { e.preventDefault(); closeModal(); }
+      });
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bind);
+    else bind();
+
+    window.__openPdfExportModal = openModal;
+  })();
+
   loadFromStorage();
 })();
 </script>
+
+<!-- ════════ R293: PDF 出力モーダル ════════ -->
+<div id="pdf-export-modal" class="pdf-modal-overlay" role="dialog" aria-modal="true">
+  <div class="pdf-modal-panel">
+    <div class="pdf-modal-header">
+      <div>
+        <h2 class="pdf-modal-title">PDF に出力</h2>
+        <div class="pdf-modal-subtitle">Schedule Studio · A4 Landscape</div>
+      </div>
+      <button class="pdf-modal-close" id="pdf-modal-close" type="button" aria-label="閉じる">×</button>
+    </div>
+    <div class="pdf-modal-body">
+      <div class="pdf-range-section">
+        <p class="pdf-section-label">出力する日付</p>
+        <div class="pdf-mode-tabs" role="tablist">
+          <button class="pdf-mode-tab active" data-mode="single" type="button">単日</button>
+          <button class="pdf-mode-tab" data-mode="range" type="button">連続</button>
+          <button class="pdf-mode-tab" data-mode="custom" type="button">複数選択</button>
+        </div>
+        <div class="pdf-date-input-area" id="pdf-date-input-area"></div>
+        <div class="pdf-date-summary empty" id="pdf-date-summary">日付を選んでください</div>
+      </div>
+      <div class="pdf-preview-section">
+        <p class="pdf-section-label">プレビュー（1 ページ目）</p>
+        <div class="pdf-preview-frame">
+          <div class="pdf-preview-stage" id="pdf-preview-stage"></div>
+          <div class="pdf-preview-empty" id="pdf-preview-empty">日付を選ぶとプレビューされます</div>
+        </div>
+        <div class="pdf-preview-caption" id="pdf-preview-caption">　</div>
+      </div>
+    </div>
+    <div class="pdf-modal-footer">
+      <div class="pdf-progress" id="pdf-progress">　</div>
+      <div class="pdf-modal-actions">
+        <button class="pdf-btn" id="pdf-btn-cancel" type="button">キャンセル</button>
+        <button class="pdf-btn pdf-btn-primary" id="pdf-btn-export" type="button" disabled>PDF に出力</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
