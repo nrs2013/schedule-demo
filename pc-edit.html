@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260521.260000">
+<meta name="build-version" content="20260521.270000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -13069,21 +13069,99 @@ function show(id) {
       }
       if (handleT) handleT.addEventListener('mousedown', startVResize('t'));
       if (handleB) handleB.addEventListener('mousedown', startVResize('b'));
-      // R288: 4 隅コーナーハンドル — 横方向リサイズ + 縦方向リサイズを同時起動（PPT 図形と同じ挙動）
-      ['tl','tr','bl','br'].forEach(function(corner){
-        const cHandle = el.querySelector('.tt-bar-handle.' + corner);
-        if (!cHandle) return;
-        cHandle.addEventListener('mousedown', function(e){
+      // R290: 4 隅コーナーハンドル — 専用ハンドラで横＋縦を 1 つの mousemove に統合（dispatchEvent 競合解消）
+      function startCornerResize(corner){
+        return function(e){
           if (e.button !== 0) return;
           e.stopPropagation();
           e.preventDefault();
-          const hSide = corner.indexOf('r') >= 0 ? 'r' : 'l';
-          const vSide = corner.indexOf('t') === 0 ? 't' : 'b';
-          const hH = el.querySelector('.tt-bar-handle.' + hSide);
-          const vH = el.querySelector('.tt-bar-handle.' + vSide);
-          if (hH) hH.dispatchEvent(new MouseEvent('mousedown', {bubbles:true, cancelable:true, button:0, clientX:e.clientX, clientY:e.clientY}));
-          if (vH) vH.dispatchEvent(new MouseEvent('mousedown', {bubbles:true, cancelable:true, button:0, clientX:e.clientX, clientY:e.clientY}));
-        });
+          const isLeftCorner = corner.indexOf('l') >= 0;
+          const isTopCorner = corner.indexOf('t') === 0;
+          const scale = getPaperScale();
+          const initStart = bar.start;
+          const initEnd = bar.end;
+          const orderedSecIds = tt.sections.map(function(s){ return s.id; });
+          const initIdxs = (bar.spanSecIds || []).map(function(sid){ return orderedSecIds.indexOf(sid); }).filter(function(i){ return i >= 0; }).sort(function(a,b){ return a-b; });
+          if (initIdxs.length === 0) return;
+          const startX = e.clientX;
+          const startY = e.clientY;
+          const sampleRow = gridEl.querySelector('[data-sec-id="' + orderedSecIds[initIdxs[0]] + '"]');
+          const sectionH = sampleRow ? sampleRow.offsetHeight : LANE_H;
+          function move(ev){
+            const dx = (ev.clientX - startX) / scale;
+            const dy = (ev.clientY - startY) / scale;
+            // 横方向：時間を 15 分グリッドにスナップしながら伸縮
+            let newStart = initStart, newEnd = initEnd;
+            const tStart0 = pixelToTime(timeToPixel(initStart, tt), tt);
+            const tEnd0 = pixelToTime(timeToPixel(initEnd, tt), tt);
+            if (isLeftCorner) {
+              const t = snapTime(pixelToTime(timeToPixel(initStart, tt) + dx, tt), tt.timeStart);
+              if (t >= tt.timeStart && t < initEnd - 0.24) newStart = t;
+            } else {
+              const t = snapTime(pixelToTime(timeToPixel(initEnd, tt) + dx, tt), tt.timeStart);
+              if (t <= tt.timeEnd && t > initStart + 0.24) newEnd = t;
+            }
+            // 縦方向：セクションを 1 つ単位でスナップしながら伸縮
+            let newTopIdx = initIdxs[0];
+            let newBotIdx = initIdxs[initIdxs.length - 1];
+            const shift = sectionH > 0 ? Math.round(dy / sectionH) : 0;
+            if (isTopCorner) {
+              const cand = initIdxs[0] + shift;
+              if (cand >= 0 && cand <= initIdxs[initIdxs.length - 1]) newTopIdx = cand;
+            } else {
+              const cand = initIdxs[initIdxs.length - 1] + shift;
+              if (cand < orderedSecIds.length && cand >= initIdxs[0]) newBotIdx = cand;
+            }
+            // 2 セクション以上を維持
+            if (newTopIdx === newBotIdx) {
+              if (isTopCorner && newBotIdx > 0) newTopIdx = newBotIdx - 1;
+              else if (!isTopCorner && newTopIdx < orderedSecIds.length - 1) newBotIdx = newTopIdx + 1;
+            }
+            const newSpanIds = [];
+            for (let i = newTopIdx; i <= newBotIdx; i++) newSpanIds.push(orderedSecIds[i]);
+            // 重なり判定
+            const isOverlap = overlapsAnyBar(tt, {
+              start: newStart, end: newEnd, lane: 0,
+              secId: bar.secId, spanSecIds: newSpanIds
+            }, bar.id);
+            if (isOverlap) return;
+            // 状態更新
+            bar.start = newStart;
+            bar.end = newEnd;
+            bar.spanSecIds = newSpanIds;
+            // DOM 直接更新（render 呼ばない＝ちらつかない、PPT 図形と同等の追従感）
+            const leftPx = LABEL_W + timeToPixel(newStart, tt);
+            const widthPx = Math.max(SLOT_W(), timeToPixel(newEnd, tt) - timeToPixel(newStart, tt));
+            el.style.left = leftPx + 'px';
+            el.style.width = widthPx + 'px';
+            const firstRow = gridEl.querySelector('[data-sec-id="' + newSpanIds[0] + '"]');
+            const lastRow = gridEl.querySelector('[data-sec-id="' + newSpanIds[newSpanIds.length - 1] + '"]');
+            if (firstRow && lastRow) {
+              const topPx = firstRow.offsetTop;
+              const botPx = lastRow.offsetTop + lastRow.offsetHeight;
+              el.style.top = topPx + 'px';
+              el.style.height = (botPx - topPx) + 'px';
+            }
+            // カーソル＋HUD
+            const dragCls = (isTopCorner === isLeftCorner) ? 'tt-resizing-nwse' : 'tt-resizing-nesw';
+            if (typeof ttSetDragClass === 'function' && !document.body.classList.contains(dragCls)) ttSetDragClass(dragCls);
+            ttShowHud(ev.clientX, ev.clientY, bar.start, bar.end);
+          }
+          function up(){
+            document.removeEventListener('mousemove', move);
+            document.removeEventListener('mouseup', up);
+            ttHideHud();
+            if (typeof ttSetDragClass === 'function') ttSetDragClass(null);
+            saveToStorage();
+            render();
+          }
+          document.addEventListener('mousemove', move);
+          document.addEventListener('mouseup', up);
+        };
+      }
+      ['tl','tr','bl','br'].forEach(function(corner){
+        const cHandle = el.querySelector('.tt-bar-handle.' + corner);
+        if (cHandle) cHandle.addEventListener('mousedown', startCornerResize(corner));
       });
     });
     gridEl.appendChild(newOv);
