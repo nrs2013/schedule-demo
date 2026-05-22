@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260521.270000">
+<meta name="build-version" content="20260521.280000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -12689,8 +12689,10 @@ function show(id) {
       if (!candIsSpan && !otherIsSpan) {
         return (b.lane||0) === candLane;
       }
-      // 片方でも縦串なら、共通セクションが時間重なれば衝突
-      return true;
+      // R291: 縦串 vs 縦串 のみ衝突。縦串 vs 単品は重なってよい
+      // （縦串は単品の上を「貫通」する仕様 — PowerPoint 図形のように自由に伸ばせる）
+      if (candIsSpan && otherIsSpan) return true;
+      return false;
     });
   }
   /* R249: 重ならない範囲に縮める（end の方を縮めるか、start を進める） */
@@ -13003,7 +13005,8 @@ function show(id) {
           function move(ev){
             // R288: マウスがセクション範囲外でも、最も近いセクションを hover とみなす
             // （以前は範囲外で null になり、下に振り切ると伸びなかった）
-            const sectionRows = gridEl.querySelectorAll('[data-sec-id]');
+            // R291: data-sec-id が .tt-sec-drag / .tt-sec-name にも付くので、行だけに絞る
+            const sectionRows = gridEl.querySelectorAll('.tt-sec-row[data-sec-id]');
             let hoverSecId = null;
             let lastBelow = null;  // マウスより上に終わっているセクションのうち最も下のもの
             let firstAbove = null; // マウスより下に始まっているセクションのうち最も上のもの
@@ -13283,7 +13286,8 @@ function show(id) {
           // 開始セクションを完全に超えた
           const isDownward = (mouseY > startBot);
           const passedSecIds = [sec.id];
-          const secRows = gridEl.querySelectorAll('[data-sec-id]');
+          // R291: .tt-sec-drag / .tt-sec-name にも data-sec-id があるので、行だけに絞る
+          const secRows = gridEl.querySelectorAll('.tt-sec-row[data-sec-id]');
           secRows.forEach(function(row){
             const rId = row.getAttribute('data-sec-id');
             if (rId === sec.id) return;
@@ -13821,7 +13825,8 @@ function show(id) {
     if (addSecCell) addSecCell.addEventListener('click', addSection);
 
     // バー描画 + ドラッグイベント
-    gridEl.querySelectorAll('[data-sec-id]').forEach(function(row){
+    // R291: data-sec-id は子要素にも付くため .tt-sec-row に絞る（3 倍ループ防止）
+    gridEl.querySelectorAll('.tt-sec-row[data-sec-id]').forEach(function(row){
       const secId = row.getAttribute('data-sec-id');
       const sec = tt.sections.find(function(s){ return s.id === secId; });
       if (!sec) return;
@@ -13904,7 +13909,8 @@ function show(id) {
         });
       });
     });
-    gridEl.querySelectorAll('[data-sec-id]').forEach(function(row){
+    // R291: data-sec-id は子要素にも付くため .tt-sec-row に絞る
+    gridEl.querySelectorAll('.tt-sec-row[data-sec-id]').forEach(function(row){
       row.addEventListener('dragover', function(e){
         if (!row.getAttribute('data-sec-id')) return;
         e.preventDefault();
