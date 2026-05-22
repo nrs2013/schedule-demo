@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260521.280000">
+<meta name="build-version" content="20260521.290000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -5819,6 +5819,11 @@
   }
   .tt-bar-handle.t { top: -3px; }
   .tt-bar-handle.b { bottom: -3px; }
+  /* R292: 縦串バーの上下ハンドルは未選択でも薄く可視化。「ここに掴み目がある」と分かるように */
+  .tt-bar.span-bar .tt-bar-handle.t,
+  .tt-bar.span-bar .tt-bar-handle.b {
+    background: rgba(245,200,120,0.10);
+  }
   .tt-bar-handle.t:hover, .tt-bar-handle.b:hover { background: rgba(245,200,120,0.45); }
   /* R288: 4 隅コーナーハンドル（PPT 図形相当） — 縦串バー専用 */
   .tt-bar.span-bar .tt-bar-handle.tl,
@@ -5828,7 +5833,10 @@
     position: absolute;
     width: 16px;
     height: 16px;
-    background: transparent;
+    /* R292: 未選択時も薄く可視化（PowerPoint 図形のハンドルのように） */
+    background: rgba(245,200,120,0.18);
+    border: 1px solid rgba(255,255,255,0.35);
+    border-radius: 2px;
     pointer-events: auto;
     z-index: 11;
   }
@@ -12957,7 +12965,7 @@ function show(id) {
     if (ov) ov.remove();
     const newOv = document.createElement('div');
     newOv.className = 'tt-span-overlay';
-    newOv.style.cssText = 'position:absolute; left:0; top:0; right:0; bottom:0; pointer-events:none; z-index:2;'; /* R262: 縦串overlay は個別バー(z-index:5)より下の階層に置く */
+    newOv.style.cssText = 'position:absolute; left:0; top:0; right:0; bottom:0; pointer-events:none; z-index:6;'; /* R292: 縦串overlay を個別バー(z:5)より上に。中央領域は pointer-events:none で個別バーに素通りするので操作は両立。これで縦串の上下/4隅ハンドルが個別バーに隠されなくなる */
 
     tt.bars.filter(function(b){ return getSpanSecIds(b); }).forEach(function(bar){
       const spanIds = bar.spanSecIds;
