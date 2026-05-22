@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260521.230000">
+<meta name="build-version" content="20260521.240000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -12492,6 +12492,8 @@ function show(id) {
   const PAPER_INNER_H = PAPER_H_PX - PAPER_PAD_T - PAPER_PAD_B;
 
   function updateCellW(tt){
+    // R287: 印刷時は CELL_W を __applyPrintLayout が事前に強制設定するので、render の再計算で上書きさせない
+    if (window.__forcePrintCellW) return;
     const hours = Math.max(1, tt.timeEnd - tt.timeStart);
     const paper = document.getElementById('tt-paper');
     const paddingX = 36; // .tt-paper の左右 padding 合計
@@ -14004,9 +14006,9 @@ function show(id) {
       var __origLaneH = null;
       var __origBarH = null;
       var __origBarTop = null;
-      /* R285: A4 完全フィット — transform を撤廃して CSS flex に任せる方式。
-         paper は CSS で height:210mm 強制。grid が flex:1 で残りを使う。
-         一度 render → grid 実測 → 残り÷totalLanes で LANE_H → 再 render で bar 位置が grid に正しく収まる。 */
+      var __origCellW = null;
+      /* R287: A4 完全フィット — 横方向（CELL_W）と縦方向（LANE_H）の両方を A4 サイズから直接計算。
+         paper.clientWidth に頼らない（印刷時に未確定のタイミング問題を回避）。 */
       function __applyPrintLayout(){
         const paper = document.getElementById('tt-paper');
         if (!paper) return;
@@ -14014,22 +14016,32 @@ function show(id) {
         const dk = (typeof getCurrentDateKey === 'function') ? getCurrentDateKey() : null;
         const tt = dk ? getTimetableForDate(dk) : null;
         if (!tt || !Array.isArray(tt.sections)) return;
+        // A4 横向きの正味エリア（paper padding 3mm × 2 を引く）
+        const PAGE_W_PX = 297 * 96 / 25.4;
+        const PAGE_H_PX = 210 * 96 / 25.4;
+        const PAPER_PAD = 3 * 96 / 25.4 * 2; // padding 3mm * 両側
+        const innerW = PAGE_W_PX - PAPER_PAD;
+        const innerH = PAGE_H_PX - PAPER_PAD;
         const totalLanes = tt.sections.reduce(function(s,sec){ return s + (sec.lanes || 1); }, 0) || 1;
+        const hours = Math.max(1, tt.timeEnd - tt.timeStart);
         __origLaneH = LANE_H; __origBarH = BAR_H; __origBarTop = BAR_TOP;
-        // Step 1: 現状で一度 render → CSS flex で paper が A4 サイズになり grid に残りスペースが割り当てられる
+        __origCellW = CELL_W;
+        // Step 1: 横方向の CELL_W を A4 横幅から直接計算（時刻軸が paper 横幅にぴったり）
+        const axisW = innerW - LABEL_W - ADD_W;
+        CELL_W = axisW / hours;
+        window.__forcePrintCellW = true; // updateCellW の上書きを止める
+        // Step 2: 一度 render してヘッダー類の実高さを取得
         if (typeof render === 'function') render();
-        // Step 2: grid 内の利用可能高さを実測（時刻軸 + セクション行の合計）
-        const grid = paper.querySelector('.tt-grid');
-        const gridH = grid ? grid.offsetHeight : 0;
-        const timeRow = grid ? grid.querySelector('.tt-time-row') : null;
-        const timeRowH = timeRow ? timeRow.offsetHeight : 36;
+        const headerH = (paper.querySelector('.tt-paper-header')||{}).offsetHeight || 0;
+        const footerH = (paper.querySelector('.tt-paper-footer')||{}).offsetHeight || 0;
+        const timeRowH = (paper.querySelector('.tt-time-row')||{}).offsetHeight || 36;
         const sectionBorders = Math.max(0, tt.sections.length - 1);
-        const availableH = Math.max(20 * totalLanes, gridH - timeRowH - sectionBorders);
-        // Step 3: 残りスペースをレーン数で割って LANE_H 確定
-        LANE_H = availableH / totalLanes;
+        // Step 3: 縦方向の LANE_H を A4 縦から直接計算（grid が時刻軸＋セクション全部で残りスペース）
+        const availableH = innerH - headerH - footerH - timeRowH - sectionBorders;
+        LANE_H = Math.max(18, availableH / totalLanes);
         BAR_H = Math.max(14, LANE_H - 6);
         BAR_TOP = Math.max(1, (LANE_H - BAR_H) / 2);
-        // Step 4: 再 render — 新 LANE_H で sec-body の min-height・bar の top が確定 → grid にぴったり収まる
+        // Step 4: 再 render — 新 CELL_W と LANE_H で全要素が A4 にぴったり収まる
         if (typeof render === 'function') render();
         // transform は使わない（CSS で transform: none !important なので念のためクリア）
         paper.style.transform = '';
@@ -14045,13 +14057,19 @@ function show(id) {
             paper.style.transform = '';
           }
         }
+        // R287: CELL_W / LANE_H を画面用に戻す
+        window.__forcePrintCellW = false;
+        if (typeof __origCellW !== 'undefined' && __origCellW !== null) {
+          CELL_W = __origCellW;
+          __origCellW = null;
+        }
         if (__origLaneH !== null) {
           LANE_H = __origLaneH;
           BAR_H = __origBarH;
           BAR_TOP = __origBarTop;
           __origLaneH = null;
-          if (typeof render === 'function') render();
         }
+        if (typeof render === 'function') render();
       }
       window.addEventListener('beforeprint', __applyPrintLayout);
       window.addEventListener('afterprint', __restorePrintLayout);
