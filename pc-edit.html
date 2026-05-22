@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260521.220000">
+<meta name="build-version" content="20260521.230000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -13230,6 +13230,12 @@ function show(id) {
       el.__cancelPendingEdit = function(){
         if (pendingEditTimer) { clearTimeout(pendingEditTimer); pendingEditTimer = null; }
       };
+      // R286: 縦串バーの上下移動用に section index リストを記憶
+      const isSpan = el.classList.contains('span-bar');
+      const __orderedSecIds = tt.sections.map(function(s){ return s.id; });
+      const __initSpanIdxs = (isSpan && Array.isArray(bar.spanSecIds))
+        ? bar.spanSecIds.map(function(sid){ return __orderedSecIds.indexOf(sid); }).filter(function(i){ return i >= 0; }).sort(function(a,b){ return a-b; })
+        : [];
       function move(ev){
         const x = (ev.clientX - rect.left) / scale;
         const y = (ev.clientY - rect.top) / scale;
@@ -13240,18 +13246,30 @@ function show(id) {
         const newStart = snapTime(pixelToTime(timeToPixel(initStart, tt) + dx, tt), tt.timeStart);
         const newEnd = newStart + duration;
         let targetLane = bar.lane || 0;
-        if (sec) targetLane = Math.max(0, Math.min(sec.lanes - 1, initLane + Math.round(dy / LANE_H)));
+        // R286: 縦串バーは dy で spanSecIds 全体を上下シフト（自由に上にも下にも運べる）
+        let candidateSpanIds = bar.spanSecIds;
+        if (isSpan && __initSpanIdxs.length > 0) {
+          const firstSpanRow = document.querySelector('[data-sec-id="' + __orderedSecIds[__initSpanIdxs[0]] + '"]');
+          const sectionH = firstSpanRow ? firstSpanRow.offsetHeight : LANE_H;
+          const shift = sectionH > 0 ? Math.round(dy / sectionH) : 0;
+          const newTopIdx = __initSpanIdxs[0] + shift;
+          const newBotIdx = __initSpanIdxs[__initSpanIdxs.length - 1] + shift;
+          if (shift !== 0 && newTopIdx >= 0 && newBotIdx < __orderedSecIds.length) {
+            candidateSpanIds = [];
+            for (let i = newTopIdx; i <= newBotIdx; i++) candidateSpanIds.push(__orderedSecIds[i]);
+          }
+        } else if (sec) {
+          targetLane = Math.max(0, Math.min(sec.lanes - 1, initLane + Math.round(dy / LANE_H)));
+        }
         const isOverlap = overlapsAnyBar(tt, {
           start: newStart, end: newEnd, lane: targetLane,
-          secId: bar.secId, spanSecIds: bar.spanSecIds
+          secId: bar.secId, spanSecIds: candidateSpanIds
         }, bar.id);
         if (newStart >= tt.timeStart && newEnd <= tt.timeEnd && !isOverlap) {
           bar.start = newStart;
           bar.end = newEnd;
           if (sec) bar.lane = targetLane;
-          // R281c: render() を呼ばず、このバー本体だけ style 直接更新。
-          //        他バー・縦串overlay は触らないので一切ちらつかない。
-          const isSpan = el.classList.contains('span-bar');
+          // R281c+R286: DOM 直接更新で ちらつき防止。縦串も上下シフトに追従。
           const leftBase = isSpan ? LABEL_W : 0;
           const newLeftPx = leftBase + timeToPixel(newStart, tt);
           const newWidthPx = Math.max(SLOT_W(), timeToPixel(newEnd, tt) - timeToPixel(newStart, tt));
@@ -13260,8 +13278,18 @@ function show(id) {
           if (sec && !isSpan) {
             el.style.top = (targetLane * LANE_H + BAR_TOP) + 'px';
           }
+          if (isSpan && candidateSpanIds && candidateSpanIds !== bar.spanSecIds) {
+            bar.spanSecIds = candidateSpanIds;
+            const newFirstRow = document.querySelector('[data-sec-id="' + candidateSpanIds[0] + '"]');
+            const newLastRow = document.querySelector('[data-sec-id="' + candidateSpanIds[candidateSpanIds.length - 1] + '"]');
+            if (newFirstRow && newLastRow) {
+              const newTopPx = newFirstRow.offsetTop;
+              const newBotPx = newLastRow.offsetTop + newLastRow.offsetHeight;
+              el.style.top = newTopPx + 'px';
+              el.style.height = (newBotPx - newTopPx) + 'px';
+            }
+          }
         }
-        // R281e-A/C: ドラッグ中の時刻HUD と grabbing カーソル
         if (dragging) {
           if (typeof ttSetDragClass === 'function' && !document.body.classList.contains('tt-dragging')) ttSetDragClass('tt-dragging');
           ttShowHud(ev.clientX, ev.clientY, bar.start, bar.end);
