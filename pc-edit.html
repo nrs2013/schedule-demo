@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260521.300000">
+<meta name="build-version" content="20260521.310000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -14677,14 +14677,81 @@ function show(id) {
 
   // ════════ R293: PDF 出力モーダル — Brutalist Vivid 準拠 ════════
   // 既存の __applyPrintLayout / __restorePrintLayout を流用し、html2pdf.js で N 日分を 1 PDF に
+  // ════════ R294: PDF 出力モーダル — 独立 DOM 方式（リハーサル PDF と同パターン）════════
+  // 編集 UI 一切混入なし。プレビューと書き出しが完全に同じ HTML から生成されるので
+  // 「プレビュー = PDF」が原理的に保証される。@media print や __applyPrintLayout に依存しない。
   (function setupPdfExportModal(){
     let pdfModalOpened = false;
-    let pdfMode = 'single';            // 'single' | 'range' | 'custom'
-    let pdfSelectedDates = [];         // ISO yyyy-mm-dd の配列（並べ替え済み）
+    let pdfMode = 'single';
+    let pdfSelectedDates = [];
     let pdfRangeFrom = null;
     let pdfRangeTo = null;
     let pdfAvailableDates = [];
     let pdfPreviewTimer = null;
+
+    // PDF 専用 CSS（#tt-pdf-root スコープで完全自己完結）
+    const TT_PDF_CSS = `
+#tt-pdf-root { width:297mm; box-sizing:border-box; background:#fff; color:#111;
+               font-family:'Noto Sans JP','Inter',sans-serif; margin:0; padding:0; }
+#tt-pdf-root *, #tt-pdf-root *::before, #tt-pdf-root *::after { box-sizing:border-box; -webkit-print-color-adjust:exact; print-color-adjust:exact; text-shadow:none !important; }
+#tt-pdf-root .tt-pdf-page { width:297mm; height:210mm; padding:5mm 6mm; display:flex; flex-direction:column;
+                            page-break-after:always; break-after:page; background:#fff; overflow:hidden; }
+#tt-pdf-root .tt-pdf-page:last-child { page-break-after:auto; break-after:auto; }
+#tt-pdf-root .tt-pdf-mast { display:flex; justify-content:space-between; align-items:baseline;
+                            border-bottom:1.5px solid #1a1a1a; padding:2px 4px 4px; margin-bottom:3mm; gap:12px; }
+#tt-pdf-root .tt-pdf-mast-left { display:flex; gap:14px; align-items:baseline; flex-wrap:wrap; min-width:0; }
+#tt-pdf-root .tt-pdf-mast-title { font-weight:800; font-size:14px; letter-spacing:0.04em; color:#000; }
+#tt-pdf-root .tt-pdf-mast-meta { font-size:10px; color:#555; letter-spacing:0.10em; font-weight:600; }
+#tt-pdf-root .tt-pdf-mast-meta b { color:#111; font-weight:700; }
+#tt-pdf-root .tt-pdf-mast-date { font-family:'JetBrains Mono','Courier New',monospace; font-size:13px; font-weight:700; color:#111; letter-spacing:0.06em; }
+#tt-pdf-root .tt-pdf-grid { flex:1 1 0; min-height:0; display:flex; flex-direction:column; border:0.6px solid #1a1a1a; background:#fff; }
+#tt-pdf-root .tt-pdf-time-row { display:grid; grid-template-columns:18mm 1fr; border-bottom:1px solid #1a1a1a;
+                                font-family:'JetBrains Mono',monospace; font-size:8.5px; color:#111; height:5mm; flex:0 0 5mm; }
+#tt-pdf-root .tt-pdf-time-corner { border-right:1px solid #1a1a1a; background:#f4f4f4; }
+#tt-pdf-root .tt-pdf-time-axis { position:relative; }
+#tt-pdf-root .tt-pdf-time-tick { position:absolute; top:0; bottom:0; border-left:0.6px solid #1a1a1a; }
+#tt-pdf-root .tt-pdf-time-tick.half { border-left:0.4px dashed #b0b0b0; }
+#tt-pdf-root .tt-pdf-time-tick.first { border-left:none; }
+#tt-pdf-root .tt-pdf-time-label { position:absolute; top:0; transform:translateX(-50%); padding:0 2px; font-weight:700; color:#111; background:#fff; line-height:5mm; font-size:8.5px; }
+#tt-pdf-root .tt-pdf-time-label.start { transform:translateX(0); padding-left:3px; }
+#tt-pdf-root .tt-pdf-time-label.end { transform:translateX(-100%); padding-right:3px; }
+#tt-pdf-root .tt-pdf-sec-row { display:grid; grid-template-columns:18mm 1fr; border-bottom:0.5px solid #999;
+                               position:relative; min-height:0; }
+#tt-pdf-root .tt-pdf-sec-row:last-child { border-bottom:none; }
+#tt-pdf-root .tt-pdf-sec-label { font-size:9px; letter-spacing:0.05em; padding:3px 5px; border-right:1px solid #1a1a1a;
+                                 background:#fafafa; color:#111; font-weight:700; display:flex; align-items:center;
+                                 word-break:break-all; line-height:1.15; }
+#tt-pdf-root .tt-pdf-sec-body { position:relative;
+                                background-image:
+                                  linear-gradient(to right, #1a1a1a 0.5px, transparent 0.5px),
+                                  linear-gradient(to right, #d0d0d0 0.35px, transparent 0.35px);
+                                background-repeat:repeat-y;
+                                background-size:var(--tt-cell-w,40px) 100%, calc(var(--tt-cell-w,40px) / 2) 100%; }
+#tt-pdf-root .tt-pdf-bar { position:absolute; box-sizing:border-box; padding:2px 4px; font-size:8.5px; font-weight:600;
+                           color:#111; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; line-height:1.15;
+                           background:#fff; border:1px solid #888; border-radius:2px; display:flex; align-items:center; }
+#tt-pdf-root .tt-pdf-bar .b-time { font-family:'JetBrains Mono',monospace; font-weight:700; font-size:7.5px; color:#333; margin-right:3px; flex-shrink:0; }
+#tt-pdf-root .tt-pdf-bar .b-text { overflow:hidden; text-overflow:ellipsis; }
+#tt-pdf-root .tt-pdf-bar.color-white  { background:#fff; border:1px solid #888; color:#111; }
+#tt-pdf-root .tt-pdf-bar.color-amber  { background:#fff; border:1.5px solid #444; color:#111; }
+#tt-pdf-root .tt-pdf-bar.color-gray   { background:#fff; border:1.5px dashed #555; color:#111; }
+#tt-pdf-root .tt-pdf-bar.color-accent { background:#fff; border:1px dashed #777; color:#111; }
+#tt-pdf-root .tt-pdf-bar.color-pink   { background:#fff; border:2px solid #111; color:#000; font-weight:800; }
+#tt-pdf-root .tt-pdf-span-bar { position:absolute; box-sizing:border-box; padding:3px 5px; font-size:9px; font-weight:700;
+                                color:#000; background:#fff; border:2px solid #1a1a1a; border-radius:3px; z-index:2;
+                                display:flex; flex-direction:column; align-items:center; justify-content:center;
+                                text-align:center; overflow:hidden; line-height:1.15; }
+#tt-pdf-root .tt-pdf-span-bar .b-text { font-weight:800; color:#000; word-break:break-all; }
+#tt-pdf-root .tt-pdf-span-bar .b-time { font-family:'JetBrains Mono',monospace; font-weight:600; font-size:7.5px; color:#333; margin-top:2px; }
+#tt-pdf-root .tt-pdf-foot { margin-top:3mm; padding:4px 6px; border:1px solid #1a1a1a; border-radius:3px;
+                            display:flex; gap:10px; flex-wrap:wrap; font-size:9.5px; color:#111; flex:0 0 auto; }
+#tt-pdf-root .tt-pdf-foot-label { font-weight:700; color:#555; letter-spacing:0.12em; font-size:8.5px; margin-right:4px; }
+#tt-pdf-root .tt-pdf-foot-ev { color:#111; }
+#tt-pdf-root .tt-pdf-foot-ev b { color:#000; font-weight:800; }
+#tt-pdf-root .tt-pdf-foot-ev .ev-time { color:#333; font-family:'JetBrains Mono',monospace; font-size:8.5px; margin-left:3px; }
+#tt-pdf-root .tt-pdf-foot-sep { color:#aaa; }
+#tt-pdf-root .tt-pdf-foot-empty { color:#888; font-style:italic; }
+`;
 
     function collectAvailableDates(){
       const keys = Object.keys(timetableByDate || {}).slice();
@@ -14810,6 +14877,145 @@ function show(id) {
       if (pdfPreviewTimer) clearTimeout(pdfPreviewTimer);
       pdfPreviewTimer = setTimeout(renderPreview, 180);
     }
+
+    // ========== PDF 用 HTML 生成（プレビューと書き出しで共有）==========
+    function buildTtPdfPageHtml(dateKey){
+      const tt = timetableByDate[dateKey];
+      if (!tt) return '';
+      const title = (typeof getActiveConcertTitle === 'function') ? getActiveConcertTitle() : '';
+      const info = (typeof getTourInfoForDate === 'function') ? (getTourInfoForDate(dateKey) || {}) : {};
+      const dateDisp = (typeof fmtDateDisplay === 'function') ? fmtDateDisplay(dateKey) : dateKey;
+      const tStart = tt.timeStart, tEnd = tt.timeEnd;
+      const hours = Math.max(1, tEnd - tStart);
+
+      // 時刻軸（毎正時 + 30 分グリッド）
+      const tickHtml = [];
+      for (let h = tStart; h <= tEnd; h++) {
+        const pct = ((h - tStart) / hours) * 100;
+        const cls = h === tStart ? 'first' : '';
+        tickHtml.push('<div class="tt-pdf-time-tick ' + cls + '" style="left:' + pct + '%;"></div>');
+        const labelCls = h === tStart ? 'start' : (h === tEnd ? 'end' : '');
+        tickHtml.push('<div class="tt-pdf-time-label ' + labelCls + '" style="left:' + pct + '%;">' + h + '</div>');
+        if (h < tEnd) {
+          const halfPct = ((h - tStart + 0.5) / hours) * 100;
+          tickHtml.push('<div class="tt-pdf-time-tick half" style="left:' + halfPct + '%;"></div>');
+        }
+      }
+
+      // セクション行（lanes 比率で flex 分割）
+      const sections = tt.sections || [];
+      const allBars = (tt.bars || []).filter(function(b){
+        return b && typeof b.start === 'number' && typeof b.end === 'number';
+      });
+      const isSpan = function(b){ return Array.isArray(b.spanSecIds) && b.spanSecIds.length > 1; };
+      const secRowsHtml = sections.map(function(sec){
+        const lanes = sec.lanes || 1;
+        const bars = allBars.filter(function(b){ return !isSpan(b) && b.secId === sec.id; });
+        const barsHtml = bars.map(function(b){
+          const left  = ((b.start - tStart) / hours) * 100;
+          const width = Math.max(0, ((b.end - b.start) / hours) * 100);
+          const top   = ((b.lane || 0) / lanes) * 100;
+          const h     = (1 / lanes) * 100;
+          const color = b.color || 'white';
+          const tm = fmtTimeFromHour(b.start) + '〜' + fmtTimeFromHour(b.end);
+          const text = b.text || '';
+          return '<div class="tt-pdf-bar color-' + color + '" style="left:' + left + '%;width:' + width +
+                 '%;top:calc(' + top + '% + 1.5px);height:calc(' + h + '% - 3px);">' +
+                 '<span class="b-time">' + escapeHtml(tm) + '</span>' +
+                 '<span class="b-text">' + escapeHtml(text) + '</span></div>';
+        }).join('');
+        return '<div class="tt-pdf-sec-row" style="flex:' + lanes + ' 1 0;">' +
+               '<div class="tt-pdf-sec-label">' + escapeHtml(sec.name || '') + '</div>' +
+               '<div class="tt-pdf-sec-body">' + barsHtml + '</div></div>';
+      }).join('');
+
+      // 縦串バー（sections を跨ぐ）：sections 順から top/bottom を絶対 % で算出
+      // ただし sections 各行は flex で lanes 比率分配なので、絶対位置は「section index ベースで等比近似」
+      const totalLanes = sections.reduce(function(a, s){ return a + (s.lanes || 1); }, 0) || 1;
+      const secLaneOffsets = (function(){
+        const out = {}; let cum = 0;
+        sections.forEach(function(s){ out[s.id] = { start: cum, end: cum + (s.lanes || 1) }; cum += (s.lanes || 1); });
+        return out;
+      })();
+      const spanBarsHtml = allBars.filter(isSpan).map(function(b){
+        const ids = b.spanSecIds;
+        const offs = ids.map(function(id){ return secLaneOffsets[id]; }).filter(Boolean);
+        if (offs.length === 0) return '';
+        const startLane = Math.min.apply(null, offs.map(function(o){ return o.start; }));
+        const endLane = Math.max.apply(null, offs.map(function(o){ return o.end; }));
+        // % は .tt-pdf-grid の高さ内（time-row 5mm を除く）。grid 全体に対する相対位置で配置
+        // 簡略：grid 内で時刻軸を除いた残り領域に section が積まれていると仮定し、
+        // top/bottom も「section 帯の高さに比例」する近似
+        // sections の合計 lanes に対する比率を grid 高さに掛ける
+        const left  = ((b.start - tStart) / hours) * 100;
+        const width = Math.max(0, ((b.end - b.start) / hours) * 100);
+        // section エリアは grid 内で time-row (5mm) を除いた残り
+        // top/height は section の比率を CSS calc で組む
+        const topPct = (startLane / totalLanes) * 100;
+        const heightPct = ((endLane - startLane) / totalLanes) * 100;
+        const color = b.color || 'white';
+        const tm = fmtTimeFromHour(b.start) + '〜' + fmtTimeFromHour(b.end);
+        const text = b.text || '';
+        return '<div class="tt-pdf-span-bar color-' + color +
+               '" style="left:calc(18mm + (100% - 18mm) * ' + (left/100) + ');' +
+               'width:calc((100% - 18mm) * ' + (width/100) + ');' +
+               'top:calc(5mm + (100% - 5mm) * ' + (topPct/100) + ' + 1px);' +
+               'height:calc((100% - 5mm) * ' + (heightPct/100) + ' - 2px);">' +
+               '<div class="b-text">' + escapeHtml(text) + '</div>' +
+               '<div class="b-time">' + escapeHtml(tm) + '</div></div>';
+      }).join('');
+
+      // メインイベント（footer）
+      const mainEvs = allBars.filter(function(b){ return b.inFooter === true; })
+                             .sort(function(a, b){ return a.start - b.start; });
+      let footHtml;
+      if (mainEvs.length === 0) {
+        footHtml = '<span class="tt-pdf-foot-label">MAIN EVENTS</span><span class="tt-pdf-foot-empty">— なし —</span>';
+      } else {
+        const items = mainEvs.map(function(b){
+          return '<span class="tt-pdf-foot-ev"><b>' + escapeHtml(b.text || '') + '</b>' +
+                 '<span class="ev-time">' + fmtTimeFromHour(b.start) + '〜' + fmtTimeFromHour(b.end) + '</span></span>';
+        }).join('<span class="tt-pdf-foot-sep"> / </span>');
+        footHtml = '<span class="tt-pdf-foot-label">MAIN EVENTS</span>' + items;
+      }
+
+      // CELL_W を inline CSS 変数で渡す（時刻グリッドの background-size 用）
+      // grid 横幅 = 297mm - 12mm padding = 285mm。label 18mm を引いて 267mm 余り。
+      // CELL_W = 267mm / hours
+      const cellW = (267 / hours) + 'mm';
+
+      const venue = info.venue || '';
+      const phase = info.day || info.phase || '';
+      const masterTitle = title || '—';
+
+      return '<div class="tt-pdf-page" style="--tt-cell-w:' + cellW + ';">' +
+        '<div class="tt-pdf-mast">' +
+          '<div class="tt-pdf-mast-left">' +
+            '<span class="tt-pdf-mast-title">' + escapeHtml(masterTitle) + '</span>' +
+            (venue ? '<span class="tt-pdf-mast-meta">VENUE <b>' + escapeHtml(venue) + '</b></span>' : '') +
+            (phase ? '<span class="tt-pdf-mast-meta">PHASE <b>' + escapeHtml(phase) + '</b></span>' : '') +
+          '</div>' +
+          '<div class="tt-pdf-mast-date">' + escapeHtml(dateDisp) + '</div>' +
+        '</div>' +
+        '<div class="tt-pdf-grid">' +
+          '<div class="tt-pdf-time-row">' +
+            '<div class="tt-pdf-time-corner"></div>' +
+            '<div class="tt-pdf-time-axis">' + tickHtml.join('') + '</div>' +
+          '</div>' +
+          '<div style="flex:1 1 0; display:flex; flex-direction:column; position:relative; min-height:0;">' +
+            secRowsHtml +
+            spanBarsHtml +
+          '</div>' +
+        '</div>' +
+        '<div class="tt-pdf-foot">' + footHtml + '</div>' +
+      '</div>';
+    }
+
+    function buildTtPdfRootHtml(dateKeys){
+      const pages = dateKeys.map(buildTtPdfPageHtml).join('');
+      return '<div id="tt-pdf-root"><style>' + TT_PDF_CSS + '</style>' + pages + '</div>';
+    }
+
     function renderPreview(){
       const stage = document.getElementById('pdf-preview-stage');
       const empty = document.getElementById('pdf-preview-empty');
@@ -14823,40 +15029,22 @@ function show(id) {
         return;
       }
       empty.style.display = 'none';
-      // 1 日目のレイアウトを A4 横（mm 単位）の縮小サムネとして描画
       const firstDate = pdfSelectedDates[0];
-      const html = buildPrintHtmlForDate(firstDate);
-      if (!html) {
-        empty.style.display = '';
-        empty.textContent = '選択日のデータが見つかりません';
-        return;
-      }
-      // フレーム実寸 (CSS) は 360px 高、A4 横は 297×210mm。比率を測定して scale を決定
-      const frameH = 360;
-      const frameW = stage.parentElement ? stage.parentElement.clientWidth : 600;
-      const PAPER_W_MM = 297, PAPER_H_MM = 210;
       const PX_PER_MM = 96 / 25.4;
-      const paperWpx = PAPER_W_MM * PX_PER_MM;
-      const paperHpx = PAPER_H_MM * PX_PER_MM;
+      const paperWpx = 297 * PX_PER_MM;
+      const paperHpx = 210 * PX_PER_MM;
+      const frame = stage.parentElement;
+      const frameW = frame ? frame.clientWidth - 8 : 600;
+      const frameH = 360;
       const scale = Math.min(frameW / paperWpx, frameH / paperHpx) * 0.96;
-      stage.style.cssText = 'width:' + paperWpx + 'px; height:' + paperHpx + 'px; transform:scale(' + scale + '); transform-origin: top left;';
-      stage.innerHTML = html;
+      stage.style.cssText = 'width:' + paperWpx + 'px; height:' + paperHpx + 'px; transform:scale(' + scale +
+                            '); transform-origin: top left; background:#fff;';
+      stage.innerHTML = buildTtPdfRootHtml([firstDate]);
       if (cap) cap.textContent = '1 / ' + pdfSelectedDates.length + ' ページ目  ・  A4 横  ・  ' + fmtDateLabel(firstDate);
     }
-    function buildPrintHtmlForDate(dateKey){
-      const tt = timetableByDate[dateKey];
-      if (!tt) return '';
-      // 既存 #tt-paper を clone して中身を組み立てる。簡易版：現在の DOM から outerHTML を流用
-      const paperEl = document.getElementById('tt-paper');
-      if (!paperEl) return '';
-      // dateKey が現在表示中の日付と異なる場合、現在の DOM はそのままでは使えない。
-      // 安全策：プレビュー用には現在表示中の `.tt-paper` の outerHTML を返す（モーダル開いた時点で表示日のレイアウト）。
-      // ※書き出し本体では日付ごとに表示切替して取得する経路を採るので、プレビューは「現在表示中の 1 ページ」サンプルでも実用上 OK
-      return paperEl.outerHTML;
-    }
+
     async function ensureHtml2Pdf(){
       if (typeof html2pdf !== 'undefined') return true;
-      // 既に <script> で読み込み済みの想定だが念のため動的ロード
       return new Promise(function(resolve){
         const s = document.createElement('script');
         s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
@@ -14865,6 +15053,7 @@ function show(id) {
         document.head.appendChild(s);
       });
     }
+
     async function exportPdf(){
       const exportBtn = document.getElementById('pdf-btn-export');
       const cancelBtn = document.getElementById('pdf-btn-cancel');
@@ -14872,64 +15061,21 @@ function show(id) {
       if (!exportBtn || !progress) return;
       if (pdfSelectedDates.length === 0) return;
       exportBtn.disabled = true;
-      cancelBtn.disabled = true;
+      if (cancelBtn) cancelBtn.disabled = true;
       progress.textContent = 'PDF エンジンを準備中...';
       const ok = await ensureHtml2Pdf();
       if (!ok) {
         progress.textContent = 'html2pdf の読み込みに失敗しました';
-        exportBtn.disabled = false; cancelBtn.disabled = false;
+        exportBtn.disabled = false; if (cancelBtn) cancelBtn.disabled = false;
         return;
       }
-      try { await document.fonts.ready; } catch(e){ /* noop */ }
+      try { await document.fonts.ready; } catch(e){}
 
-      // すべての日付ページを 1 コンテナに集める
-      const container = document.createElement('div');
-      container.style.cssText = 'position:fixed; left:-99999px; top:0; background:#fff; z-index:-1;';
-      document.body.appendChild(container);
-
-      // 現在表示中の日付を覚えておく（書き出し終了後に戻す）
-      const originalDate = getCurrentDateKey();
-      const setMasterDate = function(iso){
-        const ms = window.__masterDateState;
-        if (!ms) return false;
-        try {
-          ms.current = new Date(iso + 'T00:00:00');
-          if (typeof window.__refreshMasterDateBar === 'function') window.__refreshMasterDateBar();
-          return true;
-        } catch(e){ return false; }
-      };
-
-      for (let i = 0; i < pdfSelectedDates.length; i++) {
-        const d = pdfSelectedDates[i];
-        progress.textContent = (i+1) + ' / ' + pdfSelectedDates.length + ' 日目を生成中...';
-        // 日付を切り替えてレンダリングを更新
-        setMasterDate(d);
-        if (typeof render === 'function') render();
-        // 印刷用レイアウトを適用
-        if (typeof window.__applyPrintLayout === 'function') window.__applyPrintLayout();
-        // .tt-paper を clone して container に追加
-        const paperEl = document.getElementById('tt-paper');
-        if (paperEl) {
-          const clone = paperEl.cloneNode(true);
-          clone.style.width = '297mm';
-          clone.style.height = '210mm';
-          clone.style.boxSizing = 'border-box';
-          clone.style.background = '#ffffff';
-          if (i < pdfSelectedDates.length - 1) {
-            clone.style.pageBreakAfter = 'always';
-            clone.style.breakAfter = 'page';
-          }
-          container.appendChild(clone);
-        }
-        // 復元
-        if (typeof window.__restorePrintLayout === 'function') window.__restorePrintLayout();
-        // 描画余裕
-        await new Promise(function(r){ setTimeout(r, 30); });
-      }
-
-      // 元の日付に戻す
-      setMasterDate(originalDate);
-      if (typeof render === 'function') render();
+      progress.textContent = 'ページを構築中...';
+      const tmp = document.createElement('div');
+      tmp.style.cssText = 'position:fixed; left:-9999px; top:0; background:#fff;';
+      tmp.innerHTML = buildTtPdfRootHtml(pdfSelectedDates);
+      document.body.appendChild(tmp);
 
       const dateStr = pdfSelectedDates.length === 1
         ? pdfSelectedDates[0]
@@ -14951,22 +15097,22 @@ function show(id) {
       };
       progress.textContent = 'PDF をエンコード中...';
       try {
-        await html2pdf().set(opt).from(container).save();
+        await html2pdf().set(opt).from(tmp.querySelector('#tt-pdf-root')).save();
         progress.textContent = '完了！  ' + filename;
       } catch(e) {
         progress.textContent = 'エラー: ' + (e && e.message ? e.message : 'PDF 生成に失敗しました');
         console.error('[PDF Export]', e);
       } finally {
-        container.remove();
-        exportBtn.disabled = false; cancelBtn.disabled = false;
+        tmp.remove();
+        exportBtn.disabled = false; if (cancelBtn) cancelBtn.disabled = false;
       }
     }
+
     function openModal(){
       const ov = document.getElementById('pdf-export-modal');
       if (!ov) return;
       pdfAvailableDates = collectAvailableDates();
-      const cur = getCurrentDateKey();
-      // 現在日が在籍日リストに無ければ追加（編集中の状態を尊重）
+      const cur = (typeof getCurrentDateKey === 'function') ? getCurrentDateKey() : null;
       if (cur && pdfAvailableDates.indexOf(cur) < 0) {
         pdfAvailableDates.push(cur);
         pdfAvailableDates.sort();
@@ -14987,7 +15133,6 @@ function show(id) {
       pdfModalOpened = false;
     }
 
-    // バインド
     function bind(){
       const ov = document.getElementById('pdf-export-modal');
       if (!ov) return;
