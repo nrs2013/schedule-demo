@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260521.180000">
+<meta name="build-version" content="20260521.190000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -5660,56 +5660,73 @@
   .tt-bar.span-bar.color-amber  { background: linear-gradient(180deg, rgba(245,168,40,0.32) 0%, rgba(245,168,40,0.18) 100%) !important; border: 1.5px solid rgba(245,168,40,0.90) !important; }
   .tt-bar.span-bar.color-gray   { background: linear-gradient(180deg, rgba(126,216,72,0.30) 0%, rgba(126,216,72,0.15) 100%) !important; border: 1.5px solid rgba(126,216,72,0.90) !important; }
   .tt-bar.span-bar.color-accent { background: linear-gradient(180deg, rgba(58,160,224,0.32) 0%, rgba(58,160,224,0.18) 100%) !important; border: 1.5px solid rgba(58,160,224,0.90) !important; }
-  /* R281b: 縦串バーのラベルは「バーの真ん中に大きく」表示。バーからはみ出さない（ellipsis）。
-     glassy pill は撤廃 — バー本体の色グラデの上に強いテキストシャドウで読みやすく。 */
+  /* R282: 縦串バーラベルを縦書きで全文表示。文字サイズは通常（13px）、縦に並ぶので
+     縦長バーに収まりやすい。タイトル＋時刻が縦に流れる。 */
   .tt-bar.span-bar { overflow: hidden !important; }
   .tt-bar.span-bar .tt-bar-text {
     pointer-events: auto;
     position: absolute;
     inset: 0;
     display: flex;
-    flex-direction: column;
-    align-items: center;
+    flex-direction: row;
+    align-items: flex-start;
     justify-content: center;
-    padding: 8px 14px;
-    gap: 4px;
+    padding: 10px 4px;
+    gap: 8px;
     background: transparent;
     cursor: move;
     box-sizing: border-box;
     overflow: hidden;
     z-index: 7;
+    writing-mode: vertical-rl;
+    text-orientation: upright;
   }
-  /* タイトル：バー高さに応じて 18〜26px、はみ出しは ellipsis */
+  /* タイトル：通常サイズ、縦書きで全文表示。バー高さに収まらなければ ellipsis */
   .tt-bar.span-bar .tt-span-title,
   .tt-bar.span-bar .tt-span-title-empty {
-    font-size: clamp(16px, 1.8vw, 24px);
-    font-weight: 700;
+    font-size: 13px;
+    font-weight: 600;
     color: #ffffff;
     text-shadow: 0 1px 3px rgba(0,0,0,0.85), 0 0 8px rgba(0,0,0,0.55);
-    letter-spacing: 0.06em;
-    max-width: 100%;
-    white-space: nowrap;
+    letter-spacing: 0.08em;
+    max-height: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
-    text-align: center;
-    line-height: 1.15;
+    line-height: 1.05;
     flex: 0 1 auto;
+    /* 縦書き中の数字・半角は立てる（upright を継承） */
   }
   .tt-bar.span-bar .tt-span-title-empty {
     font-style: italic;
     font-weight: 500;
     opacity: 0.75;
   }
-  /* 時刻：タイトルの下に小さく */
+  /* 時刻：縦書き、半角数字は mixed で読みやすく傾ける */
   .tt-bar.span-bar .tt-span-time {
     font-size: 11px;
     font-weight: 500;
-    color: rgba(255,255,255,0.92);
+    color: rgba(255,255,255,0.85);
     text-shadow: 0 1px 2px rgba(0,0,0,0.7);
     font-feature-settings: 'tnum';
-    letter-spacing: 0.06em;
+    letter-spacing: 0.04em;
+    line-height: 1.05;
     flex: 0 0 auto;
     margin-left: 0;
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+  }
+  /* R282: 編集中だけ横書きに戻す（タイピング体験が普通に） */
+  .tt-bar.span-bar.tt-bar-editing .tt-bar-text,
+  .tt-bar.span-bar.tt-bar-editing .tt-span-title,
+  .tt-bar.span-bar.tt-bar-editing .tt-span-title-empty,
+  .tt-bar.span-bar.tt-bar-editing .tt-span-time {
+    writing-mode: horizontal-tb !important;
+    text-orientation: mixed !important;
+  }
+  .tt-bar.span-bar.tt-bar-editing .tt-bar-text {
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
   }
   /* R281b: 旧 R268 下端退避モードは中央配置で不要に。互換のため空ルール残し */
   .tt-bar.span-bar .tt-bar-text.tt-label-bottom { /* noop */ }
