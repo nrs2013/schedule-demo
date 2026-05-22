@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260521.240000">
+<meta name="build-version" content="20260521.250000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -5796,10 +5796,68 @@
   .tt-bar-handle.t { top: -3px; }
   .tt-bar-handle.b { bottom: -3px; }
   .tt-bar-handle.t:hover, .tt-bar-handle.b:hover { background: rgba(245,200,120,0.45); }
+  /* R288: 4 隅コーナーハンドル（PPT 図形相当） — 縦串バー専用 */
+  .tt-bar.span-bar .tt-bar-handle.tl,
+  .tt-bar.span-bar .tt-bar-handle.tr,
+  .tt-bar.span-bar .tt-bar-handle.bl,
+  .tt-bar.span-bar .tt-bar-handle.br {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    background: transparent;
+    pointer-events: auto;
+    z-index: 11;
+  }
+  .tt-bar.span-bar .tt-bar-handle.tl { top: -8px;    left: -8px;  cursor: nwse-resize; }
+  .tt-bar.span-bar .tt-bar-handle.tr { top: -8px;    right: -8px; cursor: nesw-resize; }
+  .tt-bar.span-bar .tt-bar-handle.bl { bottom: -8px; left: -8px;  cursor: nesw-resize; }
+  .tt-bar.span-bar .tt-bar-handle.br { bottom: -8px; right: -8px; cursor: nwse-resize; }
+  .tt-bar.span-bar .tt-bar-handle.tl:hover,
+  .tt-bar.span-bar .tt-bar-handle.tr:hover,
+  .tt-bar.span-bar .tt-bar-handle.bl:hover,
+  .tt-bar.span-bar .tt-bar-handle.br:hover {
+    background: rgba(245,200,120,0.65);
+    border-radius: 2px;
+  }
   .tt-bar.span-bar.selected {
     box-shadow: inset 3px 0 0 #c8a878, inset -3px 0 0 #c8a878, 0 0 0 2px #c8a878;
     z-index: 10;
   }
+  /* R288: 選択中の縦串バーは PPT 図形のような白枠琥珀ハンドルを常時可視化 */
+  .tt-bar.span-bar.selected .tt-bar-handle.tl,
+  .tt-bar.span-bar.selected .tt-bar-handle.tr,
+  .tt-bar.span-bar.selected .tt-bar-handle.bl,
+  .tt-bar.span-bar.selected .tt-bar-handle.br {
+    background: #c8a878 !important;
+    border: 2px solid #ffffff;
+    border-radius: 2px;
+    width: 12px;
+    height: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+  }
+  .tt-bar.span-bar.selected .tt-bar-handle.tl { top: -6px;    left: -6px;  }
+  .tt-bar.span-bar.selected .tt-bar-handle.tr { top: -6px;    right: -6px; }
+  .tt-bar.span-bar.selected .tt-bar-handle.bl { bottom: -6px; left: -6px;  }
+  .tt-bar.span-bar.selected .tt-bar-handle.br { bottom: -6px; right: -6px; }
+  /* 辺のハンドルも選択中は強調（中央に小さい琥珀の四角） */
+  .tt-bar.span-bar.selected .tt-bar-handle.l::after,
+  .tt-bar.span-bar.selected .tt-bar-handle.r::after,
+  .tt-bar.span-bar.selected .tt-bar-handle.t::after,
+  .tt-bar.span-bar.selected .tt-bar-handle.b::after {
+    content: '';
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: #c8a878;
+    border: 2px solid #ffffff;
+    border-radius: 2px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+    pointer-events: none;
+  }
+  .tt-bar.span-bar.selected .tt-bar-handle.l::after { top: 50%; left: -3px; transform: translateY(-50%); }
+  .tt-bar.span-bar.selected .tt-bar-handle.r::after { top: 50%; right: -3px; transform: translateY(-50%); }
+  .tt-bar.span-bar.selected .tt-bar-handle.t::after { left: 50%; top: -2px; transform: translateX(-50%); }
+  .tt-bar.span-bar.selected .tt-bar-handle.b::after { left: 50%; bottom: -2px; transform: translateX(-50%); }
   /* R275b: 左右ハンドルもラベルより上に出して、縦串バーで横幅変更も確実に */
   .tt-bar.span-bar .tt-bar-handle.l,
   .tt-bar.span-bar .tt-bar-handle.r {
@@ -12895,13 +12953,17 @@ function show(id) {
       const title = (bar.text || '').trim();
       el.title = (title || '(無題)') + '  ' + timeLabel + '  ／ ' + spanIds.length + ' セクション';
       el.innerHTML = '<div class="tt-bar-handle l"></div>' +
+        '<div class="tt-bar-handle r"></div>' +
         '<div class="tt-bar-handle t"></div>' +
+        '<div class="tt-bar-handle b"></div>' +
+        '<div class="tt-bar-handle tl"></div>' +
+        '<div class="tt-bar-handle tr"></div>' +
+        '<div class="tt-bar-handle bl"></div>' +
+        '<div class="tt-bar-handle br"></div>' +
         '<div class="tt-bar-text">' +
           (title ? '<span class="tt-span-title">' + escapeHtml(title) + '</span>' : '<span class="tt-span-title-empty">無題</span>') +
           '<span class="tt-span-time">' + timeLabel + '</span>' +
-        '</div>' +
-        '<div class="tt-bar-handle b"></div>' +
-        '<div class="tt-bar-handle r"></div>';
+        '</div>';
       newOv.appendChild(el);
       // R268: 上端レーンに個別バーが X 範囲で被ったらラベルを下端へ退避
       placeSpanLabel(el, bar, tt);
@@ -12915,14 +12977,20 @@ function show(id) {
           e.stopPropagation();
           e.preventDefault();
           function move(ev){
-            // 全 section row の rect を取得して、マウスがどのセクションにいるか判定
+            // R288: マウスがセクション範囲外でも、最も近いセクションを hover とみなす
+            // （以前は範囲外で null になり、下に振り切ると伸びなかった）
             const sectionRows = gridEl.querySelectorAll('[data-sec-id]');
             let hoverSecId = null;
+            let lastBelow = null;  // マウスより上に終わっているセクションのうち最も下のもの
+            let firstAbove = null; // マウスより下に始まっているセクションのうち最も上のもの
             sectionRows.forEach(function(row){
               const sid = row.getAttribute('data-sec-id');
               const r = row.getBoundingClientRect();
               if (ev.clientY >= r.top && ev.clientY <= r.bottom) hoverSecId = sid;
+              if (ev.clientY > r.bottom) lastBelow = sid;
+              if (ev.clientY < r.top && !firstAbove) firstAbove = sid;
             });
+            if (!hoverSecId) hoverSecId = lastBelow || firstAbove;
             if (!hoverSecId) return;
             // bar.spanSecIds（順序付き）を tt.sections 順で並び替えてから top / bottom 更新
             const orderedIds = tt.sections.map(function(s){ return s.id; });
@@ -12977,6 +13045,22 @@ function show(id) {
       }
       if (handleT) handleT.addEventListener('mousedown', startVResize('t'));
       if (handleB) handleB.addEventListener('mousedown', startVResize('b'));
+      // R288: 4 隅コーナーハンドル — 横方向リサイズ + 縦方向リサイズを同時起動（PPT 図形と同じ挙動）
+      ['tl','tr','bl','br'].forEach(function(corner){
+        const cHandle = el.querySelector('.tt-bar-handle.' + corner);
+        if (!cHandle) return;
+        cHandle.addEventListener('mousedown', function(e){
+          if (e.button !== 0) return;
+          e.stopPropagation();
+          e.preventDefault();
+          const hSide = corner.indexOf('r') >= 0 ? 'r' : 'l';
+          const vSide = corner.indexOf('t') === 0 ? 't' : 'b';
+          const hH = el.querySelector('.tt-bar-handle.' + hSide);
+          const vH = el.querySelector('.tt-bar-handle.' + vSide);
+          if (hH) hH.dispatchEvent(new MouseEvent('mousedown', {bubbles:true, cancelable:true, button:0, clientX:e.clientX, clientY:e.clientY}));
+          if (vH) vH.dispatchEvent(new MouseEvent('mousedown', {bubbles:true, cancelable:true, button:0, clientX:e.clientX, clientY:e.clientY}));
+        });
+      });
     });
     gridEl.appendChild(newOv);
     // R284: 全縦串バーに対して fitSpanLabel を実行（DOM 追加後に measure）
