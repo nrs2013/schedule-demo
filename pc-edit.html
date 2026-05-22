@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260521.210000">
+<meta name="build-version" content="20260521.220000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -4992,7 +4992,9 @@
   .tt-paper-footer .ev-time { color: #e8e6dc; font-feature-settings: 'tnum'; }
   .tt-paper-footer .ev-sep { color: #4a4a4a; padding: 0 4px; }
   .tt-paper-footer .ev-empty { font-size: 11px; color: #6e6c66; font-style: normal; }
-  /* R250+R251+R279+R280b: A4 完全フィット印刷 — paper は自然な高さで描画し、JS の transform で A4 全面に伸ばす */
+  /* R285: A4 完全フィット — transform を完全撤廃して CSS flex で paper を A4 サイズに強制。
+     paper height:210mm 固定 / 内側はヘッダ・時刻軸・グリッド・フッタが flex で分割。
+     bar 位置は LANE_H 依存なので、JS の __applyPrintLayout で実測ベースに再計算 → 再 render。 */
   @media print {
     @page { size: A4 landscape; margin: 0; }
     html, body { background: white !important; margin: 0 !important; padding: 0 !important; width: 297mm !important; height: 210mm !important; overflow: hidden !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
@@ -5003,21 +5005,26 @@
       left: 0 !important; top: 0 !important;
       width: 297mm !important;
       max-width: 297mm !important;
-      height: auto !important;
-      min-height: 0 !important;
-      max-height: none !important;
+      height: 210mm !important;
+      min-height: 210mm !important;
+      max-height: 210mm !important;
       background: white !important;
       color: #111 !important;
-      padding: 0 !important;
+      padding: 3mm !important;
       margin: 0 !important;
       border: none !important;
       box-shadow: none !important;
       border-radius: 0 !important;
-      transform-origin: top left !important;
+      transform: none !important;
+      transform-origin: 0 0 !important;
       display: flex !important;
       flex-direction: column !important;
-      overflow: visible !important;
+      overflow: hidden !important;
+      box-sizing: border-box !important;
     }
+    .tt-paper > .tt-paper-header { flex: 0 0 auto !important; }
+    .tt-paper > .tt-grid { flex: 1 1 0 !important; min-height: 0 !important; overflow: hidden !important; }
+    .tt-paper > .tt-paper-footer { flex: 0 0 auto !important; }
     /* R259: PDF 時、グリッド全体を白に。ADD 列も白 */
     .tt-grid { background: white !important; border: 0.5px solid #1a1a1a !important; }
     .tt-time-add { background: white !important; }
@@ -13969,44 +13976,36 @@ function show(id) {
       var __origLaneH = null;
       var __origBarH = null;
       var __origBarTop = null;
-      /* R283: A4 完全フィットの計算を実測ベースに作り直し。
-         一旦 render → ヘッダー/時刻軸/フッターの実高さを測る → 残りを totalLanes で割って LANE_H 確定 → 再 render。
-         最後に paper.scrollHeight と A4 高さの差を transform scaleY で詰める（誤差吸収）。 */
+      /* R285: A4 完全フィット — transform を撤廃して CSS flex に任せる方式。
+         paper は CSS で height:210mm 強制。grid が flex:1 で残りを使う。
+         一度 render → grid 実測 → 残り÷totalLanes で LANE_H → 再 render で bar 位置が grid に正しく収まる。 */
       function __applyPrintLayout(){
         const paper = document.getElementById('tt-paper');
         if (!paper) return;
         __prevPaperStyle = paper.getAttribute('style') || '';
         const dk = (typeof getCurrentDateKey === 'function') ? getCurrentDateKey() : null;
         const tt = dk ? getTimetableForDate(dk) : null;
-        const PAGE_W_PX = 297 * 96 / 25.4;
-        const PAGE_H_PX = 210 * 96 / 25.4;
-        if (tt && Array.isArray(tt.sections)) {
-          const totalLanes = tt.sections.reduce(function(s,sec){ return s + (sec.lanes || 1); }, 0) || 1;
-          __origLaneH = LANE_H; __origBarH = BAR_H; __origBarTop = BAR_TOP;
-          // Step 1: 一旦現在の LANE_H で render してヘッダー類の高さを測る
-          if (typeof render === 'function') render();
-          const headerEl = paper.querySelector('.tt-paper-header');
-          const timeRowEl = paper.querySelector('.tt-time-row');
-          const footerEl = paper.querySelector('.tt-paper-footer');
-          const headerH = headerEl ? headerEl.offsetHeight : 0;
-          const timeRowH = timeRowEl ? timeRowEl.offsetHeight : 0;
-          const footerH = footerEl ? footerEl.offsetHeight : 0;
-          const rowGap = (tt.sections.length - 1) * 1; // セクション境界線
-          const availableH = PAGE_H_PX - headerH - timeRowH - footerH - rowGap;
-          // Step 2: 残りスペースをレーン数で割って LANE_H を確定（小数も許容して綺麗にフィット）
-          LANE_H = Math.max(18, availableH / totalLanes);
-          BAR_H = Math.max(14, LANE_H - 6);
-          BAR_TOP = Math.max(1, (LANE_H - BAR_H) / 2);
-          // Step 3: 再 render で新 LANE_H 反映
-          if (typeof render === 'function') render();
-        }
-        // Step 4: 横方向は CSS の width:297mm でフィット済み。念のため scaleX 補正
-        const paperW = paper.scrollWidth;
-        const paperH = paper.scrollHeight;
-        const sx = PAGE_W_PX / paperW;
-        const sy = PAGE_H_PX / paperH;
-        paper.style.transformOrigin = 'top left';
-        paper.style.transform = 'scaleX(' + sx + ') scaleY(' + sy + ')';
+        if (!tt || !Array.isArray(tt.sections)) return;
+        const totalLanes = tt.sections.reduce(function(s,sec){ return s + (sec.lanes || 1); }, 0) || 1;
+        __origLaneH = LANE_H; __origBarH = BAR_H; __origBarTop = BAR_TOP;
+        // Step 1: 現状で一度 render → CSS flex で paper が A4 サイズになり grid に残りスペースが割り当てられる
+        if (typeof render === 'function') render();
+        // Step 2: grid 内の利用可能高さを実測（時刻軸 + セクション行の合計）
+        const grid = paper.querySelector('.tt-grid');
+        const gridH = grid ? grid.offsetHeight : 0;
+        const timeRow = grid ? grid.querySelector('.tt-time-row') : null;
+        const timeRowH = timeRow ? timeRow.offsetHeight : 36;
+        const sectionBorders = Math.max(0, tt.sections.length - 1);
+        const availableH = Math.max(20 * totalLanes, gridH - timeRowH - sectionBorders);
+        // Step 3: 残りスペースをレーン数で割って LANE_H 確定
+        LANE_H = availableH / totalLanes;
+        BAR_H = Math.max(14, LANE_H - 6);
+        BAR_TOP = Math.max(1, (LANE_H - BAR_H) / 2);
+        // Step 4: 再 render — 新 LANE_H で sec-body の min-height・bar の top が確定 → grid にぴったり収まる
+        if (typeof render === 'function') render();
+        // transform は使わない（CSS で transform: none !important なので念のためクリア）
+        paper.style.transform = '';
+        paper.style.transformOrigin = '';
       }
       function __restorePrintLayout(){
         const paper = document.getElementById('tt-paper');
