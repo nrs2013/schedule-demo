@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260524.320000">
+<meta name="build-version" content="20260524.330000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -4877,31 +4877,32 @@
   .tt-paper-stage {
     width: 100%;
     display: flex;
-    flex-direction: row;
-    justify-content: center;
-    align-items: flex-start;
-    gap: 12px;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 6px;
     padding: 4px 0;
     overflow: auto;
     box-sizing: border-box;
   }
-  /* R352: A4 の右にツールバー（縦並び）。固定幅 130px。 */
+  /* R353: ツールバーを A4 の下に横並び（横幅を A4 にフルに譲る） */
   .tt-side-toolbar {
     display: flex;
-    flex-direction: column;
-    gap: 8px;
-    width: 130px;
-    flex: 0 0 130px;
-    align-self: stretch;
-    padding-top: 4px;
+    flex-direction: row;
+    gap: 6px;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    flex: 0 0 auto;
   }
   .tt-side-toolbar .tt-btn { text-align: center; }
   .tt-paper {
     /* A4 横向き比率を維持 */
     aspect-ratio: 297 / 210;
-    /* R352: ツールバー横並びに切り替えたので上部 UI が浅くなった → 縦余白を 240→160 に縮小、
-       横は右サイドバー 130px + gap 12px = 142px を差し引く */
-    height: min(calc(100vh - 160px), calc((100vw - 32px - 142px) * 210 / 297));
+    /* R353: ツールバーは A4 下に横並び → 横は (100vw - 32px) フルに使える。
+       縦は: 上ヘッダ ~120 + 下ツールバー ~50 + 余白 ~20 = 約 190px 引く */
+    height: min(calc(100vh - 190px), calc((100vw - 32px) * 210 / 297));
     width: auto;
     min-height: 420px;
     flex: 0 0 auto;
@@ -4918,6 +4919,12 @@
     border-radius: 8px;
   }
   .tt-paper .tt-grid { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+  /* R353: 編集画面では A4 を最大化するため、紙の中ヘッダ/フッタとヘルプを非表示。
+     PDF 出力は別経路 (buildTtPdfPageHtml) なので影響なし。 */
+  #mode-timetable .tt-paper-header,
+  #mode-timetable .tt-paper-footer,
+  #mode-timetable .tt-help { display: none !important; }
+  #mode-timetable .tt-paper { padding: 6px 8px 6px 8px; }
   /* R245+R257: 紙の中ヘッダ：横長で押し出し、線は細く */
   .tt-paper-header {
     flex: 0 0 auto;
