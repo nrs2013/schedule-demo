@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260523.520000">
+<meta name="build-version" content="20260523.530000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -14785,25 +14785,27 @@ function show(id) {
 #tt-pdf-root .tt-pdf-grid { flex:1 1 0; min-height:0; display:flex; flex-direction:column;
                             border:1px solid #1a1a1a; border-radius:2px; background:#fff; overflow:hidden; position:relative; }
 /* ── 時刻軸（上端） ── */
-#tt-pdf-root .tt-pdf-time-row { display:flex; flex-direction:row; border-bottom:1px solid #1a1a1a;
-                                font-family:'JetBrains Mono','Courier New',monospace; color:#1a1a1a; height:6mm; flex:0 0 6mm; background:#f6f6f4; }
-#tt-pdf-root .tt-pdf-time-corner { width:20mm; flex:0 0 20mm; border-right:1px solid #1a1a1a; background:#1a1a1a;
+/* R322: time-row を 8mm に拡張、ラベルと grid を完全に同じ縦線で繋ぐ */
+#tt-pdf-root .tt-pdf-time-row { display:flex; flex-direction:row; border-bottom:0.6px solid #1a1a1a;
+                                font-family:'JetBrains Mono','Courier New',monospace; color:#1a1a1a; height:8mm; flex:0 0 8mm; background:#fafaf6; }
+#tt-pdf-root .tt-pdf-time-corner { width:20mm; flex:0 0 20mm; border-right:0.6px solid #1a1a1a; background:#1a1a1a;
                                    display:flex; align-items:center; justify-content:center;
-                                   font-size:9.5px; letter-spacing:0.28em; color:#fff; font-weight:700; }
+                                   font-size:10px; letter-spacing:0.32em; color:#fff; font-weight:700; }
 #tt-pdf-root .tt-pdf-time-axis { flex:1 1 auto; position:relative; }
-/* R321: 時刻ラベル — 端も含めすべて translateX(-50%) で線中央に乗せる */
-#tt-pdf-root .tt-pdf-time-label { position:absolute; top:0; transform:translateX(-50%); padding:0 3px;
-                                  font-weight:700; color:#1a1a1a; line-height:6mm; font-size:10px; letter-spacing:0.04em;
-                                  text-align:center; }
-/* R321: 30 分位置の小さい「30」ラベル */
-#tt-pdf-root .tt-pdf-time-label.half { font-size:7px; font-weight:500; color:#999; letter-spacing:0; }
-/* R321: 時刻ラベル下にスタイリッシュなティック線 — 時刻軸と下のグリッドを視覚的に繋ぐ */
+/* R322: 時刻ラベルを大きく・太く・読みやすく */
+#tt-pdf-root .tt-pdf-time-label { position:absolute; top:0; transform:translateX(-50%); padding:0;
+                                  font-weight:800; color:#1a1a1a; font-size:11px; letter-spacing:0;
+                                  text-align:center; line-height:1; padding-top:1.2mm; min-width:8px; }
+/* R322: 30 分位置の「30」 — 控えめなグレー */
+#tt-pdf-root .tt-pdf-time-label.half { font-size:7.5px; font-weight:500; color:#a8a6a2; padding-top:1.6mm; }
+/* R322: ティック線 — グリッド線と同じ太さ (0.6px) / 同じ色で、time-row 下端の separator まで到達。
+   labelの「bottom:0」は時刻軸高さの底＝separator直上なので、視覚的に完全な縦線に繋がる。 */
 #tt-pdf-root .tt-pdf-time-label::after {
   content:''; position:absolute; left:50%; bottom:0; transform:translateX(-50%);
-  width:0.6px; height:1.4mm; background:#1a1a1a; pointer-events:none;
+  width:0.6px; height:4.2mm; background:#1a1a1a; pointer-events:none;
 }
 #tt-pdf-root .tt-pdf-time-label.half::after {
-  width:0.4px; height:0.7mm; background:#aaa; bottom:0.4mm;
+  width:0.4px; height:2.4mm; background:#bbb;
 }
 /* ── セクション行 ── */
 #tt-pdf-root .tt-pdf-sec-row { display:flex; flex-direction:row; border-bottom:0.5px solid #d8d6d2;
@@ -14841,6 +14843,10 @@ function show(id) {
 #tt-pdf-root .tt-pdf-span-bar.color-pink   { background:#fcd0dc; border:2.2px solid #c8336a; }
 #tt-pdf-root .tt-pdf-span-bar .b-text { font-weight:800; color:#0a0a0a; word-break:break-all; font-size:14px; letter-spacing:0.06em; }
 #tt-pdf-root .tt-pdf-span-bar .b-time { font-family:'JetBrains Mono','Courier New',monospace; font-weight:600; font-size:10px; color:rgba(0,0,0,0.6); margin-top:5px; letter-spacing:0.10em; }
+/* R322: 狭い縦串バー（30分前後）は padding を詰めて文字サイズを縮める */
+#tt-pdf-root .tt-pdf-span-bar.narrow { padding:5px 2px; }
+#tt-pdf-root .tt-pdf-span-bar.narrow .b-text { font-size:11px; letter-spacing:0.02em; writing-mode:vertical-rl; text-orientation:mixed; }
+#tt-pdf-root .tt-pdf-span-bar.narrow .b-time { font-size:8px; margin-top:3px; letter-spacing:0.04em; writing-mode:vertical-rl; }
 /* R319: フッタ — ラベルを廃して MAIN EVENTS 表示領域を最大化 */
 #tt-pdf-root .tt-pdf-foot { margin-top:4mm; padding:20px 24px; border:2px solid #1a1a1a; border-radius:3px;
                             display:flex; gap:22px; flex-wrap:wrap; font-size:18px; color:#0a0a0a; flex:0 0 auto;
@@ -15070,15 +15076,25 @@ function show(id) {
         const topPct = (startLane / totalLanes) * 100;
         const heightPct = ((endLane - startLane) / totalLanes) * 100;
         const color = b.color || 'white';
-        const tm = fmtTimeFromHour(b.start) + '〜' + fmtTimeFromHour(b.end);
+        // R322: 幅に応じた時刻表示 — 狭いバーで頭欠けしないように
+        let tm;
+        if (width < 2.5) {
+          tm = ''; // 極狭は時刻非表示
+        } else if (width < 4.5) {
+          tm = fmtTimeFromHour(b.start); // 開始時刻のみ
+        } else {
+          tm = fmtTimeFromHour(b.start) + '〜' + fmtTimeFromHour(b.end);
+        }
+        // R322: 狭いバーは padding を縮めて中身を見せる
+        const padCls = width < 4.5 ? ' narrow' : '';
         const text = b.text || '';
-        return '<div class="tt-pdf-span-bar color-' + color +
+        return '<div class="tt-pdf-span-bar color-' + color + padCls +
                '" style="left:calc(18mm + (100% - 18mm) * ' + (left/100) + ');' +
                'width:calc((100% - 18mm) * ' + (width/100) + ');' +
                'top:calc(5mm + (100% - 5mm) * ' + (topPct/100) + ' + 1px);' +
                'height:calc((100% - 5mm) * ' + (heightPct/100) + ' - 2px);">' +
                '<div class="b-text">' + escapeHtml(text) + '</div>' +
-               '<div class="b-time">' + escapeHtml(tm) + '</div></div>';
+               (tm ? '<div class="b-time">' + escapeHtml(tm) + '</div>' : '') + '</div>';
       }).join('');
 
       // メインイベント（footer）
