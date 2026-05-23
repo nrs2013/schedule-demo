@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260521.350000">
+<meta name="build-version" content="20260521.360000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -15023,9 +15023,20 @@ function show(id) {
       '</div>';
     }
 
+    // R299: html2canvas は wrap 内の inline <style> を読まないので、
+    // CSS は document.head に「グローバル stylesheet」として 1 回だけ追加。
+    function ensureTtPdfStylesheet(){
+      if (document.getElementById('tt-pdf-stylesheet')) return;
+      const st = document.createElement('style');
+      st.id = 'tt-pdf-stylesheet';
+      st.textContent = TT_PDF_CSS;
+      document.head.appendChild(st);
+    }
     function buildTtPdfRootHtml(dateKeys){
+      ensureTtPdfStylesheet();
       const pages = dateKeys.map(buildTtPdfPageHtml).join('');
-      return '<div id="tt-pdf-root"><style>' + TT_PDF_CSS + '</style>' + pages + '</div>';
+      // R299: <style> は head に出した。ここでは div だけ返す
+      return '<div id="tt-pdf-root">' + pages + '</div>';
     }
 
     // R295: プレビューを scaled wrapper で正しく box 確保（はみ出し解消）
