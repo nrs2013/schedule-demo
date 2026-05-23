@@ -3901,21 +3901,21 @@ const TT_PDF_CSS_PHONE = `
 #tt-pdf-root .tt-pdf-mast-meta b { color:#111; font-weight:700; }
 #tt-pdf-root .tt-pdf-mast-date { font-family:'JetBrains Mono','Courier New',monospace; font-size:13px; font-weight:700; color:#111; letter-spacing:0.06em; }
 #tt-pdf-root .tt-pdf-grid { flex:1 1 0; min-height:0; display:flex; flex-direction:column; border:0.6px solid #1a1a1a; background:#fff; }
-#tt-pdf-root .tt-pdf-time-row { display:grid; grid-template-columns:18mm 1fr; border-bottom:1px solid #1a1a1a;
+#tt-pdf-root .tt-pdf-time-row { display:flex; flex-direction:row; border-bottom:1px solid #1a1a1a;
                                 font-family:'JetBrains Mono',monospace; font-size:8.5px; color:#111; height:5mm; flex:0 0 5mm; }
-#tt-pdf-root .tt-pdf-time-corner { border-right:1px solid #1a1a1a; background:#f4f4f4; }
-#tt-pdf-root .tt-pdf-time-axis { position:relative; }
+#tt-pdf-root .tt-pdf-time-corner { width:18mm; flex:0 0 18mm; border-right:1px solid #1a1a1a; background:#f4f4f4; }
+#tt-pdf-root .tt-pdf-time-axis { flex:1 1 auto; position:relative; }
 #tt-pdf-root .tt-pdf-time-tick { position:absolute; top:0; bottom:0; border-left:0.6px solid #1a1a1a; }
 #tt-pdf-root .tt-pdf-time-tick.half { border-left:0.4px dashed #b0b0b0; }
 #tt-pdf-root .tt-pdf-time-tick.first { border-left:none; }
 #tt-pdf-root .tt-pdf-time-label { position:absolute; top:0; transform:translateX(-50%); padding:0 2px; font-weight:700; color:#111; background:#fff; line-height:5mm; font-size:8.5px; }
 #tt-pdf-root .tt-pdf-time-label.start { transform:translateX(0); padding-left:3px; }
 #tt-pdf-root .tt-pdf-time-label.end { transform:translateX(-100%); padding-right:3px; }
-#tt-pdf-root .tt-pdf-sec-row { display:grid; grid-template-columns:18mm 1fr; border-bottom:0.5px solid #999; position:relative; min-height:0; }
+#tt-pdf-root .tt-pdf-sec-row { display:flex; flex-direction:row; border-bottom:0.5px solid #999; position:relative; min-height:0; }
 #tt-pdf-root .tt-pdf-sec-row:last-child { border-bottom:none; }
-#tt-pdf-root .tt-pdf-sec-label { font-size:9px; letter-spacing:0.05em; padding:3px 5px; border-right:1px solid #1a1a1a;
+#tt-pdf-root .tt-pdf-sec-label { width:18mm; flex:0 0 18mm; font-size:9px; letter-spacing:0.05em; padding:3px 5px; border-right:1px solid #1a1a1a;
                                  background:#fafafa; color:#111; font-weight:700; display:flex; align-items:center; word-break:break-all; line-height:1.15; }
-#tt-pdf-root .tt-pdf-sec-body { position:relative;
+#tt-pdf-root .tt-pdf-sec-body { flex:1 1 auto; position:relative;
                                 background-image:
                                   linear-gradient(to right, #1a1a1a 0.5px, transparent 0.5px),
                                   linear-gradient(to right, #d0d0d0 0.35px, transparent 0.35px);
