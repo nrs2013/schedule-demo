@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260524.350000">
+<meta name="build-version" content="20260524.360000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -4898,12 +4898,12 @@
   }
   .tt-side-toolbar .tt-btn { text-align: center; }
   .tt-paper {
-    /* A4 横向き比率を維持 */
-    aspect-ratio: 297 / 210;
-    /* R353: ツールバーは A4 下に横並び → 横は (100vw - 32px) フルに使える。
-       縦は: 上ヘッダ ~120 + 下ツールバー ~50 + 余白 ~20 = 約 190px 引く */
-    height: min(calc(100vh - 190px), calc((100vw - 32px) * 210 / 297));
-    width: auto;
+    /* R356: 編集画面は A4 比率の縛りを外して横幅を画面いっぱいに。
+       縦は (100vh - 上下 UI) で詰める。PDF 出力 (buildTtPdfPageHtml) は A4 比率
+       で別経路生成しているのでこの変更は影響なし。 */
+    width: 100%;
+    max-width: calc(100vw - 32px);
+    height: calc(100vh - 190px);
     min-height: 420px;
     flex: 0 0 auto;
     background: #1a1a1a;
