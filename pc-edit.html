@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260523.990000">
+<meta name="build-version" content="20260524.020000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -14832,13 +14832,14 @@ function show(id) {
                                  background:#fafaf6; color:#1a1a1a; font-weight:700; display:flex; align-items:center;
                                  word-break:break-all; line-height:1.2; }
 #tt-pdf-root .tt-pdf-sec-body { flex:1 1 auto; position:relative; }
-/* R337: 線の色を濃くしてピンクバーの上でも実物大で見えるように。
-   R335 の太さ (0.5/0.4/0.3px) は保ち、色だけ濃くする。
-   (R335 で線を太い→細くした要望は維持しつつ、実物 PDF で視認できる濃さに) */
+/* R340: のむさん指示の正しい解釈
+   - 正時 (10/11/12...) の縦線は太い (バーとの十字でも視認できる)
+   - サブメモリ (15/30/45 分) の縦線は「横線 (バーの border 0.6px) と同じ太さ」
+   - 30 分も 15/45 分も同じ太さ (0.6px)、色だけで階層を出す */
 #tt-pdf-root .tt-pdf-grid-line { position:absolute; top:0; bottom:0; pointer-events:none; }
-#tt-pdf-root .tt-pdf-grid-line.hour    { background:#1a1a1a; width:0.5px; }
-#tt-pdf-root .tt-pdf-grid-line.half    { background:#888;    width:0.4px; }
-#tt-pdf-root .tt-pdf-grid-line.quarter { background:#bbb;    width:0.3px; }
+#tt-pdf-root .tt-pdf-grid-line.hour    { background:#1a1a1a; width:0.8px; }
+#tt-pdf-root .tt-pdf-grid-line.half    { background:#888;    width:0.6px; }
+#tt-pdf-root .tt-pdf-grid-line.quarter { background:#bbb;    width:0.6px; }
 /* R326+: 個別バー — dashed 撤廃、border-radius 0 で grid 線と完全に揃う直方形 */
 #tt-pdf-root .tt-pdf-bar { position:absolute; box-sizing:border-box; padding:3px 8px; font-size:10px; font-weight:600;
                            color:#1a1a1a; background:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; line-height:1.2;
@@ -15086,11 +15087,11 @@ function show(id) {
                '<div class="tt-pdf-sec-label">' + escapeHtml(sec.name || '') + '</div>' +
                '<div class="tt-pdf-sec-body">' + barsHtml + '</div></div>';
       }).join('');
-      // R339: z-index を 1 に戻す。R335 で「バーのところの縦線が消えてる」をのむさんの真意
-      //   (時刻軸サブメモリの線が時間の太い線で消える) と取り違えて z-index 5 に上げてしまい、
-      //   バー上に縦線が乗る不要な挙動が出ていた。R329 までの「バーが下の縦線を隠す」設計に復帰。
-      //   バー外 (時刻軸サブメモリ部分) では今と同様に細い線も見える。15/45 分の quarter 線は維持。
-      let gridLinesHtml = '<div style="position:absolute;left:20mm;right:0;top:0;bottom:0;pointer-events:none;z-index:1;">';
+      // R340: z-index 5 復帰 — のむさん指示「縦線がないとバーとして成立しない」を反映。
+      //   R339 で z-index 1 に戻したのは過剰反応 (のむさんの本意は「下の線を見せろ」ではなく
+      //   「バー内も含めて縦線が必要」だった)。
+      //   バー上に縦線が乗る、サブメモリ (15/30/45) は横線 (バー border 0.6px) と同じ太さ。
+      let gridLinesHtml = '<div style="position:absolute;left:20mm;right:0;top:0;bottom:0;pointer-events:none;z-index:5;">';
       for (let hh = tStart; hh <= tEnd; hh++) {
         const pct = timeToPct(hh);
         gridLinesHtml += '<div class="tt-pdf-grid-line hour" style="left:calc(' + pct + '% - 0.25px);"></div>';
