@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260524.360000">
+<meta name="build-version" content="20260524.380000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -13681,8 +13681,12 @@ function show(id) {
           color: isSpanning ? 'pink' : getDefaultColorForSection(sec.id)
         };
         // R252: 部分縦串：通ったセクション群を保存（2 以上の場合のみ）
+        // R358: 上→下・下→上どちらにドラッグしても sections 順（上→下）で保存（ラベル位置バグ修正）
         if (isSpanning && spanSecIds.length >= 2) {
-          newBar.spanSecIds = spanSecIds.slice();
+          var _orderedSecs = tt.sections.map(function(s){ return s.id; });
+          newBar.spanSecIds = spanSecIds.slice().sort(function(a, b){
+            return _orderedSecs.indexOf(a) - _orderedSecs.indexOf(b);
+          });
         }
         tt.bars.push(newBar);
         selectedBarId = newBar.id;
@@ -13994,6 +13998,8 @@ function show(id) {
       const tt = getTimetableForDate(dk);
       if (tt) {
         tt.bars = tt.bars.filter(function(b){ return b.id !== bar.id; });
+        // R358: マルチ選択のセットからも除去（幽霊ID残留バグ修正）
+        selectedBarIds.delete(bar.id);
         if (selectedBarId === bar.id) selectedBarId = null;
         saveToStorage();
         menu.remove();
@@ -14179,6 +14185,8 @@ function show(id) {
             }
             return b.secId !== secId;
           });
+          // R358: セクション削除時もマルチ選択をクリア（幽霊ID残留バグ修正）
+          clearSel();
         }
         saveToStorage();
         render();
@@ -14687,6 +14695,8 @@ function show(id) {
   });
 
   function renderPublic(){
+    // R358: 日付切替時に前の日付のバー選択状態を解除（幽霊選択バグ修正）
+    clearSel();
     bindToolbarOnce();
     render();
     setTimeout(updatePaperScale, 30);
