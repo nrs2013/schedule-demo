@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260524.340000">
+<meta name="build-version" content="20260524.350000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -14070,13 +14070,14 @@ function show(id) {
       const isLast = (h === end);
       const cls = isFirst ? ' first' : (isLast ? ' last' : '');
       html += '<div class="tt-tick-line' + (isFirst ? ' first' : '') + '" style="left:' + x + 'px;"></div>';
-      // R278c: CELL_W が広いとき（>=60px）はフル表記「11:00」、狭いときは数字だけ「11」で隣ラベルと被らない
-      const labelText = cellW >= 60 ? fmtHour(h) : String(h % 24);
+      // R355: 時刻ラベルは常に時刻数字だけ (「11:00」→「11」)。
+      //   時刻軸を簡潔にして編集画面のスペースを節約。
+      const labelText = String(h % 24);
       html += '<div class="tt-tick-label' + cls + '" style="left:' + x + 'px;">' + labelText + '</div>';
       if (h < end) {
-        html += '<div class="tt-tick-sub-mini" style="left:' + (x + cellW * 0.25) + 'px;">15</div>';
+        // R355: 15/45 の数字ラベルは出さない (ごちゃつき解消)。30 だけ残す。
+        //   線 (tt-tick-mini) は 15/30/45 とも引き続き描画。
         html += '<div class="tt-tick-sub" style="left:' + (x + cellW * 0.5) + 'px;">30</div>';
-        html += '<div class="tt-tick-sub-mini" style="left:' + (x + cellW * 0.75) + 'px;">45</div>';
         html += '<div class="tt-tick-mini half" style="left:' + (x + cellW * 0.5) + 'px;"></div>';
         html += '<div class="tt-tick-mini" style="left:' + (x + cellW * 0.25) + 'px;"></div>';
         html += '<div class="tt-tick-mini" style="left:' + (x + cellW * 0.75) + 'px;"></div>';
