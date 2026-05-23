@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260523.860000">
+<meta name="build-version" content="20260523.900000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -15068,16 +15068,15 @@ function show(id) {
           const h     = (1 / lanes) * 100;
           const color = b.color || 'white';
           const text = b.text || '';
-          // R330: バーは grid 線 (幅 1px) の右端から始めて左端で終わる
-          //   grid 線中心 = pct%、grid 線範囲 = [pct%-0.5px, pct%+0.5px]
-          //   bar.left = pct% + 0.5px (grid 線の右端) / bar.right = right_pct% - 0.5px
-          //   結果: grid 線が全長 1px の一定太さで通り、バーが grid 線に「接して」始まり終わる
+          // R336: 個別バーの shift を撤廃。grid line (0.5px幅、z-index 5) が
+          // バーの上に描かれるので、バー位置を pct% ぴったりに置けば、
+          // バー端と縦線中心が一致して隙間もズレも出ない
           let sizeCls = '';
           if (width > 0 && width < 1.8) sizeCls = ' bar-vnarrow';
           else if (width < 3.5) sizeCls = ' bar-narrow';
           else if (width < 7) sizeCls = ' bar-tight';
-          return '<div class="tt-pdf-bar color-' + color + sizeCls + '" style="left:calc(' + left + '% + 0.5px);width:calc(' + width +
-                 '% - 1px);top:calc(' + top + '% + 4px);height:calc(' + h + '% - 8px);">' +
+          return '<div class="tt-pdf-bar color-' + color + sizeCls + '" style="left:' + left + '%;width:' + width +
+                 '%;top:calc(' + top + '% + 4px);height:calc(' + h + '% - 8px);">' +
                  '<span class="b-text">' + escapeHtml(text) + '</span></div>';
         }).join('');
         // R317: lanes 1〜2 は同じ高さ、3 以上で段階的に太く (洗練された設計)
@@ -15139,11 +15138,11 @@ function show(id) {
         }
         const padCls = width < 5 ? ' narrow' : '';
         const text = b.text || '';
-        // R330: 縦串バーも grid 線 1px の右端から始まり左端で終わる
-        //   左右 = grid 線が勝ち、上下のみ bar 自身の border (色付き)
+        // R336: 縦串バーも shift 撤廃。バー左端 = 縦線中心 (pct%) で完全一致。
+        // grid line が z-index 5 でバーの上に来るので隙間もズレも出ない
         return '<div class="tt-pdf-span-bar color-' + color + padCls +
-               '" style="left:calc(18mm + (100% - 18mm) * ' + (left/100) + ' + 0.5px);' +
-               'width:calc((100% - 18mm) * ' + (width/100) + ' - 1px);' +
+               '" style="left:calc(18mm + (100% - 18mm) * ' + (left/100) + ');' +
+               'width:calc((100% - 18mm) * ' + (width/100) + ');' +
                'top:calc(5mm + (100% - 5mm) * ' + (topPct/100) + ');' +
                'height:calc((100% - 5mm) * ' + (heightPct/100) + ');">' +
                '<div class="b-text">' + escapeHtml(text) + '</div>' +
