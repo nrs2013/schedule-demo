@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260524.110000">
+<meta name="build-version" content="20260524.140000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -14858,11 +14858,12 @@ function show(id) {
 #tt-pdf-root .tt-pdf-bar .b-text { overflow:hidden; text-overflow:ellipsis; }
 /* R330: バーの左右 border を 0 に、grid 線がバー縁を担う。
    左右の縁＝grid 線（1px 黒）、上下のみ bar border (0.6px) で視認性を確保 */
-#tt-pdf-root .tt-pdf-bar.color-white  { background:#fff; border-top:0.6px solid #bbb;  border-bottom:0.6px solid #bbb; }
-#tt-pdf-root .tt-pdf-bar.color-amber  { background:#fff; border-top:0.6px solid #888;  border-bottom:0.6px solid #888; }
-#tt-pdf-root .tt-pdf-bar.color-gray   { background:#fff; border-top:0.6px solid #666;  border-bottom:0.6px solid #666; }
-#tt-pdf-root .tt-pdf-bar.color-accent { background:#fff; border-top:0.6px solid #444;  border-bottom:0.6px solid #444; }
-#tt-pdf-root .tt-pdf-bar.color-pink   { background:#fff; border-top:0.6px solid #1a1a1a; border-bottom:0.6px solid #1a1a1a; font-weight:700; }
+/* R344: bar の border を 4 辺すべて同じに (シンプルに四角の縁取り) */
+#tt-pdf-root .tt-pdf-bar.color-white  { background:#fff; border:0.6px solid #bbb;    }
+#tt-pdf-root .tt-pdf-bar.color-amber  { background:#fff; border:0.6px solid #888;    }
+#tt-pdf-root .tt-pdf-bar.color-gray   { background:#fff; border:0.6px solid #666;    }
+#tt-pdf-root .tt-pdf-bar.color-accent { background:#fff; border:0.6px solid #444;    }
+#tt-pdf-root .tt-pdf-bar.color-pink   { background:#fff; border:0.6px solid #1a1a1a; font-weight:700; }
 /* R327c: 狭個別バーは padding 詰め + font 縮小 + 改行許可で全文表示
    white-space:normal + word-break:break-all で日本語が自然に折り返す */
 #tt-pdf-root .tt-pdf-bar.bar-tight   { padding:2px 3px; font-size:8.5px; letter-spacing:0;
@@ -14882,11 +14883,12 @@ function show(id) {
                                 display:flex; flex-direction:column; align-items:center; justify-content:center;
                                 text-align:center; overflow:hidden; line-height:1.3; }
 /* R330: 縦串バーも左右 border 撤廃。grid 線がバー縁を担う */
-#tt-pdf-root .tt-pdf-span-bar.color-white  { background:#fff8d4; border-top:0.6px solid #c89c14; border-bottom:0.6px solid #c89c14; }
-#tt-pdf-root .tt-pdf-span-bar.color-amber  { background:#ffe1bc; border-top:0.6px solid #c87a18; border-bottom:0.6px solid #c87a18; }
-#tt-pdf-root .tt-pdf-span-bar.color-gray   { background:#dfeec8; border-top:0.6px solid #5e8c1e; border-bottom:0.6px solid #5e8c1e; }
-#tt-pdf-root .tt-pdf-span-bar.color-accent { background:#d6e7f4; border-top:0.6px solid #2670b0; border-bottom:0.6px solid #2670b0; }
-#tt-pdf-root .tt-pdf-span-bar.color-pink   { background:#fcd0dc; border-top:0.6px solid #c8336a; border-bottom:0.6px solid #c8336a; }
+/* R344: 縦串バーも border を 4 辺すべて同じに */
+#tt-pdf-root .tt-pdf-span-bar.color-white  { background:#fff8d4; border:0.6px solid #c89c14; }
+#tt-pdf-root .tt-pdf-span-bar.color-amber  { background:#ffe1bc; border:0.6px solid #c87a18; }
+#tt-pdf-root .tt-pdf-span-bar.color-gray   { background:#dfeec8; border:0.6px solid #5e8c1e; }
+#tt-pdf-root .tt-pdf-span-bar.color-accent { background:#d6e7f4; border:0.6px solid #2670b0; }
+#tt-pdf-root .tt-pdf-span-bar.color-pink   { background:#fcd0dc; border:0.6px solid #c8336a; }
 #tt-pdf-root .tt-pdf-span-bar .b-text { font-weight:800; color:#0a0a0a; word-break:break-all; font-size:14px; letter-spacing:0.06em; }
 #tt-pdf-root .tt-pdf-span-bar .b-time { font-family:'JetBrains Mono','Courier New',monospace; font-weight:600; font-size:10px; color:rgba(0,0,0,0.6); margin-top:5px; letter-spacing:0.10em; }
 /* R322b: 狭い縦串バー (width < 5%) は padding を詰めてタイトルを縦書きで全文表示
@@ -15069,17 +15071,9 @@ function show(id) {
         return b && typeof b.start === 'number' && typeof b.end === 'number';
       });
       const isSpan = function(b){ return Array.isArray(b.spanSecIds) && b.spanSecIds.length > 1; };
-      // R343: bar の start/end time に応じて、左右の border を grid line と同じ太さ・色に。
-      //   bar が grid line を隠して「線が細く見える」問題を解消。
-      const getBorderForTime = function(t){
-        if (Math.abs(t - Math.round(t)) < 0.001) {
-          return '0.8px solid #1a1a1a';  // 正時 (hour)
-        } else if (Math.abs(t * 2 - Math.round(t * 2)) < 0.001) {
-          return '0.6px solid #888';  // 30 分 (half)
-        } else {
-          return '0.6px solid #bbb';  // 15/45 分 (quarter)
-        }
-      };
+      // R344: bar の border は 4 辺同じ (上下の横線と同じ太さ・色)。
+      //   bar が四角形として縁取られているだけで OK、time に応じた変化なし。
+      //   CSS の .tt-pdf-bar.color-X / .tt-pdf-span-bar.color-X の border を全方向に展開。
       // R316: 縦線レイヤーを sec-body 内ではなく後段で sec-rows-wrap に対して描画 → 全 sec-row で揃う
       const secRowsHtml = sections.map(function(sec){
         const lanes = sec.lanes || 1;
@@ -15099,12 +15093,10 @@ function show(id) {
           if (width > 0 && width < 1.8) sizeCls = ' bar-vnarrow';
           else if (width < 3.5) sizeCls = ' bar-narrow';
           else if (width < 7) sizeCls = ' bar-tight';
-          // R342: bar 内部縦線 (buildInlineLines) を撤廃。bar の中は文字を見やすくするために
-          // 白 (or ピンク) で塗りつぶす。縦線は bar の裏 (grid line z-index 1) で隠れる。
-          // R343: bar の左右に border 追加。bar の左右端で grid line が半分隠れて細く見えるのを解消。
-          const blStyle = 'border-left:' + getBorderForTime(b.start) + ';border-right:' + getBorderForTime(b.end) + ';';
+          // R344: bar の border は CSS で全方向同じ太さ・色 (color 別)。inline style での
+          //   getBorderForTime 計算は撤廃、bar が普通の四角として縁取られればOK。
           return '<div class="tt-pdf-bar color-' + color + sizeCls + '" style="left:' + left + '%;width:' + width +
-                 '%;top:calc(' + top + '% + 4px);height:calc(' + h + '% - 8px);' + blStyle + '">' +
+                 '%;top:calc(' + top + '% + 4px);height:calc(' + h + '% - 8px);">' +
                  '<span class="b-text">' + escapeHtml(text) + '</span></div>';
         }).join('');
         // R317: lanes 1〜2 は同じ高さ、3 以上で段階的に太く (洗練された設計)
@@ -15171,14 +15163,12 @@ function show(id) {
         //   sec-label 幅 = 20mm、grid line 親 div も left:20mm 開始、個別バーは
         //   sec-body (20mm から右) の中で left%。span-bar だけ 18mm 基準だったため
         //   バー外の縦線とバー内の縦線が 2mm 横にズレて見えていた。これを統一。
-        // R342: 縦串バーも内部縦線撤廃。ピンクはピンクで塗りつぶし、文字を見やすく。
-        // R343: 縦串バーも左右に border 追加。grid line と同じ太さ・色で。
-        const sblStyle = 'border-left:' + getBorderForTime(b.start) + ';border-right:' + getBorderForTime(b.end) + ';';
+        // R344: 縦串バーの border も CSS で全方向同じ (color 別)。inline style 撤廃。
         return '<div class="tt-pdf-span-bar color-' + color + padCls +
                '" style="left:calc(20mm + (100% - 20mm) * ' + (left/100) + ');' +
                'width:calc((100% - 20mm) * ' + (width/100) + ');' +
                'top:calc(5mm + (100% - 5mm) * ' + (topPct/100) + ');' +
-               'height:calc((100% - 5mm) * ' + (heightPct/100) + ');' + sblStyle + '">' +
+               'height:calc((100% - 5mm) * ' + (heightPct/100) + ');">' +
                '<div class="b-text">' + escapeHtml(text) + '</div>' +
                (tm ? '<div class="b-time">' + escapeHtml(tm) + '</div>' : '') + '</div>';
       }).join('');
