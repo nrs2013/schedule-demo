@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260523.530000">
+<meta name="build-version" content="20260523.540000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -14843,10 +14843,14 @@ function show(id) {
 #tt-pdf-root .tt-pdf-span-bar.color-pink   { background:#fcd0dc; border:2.2px solid #c8336a; }
 #tt-pdf-root .tt-pdf-span-bar .b-text { font-weight:800; color:#0a0a0a; word-break:break-all; font-size:14px; letter-spacing:0.06em; }
 #tt-pdf-root .tt-pdf-span-bar .b-time { font-family:'JetBrains Mono','Courier New',monospace; font-weight:600; font-size:10px; color:rgba(0,0,0,0.6); margin-top:5px; letter-spacing:0.10em; }
-/* R322: 狭い縦串バー（30分前後）は padding を詰めて文字サイズを縮める */
-#tt-pdf-root .tt-pdf-span-bar.narrow { padding:5px 2px; }
-#tt-pdf-root .tt-pdf-span-bar.narrow .b-text { font-size:11px; letter-spacing:0.02em; writing-mode:vertical-rl; text-orientation:mixed; }
-#tt-pdf-root .tt-pdf-span-bar.narrow .b-time { font-size:8px; margin-top:3px; letter-spacing:0.04em; writing-mode:vertical-rl; }
+/* R322b: 狭い縦串バー (width < 5%) は padding を詰めてタイトルを縦書きで全文表示
+   時刻は時刻軸を見れば分かるので非表示にして読みやすさ優先 */
+#tt-pdf-root .tt-pdf-span-bar.narrow { padding:8px 2px; }
+#tt-pdf-root .tt-pdf-span-bar.narrow .b-text {
+  font-size:12px; letter-spacing:0.04em;
+  writing-mode:vertical-rl; text-orientation:upright;
+  word-break:keep-all; white-space:nowrap;
+}
 /* R319: フッタ — ラベルを廃して MAIN EVENTS 表示領域を最大化 */
 #tt-pdf-root .tt-pdf-foot { margin-top:4mm; padding:20px 24px; border:2px solid #1a1a1a; border-radius:3px;
                             display:flex; gap:22px; flex-wrap:wrap; font-size:18px; color:#0a0a0a; flex:0 0 auto;
@@ -15076,17 +15080,15 @@ function show(id) {
         const topPct = (startLane / totalLanes) * 100;
         const heightPct = ((endLane - startLane) / totalLanes) * 100;
         const color = b.color || 'white';
-        // R322: 幅に応じた時刻表示 — 狭いバーで頭欠けしないように
+        // R322b: 狭縦串バーは時刻を完全に省略してタイトルだけ縦書き表示
+        // (時刻ラベルは時刻軸を見れば分かる)
         let tm;
-        if (width < 2.5) {
-          tm = ''; // 極狭は時刻非表示
-        } else if (width < 4.5) {
-          tm = fmtTimeFromHour(b.start); // 開始時刻のみ
+        if (width < 5) {
+          tm = '';
         } else {
           tm = fmtTimeFromHour(b.start) + '〜' + fmtTimeFromHour(b.end);
         }
-        // R322: 狭いバーは padding を縮めて中身を見せる
-        const padCls = width < 4.5 ? ' narrow' : '';
+        const padCls = width < 5 ? ' narrow' : '';
         const text = b.text || '';
         return '<div class="tt-pdf-span-bar color-' + color + padCls +
                '" style="left:calc(18mm + (100% - 18mm) * ' + (left/100) + ');' +
