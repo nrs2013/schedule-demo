@@ -5112,8 +5112,11 @@
     .tt-time-row { background: white !important; border-bottom: 1.5px solid #1a1a1a !important; }
     .tt-time-corner { background: white !important; color: #111 !important; border-right: 1.5px solid #1a1a1a !important; font-weight: 700 !important; letter-spacing: 0.1em !important; }
     .tt-tick-label { color: #111 !important; background: white !important; font-weight: 700 !important; font-size: 11px !important; font-feature-settings: 'tnum' !important; }
-    .tt-tick-sub { color: #555 !important; background: white !important; font-weight: 500 !important; font-size: 9px !important; font-feature-settings: 'tnum' !important; }
-    .tt-tick-sub-mini { color: #888 !important; background: white !important; font-weight: 500 !important; font-size: 8px !important; font-feature-settings: 'tnum' !important; }
+    /* R357: PDF 印刷時、30分マーカーを下げて、時間数字 (8/9/10...) の下端と
+       マーカーの下端が揃うように top を上書き。base CSS は top:19、印刷は
+       font-size 9px なので top:7 で下端 ≈ 16 → 時間数字の下端 ≈ 16.1 と一致 */
+    .tt-tick-sub { top: 7px !important; color: #555 !important; background: white !important; font-weight: 500 !important; font-size: 9px !important; font-feature-settings: 'tnum' !important; }
+    .tt-tick-sub-mini { top: 8px !important; color: #888 !important; background: white !important; font-weight: 500 !important; font-size: 8px !important; font-feature-settings: 'tnum' !important; }
     .tt-tick-line { background: #1a1a1a !important; width: 0.5px !important; }
     .tt-tick-line.first { background: #000 !important; }
     .tt-tick-mini { background: #ddd !important; }
