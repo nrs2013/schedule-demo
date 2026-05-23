@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260523.610000">
+<meta name="build-version" content="20260523.620000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -15046,15 +15046,15 @@ function show(id) {
           const h     = (1 / lanes) * 100;
           const color = b.color || 'white';
           const text = b.text || '';
-          // R327: バー幅に応じて font / padding を段階的に縮める
-          //   width < 1.8%  → 縦書き
-          //   width < 3.5%  → 7.5px font
-          //   width < 5.5%  → 8.5px font
-          //   else          → デフォルト 10px
+          // R327d: しきい値を引き上げて中幅バーもちゃんと縮小、文字切れ完全防止
+          //   width < 1.8% → vnarrow (6.5px font + 折り返し)
+          //   width < 3.5% → narrow  (7.5px + 折り返し)
+          //   width < 7%   → tight   (8.5px + 折り返し)
+          //   else         → default 10px
           let sizeCls = '';
           if (width > 0 && width < 1.8) sizeCls = ' bar-vnarrow';
           else if (width < 3.5) sizeCls = ' bar-narrow';
-          else if (width < 5.5) sizeCls = ' bar-tight';
+          else if (width < 7) sizeCls = ' bar-tight';
           return '<div class="tt-pdf-bar color-' + color + sizeCls + '" style="left:' + left + '%;width:' + width +
                  '%;top:calc(' + top + '% + 4px);height:calc(' + h + '% - 8px);">' +
                  '<span class="b-text">' + escapeHtml(text) + '</span></div>';
