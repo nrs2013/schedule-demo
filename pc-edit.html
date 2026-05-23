@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260523.800000">
+<meta name="build-version" content="20260523.820000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -4867,17 +4867,30 @@
     flex-direction: column;
     align-items: stretch;
   }
-  /* R240: A4 縛り撤去・画面いっぱい */
+  /* R334: A4 横向き比率(297:210)を維持しつつ、画面サイズに合わせて自動拡大。
+     - 縦は画面の残り高さ (100vh - 上部 UI 約 240px) まで
+     - 横は画面の 100vw - 余白 32px まで（比率で制限）
+     - 両者の min を取り、aspect-ratio で width を自動計算
+     - 見た目（色・線・フォント・padding）は R330 のまま完全維持
+     - 操作ロジック (updateCellW, updateLaneH) も R330 のまま (paper.clientWidth ベース)
+     - PDF パス・@media print は一切触らない */
   .tt-paper-stage {
     width: 100%;
     display: flex;
     justify-content: center;
+    align-items: flex-start;
     padding: 4px 0;
+    overflow: auto;
+    box-sizing: border-box;
   }
   .tt-paper {
-    width: 100%;
-    max-width: 100%;
-    flex: 1 1 auto;
+    /* A4 横向き比率を維持 */
+    aspect-ratio: 297 / 210;
+    /* 画面の縦余白 / 横余白 のうち小さい方に合わせる */
+    height: min(calc(100vh - 240px), calc((100vw - 32px) * 210 / 297));
+    width: auto;
+    min-height: 420px;
+    flex: 0 0 auto;
     background: #1a1a1a;
     border: 1px solid #2c2c2c;
     padding: 14px 18px 12px;
@@ -4889,7 +4902,6 @@
     font-size: 13px;
     position: relative;
     border-radius: 8px;
-    min-height: 480px;
   }
   .tt-paper .tt-grid { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
   /* R245+R257: 紙の中ヘッダ：横長で押し出し、線は細く */
