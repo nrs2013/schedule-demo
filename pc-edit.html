@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260524.290000">
+<meta name="build-version" content="20260524.300000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -12970,19 +12970,35 @@ function show(id) {
     return m ? parseFloat(m[1]) : 1;
   }
 
+  // R350: lane の配置を計算。bodyH を「外側 55% / 内側 45%」に配分して
+  //   上下端を少し広く、bar 間を少し狭くする。lanes=1 は中央配置。
+  function computeLaneLayout(body, lanes){
+    const bodyH = body.getBoundingClientRect().height || (LANE_H * lanes);
+    const slotH = bodyH / lanes;
+    const barH = Math.min(BAR_H, Math.max(12, slotH - 4));
+    const totalGap = Math.max(0, bodyH - lanes * barH);
+    let outerPad, innerGap;
+    if (lanes <= 1) {
+      outerPad = totalGap / 2;
+      innerGap = 0;
+    } else {
+      outerPad = (totalGap * 0.55) / 2;
+      innerGap = (totalGap * 0.45) / (lanes - 1);
+    }
+    return { bodyH: bodyH, slotH: slotH, barH: barH, outerPad: outerPad, innerGap: innerGap };
+  }
+
   function renderBarsInSection(tt, sec, body){
     body.querySelectorAll('.tt-bar.normal').forEach(function(b){ b.remove(); });
-    // R349: bar をスロット内で上下中央に配置。body の実高さから slot 高さを算出し、
-    //   各 lane の上下中央に bar を置く (上下対称、「上に行き過ぎ」を解消)。
-    const bodyH = body.getBoundingClientRect().height || (LANE_H * sec.lanes);
-    const slotH = bodyH / sec.lanes;
-    const barH = Math.min(BAR_H, Math.max(12, slotH - 4));
-    const barTopOffset = (slotH - barH) / 2;
+    // R350: 外側を少し広く、bar 同士を少し近づける (外側 55%、内側 45% で余裕を配分)。
+    //   lanes=1 では中央配置。lanes>=2 では「ほんのちょっと」外側を広く、内側を狭く。
+    const layout = computeLaneLayout(body, sec.lanes);
+    const barH = layout.barH;
     tt.bars.filter(function(b){ return b.secId === sec.id && !isVAll(b) && !getSpanSecIds(b); }).forEach(function(bar){
       const lane = Math.max(0, Math.min(sec.lanes - 1, bar.lane || 0));
       const left = timeToPixel(bar.start, tt);
       const width = Math.max(SLOT_W(), timeToPixel(bar.end, tt) - left);
-      const top = lane * slotH + barTopOffset;
+      const top = layout.outerPad + lane * (barH + layout.innerGap);
       const color = bar.color || 'white';
       const el = document.createElement('div');
       el.className = 'tt-bar normal color-' + color + (isSel(bar.id) ? ' selected' : '');
@@ -13491,12 +13507,12 @@ function show(id) {
       const startX = (e.clientX - rect.left) / scale;
       const startY = (e.clientY - rect.top) / scale;
       const startTime = snapTime(pixelToTime(startX, tt), tt.timeStart);
-      // R349: lane / ghost も body 実高さ基準の slotH で計算（renderBarsInSection と一致）
-      const bodyH = rect.height || (LANE_H * sec.lanes);
-      const slotH = bodyH / sec.lanes;
-      const ghostBarH = Math.min(BAR_H, Math.max(12, slotH - 4));
-      const ghostTopOffset = (slotH - ghostBarH) / 2;
+      // R350: lane / ghost も renderBarsInSection と同じレイアウト (外側 55%/内側 45%) を使う
+      const _lay = computeLaneLayout(body, sec.lanes);
+      const slotH = _lay.slotH;
+      const ghostBarH = _lay.barH;
       const lane = Math.max(0, Math.min(sec.lanes - 1, Math.floor(startY / slotH)));
+      const ghostTop = _lay.outerPad + lane * (ghostBarH + _lay.innerGap);
       let curEnd = startTime;
       let isDragging = false;
       let isSpanning = false;  // R247: 縦串作成中フラグ
@@ -13505,7 +13521,7 @@ function show(id) {
       const gridEl = document.getElementById('tt-grid');
       const ghost = document.createElement('div');
       ghost.className = 'tt-bar-ghost';
-      ghost.style.cssText = 'left:' + timeToPixel(startTime, tt) + 'px; width:' + SLOT_W() + 'px; top:' + (lane * slotH + ghostTopOffset) + 'px; height:' + ghostBarH + 'px;';
+      ghost.style.cssText = 'left:' + timeToPixel(startTime, tt) + 'px; width:' + SLOT_W() + 'px; top:' + ghostTop + 'px; height:' + ghostBarH + 'px;';
       body.appendChild(ghost);
       let ghostInGrid = false;  // ghost が grid 配下に移動してるか
       function move(ev){
@@ -13586,7 +13602,7 @@ function show(id) {
             ghost.classList.remove('span');
           }
           ghost.style.left = left + 'px';
-          ghost.style.top = (lane * slotH + ghostTopOffset) + 'px';
+          ghost.style.top = ghostTop + 'px';
           ghost.style.width = width + 'px';
           ghost.style.height = ghostBarH + 'px';
           if (isDragging && typeof fmtTimeFromHour === 'function') {
