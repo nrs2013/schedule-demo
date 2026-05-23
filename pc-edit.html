@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260521.480000">
+<meta name="build-version" content="20260521.490000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -14755,17 +14755,17 @@ function show(id) {
 #tt-pdf-root .tt-pdf-grid-line { position:absolute; top:0; bottom:0; width:1px; pointer-events:none; }
 #tt-pdf-root .tt-pdf-grid-line.hour { background:#1a1a1a; }
 #tt-pdf-root .tt-pdf-grid-line.half { background:#dcdad6; }
-/* R318: 個別バーは白黒・線種で区別 (縦串バーだけカラー)。セル境界から離して呼吸させる */
+/* R319: 個別バーの外枠を細くスタイリッシュに */
 #tt-pdf-root .tt-pdf-bar { position:absolute; box-sizing:border-box; padding:3px 8px; font-size:10px; font-weight:600;
                            color:#1a1a1a; background:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; line-height:1.2;
-                           border-radius:2px; display:flex; align-items:center; justify-content:center; letter-spacing:0.04em; z-index:3; }
+                           border-radius:1.5px; display:flex; align-items:center; justify-content:center; letter-spacing:0.04em; z-index:3; }
 #tt-pdf-root .tt-pdf-bar .b-text { overflow:hidden; text-overflow:ellipsis; }
-/* 線種で区別 */
-#tt-pdf-root .tt-pdf-bar.color-white  { background:#fff; border:1px solid #888; }       /* 仕込: 細線 */
-#tt-pdf-root .tt-pdf-bar.color-amber  { background:#fff; border:1.5px solid #444; }     /* 現地仕込: 中線 */
-#tt-pdf-root .tt-pdf-bar.color-gray   { background:#fff; border:1.5px dashed #555; }    /* リハ: 破線 */
-#tt-pdf-root .tt-pdf-bar.color-accent { background:#fff; border:1px dashed #777; }      /* テクリハ: 細破線 */
-#tt-pdf-root .tt-pdf-bar.color-pink   { background:#fff; border:2px solid #111; font-weight:800; }  /* 本番: 太線 (最強調) */
+/* 線種で区別 (細く・スタイリッシュ) */
+#tt-pdf-root .tt-pdf-bar.color-white  { background:#fff; border:0.6px solid #888; }
+#tt-pdf-root .tt-pdf-bar.color-amber  { background:#fff; border:0.8px solid #444; }
+#tt-pdf-root .tt-pdf-bar.color-gray   { background:#fff; border:0.8px dashed #555; }
+#tt-pdf-root .tt-pdf-bar.color-accent { background:#fff; border:0.6px dashed #777; }
+#tt-pdf-root .tt-pdf-bar.color-pink   { background:#fff; border:1.2px solid #111; font-weight:700; }  /* 本番: やや太く差別化 */
 /* ── 縦串バー：不透明背景 + 太枠 + 黒太文字 + 時刻 / 尺 ── */
 #tt-pdf-root .tt-pdf-span-bar { position:absolute; box-sizing:border-box; padding:7px 12px; font-size:10.5px; font-weight:700;
                                 color:#1a1a1a; border-radius:3px; z-index:4;
@@ -14776,19 +14776,17 @@ function show(id) {
 #tt-pdf-root .tt-pdf-span-bar.color-gray   { background:#dfeec8; border:2px solid #5e8c1e; }
 #tt-pdf-root .tt-pdf-span-bar.color-accent { background:#d6e7f4; border:2px solid #2670b0; }
 #tt-pdf-root .tt-pdf-span-bar.color-pink   { background:#fcd0dc; border:2.2px solid #c8336a; }
-#tt-pdf-root .tt-pdf-span-bar .b-text { font-weight:800; color:#0a0a0a; word-break:break-all; font-size:12px; letter-spacing:0.06em; }
-#tt-pdf-root .tt-pdf-span-bar .b-time { font-family:'JetBrains Mono','Courier New',monospace; font-weight:600; font-size:9px; color:rgba(0,0,0,0.55); margin-top:4px; letter-spacing:0.10em; }
-/* R318: フッタ MAIN EVENTS — 白黒で最大級の視認性 (学園貼り出し用) */
-#tt-pdf-root .tt-pdf-foot { margin-top:4mm; padding:12px 18px; border:2px solid #1a1a1a; border-radius:3px;
-                            display:flex; gap:20px; flex-wrap:wrap; font-size:17px; color:#0a0a0a; flex:0 0 auto;
+#tt-pdf-root .tt-pdf-span-bar .b-text { font-weight:800; color:#0a0a0a; word-break:break-all; font-size:14px; letter-spacing:0.06em; }
+#tt-pdf-root .tt-pdf-span-bar .b-time { font-family:'JetBrains Mono','Courier New',monospace; font-weight:600; font-size:10px; color:rgba(0,0,0,0.6); margin-top:5px; letter-spacing:0.10em; }
+/* R319: フッタ — ラベルを廃して MAIN EVENTS 表示領域を最大化 */
+#tt-pdf-root .tt-pdf-foot { margin-top:4mm; padding:20px 24px; border:2px solid #1a1a1a; border-radius:3px;
+                            display:flex; gap:22px; flex-wrap:wrap; font-size:18px; color:#0a0a0a; flex:0 0 auto;
                             background:#fff; align-items:baseline; }
-#tt-pdf-root .tt-pdf-foot-label { font-weight:800; color:#0a0a0a; letter-spacing:0.30em; font-size:14px; margin-right:10px; text-transform:uppercase;
-                                  padding:3px 10px; background:#0a0a0a; color:#fff !important; border-radius:2px; }
-#tt-pdf-root .tt-pdf-foot-ev { color:#0a0a0a; font-size:17px; }
-#tt-pdf-root .tt-pdf-foot-ev b { color:#000; font-weight:800; font-size:19px; }
-#tt-pdf-root .tt-pdf-foot-ev .ev-time { color:#444; font-family:'JetBrains Mono',monospace; font-size:13px; margin-left:8px; letter-spacing:0.08em; font-weight:600; }
-#tt-pdf-root .tt-pdf-foot-sep { color:#cfcdc8; font-size:17px; }
-#tt-pdf-root .tt-pdf-foot-empty { color:#888; font-style:italic; font-size:15px; }
+#tt-pdf-root .tt-pdf-foot-ev { color:#0a0a0a; font-size:18px; }
+#tt-pdf-root .tt-pdf-foot-ev b { color:#000; font-weight:800; font-size:21px; }
+#tt-pdf-root .tt-pdf-foot-ev .ev-time { color:#444; font-family:'JetBrains Mono',monospace; font-size:14px; margin-left:8px; letter-spacing:0.08em; font-weight:600; }
+#tt-pdf-root .tt-pdf-foot-sep { color:#cfcdc8; font-size:18px; }
+#tt-pdf-root .tt-pdf-foot-empty { color:#888; font-style:italic; font-size:16px; }
 `;
 
     function collectAvailableDates(){
@@ -14924,16 +14922,21 @@ function show(id) {
       const info = (typeof getTourInfoForDate === 'function') ? (getTourInfoForDate(dateKey) || {}) : {};
       const dateDisp = (typeof fmtDateDisplay === 'function') ? fmtDateDisplay(dateKey) : dateKey;
       const tStart = tt.timeStart, tEnd = tt.timeEnd;
-      const hours = Math.max(1, tEnd - tStart);
+      const hoursReal = Math.max(1, tEnd - tStart);
+      // R319: 時刻軸の前後に 30 分の余白を入れる → 端の数字がきっちり線上に乗る
+      const padHours = 0.5;
+      const hours = hoursReal + padHours * 2;
+      // 時刻 t を全体軸 (0%〜100%) の左 % に変換
+      const timeToPct = function(t){ return ((t - tStart + padHours) / hours) * 100; };
 
-      // R317: 時刻軸のラベル — 毎正時の数字 + 30 分位置に小さな「30」
+      // R317+R319: 時刻軸のラベル — 毎正時の数字 + 30 分位置に小さな「30」
       const tickHtml = [];
       for (let h = tStart; h <= tEnd; h++) {
-        const pct = ((h - tStart) / hours) * 100;
+        const pct = timeToPct(h);
         const labelCls = h === tStart ? 'start' : (h === tEnd ? 'end' : '');
         tickHtml.push('<div class="tt-pdf-time-label ' + labelCls + '" style="left:' + pct + '%;">' + h + '</div>');
         if (h < tEnd) {
-          const halfPct = ((h - tStart + 0.5) / hours) * 100;
+          const halfPct = timeToPct(h + 0.5);
           tickHtml.push('<div class="tt-pdf-time-label half" style="left:' + halfPct + '%;">30</div>');
         }
       }
@@ -14948,13 +14951,14 @@ function show(id) {
         const lanes = sec.lanes || 1;
         const bars = allBars.filter(function(b){ return !isSpan(b) && b.secId === sec.id; });
         const barsHtml = bars.map(function(b){
-          const left  = ((b.start - tStart) / hours) * 100;
-          const width = Math.max(0, ((b.end - b.start) / hours) * 100);
+          // R319: バーの左右は時刻線にきっちり吸着、上下のみ呼吸余白
+          const left  = timeToPct(b.start);
+          const right = timeToPct(b.end);
+          const width = Math.max(0, right - left);
           const top   = ((b.lane || 0) / lanes) * 100;
           const h     = (1 / lanes) * 100;
           const color = b.color || 'white';
           const text = b.text || '';
-          // R318: バーをセル境界から離す (上下に呼吸する余白)
           return '<div class="tt-pdf-bar color-' + color + '" style="left:' + left + '%;width:' + width +
                  '%;top:calc(' + top + '% + 4px);height:calc(' + h + '% - 8px);">' +
                  '<span class="b-text">' + escapeHtml(text) + '</span></div>';
@@ -14965,13 +14969,13 @@ function show(id) {
                '<div class="tt-pdf-sec-label">' + escapeHtml(sec.name || '') + '</div>' +
                '<div class="tt-pdf-sec-body">' + barsHtml + '</div></div>';
       }).join('');
-      // R316: 縦線レイヤー (sec-rows-wrap に絶対配置・左 0 から右端まで sec-body 領域に合わせる)
+      // R316+R319: 縦線レイヤー (前後 30 分の余白込みで毎正時 + 30 分位置に描画)
       let gridLinesHtml = '<div style="position:absolute;left:20mm;right:0;top:0;bottom:0;pointer-events:none;z-index:1;">';
-      for (let hh = 0; hh <= hours; hh++) {
-        const pct = (hh / hours) * 100;
+      for (let hh = tStart; hh <= tEnd; hh++) {
+        const pct = timeToPct(hh);
         gridLinesHtml += '<div class="tt-pdf-grid-line hour" style="left:calc(' + pct + '% - 0.5px);"></div>';
-        if (hh < hours) {
-          const halfPct = ((hh + 0.5) / hours) * 100;
+        if (hh < tEnd) {
+          const halfPct = timeToPct(hh + 0.5);
           gridLinesHtml += '<div class="tt-pdf-grid-line half" style="left:calc(' + halfPct + '% - 0.5px);"></div>';
         }
       }
@@ -14995,8 +14999,9 @@ function show(id) {
         // 簡略：grid 内で時刻軸を除いた残り領域に section が積まれていると仮定し、
         // top/bottom も「section 帯の高さに比例」する近似
         // sections の合計 lanes に対する比率を grid 高さに掛ける
-        const left  = ((b.start - tStart) / hours) * 100;
-        const width = Math.max(0, ((b.end - b.start) / hours) * 100);
+        // R319: 縦串バーの左右も時刻線に吸着 (timeToPct を使用)
+        const left  = timeToPct(b.start);
+        const width = Math.max(0, timeToPct(b.end) - left);
         // section エリアは grid 内で time-row (5mm) を除いた残り
         // top/height は section の比率を CSS calc で組む
         const topPct = (startLane / totalLanes) * 100;
@@ -15018,18 +15023,18 @@ function show(id) {
                              .sort(function(a, b){ return a.start - b.start; });
       let footHtml;
       if (mainEvs.length === 0) {
-        footHtml = '<span class="tt-pdf-foot-label">MAIN EVENTS</span><span class="tt-pdf-foot-empty">— なし —</span>';
+        // R319: MAIN EVENTS ラベルを廃して表示領域を最大化
+        footHtml = '<span class="tt-pdf-foot-empty">— なし —</span>';
       } else {
-        const items = mainEvs.map(function(b){
+        footHtml = mainEvs.map(function(b){
           return '<span class="tt-pdf-foot-ev"><b>' + escapeHtml(b.text || '') + '</b>' +
                  '<span class="ev-time">' + fmtTimeFromHour(b.start) + '〜' + fmtTimeFromHour(b.end) + '</span></span>';
         }).join('<span class="tt-pdf-foot-sep"> / </span>');
-        footHtml = '<span class="tt-pdf-foot-label">MAIN EVENTS</span>' + items;
       }
 
       // CELL_W を inline CSS 変数で渡す（時刻グリッドの background-size 用）
       // grid 横幅 = 297mm - 12mm padding = 285mm。label 18mm を引いて 267mm 余り。
-      // CELL_W = 267mm / hours
+      // CELL_W = 267mm / hours (R319: 前後 30 分 padding 込みの hours)
       const cellW = (267 / hours) + 'mm';
 
       const venue = info.venue || '';
