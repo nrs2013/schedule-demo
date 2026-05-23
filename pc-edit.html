@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260521.420000">
+<meta name="build-version" content="20260521.430000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -14736,13 +14736,8 @@ function show(id) {
 #tt-pdf-root .tt-pdf-sec-label { width:18mm; flex:0 0 18mm; font-size:9px; letter-spacing:0.05em; padding:3px 5px; border-right:1px solid #1a1a1a;
                                  background:#fafafa; color:#111; font-weight:700; display:flex; align-items:center;
                                  word-break:break-all; line-height:1.15; }
-/* R312: 30 分縦線が html2canvas で消える問題 → 線を 1px 以上に太く、濃く */
-#tt-pdf-root .tt-pdf-sec-body { flex:1 1 auto; position:relative;
-                                background-image:
-                                  linear-gradient(to right, #333 1px, transparent 1px),
-                                  linear-gradient(to right, #aaa 1px, transparent 1px);
-                                background-repeat:repeat-y;
-                                background-size:var(--tt-cell-w,40px) 100%, calc(var(--tt-cell-w,40px) / 2) 100%; }
+/* R313: 縦線は buildTtPdfPageHtml が <div> で物理描画する (CSS gradient は html2canvas で消えるため不採用) */
+#tt-pdf-root .tt-pdf-sec-body { flex:1 1 auto; position:relative; }
 #tt-pdf-root .tt-pdf-bar { position:absolute; box-sizing:border-box; padding:2px 5px; font-size:8.5px; font-weight:600;
                            color:#111; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; line-height:1.15;
                            border-radius:2px; display:flex; align-items:center; }
@@ -14930,6 +14925,17 @@ function show(id) {
         return b && typeof b.start === 'number' && typeof b.end === 'number';
       });
       const isSpan = function(b){ return Array.isArray(b.spanSecIds) && b.spanSecIds.length > 1; };
+      // R313: 縦線レイヤー（毎正時 + 30 分）を <div> で物理的に描画。
+      // CSS の linear-gradient だと html2canvas で消えるので絶対配置の div で固定
+      let gridLinesHtml = '';
+      for (let hh = 0; hh <= hours; hh++) {
+        const pct = (hh / hours) * 100;
+        gridLinesHtml += '<div style="position:absolute;left:' + pct + '%;top:0;bottom:0;width:1px;background:#444;margin-left:-0.5px;pointer-events:none;"></div>';
+        if (hh < hours) {
+          const halfPct = ((hh + 0.5) / hours) * 100;
+          gridLinesHtml += '<div style="position:absolute;left:' + halfPct + '%;top:0;bottom:0;width:1px;background:#bbb;margin-left:-0.5px;pointer-events:none;"></div>';
+        }
+      }
       const secRowsHtml = sections.map(function(sec){
         const lanes = sec.lanes || 1;
         const bars = allBars.filter(function(b){ return !isSpan(b) && b.secId === sec.id; });
@@ -14942,13 +14948,13 @@ function show(id) {
           const tm = fmtTimeFromHour(b.start) + '〜' + fmtTimeFromHour(b.end);
           const text = b.text || '';
           return '<div class="tt-pdf-bar color-' + color + '" style="left:' + left + '%;width:' + width +
-                 '%;top:calc(' + top + '% + 1.5px);height:calc(' + h + '% - 3px);">' +
+                 '%;top:calc(' + top + '% + 1.5px);height:calc(' + h + '% - 3px);z-index:2;">' +
                  '<span class="b-time">' + escapeHtml(tm) + '</span>' +
                  '<span class="b-text">' + escapeHtml(text) + '</span></div>';
         }).join('');
         return '<div class="tt-pdf-sec-row" style="flex:' + lanes + ' 1 0;">' +
                '<div class="tt-pdf-sec-label">' + escapeHtml(sec.name || '') + '</div>' +
-               '<div class="tt-pdf-sec-body">' + barsHtml + '</div></div>';
+               '<div class="tt-pdf-sec-body">' + gridLinesHtml + barsHtml + '</div></div>';
       }).join('');
 
       // 縦串バー（sections を跨ぐ）：sections 順から top/bottom を絶対 % で算出
