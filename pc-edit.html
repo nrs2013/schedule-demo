@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260524.140000">
+<meta name="build-version" content="20260524.170000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -13150,19 +13150,10 @@ function show(id) {
       try { target.setAttribute('contenteditable', 'false'); } catch(e){}
       el.classList.remove('tt-bar-editing');
       const newText = (saveValue ? target.textContent.trim() : (bar.text || ''));
-      // R281d: 元々空 && 編集後も空（保存・キャンセル問わず）→ ゴミバーを自動削除
-      if (wasEmpty && !newText) {
-        const dk = getCurrentDateKey();
-        const tt = dk ? getTimetableForDate(dk) : null;
-        if (tt && Array.isArray(tt.bars)) {
-          tt.bars = tt.bars.filter(function(b){ return b.id !== bar.id; });
-          saveToStorage();
-          if (el && el.parentNode) el.parentNode.removeChild(el);
-          // 縦串バーは overlay 配下なので、念のため render で正規描画
-          if (getSpanSecIds(bar)) render();
-        }
-        return;
-      }
+      // R345: R281d の「空バー自動削除」を撤廃。
+      //   のむさん指示「バーを書いて名前を書かないと消えてしまうという機能はいらない。
+      //   バーを書いて一旦表示するっていう風にした方がいい」(2026-05-23)。
+      //   名前なしのバーも残し、後から dblclick で再編集できる。
       if (saveValue && newText !== (bar.text || '')) {
         bar.text = newText;
         saveToStorage();
