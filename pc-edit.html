@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260521.490000">
+<meta name="build-version" content="20260523.500000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -5813,6 +5813,7 @@
   .tt-bar.span-bar .tt-bar-text.tt-label-bottom { /* noop */ }
   /* R256+R275b: 縦串バーの上下リサイズハンドル — ラベル(z=7)より上に出して必ず掴める。
      左右もラベル中央寄せのため掴みやすい範囲に。 */
+  /* R320: 上下ハンドル — 帯ごと内側に入れ、overflow:hidden で消えないように */
   .tt-bar-handle.t, .tt-bar-handle.b {
     position: absolute;
     left: 0;
@@ -5823,33 +5824,33 @@
     pointer-events: auto;
     z-index: 9;
   }
-  .tt-bar-handle.t { top: -3px; }
-  .tt-bar-handle.b { bottom: -3px; }
-  /* R292: 縦串バーの上下ハンドルは未選択でも薄く可視化。「ここに掴み目がある」と分かるように */
+  .tt-bar-handle.t { top: 0; }
+  .tt-bar-handle.b { bottom: 0; }
+  /* R292+R320: 縦串バーの上下ハンドル — 未選択でも薄く可視化（上下対称） */
   .tt-bar.span-bar .tt-bar-handle.t,
   .tt-bar.span-bar .tt-bar-handle.b {
     background: rgba(245,200,120,0.10);
   }
   .tt-bar-handle.t:hover, .tt-bar-handle.b:hover { background: rgba(245,200,120,0.45); }
-  /* R288: 4 隅コーナーハンドル（PPT 図形相当） — 縦串バー専用 */
+  /* R288+R320: 4 隅コーナーハンドル — 内側に配置して overflow:hidden に消されない */
   .tt-bar.span-bar .tt-bar-handle.tl,
   .tt-bar.span-bar .tt-bar-handle.tr,
   .tt-bar.span-bar .tt-bar-handle.bl,
   .tt-bar.span-bar .tt-bar-handle.br {
     position: absolute;
-    width: 16px;
-    height: 16px;
-    /* R292: 未選択時も薄く可視化（PowerPoint 図形のハンドルのように） */
-    background: rgba(245,200,120,0.18);
-    border: 1px solid rgba(255,255,255,0.35);
+    width: 14px;
+    height: 14px;
+    background: rgba(245,200,120,0.22);
+    border: 1px solid rgba(255,255,255,0.40);
     border-radius: 2px;
     pointer-events: auto;
     z-index: 11;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.4);
   }
-  .tt-bar.span-bar .tt-bar-handle.tl { top: -8px;    left: -8px;  cursor: nwse-resize; }
-  .tt-bar.span-bar .tt-bar-handle.tr { top: -8px;    right: -8px; cursor: nesw-resize; }
-  .tt-bar.span-bar .tt-bar-handle.bl { bottom: -8px; left: -8px;  cursor: nesw-resize; }
-  .tt-bar.span-bar .tt-bar-handle.br { bottom: -8px; right: -8px; cursor: nwse-resize; }
+  .tt-bar.span-bar .tt-bar-handle.tl { top: 2px;    left: 2px;  cursor: nwse-resize; }
+  .tt-bar.span-bar .tt-bar-handle.tr { top: 2px;    right: 2px; cursor: nesw-resize; }
+  .tt-bar.span-bar .tt-bar-handle.bl { bottom: 2px; left: 2px;  cursor: nesw-resize; }
+  .tt-bar.span-bar .tt-bar-handle.br { bottom: 2px; right: 2px; cursor: nwse-resize; }
   .tt-bar.span-bar .tt-bar-handle.tl:hover,
   .tt-bar.span-bar .tt-bar-handle.tr:hover,
   .tt-bar.span-bar .tt-bar-handle.bl:hover,
@@ -5861,7 +5862,7 @@
     box-shadow: inset 3px 0 0 #c8a878, inset -3px 0 0 #c8a878, 0 0 0 2px #c8a878;
     z-index: 10;
   }
-  /* R288: 選択中の縦串バーは PPT 図形のような白枠琥珀ハンドルを常時可視化 */
+  /* R288+R320: 選択中の縦串バーは PPT 図形のような白枠琥珀ハンドル — 4隅とも内側に */
   .tt-bar.span-bar.selected .tt-bar-handle.tl,
   .tt-bar.span-bar.selected .tt-bar-handle.tr,
   .tt-bar.span-bar.selected .tt-bar-handle.bl,
@@ -5871,13 +5872,13 @@
     border-radius: 2px;
     width: 12px;
     height: 12px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.55);
   }
-  .tt-bar.span-bar.selected .tt-bar-handle.tl { top: -6px;    left: -6px;  }
-  .tt-bar.span-bar.selected .tt-bar-handle.tr { top: -6px;    right: -6px; }
-  .tt-bar.span-bar.selected .tt-bar-handle.bl { bottom: -6px; left: -6px;  }
-  .tt-bar.span-bar.selected .tt-bar-handle.br { bottom: -6px; right: -6px; }
-  /* 辺のハンドルも選択中は強調（中央に小さい琥珀の四角） */
+  .tt-bar.span-bar.selected .tt-bar-handle.tl { top: 3px;    left: 3px;  }
+  .tt-bar.span-bar.selected .tt-bar-handle.tr { top: 3px;    right: 3px; }
+  .tt-bar.span-bar.selected .tt-bar-handle.bl { bottom: 3px; left: 3px;  }
+  .tt-bar.span-bar.selected .tt-bar-handle.br { bottom: 3px; right: 3px; }
+  /* R320: 辺中央のハンドル印 — 上下左右すべて内側に。下端も必ず見えるように */
   .tt-bar.span-bar.selected .tt-bar-handle.l::after,
   .tt-bar.span-bar.selected .tt-bar-handle.r::after,
   .tt-bar.span-bar.selected .tt-bar-handle.t::after,
@@ -5889,13 +5890,13 @@
     background: #c8a878;
     border: 2px solid #ffffff;
     border-radius: 2px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.55);
     pointer-events: none;
   }
-  .tt-bar.span-bar.selected .tt-bar-handle.l::after { top: 50%; left: -3px; transform: translateY(-50%); }
-  .tt-bar.span-bar.selected .tt-bar-handle.r::after { top: 50%; right: -3px; transform: translateY(-50%); }
-  .tt-bar.span-bar.selected .tt-bar-handle.t::after { left: 50%; top: -2px; transform: translateX(-50%); }
-  .tt-bar.span-bar.selected .tt-bar-handle.b::after { left: 50%; bottom: -2px; transform: translateX(-50%); }
+  .tt-bar.span-bar.selected .tt-bar-handle.l::after { top: 50%; left: 2px;  transform: translateY(-50%); }
+  .tt-bar.span-bar.selected .tt-bar-handle.r::after { top: 50%; right: 2px; transform: translateY(-50%); }
+  .tt-bar.span-bar.selected .tt-bar-handle.t::after { left: 50%; top: 1px;    transform: translateX(-50%); }
+  .tt-bar.span-bar.selected .tt-bar-handle.b::after { left: 50%; bottom: 1px; transform: translateX(-50%); }
   /* R275b: 左右ハンドルもラベルより上に出して、縦串バーで横幅変更も確実に */
   .tt-bar.span-bar .tt-bar-handle.l,
   .tt-bar.span-bar .tt-bar-handle.r {
@@ -14384,32 +14385,84 @@ function show(id) {
     btn.title = has ? '前日（' + fmtDateDisplay(pk) + '）の内容をコピー' : '前日のタイムテーブルがありません';
   }
 
-  // 開始・終了時刻の変更ダイアログ（簡易版）
-  function changeTimeStart(){
+  // R320: 開始・終了時刻のインライン編集（prompt 廃止）
+  // ボタン本体を input にすり替えて、その場で数字を打ち込める
+  let _ttTimeEditing = null;  // 'start' | 'end' | null  — 多重起動防止
+  function inlineEditTime(side){
+    if (_ttTimeEditing) return;
     const dateKey = getCurrentDateKey();
     if (!dateKey) return;
     const tt = getTimetableForDate(dateKey);
-    const v = prompt('開始時刻（時、0〜23）：', tt.timeStart);
-    if (v == null) return;
-    const n = parseInt(v, 10);
-    if (isNaN(n) || n < 0 || n > 23) { alert('0〜23 の数字を入れてください'); return; }
-    if (n >= tt.timeEnd) { alert('開始は終了より前にしてください'); return; }
-    tt.timeStart = n;
-    saveToStorage();
-    render();
+    const btnId = side === 'start' ? 'tt-btn-time-start' : 'tt-btn-time-end';
+    const btn = document.getElementById(btnId);
+    if (!btn) return;
+    _ttTimeEditing = side;
+    const cur = side === 'start' ? tt.timeStart : tt.timeEnd;
+    const savedText = btn.textContent;
+    const savedHtml = btn.innerHTML;
+    btn.innerHTML = '';
+    btn.classList.add('tt-btn-time-editing');
+    const lbl = document.createElement('span');
+    lbl.textContent = side === 'start' ? '開始 ' : '終了 ';
+    lbl.style.cssText = 'color:#cfcdc8; font-size:11px; letter-spacing:0.06em; margin-right:4px;';
+    const inp = document.createElement('input');
+    inp.type = 'number';
+    inp.value = cur;
+    inp.min = side === 'start' ? 0 : (tt.timeStart + 1);
+    inp.max = side === 'start' ? 23 : 30;
+    inp.step = 1;
+    inp.style.cssText = 'width:48px; background:#1a1a1a; color:#f5c878; border:1px solid #c8a878; border-radius:3px; padding:2px 4px; font-size:12px; font-family:inherit; font-weight:600; text-align:center; outline:none;';
+    const suf = document.createElement('span');
+    suf.textContent = ':00';
+    suf.style.cssText = 'color:#cfcdc8; font-size:11px; margin-left:2px;';
+    btn.appendChild(lbl);
+    btn.appendChild(inp);
+    btn.appendChild(suf);
+    setTimeout(function(){ inp.focus(); inp.select(); }, 0);
+    let done = false;
+    function cleanup(){
+      _ttTimeEditing = null;
+      btn.classList.remove('tt-btn-time-editing');
+      inp.removeEventListener('keydown', onKey);
+      inp.removeEventListener('blur', onBlur);
+    }
+    function cancel(){
+      if (done) return;
+      done = true;
+      btn.innerHTML = savedHtml || savedText;
+      cleanup();
+    }
+    function commit(){
+      if (done) return;
+      const raw = (inp.value || '').trim();
+      if (raw === '') { cancel(); return; }
+      const n = parseInt(raw, 10);
+      if (side === 'start') {
+        if (isNaN(n) || n < 0 || n > 23) { alert('0〜23 の数字を入れてください'); inp.focus(); inp.select(); return; }
+        if (n >= tt.timeEnd) { alert('開始は終了より前にしてください'); inp.focus(); inp.select(); return; }
+        if (n === tt.timeStart) { cancel(); return; }
+        done = true;
+        tt.timeStart = n;
+      } else {
+        if (isNaN(n) || n <= tt.timeStart || n > 30) { alert((tt.timeStart + 1) + '〜30 の数字を入れてください'); inp.focus(); inp.select(); return; }
+        if (n === tt.timeEnd) { cancel(); return; }
+        done = true;
+        tt.timeEnd = n;
+      }
+      saveToStorage();
+      cleanup();
+      render();
+    }
+    function onKey(ev){
+      if (ev.key === 'Enter') { ev.preventDefault(); commit(); }
+      else if (ev.key === 'Escape') { ev.preventDefault(); cancel(); }
+    }
+    function onBlur(){ commit(); }
+    inp.addEventListener('keydown', onKey);
+    inp.addEventListener('blur', onBlur);
   }
-  function changeTimeEnd(){
-    const dateKey = getCurrentDateKey();
-    if (!dateKey) return;
-    const tt = getTimetableForDate(dateKey);
-    const v = prompt('終了時刻（時、' + (tt.timeStart + 1) + '〜30 / 翌朝6時 = 30）：', tt.timeEnd);
-    if (v == null) return;
-    const n = parseInt(v, 10);
-    if (isNaN(n) || n <= tt.timeStart || n > 30) { alert((tt.timeStart + 1) + '〜30 の数字を入れてください'); return; }
-    tt.timeEnd = n;
-    saveToStorage();
-    render();
-  }
+  function changeTimeStart(){ inlineEditTime('start'); }
+  function changeTimeEnd(){ inlineEditTime('end'); }
 
   function bindToolbarOnce(){
     // R281: 架空の tt-btn-add-section は削除（実体は [data-act="add-section"] で別 bind）。
