@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260523.820000">
+<meta name="build-version" content="20260523.860000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -14804,21 +14804,23 @@ function show(id) {
                                    display:flex; align-items:center; justify-content:center;
                                    font-size:10px; letter-spacing:0.32em; color:#fff; font-weight:700; }
 #tt-pdf-root .tt-pdf-time-axis { flex:1 1 auto; position:relative; }
-/* R328b: ラベルに大きな padding-bottom を入れて、ボックスの下半分を「ティック領域」にする
-   数字は padding-top の領域に、ティック (::after) は padding-bottom 領域の中央に
-   配置することで、数字の下にだけ縦線が出る */
+/* R335: 数字とティック線の距離を離す + 正時と 30分のティック線長さを揃える
+   - padding-top を 1.2mm → 2.5mm に増やし、数字とティック線の間に余白
+   - 30 分も同じだけ下げる (1.6mm → 2.5mm)
+   - ティック線高さを正時 4mm / 30分 2mm から 両者 3mm に統一
+   - ティック線の太さも正時 1px → 0.5px、30分 0.6px → 0.4px に細く */
 #tt-pdf-root .tt-pdf-time-label { position:absolute; top:0; transform:translateX(-50%);
-                                  padding:1.2mm 0 4mm 0;
+                                  padding:2.5mm 0 4mm 0;
                                   font-weight:800; color:#1a1a1a; font-size:11px; letter-spacing:0;
                                   text-align:center; line-height:1; min-width:8px; }
-#tt-pdf-root .tt-pdf-time-label.half { font-size:7.5px; font-weight:500; color:#a8a6a2; padding-top:1.6mm; padding-bottom:4mm; }
-/* ティック線は padding-bottom の領域内に配置 — bottom:0、height 4mm = padding-bottom と同じ */
+#tt-pdf-root .tt-pdf-time-label.half { font-size:7.5px; font-weight:500; color:#a8a6a2; padding-top:2.5mm; padding-bottom:4mm; }
+/* ティック線は padding-bottom の領域内に配置 — 正時 / 30分とも 3mm に統一 */
 #tt-pdf-root .tt-pdf-time-label::after {
   content:''; position:absolute; left:50%; bottom:0; transform:translateX(-50%);
-  width:1px; height:4mm; background:#1a1a1a; pointer-events:none;
+  width:0.5px; height:3mm; background:#1a1a1a; pointer-events:none;
 }
 #tt-pdf-root .tt-pdf-time-label.half::after {
-  width:0.6px; height:2mm; background:#c4c2be;
+  width:0.4px; height:3mm; background:#c4c2be;
 }
 /* ── セクション行 ── */
 /* R325: section 行の divider も 0.6px に統一 (色は薄く) */
@@ -14830,10 +14832,12 @@ function show(id) {
                                  background:#fafaf6; color:#1a1a1a; font-weight:700; display:flex; align-items:center;
                                  word-break:break-all; line-height:1.2; }
 #tt-pdf-root .tt-pdf-sec-body { flex:1 1 auto; position:relative; }
-/* R326: 時間縦軸を優先表示 — hour は 1px に太く、bar より z-index 上 */
+/* R335: 縦線を全て細く + 15/45 分の quarter 線を追加。
+   z-index 5 でバー (3, 4) の上に来るので、バーの中も縦線が通る ("線は重なってもいい") */
 #tt-pdf-root .tt-pdf-grid-line { position:absolute; top:0; bottom:0; pointer-events:none; }
-#tt-pdf-root .tt-pdf-grid-line.hour { background:#1a1a1a; width:1px; }
-#tt-pdf-root .tt-pdf-grid-line.half { background:#d8d6d2; width:0.6px; }
+#tt-pdf-root .tt-pdf-grid-line.hour    { background:#555;    width:0.5px; }
+#tt-pdf-root .tt-pdf-grid-line.half    { background:#c8c6c0; width:0.4px; }
+#tt-pdf-root .tt-pdf-grid-line.quarter { background:#e8e6e0; width:0.3px; }
 /* R326+: 個別バー — dashed 撤廃、border-radius 0 で grid 線と完全に揃う直方形 */
 #tt-pdf-root .tt-pdf-bar { position:absolute; box-sizing:border-box; padding:3px 8px; font-size:10px; font-weight:600;
                            color:#1a1a1a; background:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; line-height:1.2;
@@ -15082,15 +15086,19 @@ function show(id) {
                '<div class="tt-pdf-sec-label">' + escapeHtml(sec.name || '') + '</div>' +
                '<div class="tt-pdf-sec-body">' + barsHtml + '</div></div>';
       }).join('');
-      // R329: 縦線レイヤーを bar の下 (z-index 1) に戻す
-      //   バーが乗ったところは白塗りで縦線が隠れる、バー外では縦線が見える
-      let gridLinesHtml = '<div style="position:absolute;left:20mm;right:0;top:0;bottom:0;pointer-events:none;z-index:1;">';
+      // R335: 縦線レイヤーを bar の上 (z-index 5) に上げて、バー内も縦線が通る
+      // 「線は重なってもいい、書いちゃってもいい」とのユーザー指示。15/45 分の quarter 線も追加
+      let gridLinesHtml = '<div style="position:absolute;left:20mm;right:0;top:0;bottom:0;pointer-events:none;z-index:5;">';
       for (let hh = tStart; hh <= tEnd; hh++) {
         const pct = timeToPct(hh);
-        gridLinesHtml += '<div class="tt-pdf-grid-line hour" style="left:calc(' + pct + '% - 0.5px);"></div>';
+        gridLinesHtml += '<div class="tt-pdf-grid-line hour" style="left:calc(' + pct + '% - 0.25px);"></div>';
         if (hh < tEnd) {
+          const q15 = timeToPct(hh + 0.25);
           const halfPct = timeToPct(hh + 0.5);
-          gridLinesHtml += '<div class="tt-pdf-grid-line half" style="left:calc(' + halfPct + '% - 0.3px);"></div>';
+          const q45 = timeToPct(hh + 0.75);
+          gridLinesHtml += '<div class="tt-pdf-grid-line quarter" style="left:calc(' + q15 + '% - 0.15px);"></div>';
+          gridLinesHtml += '<div class="tt-pdf-grid-line half"    style="left:calc(' + halfPct + '% - 0.2px);"></div>';
+          gridLinesHtml += '<div class="tt-pdf-grid-line quarter" style="left:calc(' + q45 + '% - 0.15px);"></div>';
         }
       }
       gridLinesHtml += '</div>';
