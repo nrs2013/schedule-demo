@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260524.050000">
+<meta name="build-version" content="20260524.080000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -15106,9 +15106,10 @@ function show(id) {
           if (width > 0 && width < 1.8) sizeCls = ' bar-vnarrow';
           else if (width < 3.5) sizeCls = ' bar-narrow';
           else if (width < 7) sizeCls = ' bar-tight';
+          // R342: bar 内部縦線 (buildInlineLines) を撤廃。bar の中は文字を見やすくするために
+          // 白 (or ピンク) で塗りつぶす。縦線は bar の裏 (grid line z-index 1) で隠れる。
           return '<div class="tt-pdf-bar color-' + color + sizeCls + '" style="left:' + left + '%;width:' + width +
                  '%;top:calc(' + top + '% + 4px);height:calc(' + h + '% - 8px);">' +
-                 buildInlineLines(b.start, b.end) +
                  '<span class="b-text">' + escapeHtml(text) + '</span></div>';
         }).join('');
         // R317: lanes 1〜2 は同じ高さ、3 以上で段階的に太く (洗練された設計)
@@ -15175,12 +15176,12 @@ function show(id) {
         //   sec-label 幅 = 20mm、grid line 親 div も left:20mm 開始、個別バーは
         //   sec-body (20mm から右) の中で left%。span-bar だけ 18mm 基準だったため
         //   バー外の縦線とバー内の縦線が 2mm 横にズレて見えていた。これを統一。
+        // R342: 縦串バーも内部縦線撤廃。ピンクはピンクで塗りつぶし、文字を見やすく。
         return '<div class="tt-pdf-span-bar color-' + color + padCls +
                '" style="left:calc(20mm + (100% - 20mm) * ' + (left/100) + ');' +
                'width:calc((100% - 20mm) * ' + (width/100) + ');' +
                'top:calc(5mm + (100% - 5mm) * ' + (topPct/100) + ');' +
                'height:calc((100% - 5mm) * ' + (heightPct/100) + ');">' +
-               buildInlineLines(b.start, b.end) +
                '<div class="b-text">' + escapeHtml(text) + '</div>' +
                (tm ? '<div class="b-time">' + escapeHtml(tm) + '</div>' : '') + '</div>';
       }).join('');
