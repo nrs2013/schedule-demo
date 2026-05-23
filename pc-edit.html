@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260523.510000">
+<meta name="build-version" content="20260523.520000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -14791,13 +14791,20 @@ function show(id) {
                                    display:flex; align-items:center; justify-content:center;
                                    font-size:9.5px; letter-spacing:0.28em; color:#fff; font-weight:700; }
 #tt-pdf-root .tt-pdf-time-axis { flex:1 1 auto; position:relative; }
-/* 時刻ラベルは背景透明にして、その下の縦線が途切れず通るように */
+/* R321: 時刻ラベル — 端も含めすべて translateX(-50%) で線中央に乗せる */
 #tt-pdf-root .tt-pdf-time-label { position:absolute; top:0; transform:translateX(-50%); padding:0 3px;
-                                  font-weight:700; color:#1a1a1a; line-height:6mm; font-size:10px; letter-spacing:0.04em; }
-#tt-pdf-root .tt-pdf-time-label.start { transform:translateX(0); padding-left:4px; }
-#tt-pdf-root .tt-pdf-time-label.end { transform:translateX(-100%); padding-right:4px; }
-/* R317: 30 分位置の小さい「30」ラベル */
+                                  font-weight:700; color:#1a1a1a; line-height:6mm; font-size:10px; letter-spacing:0.04em;
+                                  text-align:center; }
+/* R321: 30 分位置の小さい「30」ラベル */
 #tt-pdf-root .tt-pdf-time-label.half { font-size:7px; font-weight:500; color:#999; letter-spacing:0; }
+/* R321: 時刻ラベル下にスタイリッシュなティック線 — 時刻軸と下のグリッドを視覚的に繋ぐ */
+#tt-pdf-root .tt-pdf-time-label::after {
+  content:''; position:absolute; left:50%; bottom:0; transform:translateX(-50%);
+  width:0.6px; height:1.4mm; background:#1a1a1a; pointer-events:none;
+}
+#tt-pdf-root .tt-pdf-time-label.half::after {
+  width:0.4px; height:0.7mm; background:#aaa; bottom:0.4mm;
+}
 /* ── セクション行 ── */
 #tt-pdf-root .tt-pdf-sec-row { display:flex; flex-direction:row; border-bottom:0.5px solid #d8d6d2;
                                position:relative; min-height:0; }
@@ -14807,10 +14814,10 @@ function show(id) {
                                  background:#fafaf6; color:#1a1a1a; font-weight:700; display:flex; align-items:center;
                                  word-break:break-all; line-height:1.2; }
 #tt-pdf-root .tt-pdf-sec-body { flex:1 1 auto; position:relative; }
-/* 縦線（毎正時：濃 / 30 分：薄）— buildTtPdfPageHtml が物理 <div> で描画 */
-#tt-pdf-root .tt-pdf-grid-line { position:absolute; top:0; bottom:0; width:1px; pointer-events:none; }
-#tt-pdf-root .tt-pdf-grid-line.hour { background:#1a1a1a; }
-#tt-pdf-root .tt-pdf-grid-line.half { background:#dcdad6; }
+/* R321: 縦線を細く＆色を抑えて、ラベル下のティックと繋がって見えるデザインに */
+#tt-pdf-root .tt-pdf-grid-line { position:absolute; top:0; bottom:0; pointer-events:none; }
+#tt-pdf-root .tt-pdf-grid-line.hour { background:#1a1a1a; width:0.6px; }
+#tt-pdf-root .tt-pdf-grid-line.half { background:#e4e2de; width:0.4px; }
 /* R319: 個別バーの外枠を細くスタイリッシュに */
 #tt-pdf-root .tt-pdf-bar { position:absolute; box-sizing:border-box; padding:3px 8px; font-size:10px; font-weight:600;
                            color:#1a1a1a; background:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; line-height:1.2;
@@ -15025,14 +15032,14 @@ function show(id) {
                '<div class="tt-pdf-sec-label">' + escapeHtml(sec.name || '') + '</div>' +
                '<div class="tt-pdf-sec-body">' + barsHtml + '</div></div>';
       }).join('');
-      // R316+R319: 縦線レイヤー (前後 30 分の余白込みで毎正時 + 30 分位置に描画)
+      // R321: 縦線レイヤー — 細線化に合わせて中央オフセットも 0.5 → 0.3 / 0.2 px
       let gridLinesHtml = '<div style="position:absolute;left:20mm;right:0;top:0;bottom:0;pointer-events:none;z-index:1;">';
       for (let hh = tStart; hh <= tEnd; hh++) {
         const pct = timeToPct(hh);
-        gridLinesHtml += '<div class="tt-pdf-grid-line hour" style="left:calc(' + pct + '% - 0.5px);"></div>';
+        gridLinesHtml += '<div class="tt-pdf-grid-line hour" style="left:calc(' + pct + '% - 0.3px);"></div>';
         if (hh < tEnd) {
           const halfPct = timeToPct(hh + 0.5);
-          gridLinesHtml += '<div class="tt-pdf-grid-line half" style="left:calc(' + halfPct + '% - 0.5px);"></div>';
+          gridLinesHtml += '<div class="tt-pdf-grid-line half" style="left:calc(' + halfPct + '% - 0.2px);"></div>';
         }
       }
       gridLinesHtml += '</div>';
