@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260521.460000">
+<meta name="build-version" content="20260521.470000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -14466,7 +14466,7 @@ function show(id) {
         secRows0.forEach(function(row){
           const sid = row.getAttribute('data-sec-id');
           const sec = tt.sections.find(function(s){ return s.id === sid; });
-          if (sec) row.style.flex = (sec.lanes || 1) + ' 1 0';
+          if (sec) { const _l=sec.lanes||1; row.style.flex = (_l<=2?1:_l/2) + ' 1 0'; }
         });
         const headerH = (paper.querySelector('.tt-paper-header')||{}).offsetHeight || 0;
         const footerH = (paper.querySelector('.tt-paper-footer')||{}).offsetHeight || 0;
@@ -14493,7 +14493,7 @@ function show(id) {
         secRows1.forEach(function(row){
           const sid = row.getAttribute('data-sec-id');
           const sec = tt.sections.find(function(s){ return s.id === sid; });
-          if (sec) row.style.flex = (sec.lanes || 1) + ' 1 0';
+          if (sec) { const _l=sec.lanes||1; row.style.flex = (_l<=2?1:_l/2) + ' 1 0'; }
         });
         // transform は使わない（CSS で transform: none !important なので念のためクリア）
         paper.style.transform = '';
@@ -14740,6 +14740,8 @@ function show(id) {
                                   font-weight:700; color:#1a1a1a; line-height:6mm; font-size:10px; letter-spacing:0.04em; }
 #tt-pdf-root .tt-pdf-time-label.start { transform:translateX(0); padding-left:4px; }
 #tt-pdf-root .tt-pdf-time-label.end { transform:translateX(-100%); padding-right:4px; }
+/* R317: 30 分位置の小さい「30」ラベル */
+#tt-pdf-root .tt-pdf-time-label.half { font-size:7px; font-weight:500; color:#999; letter-spacing:0; }
 /* ── セクション行 ── */
 #tt-pdf-root .tt-pdf-sec-row { display:flex; flex-direction:row; border-bottom:0.5px solid #d8d6d2;
                                position:relative; min-height:0; }
@@ -14775,15 +14777,16 @@ function show(id) {
 #tt-pdf-root .tt-pdf-span-bar.color-pink   { background:#fcd0dc; border:2.2px solid #c8336a; }
 #tt-pdf-root .tt-pdf-span-bar .b-text { font-weight:800; color:#0a0a0a; word-break:break-all; font-size:12px; letter-spacing:0.06em; }
 #tt-pdf-root .tt-pdf-span-bar .b-time { font-family:'JetBrains Mono','Courier New',monospace; font-weight:600; font-size:9px; color:rgba(0,0,0,0.55); margin-top:4px; letter-spacing:0.10em; }
-/* ── フッタ ── */
-#tt-pdf-root .tt-pdf-foot { margin-top:4mm; padding:5px 10px; border:0.8px solid #1a1a1a; border-radius:2px;
-                            display:flex; gap:14px; flex-wrap:wrap; font-size:10px; color:#1a1a1a; flex:0 0 auto; background:#fafaf6; }
-#tt-pdf-root .tt-pdf-foot-label { font-weight:700; color:#888; letter-spacing:0.22em; font-size:9px; margin-right:6px; text-transform:uppercase; }
-#tt-pdf-root .tt-pdf-foot-ev { color:#1a1a1a; }
-#tt-pdf-root .tt-pdf-foot-ev b { color:#0a0a0a; font-weight:700; }
-#tt-pdf-root .tt-pdf-foot-ev .ev-time { color:rgba(0,0,0,0.55); font-family:'JetBrains Mono',monospace; font-size:9px; margin-left:5px; letter-spacing:0.05em; }
-#tt-pdf-root .tt-pdf-foot-sep { color:#cfcdc8; }
-#tt-pdf-root .tt-pdf-foot-empty { color:#888; font-style:italic; }
+/* ── フッタ：MAIN EVENTS をしっかり目立たせる（みんなが注目する核） ── */
+#tt-pdf-root .tt-pdf-foot { margin-top:4mm; padding:10px 16px; border:1.5px solid #c8336a; border-radius:3px;
+                            display:flex; gap:18px; flex-wrap:wrap; font-size:14px; color:#1a1a1a; flex:0 0 auto;
+                            background:#fff5f8; align-items:baseline; }
+#tt-pdf-root .tt-pdf-foot-label { font-weight:800; color:#c8336a; letter-spacing:0.28em; font-size:12px; margin-right:8px; text-transform:uppercase; }
+#tt-pdf-root .tt-pdf-foot-ev { color:#1a1a1a; font-size:14px; }
+#tt-pdf-root .tt-pdf-foot-ev b { color:#0a0a0a; font-weight:800; font-size:15px; }
+#tt-pdf-root .tt-pdf-foot-ev .ev-time { color:#666; font-family:'JetBrains Mono',monospace; font-size:11px; margin-left:7px; letter-spacing:0.06em; font-weight:600; }
+#tt-pdf-root .tt-pdf-foot-sep { color:#d8c0cc; font-size:14px; }
+#tt-pdf-root .tt-pdf-foot-empty { color:#888; font-style:italic; font-size:13px; }
 `;
 
     function collectAvailableDates(){
@@ -14921,12 +14924,16 @@ function show(id) {
       const tStart = tt.timeStart, tEnd = tt.timeEnd;
       const hours = Math.max(1, tEnd - tStart);
 
-      // R316: 時刻軸のラベル（数字のみ・縦線は別レイヤーで描画）
+      // R317: 時刻軸のラベル — 毎正時の数字 + 30 分位置に小さな「30」
       const tickHtml = [];
       for (let h = tStart; h <= tEnd; h++) {
         const pct = ((h - tStart) / hours) * 100;
         const labelCls = h === tStart ? 'start' : (h === tEnd ? 'end' : '');
         tickHtml.push('<div class="tt-pdf-time-label ' + labelCls + '" style="left:' + pct + '%;">' + h + '</div>');
+        if (h < tEnd) {
+          const halfPct = ((h - tStart + 0.5) / hours) * 100;
+          tickHtml.push('<div class="tt-pdf-time-label half" style="left:' + halfPct + '%;">30</div>');
+        }
       }
 
       const sections = tt.sections || [];
@@ -14949,7 +14956,9 @@ function show(id) {
                  '%;top:calc(' + top + '% + 2px);height:calc(' + h + '% - 4px);">' +
                  '<span class="b-text">' + escapeHtml(text) + '</span></div>';
         }).join('');
-        return '<div class="tt-pdf-sec-row" style="flex:' + lanes + ' 1 0;">' +
+        // R317: lanes 1〜2 は同じ高さ、3 以上で段階的に太く (洗練された設計)
+        const flexVal = lanes <= 2 ? 1 : (lanes / 2);
+        return '<div class="tt-pdf-sec-row" style="flex:' + flexVal + ' 1 0;">' +
                '<div class="tt-pdf-sec-label">' + escapeHtml(sec.name || '') + '</div>' +
                '<div class="tt-pdf-sec-body">' + barsHtml + '</div></div>';
       }).join('');
@@ -15028,8 +15037,8 @@ function show(id) {
         '<div class="tt-pdf-mast">' +
           '<div class="tt-pdf-mast-left">' +
             '<span class="tt-pdf-mast-title">' + escapeHtml(masterTitle) + '</span>' +
-            (venue ? '<span class="tt-pdf-mast-meta">VENUE <b>' + escapeHtml(venue) + '</b></span>' : '') +
-            (phase ? '<span class="tt-pdf-mast-meta">PHASE <b>' + escapeHtml(phase) + '</b></span>' : '') +
+            '<span class="tt-pdf-mast-meta">VENUE <b>' + escapeHtml(venue || '—') + '</b></span>' +
+            '<span class="tt-pdf-mast-meta">PHASE <b>' + escapeHtml(phase || '—') + '</b></span>' +
           '</div>' +
           '<div class="tt-pdf-mast-date">' + escapeHtml(dateDisp) + '</div>' +
         '</div>' +
