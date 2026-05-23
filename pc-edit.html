@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260523.970000">
+<meta name="build-version" content="20260523.990000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -15086,9 +15086,11 @@ function show(id) {
                '<div class="tt-pdf-sec-label">' + escapeHtml(sec.name || '') + '</div>' +
                '<div class="tt-pdf-sec-body">' + barsHtml + '</div></div>';
       }).join('');
-      // R335: 縦線レイヤーを bar の上 (z-index 5) に上げて、バー内も縦線が通る
-      // 「線は重なってもいい、書いちゃってもいい」とのユーザー指示。15/45 分の quarter 線も追加
-      let gridLinesHtml = '<div style="position:absolute;left:20mm;right:0;top:0;bottom:0;pointer-events:none;z-index:5;">';
+      // R339: z-index を 1 に戻す。R335 で「バーのところの縦線が消えてる」をのむさんの真意
+      //   (時刻軸サブメモリの線が時間の太い線で消える) と取り違えて z-index 5 に上げてしまい、
+      //   バー上に縦線が乗る不要な挙動が出ていた。R329 までの「バーが下の縦線を隠す」設計に復帰。
+      //   バー外 (時刻軸サブメモリ部分) では今と同様に細い線も見える。15/45 分の quarter 線は維持。
+      let gridLinesHtml = '<div style="position:absolute;left:20mm;right:0;top:0;bottom:0;pointer-events:none;z-index:1;">';
       for (let hh = tStart; hh <= tEnd; hh++) {
         const pct = timeToPct(hh);
         gridLinesHtml += '<div class="tt-pdf-grid-line hour" style="left:calc(' + pct + '% - 0.25px);"></div>';
