@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260523.500000">
+<meta name="build-version" content="20260523.510000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -5814,18 +5814,21 @@
   /* R256+R275b: 縦串バーの上下リサイズハンドル — ラベル(z=7)より上に出して必ず掴める。
      左右もラベル中央寄せのため掴みやすい範囲に。 */
   /* R320: 上下ハンドル — 帯ごと内側に入れ、overflow:hidden で消えないように */
+  /* 重要: .tt-bar-handle のベースルール (top:0; height:100%) を完全上書きするため
+     width/height/top/bottom をすべて明示 */
   .tt-bar-handle.t, .tt-bar-handle.b {
     position: absolute;
     left: 0;
     right: 0;
+    width: auto;
     height: 10px;
     cursor: ns-resize;
     background: transparent;
     pointer-events: auto;
     z-index: 9;
   }
-  .tt-bar-handle.t { top: 0; }
-  .tt-bar-handle.b { bottom: 0; }
+  .tt-bar-handle.t { top: 0; bottom: auto; }
+  .tt-bar-handle.b { top: auto; bottom: 0; }
   /* R292+R320: 縦串バーの上下ハンドル — 未選択でも薄く可視化（上下対称） */
   .tt-bar.span-bar .tt-bar-handle.t,
   .tt-bar.span-bar .tt-bar-handle.b {
@@ -5847,10 +5850,10 @@
     z-index: 11;
     box-shadow: 0 1px 2px rgba(0,0,0,0.4);
   }
-  .tt-bar.span-bar .tt-bar-handle.tl { top: 2px;    left: 2px;  cursor: nwse-resize; }
-  .tt-bar.span-bar .tt-bar-handle.tr { top: 2px;    right: 2px; cursor: nesw-resize; }
-  .tt-bar.span-bar .tt-bar-handle.bl { bottom: 2px; left: 2px;  cursor: nesw-resize; }
-  .tt-bar.span-bar .tt-bar-handle.br { bottom: 2px; right: 2px; cursor: nwse-resize; }
+  .tt-bar.span-bar .tt-bar-handle.tl { top: 2px;    bottom: auto; left: 2px;    right: auto; cursor: nwse-resize; }
+  .tt-bar.span-bar .tt-bar-handle.tr { top: 2px;    bottom: auto; left: auto;   right: 2px;  cursor: nesw-resize; }
+  .tt-bar.span-bar .tt-bar-handle.bl { top: auto;   bottom: 2px;  left: 2px;    right: auto; cursor: nesw-resize; }
+  .tt-bar.span-bar .tt-bar-handle.br { top: auto;   bottom: 2px;  left: auto;   right: 2px;  cursor: nwse-resize; }
   .tt-bar.span-bar .tt-bar-handle.tl:hover,
   .tt-bar.span-bar .tt-bar-handle.tr:hover,
   .tt-bar.span-bar .tt-bar-handle.bl:hover,
@@ -5874,10 +5877,10 @@
     height: 12px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.55);
   }
-  .tt-bar.span-bar.selected .tt-bar-handle.tl { top: 3px;    left: 3px;  }
-  .tt-bar.span-bar.selected .tt-bar-handle.tr { top: 3px;    right: 3px; }
-  .tt-bar.span-bar.selected .tt-bar-handle.bl { bottom: 3px; left: 3px;  }
-  .tt-bar.span-bar.selected .tt-bar-handle.br { bottom: 3px; right: 3px; }
+  .tt-bar.span-bar.selected .tt-bar-handle.tl { top: 3px;  bottom: auto; left: 3px;  right: auto; }
+  .tt-bar.span-bar.selected .tt-bar-handle.tr { top: 3px;  bottom: auto; left: auto; right: 3px;  }
+  .tt-bar.span-bar.selected .tt-bar-handle.bl { top: auto; bottom: 3px;  left: 3px;  right: auto; }
+  .tt-bar.span-bar.selected .tt-bar-handle.br { top: auto; bottom: 3px;  left: auto; right: 3px;  }
   /* R320: 辺中央のハンドル印 — 上下左右すべて内側に。下端も必ず見えるように */
   .tt-bar.span-bar.selected .tt-bar-handle.l::after,
   .tt-bar.span-bar.selected .tt-bar-handle.r::after,
