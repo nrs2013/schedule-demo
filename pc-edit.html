@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260524.170000">
+<meta name="build-version" content="20260524.200000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -12615,17 +12615,19 @@ function show(id) {
 
   const STORAGE_KEY = 'schedule-studio:timetableByDate:v1';
 
+  // R346: デフォルト lanes=2 (1 セルに 2 バーが入る) — のむさん指示 2026-05-23
+  //   バー細くして上下 2 本入るのがデフォルト、3 本目以降は lanes=3+ でセル拡張
   const DEFAULT_SECTIONS = [
-    { id: 'sec-stage',  name: 'STAGE',     lanes: 1 },
-    { id: 'sec-light',  name: '照明',      lanes: 1 },
-    { id: 'sec-video',  name: '映像',      lanes: 1 },
-    { id: 'sec-pa',     name: 'PA/MP',     lanes: 1 },
-    { id: 'sec-fx',     name: '特効',      lanes: 1 },
-    { id: 'sec-power',  name: '電源',      lanes: 1 },
-    { id: 'sec-rec',    name: '収録/カメラ', lanes: 1 },
-    { id: 'sec-cast',   name: 'CAST',     lanes: 1 },
-    { id: 'sec-note',   name: '備考',      lanes: 1 },
-    { id: 'sec-staff',  name: 'アルバイト', lanes: 1 }
+    { id: 'sec-stage',  name: 'STAGE',     lanes: 2 },
+    { id: 'sec-light',  name: '照明',      lanes: 2 },
+    { id: 'sec-video',  name: '映像',      lanes: 2 },
+    { id: 'sec-pa',     name: 'PA/MP',     lanes: 2 },
+    { id: 'sec-fx',     name: '特効',      lanes: 2 },
+    { id: 'sec-power',  name: '電源',      lanes: 2 },
+    { id: 'sec-rec',    name: '収録/カメラ', lanes: 2 },
+    { id: 'sec-cast',   name: 'CAST',     lanes: 2 },
+    { id: 'sec-note',   name: '備考',      lanes: 2 },
+    { id: 'sec-staff',  name: 'アルバイト', lanes: 2 }
   ];
 
   let timetableByDate = {};
@@ -12830,10 +12832,11 @@ function show(id) {
     CELL_W = Math.max(28, Math.floor((axisW / hours) * factor));
   }
   function updateLaneH(tt){
-    // R240: 固定サイズ。バーは十分見やすい高さに
-    LANE_H = 44;
-    BAR_H = 36;
-    BAR_TOP = 4;
+    // R346: lanes=2 デフォルト化。バー 1 本の高さを半分にして、セクション 1 セルに
+    //   バー 2 本 (上下) が入るのがデフォルト。3 本目以降は lanes=3+ でセル拡張。
+    LANE_H = 22;
+    BAR_H = 18;
+    BAR_TOP = 2;
   }
   function updatePaperScale(){
     // R240: transform scale を完全撤去。サイズは CSS と updateCellW で決定
