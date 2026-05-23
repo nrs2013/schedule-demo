@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260523.940000">
+<meta name="build-version" content="20260523.970000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -15139,11 +15139,13 @@ function show(id) {
         }
         const padCls = width < 5 ? ' narrow' : '';
         const text = b.text || '';
-        // R336: 縦串バーも shift 撤廃。バー左端 = 縦線中心 (pct%) で完全一致。
-        // grid line が z-index 5 でバーの上に来るので隙間もズレも出ない
+        // R338: 縦串バーの基準を 18mm → 20mm に修正。
+        //   sec-label 幅 = 20mm、grid line 親 div も left:20mm 開始、個別バーは
+        //   sec-body (20mm から右) の中で left%。span-bar だけ 18mm 基準だったため
+        //   バー外の縦線とバー内の縦線が 2mm 横にズレて見えていた。これを統一。
         return '<div class="tt-pdf-span-bar color-' + color + padCls +
-               '" style="left:calc(18mm + (100% - 18mm) * ' + (left/100) + ');' +
-               'width:calc((100% - 18mm) * ' + (width/100) + ');' +
+               '" style="left:calc(20mm + (100% - 20mm) * ' + (left/100) + ');' +
+               'width:calc((100% - 20mm) * ' + (width/100) + ');' +
                'top:calc(5mm + (100% - 5mm) * ' + (topPct/100) + ');' +
                'height:calc((100% - 5mm) * ' + (heightPct/100) + ');">' +
                '<div class="b-text">' + escapeHtml(text) + '</div>' +
