@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260523.308000">
+<meta name="build-version" content="20260523.309000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="apple-touch-icon" href="favicon.svg">
 <title>SCHEDULE STUDIO — STAFF</title>
@@ -49,6 +49,50 @@
       window.__fbConnected = snap.val() === true;
     });
   } catch (e) { console.error('[FB] init err', e); }
+})();
+// R309 phone: デモデータ自動投入 — 初回アクセスでもタイムスケジュールが見える
+(function seedDemoIfEmpty(){
+  try {
+    // 公演データが無い場合だけ投入（既存ユーザーのデータは絶対に壊さない）
+    if (!localStorage.getItem('schedule-studio:concerts:v1')) {
+      const concert = {
+        id: 'concert-demo',
+        title: '櫻坂46  四期生ライブ',
+        name: '櫻坂46  四期生ライブ',
+        passwords: { entry: '1111', edit: '1111', staff: '1111', artist: '2222' },
+        createdAt: Date.now()
+      };
+      localStorage.setItem('schedule-studio:concerts:v1', JSON.stringify([concert]));
+      localStorage.setItem('schedule-studio:active-concert-id', concert.id);
+    }
+    if (!localStorage.getItem('schedule-studio:timetableByDate:v1')) {
+      const demo = {
+        '2026-05-22': {
+          timeStart: 8, timeEnd: 24,
+          sections: [
+            { id:'sec-stage', name:'STAGE', lanes:1 },
+            { id:'sec-light', name:'照明', lanes:1 },
+            { id:'sec-video', name:'映像', lanes:1 },
+            { id:'sec-pa',    name:'PA/MP', lanes:1 },
+            { id:'sec-fx',    name:'特効', lanes:1 },
+            { id:'sec-power', name:'電源', lanes:1 },
+            { id:'sec-rec',   name:'収録/カメラ', lanes:1 },
+            { id:'sec-cast',  name:'CAST', lanes:1 },
+            { id:'sec-note',  name:'備考', lanes:1 },
+            { id:'sec-staff', name:'スタッフ', lanes:1 }
+          ],
+          bars: [
+            { id:'demo-span', secId:'sec-light', lane:0, start:14.25, end:19, text:'テスト', color:'pink', spanSecIds:['sec-light','sec-video','sec-pa'] },
+            { id:'demo-pa',   secId:'sec-pa',    lane:0, start:12,    end:14, text:'テスト', color:'amber' },
+            { id:'demo-fx1',  secId:'sec-fx',    lane:0, start:10,    end:11.25, text:'テスト', color:'pink' },
+            { id:'demo-fx2',  secId:'sec-fx',    lane:0, start:10.25, end:11.75, text:'問題あり', color:'pink' },
+            { id:'demo-power',secId:'sec-power', lane:0, start:12,    end:13.25, text:'テスト', color:'gray' }
+          ]
+        }
+      };
+      localStorage.setItem('schedule-studio:timetableByDate:v1', JSON.stringify(demo));
+    }
+  } catch(e) { console.warn('[R309 demo seed]', e); }
 })();
 // localStorage ↔ Firebase 自動同期
 (function fbSync(){
@@ -1278,7 +1322,7 @@
     width: 100%;
   }
 
-  /* ── タイムスケジュール画面 ───────── */
+  /* ── TIME SCHEDULE画面 ───────── */
   .schedule-section-title {
     font-size: 12px;
     letter-spacing: 0.3em;
@@ -2075,7 +2119,7 @@
     <div class="phone-top-tabs" style="display:flex; gap:6px; margin-bottom:12px; padding:0 2px;">
       <button type="button" onclick="show('arrival')" style="flex:1; padding:9px 4px; background:#1d1d1d; border:1px solid rgba(255,255,255,0.18); color:#a8a8a8; font-size:11px; letter-spacing:0.10em; border-radius:4px; cursor:pointer;">入り時間</button>
       <button type="button" onclick="show('schedule')" style="flex:1; padding:9px 4px; background:#3a3a36; border:1px solid rgba(216,184,120,0.5); color:#f0e0c8; font-size:11px; letter-spacing:0.10em; border-radius:4px; cursor:pointer; font-weight:500;">DAY SCHEDULE</button>
-      <button type="button" onclick="show('timetable')" style="flex:1; padding:9px 4px; background:#1d1d1d; border:1px solid rgba(255,255,255,0.18); color:#a8a8a8; font-size:11px; letter-spacing:0.10em; border-radius:4px; cursor:pointer;">タイムスケジュール</button>
+      <button type="button" onclick="show('timetable')" style="flex:1; padding:9px 4px; background:#1d1d1d; border:1px solid rgba(255,255,255,0.18); color:#a8a8a8; font-size:11px; letter-spacing:0.10em; border-radius:4px; cursor:pointer;">TIME SCHEDULE</button>
     </div>
     <div class="schedule-section-title" style="margin-top:6px;">DAY SCHEDULE</div>
     <div id="schedule-day-list-host"></div>
@@ -2084,12 +2128,12 @@
     </div>
   </div>
 
-  <!-- ════ タイムスケジュール R307 phone: PC ダーク UI A4 横をピンチズーム/スクロール可で表示 ════ -->
+  <!-- ════ TIME SCHEDULE R307 phone: PC ダーク UI A4 横をピンチズーム/スクロール可で表示 ════ -->
   <div class="screen" id="screen-timetable">
     <div class="phone-top-tabs" style="display:flex; gap:6px; margin-bottom:12px; padding:0 2px;">
       <button type="button" onclick="show('arrival')" style="flex:1; padding:9px 4px; background:#1d1d1d; border:1px solid rgba(255,255,255,0.18); color:#a8a8a8; font-size:11px; letter-spacing:0.10em; border-radius:4px; cursor:pointer;">入り時間</button>
       <button type="button" onclick="show('schedule')" style="flex:1; padding:9px 4px; background:#1d1d1d; border:1px solid rgba(255,255,255,0.18); color:#a8a8a8; font-size:11px; letter-spacing:0.10em; border-radius:4px; cursor:pointer;">DAY SCHEDULE</button>
-      <button type="button" onclick="show('timetable')" style="flex:1; padding:9px 4px; background:#3a3a36; border:1px solid rgba(216,184,120,0.5); color:#f0e0c8; font-size:11px; letter-spacing:0.10em; border-radius:4px; cursor:pointer; font-weight:500;">タイムスケジュール</button>
+      <button type="button" onclick="show('timetable')" style="flex:1; padding:9px 4px; background:#3a3a36; border:1px solid rgba(216,184,120,0.5); color:#f0e0c8; font-size:11px; letter-spacing:0.10em; border-radius:4px; cursor:pointer; font-weight:500;">TIME SCHEDULE</button>
     </div>
     <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px; padding:0 2px;">
       <div style="font-size:11px; letter-spacing:0.10em; color:#a8a8a8;">A4 LANDSCAPE  ・  ピンチで拡大</div>
@@ -2100,7 +2144,7 @@
     </div>
     <div id="tt-phone-paper-host" style="background:#0a0a0a; border:0.5px solid rgba(255,255,255,0.10); border-radius:6px; overflow:auto; -webkit-overflow-scrolling:touch; touch-action:pan-x pan-y pinch-zoom; max-height:calc(100vh - 220px);"></div>
     <div style="font-size:11px; color:#5a5a55; text-align:center; margin-top:14px; letter-spacing:0.08em;">
-      ※ PCのタイムスケジュールタブと連動（PC側で編集・閲覧専用）
+      ※ PCのTIME SCHEDULEタブと連動（PC側で編集・閲覧専用）
     </div>
   </div>
 
@@ -2175,11 +2219,11 @@
 
   <!-- ════ 入り時間 ════ -->
   <div class="screen" id="screen-arrival">
-    <!-- R307 phone: 入り時間 / DAY SCHEDULE / タイムスケジュール 3 サブタブ -->
+    <!-- R307 phone: 入り時間 / DAY SCHEDULE / TIME SCHEDULE 3 サブタブ -->
     <div class="phone-top-tabs" style="display:flex; gap:6px; margin-bottom:12px; padding:0 2px;">
       <button type="button" onclick="show('arrival')" style="flex:1; padding:9px 4px; background:#3a3a36; border:1px solid rgba(216,184,120,0.5); color:#f0e0c8; font-size:11px; letter-spacing:0.10em; border-radius:4px; cursor:pointer; font-weight:500;">入り時間</button>
       <button type="button" onclick="show('schedule')" style="flex:1; padding:9px 4px; background:#1d1d1d; border:1px solid rgba(255,255,255,0.18); color:#a8a8a8; font-size:11px; letter-spacing:0.10em; border-radius:4px; cursor:pointer;">DAY SCHEDULE</button>
-      <button type="button" onclick="show('timetable')" style="flex:1; padding:9px 4px; background:#1d1d1d; border:1px solid rgba(255,255,255,0.18); color:#a8a8a8; font-size:11px; letter-spacing:0.10em; border-radius:4px; cursor:pointer;">タイムスケジュール</button>
+      <button type="button" onclick="show('timetable')" style="flex:1; padding:9px 4px; background:#1d1d1d; border:1px solid rgba(255,255,255,0.18); color:#a8a8a8; font-size:11px; letter-spacing:0.10em; border-radius:4px; cursor:pointer;">TIME SCHEDULE</button>
     </div>
 
     <!-- 自分の入り時間を追加するエリア -->
@@ -4331,7 +4375,7 @@ const _showAfterDayEvents = window.show;
 window.show = function(id) {
   _showAfterDayEvents(id);
   if (id === 'schedule') renderScheduleDayListPhone();
-  // R307 phone: タイムスケジュールタブ用
+  // R307 phone: TIME SCHEDULEタブ用
   if (id === 'timetable') {
     if (typeof renderTimetableInlinePhone === 'function') renderTimetableInlinePhone();
     if (typeof __bindTtPhoneZoomButtons === 'function') __bindTtPhoneZoomButtons();
