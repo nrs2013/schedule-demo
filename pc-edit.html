@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260524.310000">
+<meta name="build-version" content="20260524.320000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -4877,17 +4877,31 @@
   .tt-paper-stage {
     width: 100%;
     display: flex;
+    flex-direction: row;
     justify-content: center;
     align-items: flex-start;
+    gap: 12px;
     padding: 4px 0;
     overflow: auto;
     box-sizing: border-box;
   }
+  /* R352: A4 の右にツールバー（縦並び）。固定幅 130px。 */
+  .tt-side-toolbar {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 130px;
+    flex: 0 0 130px;
+    align-self: stretch;
+    padding-top: 4px;
+  }
+  .tt-side-toolbar .tt-btn { text-align: center; }
   .tt-paper {
     /* A4 横向き比率を維持 */
     aspect-ratio: 297 / 210;
-    /* 画面の縦余白 / 横余白 のうち小さい方に合わせる */
-    height: min(calc(100vh - 240px), calc((100vw - 32px) * 210 / 297));
+    /* R352: ツールバー横並びに切り替えたので上部 UI が浅くなった → 縦余白を 240→160 に縮小、
+       横は右サイドバー 130px + gap 12px = 142px を差し引く */
+    height: min(calc(100vh - 160px), calc((100vw - 32px - 142px) * 210 / 297));
     width: auto;
     min-height: 420px;
     flex: 0 0 auto;
@@ -6596,12 +6610,16 @@
     <!-- ── mode-content: TIMETABLE（R237 Phase 1） ───────── -->
     <div class="mode-content" id="mode-timetable">
       <div class="tt-wrap">
-        <div class="tt-toolbar">
-          <div class="tt-toolbar-info">
-            <span class="tt-toolbar-label">タイムテーブル</span>
-            <span class="tt-toolbar-date" id="tt-date-display">—</span>
+        <!-- R352: ツールバーは A4 の右側に縦並び（tt-paper-stage 内の .tt-side-toolbar）。
+             tt-date-display は隠して残す (内部ロジックで参照されているため)。 -->
+        <span id="tt-date-display" style="display:none;">—</span>
+        <div class="tt-paper-stage" id="tt-paper-stage">
+          <div class="tt-paper" id="tt-paper">
+            <div class="tt-paper-header" id="tt-paper-header"></div>
+            <div class="tt-grid" id="tt-grid"></div>
+            <div class="tt-paper-footer" id="tt-paper-footer"></div>
           </div>
-          <div class="tt-toolbar-actions">
+          <aside class="tt-side-toolbar">
             <button class="tt-btn" id="tt-btn-time-start" type="button">開始時刻</button>
             <button class="tt-btn" id="tt-btn-time-end" type="button">終了時刻</button>
             <div class="tt-zoom-group">
@@ -6613,14 +6631,7 @@
             <button class="tt-btn" id="tt-btn-copy-prev" type="button">前日から複製</button>
             <button class="tt-btn" id="tt-btn-reset-day" type="button" style="color:#d97070;">この日リセット</button>
             <button class="tt-btn" id="tt-btn-print" type="button">📄 PDF 出力</button>
-          </div>
-        </div>
-        <div class="tt-paper-stage" id="tt-paper-stage">
-          <div class="tt-paper" id="tt-paper">
-            <div class="tt-paper-header" id="tt-paper-header"></div>
-            <div class="tt-grid" id="tt-grid"></div>
-            <div class="tt-paper-footer" id="tt-paper-footer"></div>
-          </div>
+          </aside>
         </div>
         <div class="tt-help">
           <span><strong style="color:#f5c878;">ドラッグ</strong>で予定追加 → そのまま<strong style="color:#f5c878;">文字を入力</strong> → <strong style="color:#f5c878;">Enter</strong> で確定</span>
