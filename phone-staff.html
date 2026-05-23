@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260523.305000">
+<meta name="build-version" content="20260523.307000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="apple-touch-icon" href="favicon.svg">
 <title>SCHEDULE STUDIO — STAFF</title>
@@ -2070,23 +2070,37 @@
     </div>
   </div>
 
-  <!-- ════ タイムスケジュール ════ -->
+  <!-- ════ DAY SCHEDULE ════ R307 phone: 元に戻して新タブ TIMETABLE を分離 -->
   <div class="screen active" id="screen-schedule">
-    <!-- R188: 入り時間 ↔ DAY SCHEDULE サブタブ統合（R137 復元） -->
-    <div class="phone-top-tabs" style="display:flex; gap:8px; margin-bottom:12px; padding:0 2px;">
-      <button type="button" onclick="show('arrival')" style="flex:1; padding:10px 8px; background:#1d1d1d; border:1px solid rgba(255,255,255,0.18); color:#a8a8a8; font-size:12px; letter-spacing:0.16em; border-radius:4px; cursor:pointer;">入り時間</button>
-      <button type="button" onclick="show('schedule')" style="flex:1; padding:10px 8px; background:#3a3a36; border:1px solid rgba(216,184,120,0.5); color:#f0e0c8; font-size:12px; letter-spacing:0.16em; border-radius:4px; cursor:pointer; font-weight:500;">DAY SCHEDULE</button>
+    <div class="phone-top-tabs" style="display:flex; gap:6px; margin-bottom:12px; padding:0 2px;">
+      <button type="button" onclick="show('arrival')" style="flex:1; padding:9px 4px; background:#1d1d1d; border:1px solid rgba(255,255,255,0.18); color:#a8a8a8; font-size:11px; letter-spacing:0.10em; border-radius:4px; cursor:pointer;">入り時間</button>
+      <button type="button" onclick="show('schedule')" style="flex:1; padding:9px 4px; background:#3a3a36; border:1px solid rgba(216,184,120,0.5); color:#f0e0c8; font-size:11px; letter-spacing:0.10em; border-radius:4px; cursor:pointer; font-weight:500;">DAY SCHEDULE</button>
+      <button type="button" onclick="show('timetable')" style="flex:1; padding:9px 4px; background:#1d1d1d; border:1px solid rgba(255,255,255,0.18); color:#a8a8a8; font-size:11px; letter-spacing:0.10em; border-radius:4px; cursor:pointer;">タイムスケジュール</button>
     </div>
-    <!-- R294 phone: PC の新タイムテーブル（縦串バー入り）を A4 横縮小で表示 -->
-    <div class="schedule-section-title" style="margin-top:6px;">タイムテーブル</div>
-    <div id="tt-phone-paper-host" style="margin-bottom:12px;"></div>
-
-    <!-- R77 P2: PC の DAY SCHEDULE と同期（自由項目・1行表示） -->
-    <div class="schedule-section-title" style="margin-top:14px;">自由項目</div>
+    <div class="schedule-section-title" style="margin-top:6px;">DAY SCHEDULE</div>
     <div id="schedule-day-list-host"></div>
-
     <div style="font-size:11px; color:#5a5a55; text-align:center; margin-top:18px; letter-spacing:0.08em;">
       ※ PCの DAY SCHEDULE タブと連動（PC側で編集）
+    </div>
+  </div>
+
+  <!-- ════ タイムスケジュール R307 phone: PC ダーク UI A4 横をピンチズーム/スクロール可で表示 ════ -->
+  <div class="screen" id="screen-timetable">
+    <div class="phone-top-tabs" style="display:flex; gap:6px; margin-bottom:12px; padding:0 2px;">
+      <button type="button" onclick="show('arrival')" style="flex:1; padding:9px 4px; background:#1d1d1d; border:1px solid rgba(255,255,255,0.18); color:#a8a8a8; font-size:11px; letter-spacing:0.10em; border-radius:4px; cursor:pointer;">入り時間</button>
+      <button type="button" onclick="show('schedule')" style="flex:1; padding:9px 4px; background:#1d1d1d; border:1px solid rgba(255,255,255,0.18); color:#a8a8a8; font-size:11px; letter-spacing:0.10em; border-radius:4px; cursor:pointer;">DAY SCHEDULE</button>
+      <button type="button" onclick="show('timetable')" style="flex:1; padding:9px 4px; background:#3a3a36; border:1px solid rgba(216,184,120,0.5); color:#f0e0c8; font-size:11px; letter-spacing:0.10em; border-radius:4px; cursor:pointer; font-weight:500;">タイムスケジュール</button>
+    </div>
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px; padding:0 2px;">
+      <div style="font-size:11px; letter-spacing:0.10em; color:#a8a8a8;">A4 LANDSCAPE  ・  ピンチで拡大</div>
+      <div style="display:flex; gap:4px;">
+        <button type="button" id="tt-phone-zoom-fit" style="background:transparent; border:0.5px solid rgba(255,255,255,0.3); color:#fafaf8; padding:4px 10px; font-size:10px; letter-spacing:0.10em; border-radius:3px; cursor:pointer;">FIT</button>
+        <button type="button" id="tt-phone-zoom-1x" style="background:transparent; border:0.5px solid rgba(255,255,255,0.3); color:#fafaf8; padding:4px 10px; font-size:10px; letter-spacing:0.10em; border-radius:3px; cursor:pointer;">100%</button>
+      </div>
+    </div>
+    <div id="tt-phone-paper-host" style="background:#0a0a0a; border:0.5px solid rgba(255,255,255,0.10); border-radius:6px; overflow:auto; -webkit-overflow-scrolling:touch; touch-action:pan-x pan-y pinch-zoom; max-height:calc(100vh - 220px);"></div>
+    <div style="font-size:11px; color:#5a5a55; text-align:center; margin-top:14px; letter-spacing:0.08em;">
+      ※ PCのタイムスケジュールタブと連動（PC側で編集・閲覧専用）
     </div>
   </div>
 
@@ -2161,10 +2175,11 @@
 
   <!-- ════ 入り時間 ════ -->
   <div class="screen" id="screen-arrival">
-    <!-- R188: 入り時間 ↔ DAY SCHEDULE サブタブ統合（R137 復元） -->
-    <div class="phone-top-tabs" style="display:flex; gap:8px; margin-bottom:12px; padding:0 2px;">
-      <button type="button" onclick="show('arrival')" style="flex:1; padding:10px 8px; background:#3a3a36; border:1px solid rgba(216,184,120,0.5); color:#f0e0c8; font-size:12px; letter-spacing:0.16em; border-radius:4px; cursor:pointer; font-weight:500;">入り時間</button>
-      <button type="button" onclick="show('schedule')" style="flex:1; padding:10px 8px; background:#1d1d1d; border:1px solid rgba(255,255,255,0.18); color:#a8a8a8; font-size:12px; letter-spacing:0.16em; border-radius:4px; cursor:pointer;">DAY SCHEDULE</button>
+    <!-- R307 phone: 入り時間 / DAY SCHEDULE / タイムスケジュール 3 サブタブ -->
+    <div class="phone-top-tabs" style="display:flex; gap:6px; margin-bottom:12px; padding:0 2px;">
+      <button type="button" onclick="show('arrival')" style="flex:1; padding:9px 4px; background:#3a3a36; border:1px solid rgba(216,184,120,0.5); color:#f0e0c8; font-size:11px; letter-spacing:0.10em; border-radius:4px; cursor:pointer; font-weight:500;">入り時間</button>
+      <button type="button" onclick="show('schedule')" style="flex:1; padding:9px 4px; background:#1d1d1d; border:1px solid rgba(255,255,255,0.18); color:#a8a8a8; font-size:11px; letter-spacing:0.10em; border-radius:4px; cursor:pointer;">DAY SCHEDULE</button>
+      <button type="button" onclick="show('timetable')" style="flex:1; padding:9px 4px; background:#1d1d1d; border:1px solid rgba(255,255,255,0.18); color:#a8a8a8; font-size:11px; letter-spacing:0.10em; border-radius:4px; cursor:pointer;">タイムスケジュール</button>
     </div>
 
     <!-- 自分の入り時間を追加するエリア -->
@@ -3887,14 +3902,15 @@ function timeOptionsHtmlPhone(selected) {
 // R294 phone: PC の新タイムテーブル（timetableByDate, 縦串バー入り）を
 // A4 横縮小ビューで表示。PC 側 buildTtPdfPageHtml と同等の HTML を生成。
 // ════════════════════════════════════════════════════════════
+// R306 phone: PC 版ダーク UI を踏襲した A4 横タイムテーブル CSS（白テーマから刷新）
 const TT_PDF_CSS_PHONE = `
-#tt-pdf-root { width:297mm; box-sizing:border-box; background:#fff; color:#111;
+#tt-pdf-root { width:297mm; box-sizing:border-box; background:#131211; color:#fafaf8;
                font-family:'Noto Sans JP','Inter',sans-serif; margin:0; padding:0; }
 #tt-pdf-root *, #tt-pdf-root *::before, #tt-pdf-root *::after { box-sizing:border-box; text-shadow:none !important; }
 #tt-pdf-root .tt-pdf-page { width:297mm; height:210mm; padding:5mm 6mm; display:flex; flex-direction:column;
-                            background:#fff; overflow:hidden; }
+                            background:#0a0a0a; overflow:hidden; }
 #tt-pdf-root .tt-pdf-mast { display:flex; justify-content:space-between; align-items:baseline;
-                            border-bottom:1.5px solid #1a1a1a; padding:2px 4px 4px; margin-bottom:3mm; gap:12px; }
+                            border-bottom:1px solid rgba(255,255,255,0.18); padding:2px 4px 4px; margin-bottom:3mm; gap:12px; }
 #tt-pdf-root .tt-pdf-mast-left { display:flex; gap:14px; align-items:baseline; flex-wrap:wrap; min-width:0; }
 #tt-pdf-root .tt-pdf-mast-title { font-weight:800; font-size:14px; letter-spacing:0.04em; color:#000; }
 #tt-pdf-root .tt-pdf-mast-meta { font-size:10px; color:#555; letter-spacing:0.10em; font-weight:600; }
@@ -4131,15 +4147,17 @@ const TT_PHONE_TL_CSS = `
 .tt-tl-empty { background:rgba(255,255,255,0.02); border:0.5px dashed rgba(255,255,255,0.12); border-radius:6px;
                color:rgba(255,255,255,0.4); font-size:12px; padding:18px 14px; text-align:center; letter-spacing:0.05em; line-height:1.6; }
 `;
-function __ensureTtPhoneTlStylesheet(){
-  if (document.getElementById('tt-phone-tl-stylesheet')) return;
+// R307 phone: PC ダーク UI A4 横タイムテーブル — FIT/100% ズーム切替 + ピンチ・スクロール対応
+function __ensureTtPhonePaperStylesheet(){
+  if (document.getElementById('tt-phone-paper-stylesheet')) return;
   const st = document.createElement('style');
-  st.id = 'tt-phone-tl-stylesheet';
-  st.textContent = TT_PHONE_TL_CSS;
+  st.id = 'tt-phone-paper-stylesheet';
+  st.textContent = TT_PDF_CSS_PHONE;
   document.head.appendChild(st);
 }
+let __ttPhoneZoomMode = 'fit'; // 'fit' | '1x'
 function renderTimetableInlinePhone(){
-  __ensureTtPhoneTlStylesheet();
+  __ensureTtPhonePaperStylesheet();
   const host = document.getElementById('tt-phone-paper-host');
   if (!host) return;
   const iso = getCurrentDateIso();
@@ -4151,81 +4169,32 @@ function renderTimetableInlinePhone(){
   } catch(e) {}
   const tt = tts[iso];
   if (!tt || !Array.isArray(tt.bars) || tt.bars.length === 0) {
-    host.innerHTML = '<div class="tt-tl-empty">— この日のタイムテーブルは PC でまだ登録されていません —</div>';
+    host.innerHTML = '<div style="color:rgba(255,255,255,0.4); font-size:12px; padding:24px 14px; text-align:center; letter-spacing:0.06em; line-height:1.6;">— この日のタイムテーブルは PC でまだ登録されていません —</div>';
     return;
   }
-  const title = getActiveConcertTitlePhone();
-  const info = getTourInfoForDatePhone(iso);
-  const dateDisp = fmtDateDisplayPhone(iso);
-  const sections = tt.sections || [];
-  const secById = {};
-  sections.forEach(function(s){ secById[s.id] = s; });
-  const bars = (tt.bars||[]).filter(function(b){ return b && typeof b.start==='number' && typeof b.end==='number'; });
-  const sorted = bars.slice().sort(function(a,b){ return a.start - b.start; });
-  function durStr(b){
-    const mm = Math.round((b.end - b.start) * 60);
-    if (mm >= 60) { const h = Math.floor(mm/60); const m = mm%60; return h + 'h' + (m?(m+'m'):''); }
-    return mm + 'm';
-  }
-  function sectionLabel(b){
-    if (Array.isArray(b.spanSecIds) && b.spanSecIds.length > 1) {
-      return b.spanSecIds.map(function(sid){ const s=secById[sid]; return s?s.name:sid; }).join(' / ');
-    }
-    const s = secById[b.secId]; return s ? s.name : '';
-  }
-  function barHtml(b){
-    const isSpan = Array.isArray(b.spanSecIds) && b.spanSecIds.length > 1;
-    const color = b.color || 'white';
-    return '<div class="tt-tl-bar color-' + color + (isSpan ? ' span' : '') + '">' +
-      '<div class="tt-tl-bar-tline">' +
-        '<span class="tt-tl-bar-start">' + fmtTimeFromHourPhone(b.start) + '</span>' +
-        '<span class="tt-tl-bar-arrow">→</span>' +
-        '<span class="tt-tl-bar-end">' + fmtTimeFromHourPhone(b.end) + '</span>' +
-        '<span class="tt-tl-bar-dur">' + durStr(b) + '</span>' +
-      '</div>' +
-      '<div class="tt-tl-bar-name">' + escHtmlPhone(b.text || '(無題)') + '</div>' +
-      '<div class="tt-tl-bar-sec">' + escHtmlPhone(sectionLabel(b)) + '</div>' +
-    '</div>';
-  }
-  // ヘッダ
-  let html = '<div class="tt-tl">';
-  html += '<div class="tt-tl-head">';
-  html += '<h2 class="tt-tl-title">' + escHtmlPhone(title || '—') + '</h2>';
-  html += '<div class="tt-tl-meta">';
-  html += '<span class="tt-tl-date">' + escHtmlPhone(dateDisp) + '</span>';
-  if (info.venue) html += '<span class="tt-tl-venue">' + escHtmlPhone(info.venue) + '</span>';
-  if (info.day || info.phase) html += '<span class="tt-tl-phase">' + escHtmlPhone(info.day || info.phase) + '</span>';
-  html += '</div></div>';
-  // MAIN EVENTS（inFooter フラグ）
-  const mainEvs = sorted.filter(function(b){ return b.inFooter === true; });
-  if (mainEvs.length > 0) {
-    html += '<div class="tt-tl-main"><div class="tt-tl-main-label">★ Main Events</div>';
-    mainEvs.forEach(function(b){
-      html += '<div class="tt-tl-main-item">' +
-        '<span class="tt-tl-main-time">' + fmtTimeFromHourPhone(b.start) + '〜' + fmtTimeFromHourPhone(b.end) + '</span>' +
-        '<span class="tt-tl-main-name">' + escHtmlPhone(b.text || '') + '</span>' +
-      '</div>';
-    });
-    html += '</div>';
-  }
-  // 縦串バーセクション
-  const spanBars = sorted.filter(function(b){ return Array.isArray(b.spanSecIds) && b.spanSecIds.length > 1; });
-  const soloBars = sorted.filter(function(b){ return !(Array.isArray(b.spanSecIds) && b.spanSecIds.length > 1); });
-  if (spanBars.length > 0) {
-    html += '<div class="tt-tl-section-label">★ 全体・縦串</div>';
-    html += '<div class="tt-tl-body">';
-    spanBars.forEach(function(b){ html += barHtml(b); });
-    html += '</div>';
-  }
-  if (soloBars.length > 0) {
-    html += '<div class="tt-tl-section-label">Timeline</div>';
-    html += '<div class="tt-tl-body">';
-    soloBars.forEach(function(b){ html += barHtml(b); });
-    html += '</div>';
-  }
-  html += '</div>';
-  host.innerHTML = html;
+  const pageHtml = buildTtPdfPageHtmlForPhone(iso, tt);
+  const PX_PER_MM = 96 / 25.4;
+  const paperWpx = 297 * PX_PER_MM;
+  const paperHpx = 210 * PX_PER_MM;
+  const hostW = host.clientWidth || (window.innerWidth - 24);
+  const fitScale = (hostW - 4) / paperWpx;
+  const scale = __ttPhoneZoomMode === '1x' ? 1 : fitScale;
+  const scaledW = paperWpx * scale;
+  const scaledH = paperHpx * scale;
+  // スクロール可能な内枠 + scale 縮小した実 A4 横を絶対配置
+  host.innerHTML = '<div style="position:relative; width:' + scaledW + 'px; height:' + scaledH + 'px; min-width:100%;">' +
+    '<div style="position:absolute; left:0; top:0; width:' + paperWpx + 'px; height:' + paperHpx + 'px; transform:scale(' + scale + '); transform-origin:top left;">' +
+    '<div id="tt-pdf-root">' + pageHtml + '</div>' +
+    '</div></div>';
 }
+function __bindTtPhoneZoomButtons(){
+  const fit = document.getElementById('tt-phone-zoom-fit');
+  const x1 = document.getElementById('tt-phone-zoom-1x');
+  if (fit && !fit.__bound) { fit.__bound = true; fit.addEventListener('click', function(){ __ttPhoneZoomMode='fit'; renderTimetableInlinePhone(); }); }
+  if (x1 && !x1.__bound) { x1.__bound = true; x1.addEventListener('click', function(){ __ttPhoneZoomMode='1x'; renderTimetableInlinePhone(); }); }
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', __bindTtPhoneZoomButtons);
+else __bindTtPhoneZoomButtons();
 
 window.__reloadTimetableByDatePhone = function(){
   // localStorage は既に最新（hook が書いた後に呼ばれる）。再描画だけする
@@ -4233,8 +4202,7 @@ window.__reloadTimetableByDatePhone = function(){
 };
 
 function renderScheduleDayListPhone() {
-  // R294 phone: タイムテーブルビューも一緒に再描画
-  try { renderTimetableInlinePhone(); } catch(e) { console.warn('[R294 tt phone]', e); }
+  // R307 phone: タイムテーブルは別タブ (screen-timetable) に分離。ここでは自由項目のみ
   const host = document.getElementById('schedule-day-list-host');
   if (!host) return;
   // 毎回 localStorage から最新を取得（PCで更新→画面切替時に反映）
@@ -4354,6 +4322,11 @@ const _showAfterDayEvents = window.show;
 window.show = function(id) {
   _showAfterDayEvents(id);
   if (id === 'schedule') renderScheduleDayListPhone();
+  // R307 phone: タイムスケジュールタブ用
+  if (id === 'timetable') {
+    if (typeof renderTimetableInlinePhone === 'function') renderTimetableInlinePhone();
+    if (typeof __bindTtPhoneZoomButtons === 'function') __bindTtPhoneZoomButtons();
+  }
 };
 const _selectTourDayAfterDayEvents = window.selectTourDay || selectTourDay;
 window.selectTourDay = function(idx) {
