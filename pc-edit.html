@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260524.330000">
+<meta name="build-version" content="20260524.340000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -6621,11 +6621,7 @@
              tt-date-display は隠して残す (内部ロジックで参照されているため)。 -->
         <span id="tt-date-display" style="display:none;">—</span>
         <div class="tt-paper-stage" id="tt-paper-stage">
-          <div class="tt-paper" id="tt-paper">
-            <div class="tt-paper-header" id="tt-paper-header"></div>
-            <div class="tt-grid" id="tt-grid"></div>
-            <div class="tt-paper-footer" id="tt-paper-footer"></div>
-          </div>
+          <!-- R354: ツールバーを A4 の上に配置 (目に入りやすく) -->
           <aside class="tt-side-toolbar">
             <button class="tt-btn" id="tt-btn-time-start" type="button">開始時刻</button>
             <button class="tt-btn" id="tt-btn-time-end" type="button">終了時刻</button>
@@ -6639,6 +6635,11 @@
             <button class="tt-btn" id="tt-btn-reset-day" type="button" style="color:#d97070;">この日リセット</button>
             <button class="tt-btn" id="tt-btn-print" type="button">📄 PDF 出力</button>
           </aside>
+          <div class="tt-paper" id="tt-paper">
+            <div class="tt-paper-header" id="tt-paper-header"></div>
+            <div class="tt-grid" id="tt-grid"></div>
+            <div class="tt-paper-footer" id="tt-paper-footer"></div>
+          </div>
         </div>
         <div class="tt-help">
           <span><strong style="color:#f5c878;">ドラッグ</strong>で予定追加 → そのまま<strong style="color:#f5c878;">文字を入力</strong> → <strong style="color:#f5c878;">Enter</strong> で確定</span>
