@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260524.230000">
+<meta name="build-version" content="20260524.260000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -13600,8 +13600,10 @@ function show(id) {
         if (et - st < 0.25) et = st + 0.25;
         if (et > tt.timeEnd) et = tt.timeEnd;
         if (st < tt.timeStart) st = tt.timeStart;
-        // R249+R347: 縦串以外は他のバーと重ならないように縮める
+        // R249+R347+R348: 縦串以外は他のバーと重ならないように縮める
         //   R347: 既存 lane で隙間なし → 他の lane を試す → それでもダメなら sec.lanes 自動拡張
+        //   R348: 最大 3 lanes まで (のむさん指示 2026-05-23 「4 本予定が重なる事はない、最大で 3」)
+        const MAX_LANES = 3;
         let finalLane = lane;
         if (!isSpanning) {
           let fit = fitNonOverlap(tt, sec.id, finalLane, st, et, null);
@@ -13616,11 +13618,15 @@ function show(id) {
               }
             }
             if (!found) {
-              // 全 lane 埋まってる → sec.lanes を自動拡張 (R347: のむさん希望
-              //   「3 本目発動でやむを得ずセル拡張」)
-              sec.lanes = sec.lanes + 1;
-              finalLane = sec.lanes - 1;
-              fit = { st: st, et: et };
+              if (sec.lanes < MAX_LANES) {
+                // sec.lanes を自動拡張 (R347)、ただし MAX_LANES=3 まで
+                sec.lanes = sec.lanes + 1;
+                finalLane = sec.lanes - 1;
+                fit = { st: st, et: et };
+              } else {
+                // R348: 4 本目以降は拒否 (最大 3 まで)
+                return;
+              }
             }
           }
           st = fit.st; et = fit.et;
