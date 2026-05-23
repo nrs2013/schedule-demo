@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260523.540000">
+<meta name="build-version" content="20260523.550000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -14855,9 +14855,10 @@ function show(id) {
 #tt-pdf-root .tt-pdf-foot { margin-top:4mm; padding:20px 24px; border:2px solid #1a1a1a; border-radius:3px;
                             display:flex; gap:22px; flex-wrap:wrap; font-size:18px; color:#0a0a0a; flex:0 0 auto;
                             background:#fff; align-items:baseline; }
+/* R323: 内容と時間を同じサイズに統一 (18px) */
 #tt-pdf-root .tt-pdf-foot-ev { color:#0a0a0a; font-size:18px; }
-#tt-pdf-root .tt-pdf-foot-ev b { color:#000; font-weight:800; font-size:21px; }
-#tt-pdf-root .tt-pdf-foot-ev .ev-time { color:#444; font-family:'JetBrains Mono',monospace; font-size:14px; margin-left:8px; letter-spacing:0.08em; font-weight:600; }
+#tt-pdf-root .tt-pdf-foot-ev b { color:#000; font-weight:800; font-size:18px; }
+#tt-pdf-root .tt-pdf-foot-ev .ev-time { color:#444; font-family:'JetBrains Mono',monospace; font-size:18px; margin-left:8px; letter-spacing:0.06em; font-weight:600; }
 #tt-pdf-root .tt-pdf-foot-sep { color:#cfcdc8; font-size:18px; }
 #tt-pdf-root .tt-pdf-foot-empty { color:#888; font-style:italic; font-size:16px; }
 `;
@@ -14880,16 +14881,19 @@ function show(id) {
     function refreshSummary(){
       const sum = document.getElementById('pdf-date-summary');
       const exportBtn = document.getElementById('pdf-btn-export');
+      const printBtn = document.getElementById('pdf-btn-browser-print');
       if (!sum || !exportBtn) return;
       if (pdfSelectedDates.length === 0) {
         sum.textContent = '日付を選んでください';
         sum.classList.add('empty');
         exportBtn.disabled = true;
+        if (printBtn) printBtn.disabled = true;
       } else {
         const labels = pdfSelectedDates.map(fmtDateLabel);
         sum.textContent = '選択: ' + labels.join(' / ') + '  (' + pdfSelectedDates.length + ' 日分)';
         sum.classList.remove('empty');
         exportBtn.disabled = false;
+        if (printBtn) printBtn.disabled = false;
       }
     }
     function renderChipList(targetEl, multi){
@@ -15392,15 +15396,53 @@ function show(id) {
       pdfModalOpened = false;
     }
 
+    // R324: ブラウザ印刷ダイアログを直接開く (PDF 化を経由しない)
+    // @page CSS で A4 横を強制宣言、ブラウザ印刷ダイアログは PDF よりも
+    // プリンタドライバとの互換性が高いので向きズレが起きにくい。
+    function browserPrint(){
+      if (pdfSelectedDates.length === 0) return;
+      ensureTtPdfStylesheet();
+      // 印刷用の独立 window を開いて A4 横を強制
+      const w = window.open('', '_blank', 'width=1200,height=800');
+      if (!w) { alert('ポップアップがブロックされました。許可してから再試行してください'); return; }
+      const stylesheet = '<style>' + TT_PDF_CSS +
+        '@page { size: A4 landscape; margin: 0; }' +
+        '@media print { html, body { margin:0; padding:0; -webkit-print-color-adjust:exact; print-color-adjust:exact; } ' +
+        '#tt-pdf-root { width:297mm; box-sizing:border-box; } ' +
+        '.tt-pdf-page { width:297mm; height:210mm; page-break-after:always; box-sizing:border-box; padding:6mm 6mm 5mm; display:flex; flex-direction:column; overflow:hidden; } ' +
+        '.tt-pdf-page:last-child { page-break-after:auto; } }' +
+        'body { margin:0; background:#fff; font-family:"Noto Sans JP","Inter","Hiragino Sans",sans-serif; }' +
+        '.tt-pdf-page { width:297mm; height:210mm; box-sizing:border-box; padding:6mm 6mm 5mm; margin:0 auto 4mm; display:flex; flex-direction:column; background:#fff; }' +
+        '.print-controls { padding:12px 16px; background:#1a1a1a; color:#fff; display:flex; gap:12px; align-items:center; font-family:"Inter",sans-serif; font-size:13px; }' +
+        '.print-controls button { padding:8px 16px; background:#f5c878; border:none; border-radius:3px; cursor:pointer; font-weight:700; font-size:13px; }' +
+        '.print-controls button:hover { background:#ffe0a0; }' +
+        '@media print { .print-controls { display:none !important; } }' +
+        '</style>';
+      const pages = pdfSelectedDates.map(buildTtPdfPageHtml).join('');
+      const html = '<!doctype html><html><head><meta charset="utf-8"><title>印刷: タイムスケジュール</title>' + stylesheet + '</head><body>' +
+        '<div class="print-controls">' +
+        '<span>A4 横で印刷準備完了。ブラウザの印刷ダイアログから「用紙: A4」「向き: 横」を選んでください。</span>' +
+        '<button onclick="window.print()">🖨️ 印刷ダイアログを開く</button>' +
+        '<button onclick="window.close()">閉じる</button>' +
+        '</div>' +
+        '<div id="tt-pdf-root">' + pages + '</div>' +
+        '<script>setTimeout(function(){window.focus();window.print();},500);<\/script>' +
+        '</body></html>';
+      w.document.write(html);
+      w.document.close();
+    }
+
     function bind(){
       const ov = document.getElementById('pdf-export-modal');
       if (!ov) return;
       const closeBtn = document.getElementById('pdf-modal-close');
       const cancelBtn = document.getElementById('pdf-btn-cancel');
       const exportBtn = document.getElementById('pdf-btn-export');
+      const printBtn = document.getElementById('pdf-btn-browser-print');
       if (closeBtn) closeBtn.addEventListener('click', closeModal);
       if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
       if (exportBtn) exportBtn.addEventListener('click', exportPdf);
+      if (printBtn) printBtn.addEventListener('click', browserPrint);
       ov.addEventListener('click', function(e){ if (e.target === ov) closeModal(); });
       document.querySelectorAll('.pdf-mode-tab').forEach(function(t){
         t.addEventListener('click', function(){ switchMode(t.dataset.mode); });
@@ -15455,6 +15497,7 @@ function show(id) {
       <div class="pdf-progress" id="pdf-progress">　</div>
       <div class="pdf-modal-actions">
         <button class="pdf-btn" id="pdf-btn-cancel" type="button">キャンセル</button>
+        <button class="pdf-btn" id="pdf-btn-browser-print" type="button" disabled title="ブラウザの印刷ダイアログで直接印刷 (A4 横自動)">🖨️ 直接印刷</button>
         <button class="pdf-btn pdf-btn-primary" id="pdf-btn-export" type="button" disabled>PDF に出力</button>
       </div>
     </div>
