@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260521.320000">
+<meta name="build-version" content="20260521.330000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -4894,7 +4894,8 @@
     flex: 0 0 auto;
     min-height: 70px;
     display: grid;
-    grid-template-columns: minmax(0, 2.4fr) minmax(0, 1.3fr) minmax(0, 1.4fr) minmax(0, 1.2fr);
+    /* R296: DATE 列を広げて「2026.05.22 (土)」が切り詰められないように */
+    grid-template-columns: minmax(0, 2.0fr) minmax(0, 1.7fr) minmax(0, 1.4fr) minmax(0, 1.2fr);
     gap: 14px;
     padding: 12px 18px;
     background: linear-gradient(180deg, #242424 0%, #1c1c1c 100%);
@@ -4935,7 +4936,8 @@
     letter-spacing: 0.02em;
   }
   .tt-paper-header .h-val.date {
-    font-size: 24px;
+    /* R296: DATE フォントを 24 → 22 にして「2026.05.22 (土)」が確実に収まるように */
+    font-size: 22px;
     font-weight: 600;
     color: #c8a878;
     font-feature-settings: 'tnum';
