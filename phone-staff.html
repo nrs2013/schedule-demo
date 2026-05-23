@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260523.307000">
+<meta name="build-version" content="20260523.308000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="apple-touch-icon" href="favicon.svg">
 <title>SCHEDULE STUDIO — STAFF</title>
@@ -3902,65 +3902,74 @@ function timeOptionsHtmlPhone(selected) {
 // R294 phone: PC の新タイムテーブル（timetableByDate, 縦串バー入り）を
 // A4 横縮小ビューで表示。PC 側 buildTtPdfPageHtml と同等の HTML を生成。
 // ════════════════════════════════════════════════════════════
-// R306 phone: PC 版ダーク UI を踏襲した A4 横タイムテーブル CSS（白テーマから刷新）
+// R308 phone: PC screen UI 完全再現版 — グラデバー / ネオンボーダー / 白文字 + glow
 const TT_PDF_CSS_PHONE = `
-#tt-pdf-root { width:297mm; box-sizing:border-box; background:#131211; color:#fafaf8;
+#tt-pdf-root { width:297mm; box-sizing:border-box; background:#0a0a0a; color:#fafaf8;
                font-family:'Noto Sans JP','Inter',sans-serif; margin:0; padding:0; }
-#tt-pdf-root *, #tt-pdf-root *::before, #tt-pdf-root *::after { box-sizing:border-box; text-shadow:none !important; }
+#tt-pdf-root *, #tt-pdf-root *::before, #tt-pdf-root *::after { box-sizing:border-box; }
 #tt-pdf-root .tt-pdf-page { width:297mm; height:210mm; padding:5mm 6mm; display:flex; flex-direction:column;
-                            background:#0a0a0a; overflow:hidden; }
+                            background:linear-gradient(180deg, #131211 0%, #0a0a08 100%); overflow:hidden; }
 #tt-pdf-root .tt-pdf-mast { display:flex; justify-content:space-between; align-items:baseline;
-                            border-bottom:1px solid rgba(255,255,255,0.18); padding:2px 4px 4px; margin-bottom:3mm; gap:12px; }
+                            border-bottom:1px solid rgba(216,184,120,0.30); padding:2px 4px 6px; margin-bottom:4mm; gap:12px; }
 #tt-pdf-root .tt-pdf-mast-left { display:flex; gap:14px; align-items:baseline; flex-wrap:wrap; min-width:0; }
-#tt-pdf-root .tt-pdf-mast-title { font-weight:800; font-size:14px; letter-spacing:0.04em; color:#000; }
-#tt-pdf-root .tt-pdf-mast-meta { font-size:10px; color:#555; letter-spacing:0.10em; font-weight:600; }
-#tt-pdf-root .tt-pdf-mast-meta b { color:#111; font-weight:700; }
-#tt-pdf-root .tt-pdf-mast-date { font-family:'JetBrains Mono','Courier New',monospace; font-size:13px; font-weight:700; color:#111; letter-spacing:0.06em; }
-#tt-pdf-root .tt-pdf-grid { flex:1 1 0; min-height:0; display:flex; flex-direction:column; border:0.6px solid #1a1a1a; background:#fff; }
-#tt-pdf-root .tt-pdf-time-row { display:flex; flex-direction:row; border-bottom:1px solid #1a1a1a;
-                                font-family:'JetBrains Mono',monospace; font-size:8.5px; color:#111; height:5mm; flex:0 0 5mm; }
-#tt-pdf-root .tt-pdf-time-corner { width:18mm; flex:0 0 18mm; border-right:1px solid #1a1a1a; background:#f4f4f4; }
-#tt-pdf-root .tt-pdf-time-axis { flex:1 1 auto; position:relative; }
-#tt-pdf-root .tt-pdf-time-tick { position:absolute; top:0; bottom:0; border-left:0.6px solid #1a1a1a; }
-#tt-pdf-root .tt-pdf-time-tick.half { border-left:0.4px dashed #b0b0b0; }
+#tt-pdf-root .tt-pdf-mast-title { font-weight:700; font-size:15px; letter-spacing:0.04em; color:#f5c878; }
+#tt-pdf-root .tt-pdf-mast-meta { font-size:10px; color:rgba(255,255,255,0.55); letter-spacing:0.12em; font-weight:600; text-transform:uppercase; }
+#tt-pdf-root .tt-pdf-mast-meta b { color:#fafaf8; font-weight:700; letter-spacing:0.02em; text-transform:none; }
+#tt-pdf-root .tt-pdf-mast-date { font-family:'JetBrains Mono','Courier New',monospace; font-size:14px; font-weight:700; color:#fafaf8; letter-spacing:0.04em; }
+#tt-pdf-root .tt-pdf-grid { flex:1 1 0; min-height:0; display:flex; flex-direction:column; border:0.5px solid rgba(255,255,255,0.10); background:rgba(0,0,0,0.30); border-radius:3px; }
+#tt-pdf-root .tt-pdf-time-row { display:flex; flex-direction:row; border-bottom:1px solid rgba(255,255,255,0.15);
+                                font-family:'JetBrains Mono',monospace; font-size:8.5px; color:#fafaf8; height:5mm; flex:0 0 5mm; }
+#tt-pdf-root .tt-pdf-time-corner { width:18mm; flex:0 0 18mm; border-right:1px solid rgba(255,255,255,0.10); background:rgba(255,255,255,0.02); }
+#tt-pdf-root .tt-pdf-time-axis { flex:1 1 auto; position:relative; background:rgba(255,255,255,0.015); }
+#tt-pdf-root .tt-pdf-time-tick { position:absolute; top:0; bottom:0; border-left:0.6px solid rgba(255,255,255,0.18); }
+#tt-pdf-root .tt-pdf-time-tick.half { border-left:0.4px dashed rgba(255,255,255,0.08); }
 #tt-pdf-root .tt-pdf-time-tick.first { border-left:none; }
-#tt-pdf-root .tt-pdf-time-label { position:absolute; top:0; transform:translateX(-50%); padding:0 2px; font-weight:700; color:#111; background:#fff; line-height:5mm; font-size:8.5px; }
+#tt-pdf-root .tt-pdf-time-label { position:absolute; top:0; transform:translateX(-50%); padding:0 3px; font-weight:700; color:#d8c898; line-height:5mm; font-size:9px; letter-spacing:0.04em; }
 #tt-pdf-root .tt-pdf-time-label.start { transform:translateX(0); padding-left:3px; }
 #tt-pdf-root .tt-pdf-time-label.end { transform:translateX(-100%); padding-right:3px; }
-#tt-pdf-root .tt-pdf-sec-row { display:flex; flex-direction:row; border-bottom:0.5px solid #999; position:relative; min-height:0; }
+#tt-pdf-root .tt-pdf-sec-row { display:flex; flex-direction:row; border-bottom:0.5px solid rgba(255,255,255,0.08); position:relative; min-height:0; }
 #tt-pdf-root .tt-pdf-sec-row:last-child { border-bottom:none; }
-#tt-pdf-root .tt-pdf-sec-label { width:18mm; flex:0 0 18mm; font-size:9px; letter-spacing:0.05em; padding:3px 5px; border-right:1px solid #1a1a1a;
-                                 background:#fafafa; color:#111; font-weight:700; display:flex; align-items:center; word-break:break-all; line-height:1.15; }
+#tt-pdf-root .tt-pdf-sec-label { width:18mm; flex:0 0 18mm; font-size:9.5px; letter-spacing:0.06em; padding:3px 6px; border-right:1px solid rgba(255,255,255,0.10);
+                                 background:rgba(255,255,255,0.025); color:#fafaf8; font-weight:700; display:flex; align-items:center; word-break:break-all; line-height:1.18; }
 #tt-pdf-root .tt-pdf-sec-body { flex:1 1 auto; position:relative;
                                 background-image:
-                                  linear-gradient(to right, #1a1a1a 0.5px, transparent 0.5px),
-                                  linear-gradient(to right, #d0d0d0 0.35px, transparent 0.35px);
+                                  linear-gradient(to right, rgba(255,255,255,0.10) 0.6px, transparent 0.6px),
+                                  linear-gradient(to right, rgba(255,255,255,0.04) 0.4px, transparent 0.4px);
                                 background-repeat:repeat-y;
                                 background-size:var(--tt-cell-w,40px) 100%, calc(var(--tt-cell-w,40px) / 2) 100%; }
-#tt-pdf-root .tt-pdf-bar { position:absolute; box-sizing:border-box; padding:2px 4px; font-size:8.5px; font-weight:600;
-                           color:#111; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; line-height:1.15;
-                           background:#fff; border:1px solid #888; border-radius:2px; display:flex; align-items:center; }
-#tt-pdf-root .tt-pdf-bar .b-time { font-family:'JetBrains Mono',monospace; font-weight:700; font-size:7.5px; color:#333; margin-right:3px; flex-shrink:0; }
+/* バー本体 — PC screen 同等のグラデ + ネオンボーダー + 白文字 + glow */
+#tt-pdf-root .tt-pdf-bar { position:absolute; box-sizing:border-box; padding:3px 6px; font-size:9px; font-weight:600;
+                           color:#ffffff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; line-height:1.18;
+                           border-radius:3px; display:flex; align-items:center;
+                           text-shadow:0 0 4px rgba(0,0,0,0.85), 0 1px 2px rgba(0,0,0,0.7); }
+#tt-pdf-root .tt-pdf-bar .b-time { font-family:'JetBrains Mono',monospace; font-weight:700; font-size:8px; color:rgba(255,255,255,0.95); margin-right:4px; flex-shrink:0; }
 #tt-pdf-root .tt-pdf-bar .b-text { overflow:hidden; text-overflow:ellipsis; }
-#tt-pdf-root .tt-pdf-bar.color-white  { background:#fff; border:1px solid #888; color:#111; }
-#tt-pdf-root .tt-pdf-bar.color-amber  { background:#fff; border:1.5px solid #444; color:#111; }
-#tt-pdf-root .tt-pdf-bar.color-gray   { background:#fff; border:1.5px dashed #555; color:#111; }
-#tt-pdf-root .tt-pdf-bar.color-accent { background:#fff; border:1px dashed #777; color:#111; }
-#tt-pdf-root .tt-pdf-bar.color-pink   { background:#fff; border:2px solid #111; color:#000; font-weight:800; }
-#tt-pdf-root .tt-pdf-span-bar { position:absolute; box-sizing:border-box; padding:3px 5px; font-size:9px; font-weight:700;
-                                color:#000; background:#fff; border:2px solid #1a1a1a; border-radius:3px; z-index:2;
+#tt-pdf-root .tt-pdf-bar.color-white  { background:linear-gradient(168deg, rgba(255,212,68,0.50) 0%, rgba(255,212,68,0.30) 100%); border:1.5px solid rgba(255,212,68,1.0); }
+#tt-pdf-root .tt-pdf-bar.color-amber  { background:linear-gradient(168deg, rgba(245,168,40,0.50) 0%, rgba(245,168,40,0.30) 100%); border:1.5px solid rgba(245,168,40,1.0); }
+#tt-pdf-root .tt-pdf-bar.color-gray   { background:linear-gradient(168deg, rgba(126,216,72,0.50) 0%, rgba(126,216,72,0.30) 100%); border:1.5px solid rgba(126,216,72,1.0); }
+#tt-pdf-root .tt-pdf-bar.color-accent { background:linear-gradient(168deg, rgba(58,160,224,0.50) 0%, rgba(58,160,224,0.30) 100%); border:1.5px solid rgba(58,160,224,1.0); }
+#tt-pdf-root .tt-pdf-bar.color-pink   { background:linear-gradient(168deg, rgba(255,88,140,0.55) 0%, rgba(255,88,140,0.35) 100%); border:1.5px solid rgba(255,88,140,1.0); }
+/* 縦串バー — PC screen .span-bar 相当 (半透明グラデ + ネオン枠 + 中央寄せ) */
+#tt-pdf-root .tt-pdf-span-bar { position:absolute; box-sizing:border-box; padding:6px 8px; font-size:10px; font-weight:700;
+                                color:#fafaf8; border-radius:4px; z-index:2;
                                 display:flex; flex-direction:column; align-items:center; justify-content:center;
-                                text-align:center; overflow:hidden; line-height:1.15; }
-#tt-pdf-root .tt-pdf-span-bar .b-text { font-weight:800; color:#000; word-break:break-all; }
-#tt-pdf-root .tt-pdf-span-bar .b-time { font-family:'JetBrains Mono',monospace; font-weight:600; font-size:7.5px; color:#333; margin-top:2px; }
-#tt-pdf-root .tt-pdf-foot { margin-top:3mm; padding:4px 6px; border:1px solid #1a1a1a; border-radius:3px;
-                            display:flex; gap:10px; flex-wrap:wrap; font-size:9.5px; color:#111; flex:0 0 auto; }
-#tt-pdf-root .tt-pdf-foot-label { font-weight:700; color:#555; letter-spacing:0.12em; font-size:8.5px; margin-right:4px; }
-#tt-pdf-root .tt-pdf-foot-ev { color:#111; }
-#tt-pdf-root .tt-pdf-foot-ev b { color:#000; font-weight:800; }
-#tt-pdf-root .tt-pdf-foot-ev .ev-time { color:#333; font-family:'JetBrains Mono',monospace; font-size:8.5px; margin-left:3px; }
-#tt-pdf-root .tt-pdf-foot-sep { color:#aaa; }
-#tt-pdf-root .tt-pdf-foot-empty { color:#888; font-style:italic; }
+                                text-align:center; overflow:hidden; line-height:1.2;
+                                text-shadow:0 0 4px rgba(0,0,0,0.85), 0 1px 2px rgba(0,0,0,0.7); }
+#tt-pdf-root .tt-pdf-span-bar.color-white  { background:linear-gradient(180deg, rgba(255,212,68,0.30) 0%, rgba(255,212,68,0.15) 100%); border:1.5px solid rgba(255,212,68,0.90); }
+#tt-pdf-root .tt-pdf-span-bar.color-amber  { background:linear-gradient(180deg, rgba(245,168,40,0.32) 0%, rgba(245,168,40,0.18) 100%); border:1.5px solid rgba(245,168,40,0.90); }
+#tt-pdf-root .tt-pdf-span-bar.color-gray   { background:linear-gradient(180deg, rgba(126,216,72,0.30) 0%, rgba(126,216,72,0.15) 100%); border:1.5px solid rgba(126,216,72,0.90); }
+#tt-pdf-root .tt-pdf-span-bar.color-accent { background:linear-gradient(180deg, rgba(58,160,224,0.32) 0%, rgba(58,160,224,0.18) 100%); border:1.5px solid rgba(58,160,224,0.90); }
+#tt-pdf-root .tt-pdf-span-bar.color-pink   { background:linear-gradient(180deg, rgba(255,88,140,0.32) 0%, rgba(255,88,140,0.18) 100%); border:1.5px solid rgba(255,88,140,0.90); }
+#tt-pdf-root .tt-pdf-span-bar .b-text { font-weight:800; color:#fafaf8; word-break:break-all; }
+#tt-pdf-root .tt-pdf-span-bar .b-time { font-family:'JetBrains Mono',monospace; font-weight:600; font-size:8.5px; color:rgba(255,255,255,0.85); margin-top:3px; letter-spacing:0.04em; }
+#tt-pdf-root .tt-pdf-foot { margin-top:3mm; padding:6px 10px; border:0.5px solid rgba(255,255,255,0.15); border-radius:3px;
+                            display:flex; gap:12px; flex-wrap:wrap; font-size:10px; color:#fafaf8; flex:0 0 auto; background:rgba(255,255,255,0.02); }
+#tt-pdf-root .tt-pdf-foot-label { font-weight:700; color:#f5c878; letter-spacing:0.18em; font-size:9px; margin-right:6px; text-transform:uppercase; }
+#tt-pdf-root .tt-pdf-foot-ev { color:#fafaf8; }
+#tt-pdf-root .tt-pdf-foot-ev b { color:#ffffff; font-weight:700; }
+#tt-pdf-root .tt-pdf-foot-ev .ev-time { color:rgba(255,255,255,0.7); font-family:'JetBrains Mono',monospace; font-size:9px; margin-left:4px; letter-spacing:0.02em; }
+#tt-pdf-root .tt-pdf-foot-sep { color:rgba(255,255,255,0.25); }
+#tt-pdf-root .tt-pdf-foot-empty { color:rgba(255,255,255,0.4); font-style:italic; }
 `;
 
 function fmtTimeFromHourPhone(h){
