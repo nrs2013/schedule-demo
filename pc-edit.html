@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260523.640000">
+<meta name="build-version" content="20260523.650000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -15050,17 +15050,16 @@ function show(id) {
           const h     = (1 / lanes) * 100;
           const color = b.color || 'white';
           const text = b.text || '';
-          // R327d: しきい値を引き上げて中幅バーもちゃんと縮小、文字切れ完全防止
-          //   width < 1.8% → vnarrow (6.5px font + 折り返し)
-          //   width < 3.5% → narrow  (7.5px + 折り返し)
-          //   width < 7%   → tight   (8.5px + 折り返し)
-          //   else         → default 10px
+          // R329: bar の border は 0.6px / grid 線は 1px。
+          //   bar.left = pct% にすると border-left の中心 = pct% + 0.3px、grid 線中心は pct%
+          //   差分 0.3px をシフトして両者の中心を一致させる
+          //   width も +0.6px (左右両方の border 分) 拡張
           let sizeCls = '';
           if (width > 0 && width < 1.8) sizeCls = ' bar-vnarrow';
           else if (width < 3.5) sizeCls = ' bar-narrow';
           else if (width < 7) sizeCls = ' bar-tight';
-          return '<div class="tt-pdf-bar color-' + color + sizeCls + '" style="left:' + left + '%;width:' + width +
-                 '%;top:calc(' + top + '% + 4px);height:calc(' + h + '% - 8px);">' +
+          return '<div class="tt-pdf-bar color-' + color + sizeCls + '" style="left:calc(' + left + '% - 0.3px);width:calc(' + width +
+                 '% + 0.6px);top:calc(' + top + '% + 4px);height:calc(' + h + '% - 8px);">' +
                  '<span class="b-text">' + escapeHtml(text) + '</span></div>';
         }).join('');
         // R317: lanes 1〜2 は同じ高さ、3 以上で段階的に太く (洗練された設計)
@@ -15069,9 +15068,9 @@ function show(id) {
                '<div class="tt-pdf-sec-label">' + escapeHtml(sec.name || '') + '</div>' +
                '<div class="tt-pdf-sec-body">' + barsHtml + '</div></div>';
       }).join('');
-      // R326: 縦線レイヤー — z-index を bar より上 (10) にして「時間軸が骨格」として bar を貫く
-      //   hour 1px → 中央オフセット -0.5px / half 0.6px → -0.3px
-      let gridLinesHtml = '<div style="position:absolute;left:20mm;right:0;top:0;bottom:0;pointer-events:none;z-index:10;">';
+      // R329: 縦線レイヤーを bar の下 (z-index 1) に戻す
+      //   バーが乗ったところは白塗りで縦線が隠れる、バー外では縦線が見える
+      let gridLinesHtml = '<div style="position:absolute;left:20mm;right:0;top:0;bottom:0;pointer-events:none;z-index:1;">';
       for (let hh = tStart; hh <= tEnd; hh++) {
         const pct = timeToPct(hh);
         gridLinesHtml += '<div class="tt-pdf-grid-line hour" style="left:calc(' + pct + '% - 0.5px);"></div>';
@@ -15118,13 +15117,13 @@ function show(id) {
         }
         const padCls = width < 5 ? ' narrow' : '';
         const text = b.text || '';
-        // R326: grid 線が bar より上 (z:10) に被さるので、span-bar はそのまま時刻 % に配置
-        //   bar の左右の縁は grid 線で完全に覆われ「時間軸が骨格として通る」見え方になる
+        // R329: 縦串バーも border 0.6px / grid 線 1px の中心一致のため -0.3px / +0.6px シフト
+        //   bar の白塗りが grid 線を隠す、bar の縁は grid 線と完全に重なって 1 本に見える
         return '<div class="tt-pdf-span-bar color-' + color + padCls +
-               '" style="left:calc(18mm + (100% - 18mm) * ' + (left/100) + ');' +
-               'width:calc((100% - 18mm) * ' + (width/100) + ');' +
-               'top:calc(5mm + (100% - 5mm) * ' + (topPct/100) + ');' +
-               'height:calc((100% - 5mm) * ' + (heightPct/100) + ');">' +
+               '" style="left:calc(18mm + (100% - 18mm) * ' + (left/100) + ' - 0.3px);' +
+               'width:calc((100% - 18mm) * ' + (width/100) + ' + 0.6px);' +
+               'top:calc(5mm + (100% - 5mm) * ' + (topPct/100) + ' - 0.3px);' +
+               'height:calc((100% - 5mm) * ' + (heightPct/100) + ' + 0.6px);">' +
                '<div class="b-text">' + escapeHtml(text) + '</div>' +
                (tm ? '<div class="b-time">' + escapeHtml(tm) + '</div>' : '') + '</div>';
       }).join('');
