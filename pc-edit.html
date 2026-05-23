@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260521.380000">
+<meta name="build-version" content="20260521.390000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -15147,9 +15147,9 @@ function show(id) {
         for (let i = 0; i < pdfSelectedDates.length; i++) {
           progress.textContent = (i + 1) + ' / ' + pdfSelectedDates.length + ' 日目を生成中...';
           const wrap = document.createElement('div');
-          // R298: left:-99999px だとブラウザが layout を skip して flex/grid が崩れる。
-          // 画面内座標 + opacity:0 で layout は走らせる。html2canvas は opacity:0 でも descend する。
-          wrap.style.cssText = 'position:fixed; left:0; top:0; width:' + paperWpx + 'px; height:' + paperHpx + 'px; background:#fff; opacity:0; pointer-events:none; z-index:-9999; overflow:hidden;';
+          // R302: opacity:0 でも CSS が clone に届かない問題があった。
+          // 完全に画面表示する（一瞬白い A4 が出るが許容）。これで CSS は確実に適用される。
+          wrap.style.cssText = 'position:fixed; left:0; top:0; width:' + paperWpx + 'px; height:' + paperHpx + 'px; background:#fff; z-index:99999; overflow:hidden; pointer-events:none;';
           wrap.innerHTML = buildTtPdfRootHtml([pdfSelectedDates[i]]);
           document.body.appendChild(wrap);
           cleanup = wrap;
