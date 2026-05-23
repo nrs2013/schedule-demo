@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260523.700000">
+<meta name="build-version" content="20260523.730000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -14913,6 +14913,116 @@ function show(id) {
 #tt-pdf-root .tt-pdf-foot-empty { color:#888; font-style:italic; font-size:16px; }
 `;
 
+    // R332: 画面の .tt-paper を直接撮影する WYSIWYG PDF モード用 CSS。
+    // .tt-paper.tt-pdf-rendering クラスを一時的に付与し、終わったら外す。
+    const TT_PDF_SCREEN_CSS = `
+.tt-paper.tt-pdf-rendering {
+  background: white !important;
+  color: #111 !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}
+.tt-paper.tt-pdf-rendering * { text-shadow: none !important; }
+.tt-paper.tt-pdf-rendering .tt-paper-header {
+  background: white !important;
+  border: 1.5px solid #1a1a1a !important;
+  border-radius: 6px !important;
+}
+.tt-paper.tt-pdf-rendering .tt-paper-header .h-lbl { color: #666 !important; letter-spacing: 0.14em !important; font-weight: 600 !important; }
+.tt-paper.tt-pdf-rendering .tt-paper-header .h-val { color: #111 !important; }
+.tt-paper.tt-pdf-rendering .tt-paper-header .h-val.title { color: #000 !important; font-weight: 700 !important; }
+.tt-paper.tt-pdf-rendering .tt-paper-header .h-val.date { color: #1a1a1a !important; font-weight: 700 !important; }
+.tt-paper.tt-pdf-rendering .tt-paper-header .h-val.phase { color: #333 !important; font-weight: 600 !important; }
+.tt-paper.tt-pdf-rendering .tt-paper-header .h-val.reg { color: #555 !important; }
+.tt-paper.tt-pdf-rendering .tt-grid {
+  background: white !important;
+  border: 0.5px solid #1a1a1a !important;
+  border-radius: 4px !important;
+}
+.tt-paper.tt-pdf-rendering .tt-time-row { background: #f5f5f5 !important; border-bottom: 0.5px solid #999 !important; }
+.tt-paper.tt-pdf-rendering .tt-time-corner {
+  background: #ececec !important;
+  color: #333 !important;
+  border-right: 0.5px solid #999 !important;
+}
+.tt-paper.tt-pdf-rendering .tt-time-axis { background: #f8f8f8 !important; }
+.tt-paper.tt-pdf-rendering .tt-tick-label,
+.tt-paper.tt-pdf-rendering .tt-tick-label.first,
+.tt-paper.tt-pdf-rendering .tt-tick-label.last { color: #111 !important; font-weight: 600 !important; }
+.tt-paper.tt-pdf-rendering .tt-tick-line { background: #555 !important; }
+.tt-paper.tt-pdf-rendering .tt-tick-line.first { background: #1a1a1a !important; }
+.tt-paper.tt-pdf-rendering .tt-tick-mini { background: #aaa !important; }
+.tt-paper.tt-pdf-rendering .tt-tick-mini.half { background: #888 !important; }
+.tt-paper.tt-pdf-rendering .tt-tick-sub-mini,
+.tt-paper.tt-pdf-rendering .tt-tick-sub { color: #777 !important; }
+.tt-paper.tt-pdf-rendering .tt-sec-row {
+  border-bottom: 0.5px solid #999 !important;
+  background: white !important;
+}
+.tt-paper.tt-pdf-rendering .tt-sec-row:last-child { border-bottom: none !important; }
+.tt-paper.tt-pdf-rendering .tt-sec-row:nth-child(even) .tt-sec-label { background: #eee !important; }
+.tt-paper.tt-pdf-rendering .tt-sec-row:nth-child(even) .tt-sec-body { background-color: rgba(0,0,0,0.015) !important; }
+.tt-paper.tt-pdf-rendering .tt-sec-label {
+  background: #f0f0f0 !important;
+  color: #111 !important;
+  border-right: 0.5px solid #999 !important;
+  font-weight: 600 !important;
+}
+.tt-paper.tt-pdf-rendering .tt-sec-body {
+  background-image:
+    linear-gradient(to right, #555 0.6px, transparent 0.6px),
+    linear-gradient(to right, #c0c0c0 0.4px, transparent 0.4px) !important;
+  background-size:
+    var(--tt-cell-w, 60px) 100%,
+    calc(var(--tt-cell-w, 60px) / 2) 100% !important;
+  background-position: 0 0, 0 0 !important;
+  background-color: transparent !important;
+}
+.tt-paper.tt-pdf-rendering .tt-bar {
+  color: #111 !important;
+  background: white !important;
+  border: 0.5px solid #333 !important;
+  border-radius: 4px !important;
+  box-shadow: none !important;
+  font-weight: 500 !important;
+}
+.tt-paper.tt-pdf-rendering .tt-bar.span-bar {
+  background: rgba(255,255,255,0.92) !important;
+  border: 0.6px solid #333 !important;
+}
+.tt-paper.tt-pdf-rendering .tt-bar .tt-bar-text { color: #111 !important; }
+.tt-paper.tt-pdf-rendering .tt-span-title { color: #111 !important; font-weight: 700 !important; }
+.tt-paper.tt-pdf-rendering .tt-span-time { color: #444 !important; }
+/* 編集系の UI は PDF では非表示 */
+.tt-paper.tt-pdf-rendering .tt-sec-drag,
+.tt-paper.tt-pdf-rendering .tt-sec-lanes,
+.tt-paper.tt-pdf-rendering .tt-time-add,
+.tt-paper.tt-pdf-rendering .tt-sec-add-row,
+.tt-paper.tt-pdf-rendering .tt-bar-resize-l,
+.tt-paper.tt-pdf-rendering .tt-bar-resize-r,
+.tt-paper.tt-pdf-rendering .tt-bar-resize-t,
+.tt-paper.tt-pdf-rendering .tt-bar-resize-b,
+.tt-paper.tt-pdf-rendering .tt-now-line,
+.tt-paper.tt-pdf-rendering .tt-hover-cursor,
+.tt-paper.tt-pdf-rendering .tt-drag-hud { display: none !important; }
+.tt-paper.tt-pdf-rendering .tt-paper-footer {
+  background: white !important;
+  border: 0.5px solid #999 !important;
+  color: #111 !important;
+  border-radius: 6px !important;
+}
+.tt-paper.tt-pdf-rendering .tt-paper-footer::before { color: #555 !important; font-weight: 600 !important; }
+.tt-paper.tt-pdf-rendering .tt-paper-footer .ev-item { color: #111 !important; }
+.tt-paper.tt-pdf-rendering .tt-paper-footer .ev-name { color: #000 !important; font-weight: 700 !important; }
+.tt-paper.tt-pdf-rendering .tt-paper-footer .ev-time { color: #1a1a1a !important; font-weight: 500 !important; }
+.tt-paper.tt-pdf-rendering .tt-paper-footer .ev-sep { color: #888 !important; }
+.tt-paper.tt-pdf-rendering .tt-paper-footer .ev-empty { display: none !important; }
+/* バー選択リング・編集ハイライトも撮影時は外す */
+.tt-paper.tt-pdf-rendering .tt-bar.selected,
+.tt-paper.tt-pdf-rendering .tt-bar.is-selected { box-shadow: none !important; outline: none !important; }
+`;
+
     function collectAvailableDates(){
       const keys = Object.keys(timetableByDate || {}).slice();
       keys.sort();
@@ -15327,24 +15437,56 @@ function show(id) {
         return;
       }
 
-      // 本筋: html2canvas + jsPDF を直叩きで 1 日 1 ページ
+      // R332: 本筋を WYSIWYG に書き換え — 画面の .tt-paper を直接 html2canvas で撮影。
+      // 別レイアウトの PDF 専用 HTML を介さないので、画面で見えているとおりに PDF が出る。
       const pdf = new JsPDF({ unit: 'mm', format: 'a4', orientation: 'landscape' });
-      let cleanup = null;
+      const paper = document.getElementById('tt-paper');
+      if (!paper) {
+        progress.textContent = 'エラー: タイムテーブル要素が見つかりません';
+        exportBtn.disabled = false; if (cancelBtn) cancelBtn.disabled = false;
+        return;
+      }
+
+      // 元の日付を保存（finally で復帰）
+      const origDateKey = (typeof getCurrentDateKey === 'function') ? getCurrentDateKey() : null;
+
+      // PDF 用 CSS を head に注入（撮影中だけ）
+      const styleEl = document.createElement('style');
+      styleEl.id = 'tt-pdf-screen-style';
+      styleEl.textContent = TT_PDF_SCREEN_CSS;
+      document.head.appendChild(styleEl);
+
+      function setMasterDateByKey(dk){
+        const parts = dk.split('-').map(Number);
+        const newDate = new Date(parts[0], parts[1]-1, parts[2]);
+        if (window.__masterDateState) {
+          window.__masterDateState.current = newDate;
+        }
+        if (typeof window.__refreshMasterDateBar === 'function') {
+          try { window.__refreshMasterDateBar(); } catch(e){}
+        }
+        if (typeof render === 'function') {
+          try { render(); } catch(e){ console.warn('[PDF render]', e); }
+        }
+      }
+
       try {
         for (let i = 0; i < pdfSelectedDates.length; i++) {
           progress.textContent = (i + 1) + ' / ' + pdfSelectedDates.length + ' 日目を生成中...';
-          const wrap = document.createElement('div');
-          // R302: opacity:0 でも CSS が clone に届かない問題があった。
-          // 完全に画面表示する（一瞬白い A4 が出るが許容）。これで CSS は確実に適用される。
-          wrap.style.cssText = 'position:fixed; left:0; top:0; width:' + paperWpx + 'px; height:' + paperHpx + 'px; background:#fff; z-index:99999; overflow:hidden; pointer-events:none;';
-          wrap.innerHTML = buildTtPdfRootHtml([pdfSelectedDates[i]]);
-          document.body.appendChild(wrap);
-          cleanup = wrap;
-          // フォントと layout が落ち着くのを 1 frame 待つ
+          const dk = pdfSelectedDates[i];
+
+          // 日付切替 + 再描画
+          setMasterDateByKey(dk);
+
+          // PDF モード ON（白背景化）
+          paper.classList.add('tt-pdf-rendering');
+
+          // フォント・layout 確定待ち（2 frame）
           await new Promise(function(r){ requestAnimationFrame(function(){ requestAnimationFrame(r); }); });
-          const target = wrap.querySelector('.tt-pdf-page');
-          if (!target) { wrap.remove(); cleanup = null; continue; }
-          const canvas = await html2canvasFn(target, {
+          await new Promise(function(r){ requestAnimationFrame(function(){ requestAnimationFrame(r); }); });
+
+          // 画面の .tt-paper を直接撮影
+          const canvas = await html2canvasFn(paper, {
             scale: 2,
             useCORS: true,
             letterRendering: true,
@@ -15353,26 +15495,11 @@ function show(id) {
             height: paperHpx,
             windowWidth: paperWpx,
             windowHeight: paperHpx,
-            logging: false,
-            // R301: html2canvas は clone document に親 stylesheet を引き継がない場合がある。
-            // onclone で TT_PDF_CSS を clone document の head に再注入して、レイアウトを確実に当てる。
-            onclone: function(clonedDoc, clonedTarget){
-              try {
-                const st = clonedDoc.createElement('style');
-                st.textContent = TT_PDF_CSS;
-                clonedDoc.head.appendChild(st);
-                // clone 対象の表示状態を強制（親の opacity:0 が継承されないように）
-                if (clonedTarget) {
-                  clonedTarget.style.opacity = '1';
-                  clonedTarget.style.visibility = 'visible';
-                  clonedTarget.style.position = 'relative';
-                  clonedTarget.style.left = '0';
-                  clonedTarget.style.top = '0';
-                }
-              } catch(e) { console.warn('[onclone]', e); }
-            }
+            logging: false
           });
-          wrap.remove(); cleanup = null;
+
+          paper.classList.remove('tt-pdf-rendering');
+
           const imgData = canvas.toDataURL('image/jpeg', 0.95);
           if (i > 0) pdf.addPage('a4', 'landscape');
           pdf.addImage(imgData, 'JPEG', 0, 0, 297, 210, undefined, 'FAST');
@@ -15383,8 +15510,14 @@ function show(id) {
       } catch(e) {
         progress.textContent = 'エラー: ' + (e && e.message ? e.message : 'PDF 生成失敗');
         console.error('[PDF Export]', e);
-        if (cleanup && cleanup.parentNode) cleanup.remove();
       } finally {
+        // クリーンアップ — 万一例外でも必ず元に戻す
+        try { paper.classList.remove('tt-pdf-rendering'); } catch(e){}
+        if (styleEl && styleEl.parentNode) styleEl.remove();
+        // 元の日付に戻す
+        if (origDateKey) {
+          try { setMasterDateByKey(origDateKey); } catch(e){}
+        }
         exportBtn.disabled = false; if (cancelBtn) cancelBtn.disabled = false;
       }
     }
