@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260524.080000">
+<meta name="build-version" content="20260524.110000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -15069,23 +15069,16 @@ function show(id) {
         return b && typeof b.start === 'number' && typeof b.end === 'number';
       });
       const isSpan = function(b){ return Array.isArray(b.spanSecIds) && b.spanSecIds.length > 1; };
-      // R341: bar 内部に縦線 div を生成 (bar の time range start〜end 内の正時/30/15/45 位置に)
-      //   x は bar 全体の width に対する相対 % で位置決め → bar 外の grid line と x で揃う
-      const buildInlineLines = function(start, end){
-        const dur = end - start;
-        if (dur <= 0) return '';
-        let lines = '';
-        // 0.25h 刻みで bar 内の縦線を生成 (bar の左右端は除外)
-        const firstQuarter = Math.ceil(start * 4) / 4;
-        for (let t = firstQuarter; t < end; t += 0.25) {
-          if (Math.abs(t - start) < 0.001) continue;  // bar 左端は除外
-          const isHour = Math.abs(t - Math.round(t)) < 0.001;
-          const isHalf = !isHour && Math.abs(t * 2 - Math.round(t * 2)) < 0.001;
-          const cls = isHour ? 'hour' : (isHalf ? 'half' : 'quarter');
-          const leftPct = ((t - start) / dur) * 100;
-          lines += '<div class="bar-inline-line ' + cls + '" style="left:' + leftPct + '%;"></div>';
+      // R343: bar の start/end time に応じて、左右の border を grid line と同じ太さ・色に。
+      //   bar が grid line を隠して「線が細く見える」問題を解消。
+      const getBorderForTime = function(t){
+        if (Math.abs(t - Math.round(t)) < 0.001) {
+          return '0.8px solid #1a1a1a';  // 正時 (hour)
+        } else if (Math.abs(t * 2 - Math.round(t * 2)) < 0.001) {
+          return '0.6px solid #888';  // 30 分 (half)
+        } else {
+          return '0.6px solid #bbb';  // 15/45 分 (quarter)
         }
-        return lines;
       };
       // R316: 縦線レイヤーを sec-body 内ではなく後段で sec-rows-wrap に対して描画 → 全 sec-row で揃う
       const secRowsHtml = sections.map(function(sec){
@@ -15108,8 +15101,10 @@ function show(id) {
           else if (width < 7) sizeCls = ' bar-tight';
           // R342: bar 内部縦線 (buildInlineLines) を撤廃。bar の中は文字を見やすくするために
           // 白 (or ピンク) で塗りつぶす。縦線は bar の裏 (grid line z-index 1) で隠れる。
+          // R343: bar の左右に border 追加。bar の左右端で grid line が半分隠れて細く見えるのを解消。
+          const blStyle = 'border-left:' + getBorderForTime(b.start) + ';border-right:' + getBorderForTime(b.end) + ';';
           return '<div class="tt-pdf-bar color-' + color + sizeCls + '" style="left:' + left + '%;width:' + width +
-                 '%;top:calc(' + top + '% + 4px);height:calc(' + h + '% - 8px);">' +
+                 '%;top:calc(' + top + '% + 4px);height:calc(' + h + '% - 8px);' + blStyle + '">' +
                  '<span class="b-text">' + escapeHtml(text) + '</span></div>';
         }).join('');
         // R317: lanes 1〜2 は同じ高さ、3 以上で段階的に太く (洗練された設計)
@@ -15177,11 +15172,13 @@ function show(id) {
         //   sec-body (20mm から右) の中で left%。span-bar だけ 18mm 基準だったため
         //   バー外の縦線とバー内の縦線が 2mm 横にズレて見えていた。これを統一。
         // R342: 縦串バーも内部縦線撤廃。ピンクはピンクで塗りつぶし、文字を見やすく。
+        // R343: 縦串バーも左右に border 追加。grid line と同じ太さ・色で。
+        const sblStyle = 'border-left:' + getBorderForTime(b.start) + ';border-right:' + getBorderForTime(b.end) + ';';
         return '<div class="tt-pdf-span-bar color-' + color + padCls +
                '" style="left:calc(20mm + (100% - 20mm) * ' + (left/100) + ');' +
                'width:calc((100% - 20mm) * ' + (width/100) + ');' +
                'top:calc(5mm + (100% - 5mm) * ' + (topPct/100) + ');' +
-               'height:calc((100% - 5mm) * ' + (heightPct/100) + ');">' +
+               'height:calc((100% - 5mm) * ' + (heightPct/100) + ');' + sblStyle + '">' +
                '<div class="b-text">' + escapeHtml(text) + '</div>' +
                (tm ? '<div class="b-time">' + escapeHtml(tm) + '</div>' : '') + '</div>';
       }).join('');
