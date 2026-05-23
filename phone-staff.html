@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260523.300000">
+<meta name="build-version" content="20260523.305000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="apple-touch-icon" href="favicon.svg">
 <title>SCHEDULE STUDIO — STAFF</title>
@@ -4091,7 +4091,55 @@ function buildTtPdfPageHtmlForPhone(iso, tt){
   '</div>';
 }
 
+// R305 phone: スマホならではのかっこいいダーク UI 縦タイムライン
+// (旧 A4 横縮小プリンター風から完全リニューアル。閲覧専用)
+const TT_PHONE_TL_CSS = `
+.tt-tl { background:#0a0a0a; border-radius:8px; padding:14px 14px 16px; font-family:'Noto Sans JP','Inter',sans-serif; color:#fafaf8; }
+.tt-tl-head { border-bottom:0.5px solid rgba(255,255,255,0.15); padding-bottom:10px; margin-bottom:12px; }
+.tt-tl-title { font-family:'Bebas Neue','Inter',sans-serif; font-size:20px; letter-spacing:0.08em; color:#f5c878; margin:0 0 6px; line-height:1.2; }
+.tt-tl-meta { display:flex; gap:10px; flex-wrap:wrap; align-items:baseline; }
+.tt-tl-date { font-family:'JetBrains Mono','Courier New',monospace; font-size:12px; font-weight:700; color:#fafaf8; letter-spacing:0.04em; }
+.tt-tl-venue, .tt-tl-phase { font-size:10px; letter-spacing:0.08em; font-weight:600; }
+.tt-tl-venue { color:#c186c8; }
+.tt-tl-phase { color:#a8e878; }
+.tt-tl-main { background:linear-gradient(135deg, rgba(245,200,120,0.12) 0%, rgba(193,134,200,0.08) 100%);
+              border:0.5px solid rgba(245,200,120,0.4); border-radius:6px; padding:10px 12px; margin-bottom:14px; }
+.tt-tl-main-label { font-size:9px; letter-spacing:0.20em; color:#f5c878; font-weight:700; margin-bottom:6px; text-transform:uppercase; }
+.tt-tl-main-item { display:flex; gap:10px; align-items:baseline; padding:3px 0; }
+.tt-tl-main-time { font-family:'JetBrains Mono',monospace; font-size:12px; color:#ffd9f1; font-weight:600; letter-spacing:0.02em; min-width:96px; }
+.tt-tl-main-name { font-size:13px; color:#fafaf8; font-weight:600; flex:1; }
+.tt-tl-section-label { font-size:9px; letter-spacing:0.18em; color:rgba(255,255,255,0.45); font-weight:700; text-transform:uppercase; margin:14px 0 6px; padding-left:2px; }
+.tt-tl-body { display:flex; flex-direction:column; gap:7px; }
+.tt-tl-bar { background:rgba(255,255,255,0.025); border-left:3px solid var(--accent,#888); border-radius:4px; padding:9px 12px; position:relative; }
+.tt-tl-bar.color-white  { --accent:#a8a8a4; }
+.tt-tl-bar.color-amber  { --accent:#f5c878; }
+.tt-tl-bar.color-gray   { --accent:#888; background:rgba(120,120,120,0.06); }
+.tt-tl-bar.color-accent { --accent:#c186c8; }
+.tt-tl-bar.color-pink   { --accent:#ff6a8a; background:rgba(255,106,138,0.08); }
+.tt-tl-bar.span { background:linear-gradient(90deg, rgba(193,134,200,0.14) 0%, rgba(193,134,200,0.04) 100%);
+                  border-left:3px solid #c186c8; padding-right:32px; }
+.tt-tl-bar.span::after { content:'···'; position:absolute; top:0; bottom:0; right:10px;
+                         font-family:'JetBrains Mono',monospace; color:rgba(193,134,200,0.7);
+                         display:flex; align-items:center; writing-mode:vertical-rl; font-size:14px; letter-spacing:0.2em; font-weight:700; }
+.tt-tl-bar-tline { display:flex; align-items:baseline; gap:6px; margin-bottom:3px; flex-wrap:wrap; }
+.tt-tl-bar-start, .tt-tl-bar-end { font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:700; color:#fafaf8; letter-spacing:0.02em; }
+.tt-tl-bar-arrow { color:rgba(255,255,255,0.35); font-size:11px; }
+.tt-tl-bar-dur { margin-left:auto; font-family:'JetBrains Mono',monospace; font-size:9px; color:rgba(255,255,255,0.55); background:rgba(255,255,255,0.05); padding:2px 6px; border-radius:2px; letter-spacing:0.04em; }
+.tt-tl-bar-name { font-size:14px; color:#fafaf8; font-weight:600; line-height:1.3; margin:2px 0 3px; word-break:break-word; }
+.tt-tl-bar-sec { font-size:10px; color:rgba(255,255,255,0.5); letter-spacing:0.08em; font-weight:500; }
+.tt-tl-bar.span .tt-tl-bar-sec { color:rgba(193,134,200,0.85); font-weight:600; }
+.tt-tl-empty { background:rgba(255,255,255,0.02); border:0.5px dashed rgba(255,255,255,0.12); border-radius:6px;
+               color:rgba(255,255,255,0.4); font-size:12px; padding:18px 14px; text-align:center; letter-spacing:0.05em; line-height:1.6; }
+`;
+function __ensureTtPhoneTlStylesheet(){
+  if (document.getElementById('tt-phone-tl-stylesheet')) return;
+  const st = document.createElement('style');
+  st.id = 'tt-phone-tl-stylesheet';
+  st.textContent = TT_PHONE_TL_CSS;
+  document.head.appendChild(st);
+}
 function renderTimetableInlinePhone(){
+  __ensureTtPhoneTlStylesheet();
   const host = document.getElementById('tt-phone-paper-host');
   if (!host) return;
   const iso = getCurrentDateIso();
@@ -4103,20 +4151,80 @@ function renderTimetableInlinePhone(){
   } catch(e) {}
   const tt = tts[iso];
   if (!tt || !Array.isArray(tt.bars) || tt.bars.length === 0) {
-    host.innerHTML = '<div style="color:#5a5a55; font-size:12px; padding:14px 14px 6px; text-align:center; line-height:1.6;">— この日のタイムテーブルは PC でまだ登録されていません —</div>';
+    host.innerHTML = '<div class="tt-tl-empty">— この日のタイムテーブルは PC でまだ登録されていません —</div>';
     return;
   }
-  const pageHtml = buildTtPdfPageHtmlForPhone(iso, tt);
-  const PX_PER_MM = 96 / 25.4;
-  const paperWpx = 297 * PX_PER_MM;
-  const paperHpx = 210 * PX_PER_MM;
-  const hostW = host.clientWidth || (window.innerWidth - 24);
-  const scale = hostW / paperWpx;
-  const scaledH = paperHpx * scale;
-  host.innerHTML = '<div style="position:relative; width:100%; height:' + scaledH + 'px; background:#fff; overflow:hidden; border-radius:4px; box-shadow:0 2px 12px rgba(0,0,0,0.3);">' +
-    '<div style="position:absolute; left:0; top:0; width:' + paperWpx + 'px; height:' + paperHpx + 'px; transform:scale(' + scale + '); transform-origin:top left;">' +
-    '<div id="tt-pdf-root"><style>' + TT_PDF_CSS_PHONE + '</style>' + pageHtml + '</div>' +
-    '</div></div>';
+  const title = getActiveConcertTitlePhone();
+  const info = getTourInfoForDatePhone(iso);
+  const dateDisp = fmtDateDisplayPhone(iso);
+  const sections = tt.sections || [];
+  const secById = {};
+  sections.forEach(function(s){ secById[s.id] = s; });
+  const bars = (tt.bars||[]).filter(function(b){ return b && typeof b.start==='number' && typeof b.end==='number'; });
+  const sorted = bars.slice().sort(function(a,b){ return a.start - b.start; });
+  function durStr(b){
+    const mm = Math.round((b.end - b.start) * 60);
+    if (mm >= 60) { const h = Math.floor(mm/60); const m = mm%60; return h + 'h' + (m?(m+'m'):''); }
+    return mm + 'm';
+  }
+  function sectionLabel(b){
+    if (Array.isArray(b.spanSecIds) && b.spanSecIds.length > 1) {
+      return b.spanSecIds.map(function(sid){ const s=secById[sid]; return s?s.name:sid; }).join(' / ');
+    }
+    const s = secById[b.secId]; return s ? s.name : '';
+  }
+  function barHtml(b){
+    const isSpan = Array.isArray(b.spanSecIds) && b.spanSecIds.length > 1;
+    const color = b.color || 'white';
+    return '<div class="tt-tl-bar color-' + color + (isSpan ? ' span' : '') + '">' +
+      '<div class="tt-tl-bar-tline">' +
+        '<span class="tt-tl-bar-start">' + fmtTimeFromHourPhone(b.start) + '</span>' +
+        '<span class="tt-tl-bar-arrow">→</span>' +
+        '<span class="tt-tl-bar-end">' + fmtTimeFromHourPhone(b.end) + '</span>' +
+        '<span class="tt-tl-bar-dur">' + durStr(b) + '</span>' +
+      '</div>' +
+      '<div class="tt-tl-bar-name">' + escHtmlPhone(b.text || '(無題)') + '</div>' +
+      '<div class="tt-tl-bar-sec">' + escHtmlPhone(sectionLabel(b)) + '</div>' +
+    '</div>';
+  }
+  // ヘッダ
+  let html = '<div class="tt-tl">';
+  html += '<div class="tt-tl-head">';
+  html += '<h2 class="tt-tl-title">' + escHtmlPhone(title || '—') + '</h2>';
+  html += '<div class="tt-tl-meta">';
+  html += '<span class="tt-tl-date">' + escHtmlPhone(dateDisp) + '</span>';
+  if (info.venue) html += '<span class="tt-tl-venue">' + escHtmlPhone(info.venue) + '</span>';
+  if (info.day || info.phase) html += '<span class="tt-tl-phase">' + escHtmlPhone(info.day || info.phase) + '</span>';
+  html += '</div></div>';
+  // MAIN EVENTS（inFooter フラグ）
+  const mainEvs = sorted.filter(function(b){ return b.inFooter === true; });
+  if (mainEvs.length > 0) {
+    html += '<div class="tt-tl-main"><div class="tt-tl-main-label">★ Main Events</div>';
+    mainEvs.forEach(function(b){
+      html += '<div class="tt-tl-main-item">' +
+        '<span class="tt-tl-main-time">' + fmtTimeFromHourPhone(b.start) + '〜' + fmtTimeFromHourPhone(b.end) + '</span>' +
+        '<span class="tt-tl-main-name">' + escHtmlPhone(b.text || '') + '</span>' +
+      '</div>';
+    });
+    html += '</div>';
+  }
+  // 縦串バーセクション
+  const spanBars = sorted.filter(function(b){ return Array.isArray(b.spanSecIds) && b.spanSecIds.length > 1; });
+  const soloBars = sorted.filter(function(b){ return !(Array.isArray(b.spanSecIds) && b.spanSecIds.length > 1); });
+  if (spanBars.length > 0) {
+    html += '<div class="tt-tl-section-label">★ 全体・縦串</div>';
+    html += '<div class="tt-tl-body">';
+    spanBars.forEach(function(b){ html += barHtml(b); });
+    html += '</div>';
+  }
+  if (soloBars.length > 0) {
+    html += '<div class="tt-tl-section-label">Timeline</div>';
+    html += '<div class="tt-tl-body">';
+    soloBars.forEach(function(b){ html += barHtml(b); });
+    html += '</div>';
+  }
+  html += '</div>';
+  host.innerHTML = html;
 }
 
 window.__reloadTimetableByDatePhone = function(){
