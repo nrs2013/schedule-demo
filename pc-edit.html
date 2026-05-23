@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260521.370000">
+<meta name="build-version" content="20260521.380000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -15166,7 +15166,24 @@ function show(id) {
             height: paperHpx,
             windowWidth: paperWpx,
             windowHeight: paperHpx,
-            logging: false
+            logging: false,
+            // R301: html2canvas は clone document に親 stylesheet を引き継がない場合がある。
+            // onclone で TT_PDF_CSS を clone document の head に再注入して、レイアウトを確実に当てる。
+            onclone: function(clonedDoc, clonedTarget){
+              try {
+                const st = clonedDoc.createElement('style');
+                st.textContent = TT_PDF_CSS;
+                clonedDoc.head.appendChild(st);
+                // clone 対象の表示状態を強制（親の opacity:0 が継承されないように）
+                if (clonedTarget) {
+                  clonedTarget.style.opacity = '1';
+                  clonedTarget.style.visibility = 'visible';
+                  clonedTarget.style.position = 'relative';
+                  clonedTarget.style.left = '0';
+                  clonedTarget.style.top = '0';
+                }
+              } catch(e) { console.warn('[onclone]', e); }
+            }
           });
           wrap.remove(); cleanup = null;
           const imgData = canvas.toDataURL('image/jpeg', 0.95);
