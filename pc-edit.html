@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260524.300000">
+<meta name="build-version" content="20260524.310000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -12970,22 +12970,15 @@ function show(id) {
     return m ? parseFloat(m[1]) : 1;
   }
 
-  // R350: lane の配置を計算。bodyH を「外側 55% / 内側 45%」に配分して
-  //   上下端を少し広く、bar 間を少し狭くする。lanes=1 は中央配置。
+  // R351: 上下端と bar 間の余白を「全部同じ幅」に。totalGap を (lanes+1) 等分。
+  //   lanes=1 は中央配置 (gap が上下に 1 つずつ = 中央)。
   function computeLaneLayout(body, lanes){
     const bodyH = body.getBoundingClientRect().height || (LANE_H * lanes);
     const slotH = bodyH / lanes;
     const barH = Math.min(BAR_H, Math.max(12, slotH - 4));
     const totalGap = Math.max(0, bodyH - lanes * barH);
-    let outerPad, innerGap;
-    if (lanes <= 1) {
-      outerPad = totalGap / 2;
-      innerGap = 0;
-    } else {
-      outerPad = (totalGap * 0.55) / 2;
-      innerGap = (totalGap * 0.45) / (lanes - 1);
-    }
-    return { bodyH: bodyH, slotH: slotH, barH: barH, outerPad: outerPad, innerGap: innerGap };
+    const gap = totalGap / (lanes + 1);
+    return { bodyH: bodyH, slotH: slotH, barH: barH, outerPad: gap, innerGap: gap };
   }
 
   function renderBarsInSection(tt, sec, body){
