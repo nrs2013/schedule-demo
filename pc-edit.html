@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260523.660000">
+<meta name="build-version" content="20260523.700000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -4867,31 +4867,56 @@
     flex-direction: column;
     align-items: stretch;
   }
-  /* R240: A4 縛り撤去・画面いっぱい */
+  /* R331: A4 固定 WYSIWYG — 画面 = 印刷 = PDF が完全一致。
+     .tt-paper を常時 297×210mm に固定し、内側を flex で完全分割。
+     画面が紙より小さい時は .tt-paper-stage が overflow:auto でスクロール。
+     表示倍率は --tt-paper-zoom CSS 変数で transform: scale 制御（後続 Phase 2）。 */
   .tt-paper-stage {
     width: 100%;
     display: flex;
     justify-content: center;
-    padding: 4px 0;
+    align-items: flex-start;
+    padding: 16px;
+    overflow: auto;
+    box-sizing: border-box;
   }
   .tt-paper {
-    width: 100%;
-    max-width: 100%;
-    flex: 1 1 auto;
+    /* A4 横向き原寸固定 */
+    width: 297mm;
+    height: 210mm;
+    min-width: 297mm;
+    max-width: 297mm;
+    min-height: 210mm;
+    max-height: 210mm;
+    flex: 0 0 auto;
     background: #1a1a1a;
     border: 1px solid #2c2c2c;
-    padding: 14px 18px 12px;
+    padding: 3mm;
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
-    transform: none !important;
-    box-shadow: none;
+    transform: scale(var(--tt-paper-zoom, 1));
+    transform-origin: top center;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.4);
     font-size: 13px;
     position: relative;
-    border-radius: 8px;
-    min-height: 480px;
+    border-radius: 4px;
+    overflow: hidden;
   }
-  .tt-paper .tt-grid { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+  .tt-paper > .tt-paper-header { flex: 0 0 auto; margin-bottom: 3mm !important; }
+  .tt-paper > .tt-paper-footer { flex: 0 0 auto; margin-top: 3mm !important; }
+  .tt-paper > .tt-grid {
+    flex: 1 1 0;
+    min-height: 0;
+    min-width: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .tt-paper > .tt-grid > .tt-time-row { flex: 0 0 auto; }
+  .tt-paper > .tt-grid > .tt-sec-row { flex: 1 1 0; min-height: 0; overflow: hidden; }
+  .tt-paper > .tt-grid > .tt-sec-add-row { flex: 0 0 auto; }
+  .tt-paper > .tt-grid > .tt-sec-row > .tt-sec-body { height: 100%; min-height: 0 !important; }
   /* R245+R257: 紙の中ヘッダ：横長で押し出し、線は細く */
   .tt-paper-header {
     flex: 0 0 auto;
@@ -5194,19 +5219,23 @@
   .tt-btn:disabled { opacity: 0.35; cursor: not-allowed; }
   .tt-btn.primary { background: #c8a878; color: #1a1a1a; border-color: #c8a878; font-weight: 600; }
   .tt-btn.primary:hover { background: #d4b88a; color: #1a1a1a; }
+  /* R331: tt-grid-wrap は廃止 — .tt-paper 直下に .tt-grid を flex で配置 */
   .tt-grid-wrap {
-    background: #232323;
-    border: 0.5px solid #353535;
-    border-radius: 8px;
-    padding: 10px;
-    overflow-x: auto;
+    background: transparent;
+    border: none;
+    padding: 0;
+    overflow: visible;
+    flex: 1 1 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
   }
   .tt-grid {
     background: #1a1a1a;
-    border: 1px solid #4a4a4a;
-    border-radius: 6px;
+    border: 0.5px solid #4a4a4a;
+    border-radius: 4px;
     overflow: hidden;
-    min-width: max-content;
+    /* A4 固定モードでは .tt-paper の flex 分割に従う */
   }
   .tt-time-row {
     display: grid;
@@ -12797,31 +12826,35 @@ function show(id) {
   let zoomMode = 'fit';        // 'fit' or 'manual'
   let paperZoomScale = 1.0;    // 紙の表示倍率（manual時）
 
-  // A4 原寸定数（px @ 96dpi）
+  // R331: A4 原寸定数（px @ 96dpi）— CSS の .tt-paper (width:297mm, padding:3mm) と一致
   const PAPER_W_PX = 297 * 96 / 25.4;  // 1122.52
   const PAPER_H_PX = 210 * 96 / 25.4;  // 793.70
-  const PAPER_PAD_X = 8 * 96 / 25.4;
-  const PAPER_PAD_T = 7 * 96 / 25.4;
-  const PAPER_PAD_B = 5 * 96 / 25.4;
-  const PAPER_INNER_W = PAPER_W_PX - PAPER_PAD_X * 2;
-  const PAPER_INNER_H = PAPER_H_PX - PAPER_PAD_T - PAPER_PAD_B;
+  const PAPER_PAD_MM = 3;
+  const PAPER_PAD_PX = PAPER_PAD_MM * 96 / 25.4;
+  const PAPER_INNER_W = PAPER_W_PX - PAPER_PAD_PX * 2;
+  const PAPER_INNER_H = PAPER_H_PX - PAPER_PAD_PX * 2;
 
   function updateCellW(tt){
-    // R287: 印刷時は CELL_W を __applyPrintLayout が事前に強制設定するので、render の再計算で上書きさせない
+    // R331: A4 固定モード — 画面でも紙でも CELL_W は PAPER_INNER_W から逆算
     if (window.__forcePrintCellW) return;
     const hours = Math.max(1, tt.timeEnd - tt.timeStart);
-    const paper = document.getElementById('tt-paper');
-    const paddingX = 36; // .tt-paper の左右 padding 合計
-    const containerW = paper ? Math.max(600, paper.clientWidth - paddingX) : 900;
-    const axisW = containerW - LABEL_W - ADD_W;
+    const axisW = PAPER_INNER_W - LABEL_W - ADD_W;
     const factor = (zoomMode === 'manual') ? paperZoomScale : 1.0;
-    CELL_W = Math.max(28, Math.floor((axisW / hours) * factor));
+    CELL_W = (axisW / hours) * factor;
   }
   function updateLaneH(tt){
-    // R240: 固定サイズ。バーは十分見やすい高さに
-    LANE_H = 44;
-    BAR_H = 36;
-    BAR_TOP = 4;
+    // R331: A4 固定モード — paper の残り高さを totalLanes で分割
+    // ヘッダ実測値 ≒ 70px、フッタ ≒ 48px、時刻軸 ≒ 36px、3mm margin ×2 ≒ 23px
+    if (!tt || !Array.isArray(tt.sections)) {
+      LANE_H = 44; BAR_H = 36; BAR_TOP = 4;
+      return;
+    }
+    const totalLanes = tt.sections.reduce(function(s, sec){ return s + (sec.lanes || 1); }, 0) || 1;
+    const reservedH = 70 + 48 + 36 + 26;  // header + footer + time-row + margins
+    const availableH = PAPER_INNER_H - reservedH;
+    LANE_H = Math.max(18, availableH / totalLanes);
+    BAR_H = Math.max(14, LANE_H - 8);
+    BAR_TOP = Math.max(1, (LANE_H - BAR_H) / 2);
   }
   function updatePaperScale(){
     // R240: transform scale を完全撤去。サイズは CSS と updateCellW で決定
