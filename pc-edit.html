@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260521.470000">
+<meta name="build-version" content="20260521.480000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -14755,16 +14755,17 @@ function show(id) {
 #tt-pdf-root .tt-pdf-grid-line { position:absolute; top:0; bottom:0; width:1px; pointer-events:none; }
 #tt-pdf-root .tt-pdf-grid-line.hour { background:#1a1a1a; }
 #tt-pdf-root .tt-pdf-grid-line.half { background:#dcdad6; }
-/* ── 個別バー：薄色塗り（淡）＋ 細い濃ボーダー＋ 黒太文字。テキスト名のみ（時刻なし） ── */
-#tt-pdf-root .tt-pdf-bar { position:absolute; box-sizing:border-box; padding:2px 7px; font-size:9.5px; font-weight:600;
-                           color:#1a1a1a; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; line-height:1.2;
+/* R318: 個別バーは白黒・線種で区別 (縦串バーだけカラー)。セル境界から離して呼吸させる */
+#tt-pdf-root .tt-pdf-bar { position:absolute; box-sizing:border-box; padding:3px 8px; font-size:10px; font-weight:600;
+                           color:#1a1a1a; background:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; line-height:1.2;
                            border-radius:2px; display:flex; align-items:center; justify-content:center; letter-spacing:0.04em; z-index:3; }
 #tt-pdf-root .tt-pdf-bar .b-text { overflow:hidden; text-overflow:ellipsis; }
-#tt-pdf-root .tt-pdf-bar.color-white  { background:#fff8d4; border:1px solid #c89c14; }   /* 仕込: 淡黄 */
-#tt-pdf-root .tt-pdf-bar.color-amber  { background:#ffe1bc; border:1px solid #c87a18; }   /* 現地仕込: 淡橙 */
-#tt-pdf-root .tt-pdf-bar.color-gray   { background:#dfeec8; border:1px solid #5e8c1e; }   /* リハ: 淡緑 */
-#tt-pdf-root .tt-pdf-bar.color-accent { background:#d6e7f4; border:1px solid #2670b0; }   /* テクリハ: 淡青 */
-#tt-pdf-root .tt-pdf-bar.color-pink   { background:#fcd0dc; border:1.4px solid #c8336a; color:#0a0a0a; font-weight:700; }   /* 本番: 淡桃 */
+/* 線種で区別 */
+#tt-pdf-root .tt-pdf-bar.color-white  { background:#fff; border:1px solid #888; }       /* 仕込: 細線 */
+#tt-pdf-root .tt-pdf-bar.color-amber  { background:#fff; border:1.5px solid #444; }     /* 現地仕込: 中線 */
+#tt-pdf-root .tt-pdf-bar.color-gray   { background:#fff; border:1.5px dashed #555; }    /* リハ: 破線 */
+#tt-pdf-root .tt-pdf-bar.color-accent { background:#fff; border:1px dashed #777; }      /* テクリハ: 細破線 */
+#tt-pdf-root .tt-pdf-bar.color-pink   { background:#fff; border:2px solid #111; font-weight:800; }  /* 本番: 太線 (最強調) */
 /* ── 縦串バー：不透明背景 + 太枠 + 黒太文字 + 時刻 / 尺 ── */
 #tt-pdf-root .tt-pdf-span-bar { position:absolute; box-sizing:border-box; padding:7px 12px; font-size:10.5px; font-weight:700;
                                 color:#1a1a1a; border-radius:3px; z-index:4;
@@ -14777,16 +14778,17 @@ function show(id) {
 #tt-pdf-root .tt-pdf-span-bar.color-pink   { background:#fcd0dc; border:2.2px solid #c8336a; }
 #tt-pdf-root .tt-pdf-span-bar .b-text { font-weight:800; color:#0a0a0a; word-break:break-all; font-size:12px; letter-spacing:0.06em; }
 #tt-pdf-root .tt-pdf-span-bar .b-time { font-family:'JetBrains Mono','Courier New',monospace; font-weight:600; font-size:9px; color:rgba(0,0,0,0.55); margin-top:4px; letter-spacing:0.10em; }
-/* ── フッタ：MAIN EVENTS をしっかり目立たせる（みんなが注目する核） ── */
-#tt-pdf-root .tt-pdf-foot { margin-top:4mm; padding:10px 16px; border:1.5px solid #c8336a; border-radius:3px;
-                            display:flex; gap:18px; flex-wrap:wrap; font-size:14px; color:#1a1a1a; flex:0 0 auto;
-                            background:#fff5f8; align-items:baseline; }
-#tt-pdf-root .tt-pdf-foot-label { font-weight:800; color:#c8336a; letter-spacing:0.28em; font-size:12px; margin-right:8px; text-transform:uppercase; }
-#tt-pdf-root .tt-pdf-foot-ev { color:#1a1a1a; font-size:14px; }
-#tt-pdf-root .tt-pdf-foot-ev b { color:#0a0a0a; font-weight:800; font-size:15px; }
-#tt-pdf-root .tt-pdf-foot-ev .ev-time { color:#666; font-family:'JetBrains Mono',monospace; font-size:11px; margin-left:7px; letter-spacing:0.06em; font-weight:600; }
-#tt-pdf-root .tt-pdf-foot-sep { color:#d8c0cc; font-size:14px; }
-#tt-pdf-root .tt-pdf-foot-empty { color:#888; font-style:italic; font-size:13px; }
+/* R318: フッタ MAIN EVENTS — 白黒で最大級の視認性 (学園貼り出し用) */
+#tt-pdf-root .tt-pdf-foot { margin-top:4mm; padding:12px 18px; border:2px solid #1a1a1a; border-radius:3px;
+                            display:flex; gap:20px; flex-wrap:wrap; font-size:17px; color:#0a0a0a; flex:0 0 auto;
+                            background:#fff; align-items:baseline; }
+#tt-pdf-root .tt-pdf-foot-label { font-weight:800; color:#0a0a0a; letter-spacing:0.30em; font-size:14px; margin-right:10px; text-transform:uppercase;
+                                  padding:3px 10px; background:#0a0a0a; color:#fff !important; border-radius:2px; }
+#tt-pdf-root .tt-pdf-foot-ev { color:#0a0a0a; font-size:17px; }
+#tt-pdf-root .tt-pdf-foot-ev b { color:#000; font-weight:800; font-size:19px; }
+#tt-pdf-root .tt-pdf-foot-ev .ev-time { color:#444; font-family:'JetBrains Mono',monospace; font-size:13px; margin-left:8px; letter-spacing:0.08em; font-weight:600; }
+#tt-pdf-root .tt-pdf-foot-sep { color:#cfcdc8; font-size:17px; }
+#tt-pdf-root .tt-pdf-foot-empty { color:#888; font-style:italic; font-size:15px; }
 `;
 
     function collectAvailableDates(){
@@ -14952,8 +14954,9 @@ function show(id) {
           const h     = (1 / lanes) * 100;
           const color = b.color || 'white';
           const text = b.text || '';
+          // R318: バーをセル境界から離す (上下に呼吸する余白)
           return '<div class="tt-pdf-bar color-' + color + '" style="left:' + left + '%;width:' + width +
-                 '%;top:calc(' + top + '% + 2px);height:calc(' + h + '% - 4px);">' +
+                 '%;top:calc(' + top + '% + 4px);height:calc(' + h + '% - 8px);">' +
                  '<span class="b-text">' + escapeHtml(text) + '</span></div>';
         }).join('');
         // R317: lanes 1〜2 は同じ高さ、3 以上で段階的に太く (洗練された設計)
