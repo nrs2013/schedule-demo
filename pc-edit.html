@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260521.330000">
+<meta name="build-version" content="20260521.340000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -4894,8 +4894,8 @@
     flex: 0 0 auto;
     min-height: 70px;
     display: grid;
-    /* R296: DATE 列を広げて「2026.05.22 (土)」が切り詰められないように */
-    grid-template-columns: minmax(0, 2.0fr) minmax(0, 1.7fr) minmax(0, 1.4fr) minmax(0, 1.2fr);
+    /* R297: TITLE と DATE が両方収まるように再配分。VENUE / PHASE は少し詰める */
+    grid-template-columns: minmax(0, 2.4fr) minmax(0, 1.7fr) minmax(0, 1.3fr) minmax(0, 1.0fr);
     gap: 14px;
     padding: 12px 18px;
     background: linear-gradient(180deg, #242424 0%, #1c1c1c 100%);
@@ -4930,7 +4930,8 @@
     line-height: 1.25;
   }
   .tt-paper-header .h-val.title {
-    font-size: 22px;
+    /* R297: TITLE フォントを 22 → 20 に下げて「櫻坂46 四期生ライブ」が収まるように */
+    font-size: 20px;
     font-weight: 600;
     color: #f0e8d4;
     letter-spacing: 0.02em;
