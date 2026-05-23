@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260523.580000">
+<meta name="build-version" content="20260523.590000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -14829,6 +14829,11 @@ function show(id) {
 #tt-pdf-root .tt-pdf-bar.color-gray   { background:#fff; border:0.6px solid #666; }
 #tt-pdf-root .tt-pdf-bar.color-accent { background:#fff; border:0.6px solid #444; }
 #tt-pdf-root .tt-pdf-bar.color-pink   { background:#fff; border:0.6px solid #1a1a1a; font-weight:700; }
+/* R327: 狭個別バーは padding 詰めて font 縮小 → 文字切れ防止 */
+#tt-pdf-root .tt-pdf-bar.bar-tight { padding:2px 3px; font-size:8.5px; letter-spacing:0; }
+#tt-pdf-root .tt-pdf-bar.bar-narrow { padding:1px 2px; font-size:7.5px; letter-spacing:-0.02em; }
+#tt-pdf-root .tt-pdf-bar.bar-vnarrow { padding:1px 1px; font-size:7px; letter-spacing:-0.04em;
+                                       writing-mode:vertical-rl; text-orientation:upright; }
 /* ── 縦串バー ── */
 /* R326+: 縦串バーも border-radius 0 で直方形、grid 線と完全に揃う */
 #tt-pdf-root .tt-pdf-span-bar { position:absolute; box-sizing:border-box; padding:7px 12px; font-size:10.5px; font-weight:700;
@@ -15027,8 +15032,6 @@ function show(id) {
         const lanes = sec.lanes || 1;
         const bars = allBars.filter(function(b){ return !isSpan(b) && b.secId === sec.id; });
         const barsHtml = bars.map(function(b){
-          // R326: バーの左右は grid 線中央に吸着。grid 線 (1px) が bar より上に被さるので
-          //   bar 自身は時刻 pct% にぴったり配置すれば良い (-0.5px シフトは不要)
           const left  = timeToPct(b.start);
           const right = timeToPct(b.end);
           const width = Math.max(0, right - left);
@@ -15036,7 +15039,16 @@ function show(id) {
           const h     = (1 / lanes) * 100;
           const color = b.color || 'white';
           const text = b.text || '';
-          return '<div class="tt-pdf-bar color-' + color + '" style="left:' + left + '%;width:' + width +
+          // R327: バー幅に応じて font / padding を段階的に縮める
+          //   width < 1.8%  → 縦書き
+          //   width < 3.5%  → 7.5px font
+          //   width < 5.5%  → 8.5px font
+          //   else          → デフォルト 10px
+          let sizeCls = '';
+          if (width > 0 && width < 1.8) sizeCls = ' bar-vnarrow';
+          else if (width < 3.5) sizeCls = ' bar-narrow';
+          else if (width < 5.5) sizeCls = ' bar-tight';
+          return '<div class="tt-pdf-bar color-' + color + sizeCls + '" style="left:' + left + '%;width:' + width +
                  '%;top:calc(' + top + '% + 4px);height:calc(' + h + '% - 8px);">' +
                  '<span class="b-text">' + escapeHtml(text) + '</span></div>';
         }).join('');
