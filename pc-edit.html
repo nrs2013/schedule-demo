@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260524.383000">
+<meta name="build-version" content="20260524.384000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -8590,15 +8590,19 @@ function show(id) {
     var _r77Pad = function(n){ return String(n).padStart(2, '0'); };
     var _r77TotalRuntime = _r77H > 0 ? (_r77H + ':' + _r77Pad(_r77M) + ':' + _r77Pad(_r77S)) : (_r77M + ':' + _r77Pad(_r77S));
 
+    /* R384-1: A4 全体を flex column にして tbl-wrap を flex:1。曲数が少なくても上下中央寄せでバランス良く。 */
+    var _sparseClass = (_rowCount <= 8) ? ' is-sparse' : '';
     /* 印刷ビュー HTML（A2-Bold ヘッダー付き） */
-    var pageHtml = '<div id="r70pdf-root" style="background:#fff;color:#1a1a1a;font-family:Inter,\'Noto Sans JP\',sans-serif;padding:10mm 12mm 8mm;width:210mm;box-sizing:border-box;">' +
+    var pageHtml = '<div id="r70pdf-root" class="' + _sparseClass + '" style="background:#fff;color:#1a1a1a;font-family:Inter,\'Noto Sans JP\',sans-serif;padding:14mm 14mm 12mm;width:210mm;min-height:297mm;box-sizing:border-box;display:flex;flex-direction:column;">' +
       '<style>' +
-      '#r70pdf-root .r70p-mast{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:0.5px solid #1a1a1a;padding-bottom:4px;margin-bottom:6px;}' +
-      '#r70pdf-root .r70p-eyebrow{font-family:Inter,sans-serif;font-size:7px;letter-spacing:0.4em;color:#b0b0b0;font-weight:500;text-transform:uppercase;}' +
-      '#r70pdf-root .r70p-title{font-family:Inter,sans-serif;font-size:16px;letter-spacing:0.16em;color:#1a1a1a;font-weight:200;text-transform:uppercase;margin:0;line-height:1;}' +
-      '#r70pdf-root .r70p-mast-r{text-align:right;display:flex;flex-direction:column;gap:2px;align-items:flex-end;}' +
-      '#r70pdf-root .r70p-date{font-family:\'JetBrains Mono\',monospace;font-size:11px;letter-spacing:0.06em;color:#1a1a1a;font-weight:300;}' +
-      '#r70pdf-root .r70p-dow{font-family:Inter,sans-serif;font-size:7px;letter-spacing:0.32em;color:#b0b0b0;font-weight:500;text-transform:uppercase;}' +
+      /* R384-1: タイトルを大きく＋eyebrow を追加。Brutalist Vivid を踏襲しつつアプリらしさを強調 */
+      '#r70pdf-root .r70p-mast{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:1.5px solid #1a1a1a;padding-bottom:10px;margin-bottom:10px;flex-shrink:0;}' +
+      '#r70pdf-root .r70p-mast-l{display:flex;flex-direction:column;gap:6px;}' +
+      '#r70pdf-root .r70p-eyebrow{font-family:Inter,sans-serif;font-size:7.5px;letter-spacing:0.52em;color:#9a9a9a;font-weight:600;text-transform:uppercase;line-height:1;}' +
+      '#r70pdf-root .r70p-title{font-family:Inter,sans-serif;font-size:42px;letter-spacing:0.18em;color:#1a1a1a;font-weight:300;text-transform:uppercase;margin:0;line-height:0.92;}' +
+      '#r70pdf-root .r70p-mast-r{text-align:right;display:flex;flex-direction:column;gap:4px;align-items:flex-end;}' +
+      '#r70pdf-root .r70p-date{font-family:\'JetBrains Mono\',monospace;font-size:18px;letter-spacing:0.06em;color:#1a1a1a;font-weight:400;line-height:1;}' +
+      '#r70pdf-root .r70p-dow{font-family:Inter,sans-serif;font-size:8px;letter-spacing:0.4em;color:#9a9a9a;font-weight:600;text-transform:uppercase;line-height:1;}' +
       '#r70pdf-root .r70p-bar{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:0.5px solid #ececec;margin-bottom:8px;gap:8px;flex-wrap:nowrap;white-space:nowrap;}' +
       '#r70pdf-root .r70p-l{display:flex;align-items:center;gap:6px;flex-wrap:nowrap;}' +
       '#r70pdf-root .r70p-r{display:flex;gap:6px;align-items:center;flex-shrink:0;}' +
@@ -8623,12 +8627,21 @@ function show(id) {
       '#r70pdf-root .r69-tags-list{display:flex;flex-wrap:wrap;gap:0;align-items:baseline;}' +
       '#r70pdf-root .r69-tag{font-family:\'Noto Sans JP\',sans-serif;font-size:' + _fTag + 'px;color:#1a1a1a;font-weight:500;letter-spacing:0.06em;}' +
       '#r70pdf-root .r69-tag-sep{font-family:\'Noto Sans JP\',sans-serif;font-size:' + _fTag + 'px;color:#1a1a1a;font-weight:400;margin:0 2px;}' +
-      '#r70pdf-root .r70p-foot{margin-top:10px;padding-top:8px;border-top:1px solid #1a1a1a;display:flex;justify-content:space-between;align-items:baseline;font-family:Inter,sans-serif;font-size:18px;color:#1a1a1a;letter-spacing:0.04em;font-weight:700;}' +
-      '#r70pdf-root .r70p-foot .lbl{font-family:Inter,sans-serif;font-size:9px;letter-spacing:0.32em;font-weight:500;color:#888;text-transform:uppercase;margin-right:8px;}' +
-      '#r70pdf-root .r70p-foot .val{font-family:\'JetBrains Mono\',monospace;font-size:22px;font-weight:700;color:#1a1a1a;letter-spacing:0.04em;}' +
+      /* R384-1: tbl-wrap で flex:1。曲数少時は中央寄せ */
+      '#r70pdf-root .r70p-tbl-wrap{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;justify-content:flex-start;}' +
+      '#r70pdf-root.is-sparse .r70p-tbl-wrap{justify-content:center;}' +
+      /* R384-1: フッターを Brutalist 巨大数字に */
+      '#r70pdf-root .r70p-foot{margin-top:14px;padding-top:14px;border-top:1.5px solid #1a1a1a;display:flex;justify-content:space-between;align-items:flex-end;flex-shrink:0;flex-wrap:nowrap;gap:14px;}' +
+      '#r70pdf-root .r70p-foot-cell{display:flex;flex-direction:column;gap:6px;}' +
+      '#r70pdf-root .r70p-foot-cell.is-right{align-items:flex-end;text-align:right;}' +
+      '#r70pdf-root .r70p-foot .lbl{font-family:Inter,sans-serif;font-size:8.5px;letter-spacing:0.4em;font-weight:600;color:#9a9a9a;text-transform:uppercase;line-height:1;}' +
+      '#r70pdf-root .r70p-foot .val{font-family:Inter,sans-serif;font-size:54px;font-weight:300;color:#1a1a1a;letter-spacing:0.02em;line-height:0.9;}' +
+      '#r70pdf-root .r70p-foot .val .unit{font-family:Inter,sans-serif;font-size:14px;font-weight:600;color:#9a9a9a;margin-left:4px;letter-spacing:0.08em;}' +
+      '#r70pdf-root .r70p-build{font-family:\'JetBrains Mono\',monospace;font-size:7px;color:#c8c8c8;font-weight:400;letter-spacing:0.18em;align-self:flex-end;}' +
       '</style>' +
+      /* R384-1: mast に eyebrow を追加し、タイトルを大型化 */
       '<div class="r70p-mast">' +
-        '<div><div class="r70p-title">Rehearsal Menu</div></div>' /* R77: eyebrow 撤去 */ +
+        '<div class="r70p-mast-l"><span class="r70p-eyebrow">SCHEDULE STUDIO · CONCERT TOUR PRODUCTION</span><div class="r70p-title">Rehearsal Menu</div></div>' +
         '<div class="r70p-mast-r"><span class="r70p-dow">' + dowEn + '</span><span class="r70p-date">' + dateStr + ' (' + dowJp + ')</span></div>' +
       '</div>' +
       '<div class="r70p-bar">' +
@@ -8641,11 +8654,17 @@ function show(id) {
           '<span class="r70p-pill is-stage"><span class="lbl">Show</span><span class="val">19:00</span></span>' +
         '</div>' +
       '</div>' +
-      '<table class="r70p-tbl">' +
+      /* R384-1: tbl-wrap で flex:1。曲数少時に上下中央寄せでバランス取り */
+      '<div class="r70p-tbl-wrap"><table class="r70p-tbl">' +
         '<thead><tr><th class="col-mno">M#</th><th class="col-title">Title</th><th class="col-time">Time</th><th class="col-rh">RH</th><th class="col-tags">Tags</th><th class="col-memo">Memo</th></tr></thead>' +
         '<tbody>' + rowsHtml + '</tbody>' +
-      '</table>' +
-      '<div class="r70p-foot"><span><span class="lbl">Runtime</span><span class="val">' + _r77TotalRuntime + '</span></span><span style="font-size:8px;color:#b0b0b0;font-weight:400;letter-spacing:0.2em;align-self:flex-end;">Build ' + (document.querySelector('meta[name="build-version"]') ? document.querySelector('meta[name="build-version"]').content : '?') + '</span><span><span class="lbl">Songs</span><span class="val">' + songList.length + '</span></span></div>' /* R81b: ビルド刻印で検証 */ +
+      '</table></div>' +
+      /* R384-1: フッターを 3 セル構成 (Runtime / Songs / Build) で巨大数字に */
+      '<div class="r70p-foot">' +
+        '<div class="r70p-foot-cell"><span class="lbl">Runtime</span><span class="val">' + _r77TotalRuntime + '</span></div>' +
+        '<div class="r70p-foot-cell is-right"><span class="lbl">Songs</span><span class="val">' + songList.length + '</span></div>' +
+      '</div>' +
+      '<div class="r70p-build">BUILD ' + (document.querySelector('meta[name="build-version"]') ? document.querySelector('meta[name="build-version"]').content : '?') + '</div>' +
     '</div>';
 
     /* DOM に一時挿入 → html2pdf で PDF 化 → 削除 */
@@ -11542,6 +11561,7 @@ function show(id) {
   }
 
   // D107: Undo 機能（Cmd+Z）— save が走る度に snapshot を履歴に積む
+  // R384-2: タイムテーブル / リハーサル / 曲リストの LS を追加して Undo 範囲を拡張
   function __snapshot() {
     return JSON.stringify({
       calEvents: calEvents,
@@ -11551,7 +11571,11 @@ function show(id) {
       arrivalSectionsByDate: arrivalSectionsByDate,
       dailyEvents: dailyEvents,
       calMemos: calMemos,
-      showTimes: showTimes
+      showTimes: showTimes,
+      /* R384-2: 別 IIFE 管理のデータは LS 値を直接持つ */
+      timetableByDate_LS: localStorage.getItem('schedule-studio:timetableByDate:v1') || '',
+      rehearsalByDate_LS: localStorage.getItem('schedule-studio:rehearsalByDate:v1') || '',
+      setlists_LS:        localStorage.getItem('schedule-studio:setlists:v1')        || ''
     });
   }
   const __undoStack = [];
@@ -11597,6 +11621,19 @@ function show(id) {
       localStorage.setItem(LS_KEY_DAY_EVENTS, JSON.stringify(dailyEvents));
       localStorage.setItem(LS_KEY_MEMOS, JSON.stringify(calMemos));
       localStorage.setItem(LS_KEY_SHOW_TIMES, JSON.stringify(showTimes));
+      /* R384-2: タイムテーブル / リハーサル / 曲リストも復元 */
+      if (typeof data.timetableByDate_LS === 'string') {
+        if (data.timetableByDate_LS) localStorage.setItem('schedule-studio:timetableByDate:v1', data.timetableByDate_LS);
+        else localStorage.removeItem('schedule-studio:timetableByDate:v1');
+      }
+      if (typeof data.rehearsalByDate_LS === 'string') {
+        if (data.rehearsalByDate_LS) localStorage.setItem('schedule-studio:rehearsalByDate:v1', data.rehearsalByDate_LS);
+        else localStorage.removeItem('schedule-studio:rehearsalByDate:v1');
+      }
+      if (typeof data.setlists_LS === 'string') {
+        if (data.setlists_LS) localStorage.setItem('schedule-studio:setlists:v1', data.setlists_LS);
+        else localStorage.removeItem('schedule-studio:setlists:v1');
+      }
       // 全描画
       if (typeof renderMonth === 'function') renderMonth();
       if (typeof renderDetail === 'function') renderDetail();
@@ -11606,6 +11643,11 @@ function show(id) {
       if (typeof renderVenueDefList === 'function') renderVenueDefList();
       if (typeof syncAllDateDisplays === 'function') syncAllDateDisplays();
       if (typeof window.__rehearsalRender === 'function') window.__rehearsalRender();
+      /* R384-2: 別 IIFE のデータも reload */
+      if (typeof window.__reloadTimetableByDate === 'function') { try { window.__reloadTimetableByDate(); } catch(e){ console.warn('[R384-2] reloadTimetable fail', e); } }
+      if (typeof window.__reloadRehearsalByDate === 'function') { try { window.__reloadRehearsalByDate(); } catch(e){ console.warn('[R384-2] reloadRehearsal fail', e); } }
+      if (typeof window.__reloadSetlists === 'function')        { try { window.__reloadSetlists(); }        catch(e){ console.warn('[R384-2] reloadSetlists fail', e); } }
+      if (typeof window.__renderTimetable === 'function')       { try { window.__renderTimetable(); }       catch(e){} }
     } catch (e) {
       console.error('[D107] applySnapshot error:', e);
     }
