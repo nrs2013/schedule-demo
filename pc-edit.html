@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260524.381000">
+<meta name="build-version" content="20260524.382000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -5314,16 +5314,16 @@
     transform: translateY(-50%);
     width: 14px;
     text-align: center;
-    color: #6e6c66;
+    color: #8e8c86; /* R382-D: 少し明るく */
     cursor: grab;
-    font-size: 12px;
+    font-size: 13px; /* R382-D: 12→13px で視認性 UP */
     letter-spacing: -2px;
     user-select: none;
-    opacity: 0.38;
+    opacity: 0.75; /* R382-D: 0.38→0.75 常時見える */
     transition: opacity 0.15s ease, color 0.15s ease;
     line-height: 1;
   }
-  .tt-sec-row:hover .tt-sec-drag { opacity: 0.95; }
+  .tt-sec-row:hover .tt-sec-drag { opacity: 1; }
   .tt-sec-drag:hover { color: #c8a878; opacity: 1 !important; }
   .tt-sec-drag:active { cursor: grabbing; }
   .tt-sec-row.tt-drop-target {
@@ -5500,14 +5500,14 @@
   .tt-bar-handle {
     position: absolute;
     top: 0;
-    width: 6px;
+    width: 9px; /* R382-B: 6→9px に拡張、リサイズしやすく */
     height: 100%;
     cursor: ew-resize;
-    background: transparent;
+    background: rgba(200,168,120,0.08); /* R382-B: 常時うっすら色 → 「掴める」が見える */
   }
   .tt-bar-handle.l { left: 0; }
   .tt-bar-handle.r { right: 0; }
-  .tt-bar-handle:hover { background: rgba(200,168,120,0.4); }
+  .tt-bar-handle:hover { background: rgba(200,168,120,0.45); }
   /* R238c: 四隅ハンドル撤去（通常ドラッグに戻す） */
   .tt-bar-corner { display: none; }
   .tt-bar-text { cursor: text; }
@@ -5979,11 +5979,11 @@
   }
   .tt-tick-label {
     position: absolute;
-    top: 4px;
+    top: 3px;
     transform: translateX(-50%);
-    font-size: 13px;
-    font-weight: 500;
-    color: #e8e6dc;
+    font-size: 15px;             /* R382-E: 13→15 で整時を強調 */
+    font-weight: 700;            /* R382-E: 500→700 で太字 */
+    color: #f5e6c8;              /* R382-E: アクセント寄りで「ここが○時」が瞬時に分かる */
     background: #1a1a1a;
     padding: 0 5px;
     pointer-events: none;
@@ -5995,13 +5995,13 @@
   .tt-tick-label.last { transform: translateX(-100%); padding-right: 0; }
   .tt-tick-sub {
     position: absolute;
-    top: 19px;
+    top: 21px;                   /* R382-E: 整時の font-size 増に合わせて下げる */
     transform: translateX(-50%);
-    font-size: 10px;
-    color: #d4c8a8;
+    font-size: 9px;              /* R382-E: 10→9 で 30分は控えめに */
+    color: #807a6e;              /* R382-E: #d4c8a8→#807a6e で灰色寄り（整時とのメリハリ） */
     pointer-events: none;
     letter-spacing: 0;
-    font-weight: 600;
+    font-weight: 500;            /* R382-E: 600→500 で細字 */
     background: #1a1a1a;
     padding: 0 2px;
     line-height: 1;
@@ -12880,8 +12880,9 @@ function show(id) {
   function updateLaneH(tt){
     // R346: lanes=2 デフォルト化。バー 1 本の高さを半分にして、セクション 1 セルに
     //   バー 2 本 (上下) が入るのがデフォルト。3 本目以降は lanes=3+ でセル拡張。
-    LANE_H = 22;
-    BAR_H = 18;
+    // R382-A: バー本体が薄くて掴みにくい問題を解消。BAR_H を厚く、LANE_H も拡大。
+    LANE_H = 28;
+    BAR_H = 24;
     BAR_TOP = 2;
   }
   function updatePaperScale(){
@@ -13568,7 +13569,7 @@ function show(id) {
         const y = (ev.clientY - rect.top) / scale;
         const dx = x - startX;
         const dy = y - startY;
-        if (Math.abs(dx) > 8 || Math.abs(dy) > LANE_H * 0.6) isDragging = true;
+        if (Math.abs(dx) > 4 || Math.abs(dy) > LANE_H * 0.6) isDragging = true; // R382-C: 8→4 で感度上げ
         const t = snapTime(pixelToTime(x, tt), tt.timeStart);
         curEnd = t > startTime ? t : startTime;
         const st = Math.min(startTime, curEnd);
@@ -13768,7 +13769,7 @@ function show(id) {
         const y = (ev.clientY - rect.top) / scale;
         const dx = x - startMouseX;
         const dy = y - startMouseY;
-        if (Math.abs(dx) > 8 || Math.abs(dy) > 8) dragging = true;
+        if (Math.abs(dx) > 4 || Math.abs(dy) > 4) dragging = true; // R382-C: 8→4 で感度上げ
         if (!dragging) return;
         const newStart = snapTime(pixelToTime(timeToPixel(initStart, tt) + dx, tt), tt.timeStart);
         const newEnd = newStart + duration;
