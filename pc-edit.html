@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260524.382000">
+<meta name="build-version" content="20260524.383000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -2308,6 +2308,37 @@
   }
   .day-event-card > * { min-width: 0; }
   .day-event-card:hover { border-color: #5a5a53; }
+  /* R383-3: タイムテーブル由来の読み取り専用カード */
+  .day-event-card.day-event-card-readonly {
+    background: rgba(255,212,68,0.05);
+    border: 1px dashed rgba(255,212,68,0.45);
+    grid-template-columns: 22px 105px 14px 105px 1fr;
+    cursor: default;
+  }
+  .day-event-card.day-event-card-readonly:hover {
+    border-color: rgba(255,212,68,0.75);
+  }
+  .day-event-tt-badge {
+    color: #f5c878;
+    font-size: 14px;
+    text-align: center;
+    user-select: none;
+    title: 'タイムテーブルから自動表示';
+  }
+  .day-event-readonly-time {
+    color: #d4c8a8;
+    font-weight: 600;
+    font-feature-settings: 'tnum';
+    font-size: 13px;
+    text-align: center;
+    letter-spacing: 0.02em;
+  }
+  .day-event-readonly-label {
+    color: #e8e6dc;
+    font-weight: 500;
+    font-size: 13px;
+    padding-left: 4px;
+  }
   /* 時／分を分けたプルダウン（time-pair） */
   .time-pair {
     display: inline-flex;
@@ -5144,8 +5175,14 @@
     .tt-bar.color-gray   { background: white !important; border: 1.5px dashed #555 !important;    color: #111 !important; }                                /* リハ     */
     .tt-bar.color-accent { background: white !important; border: 1px dashed #777 !important;      color: #111 !important; }                                /* テクリハ */
     .tt-bar.color-pink   { background: white !important; border: 2px solid #111 !important;       color: #111 !important; font-weight: 700 !important; }   /* 本番＝最太線で最強調 */
+    /* R383-2: 追加 4 色（印刷時はモノクロ・線種で識別） */
+    .tt-bar.color-red    { background: white !important; border: 2px solid #000 !important;       color: #111 !important; font-weight: 700 !important; }   /* 重要・本番 */
+    .tt-bar.color-purple { background: white !important; border: 1.5px dotted #333 !important;    color: #111 !important; }                                /* 映像照明 */
+    .tt-bar.color-cyan   { background: white !important; border: 1px solid #444 !important;       color: #111 !important; }                                /* PA・電気 */
+    .tt-bar.color-neutral{ background: white !important; border: 0.5px solid #aaa !important;     color: #111 !important; }                                /* 色なし */
     .tt-bar .tt-bar-text { color: #111 !important; }
     .tt-bar.color-pink .tt-bar-text { color: #111 !important; font-weight: 700 !important; }
+    .tt-bar.color-red  .tt-bar-text { color: #111 !important; font-weight: 700 !important; }
     /* === 縦串バー：太い黒枠＋白カード（参考 PDF の「Rehearsal」「OPEN 16:30〜」枠を踏襲）=== */
     .tt-bar.span-bar {
       background: white !important;
@@ -5436,6 +5473,11 @@
   .tt-bar.color-amber  { background: linear-gradient(168deg, rgba(245,168,40,0.50) 0%, rgba(245,168,40,0.30) 100%); border: 1.5px solid rgba(245,168,40,1.0); color: #ffffff; font-weight: 600; text-shadow: 0 0 4px rgba(0,0,0,0.85), 0 1px 2px rgba(0,0,0,0.7); }
   .tt-bar.color-gray   { background: linear-gradient(168deg, rgba(126,216,72,0.50) 0%, rgba(126,216,72,0.30) 100%); border: 1.5px solid rgba(126,216,72,1.0); color: #ffffff; font-weight: 600; text-shadow: 0 0 4px rgba(0,0,0,0.85), 0 1px 2px rgba(0,0,0,0.7); }
   .tt-bar.color-accent { background: linear-gradient(168deg, rgba(58,160,224,0.50) 0%, rgba(58,160,224,0.30) 100%); border: 1.5px solid rgba(58,160,224,1.0); color: #ffffff; font-weight: 600; text-shadow: 0 0 4px rgba(0,0,0,0.85), 0 1px 2px rgba(0,0,0,0.7); }
+  /* R383-2: 追加 4 色 (Brutalist Vivid に揃えた飽和高めグラデ) */
+  .tt-bar.color-red    { background: linear-gradient(168deg, rgba(230,57,70,0.55) 0%, rgba(230,57,70,0.32) 100%); border: 1.5px solid rgba(230,57,70,1.0); color: #ffffff; font-weight: 700; text-shadow: 0 0 4px rgba(0,0,0,0.85), 0 1px 2px rgba(0,0,0,0.7); }
+  .tt-bar.color-purple { background: linear-gradient(168deg, rgba(168,85,247,0.50) 0%, rgba(168,85,247,0.30) 100%); border: 1.5px solid rgba(168,85,247,1.0); color: #ffffff; font-weight: 600; text-shadow: 0 0 4px rgba(0,0,0,0.85), 0 1px 2px rgba(0,0,0,0.7); }
+  .tt-bar.color-cyan   { background: linear-gradient(168deg, rgba(56,212,204,0.50) 0%, rgba(56,212,204,0.30) 100%); border: 1.5px solid rgba(56,212,204,1.0); color: #ffffff; font-weight: 600; text-shadow: 0 0 4px rgba(0,0,0,0.85), 0 1px 2px rgba(0,0,0,0.7); }
+  .tt-bar.color-neutral{ background: linear-gradient(168deg, rgba(232,230,220,0.20) 0%, rgba(232,230,220,0.08) 100%); border: 1.5px solid rgba(232,230,220,0.85); color: #ffffff; font-weight: 600; text-shadow: 0 0 4px rgba(0,0,0,0.85), 0 1px 2px rgba(0,0,0,0.7); }
   /* R274: 編集モード — バー全体に琥珀リング、内側の編集 span は白背景＋黒文字でくっきり */
   .tt-bar.tt-bar-editing {
     box-shadow: 0 0 0 2px #f5c878, 0 0 22px rgba(245,200,120,0.55) !important;
@@ -5624,9 +5666,12 @@
   .tt-color-row {
     display: flex;
     flex-direction: row;
+    flex-wrap: wrap;          /* R383-2: 9 色を 2 段に並べる */
     gap: 2px;
     justify-content: center;
     padding: 4px 0;
+    max-width: 220px;         /* R383-2: 5 列 ×(28+6)=170px + 余裕。これを超えたら 2 段目に折り返す */
+    margin: 0 auto;
   }
   /* R258: 色チップを小さい色だけのアイコンに */
   .tt-color-item {
@@ -5648,6 +5693,11 @@
   .tt-color-item.color-amber  { background: #f5a828; border-color: #c88010; }
   .tt-color-item.color-gray   { background: #7ed848; border-color: #5cb828; }
   .tt-color-item.color-accent { background: #3aa0e0; border-color: #1c80c0; }
+  /* R383-2: 追加 4 色 */
+  .tt-color-item.color-red    { background: #e63946; border-color: #c01828; }
+  .tt-color-item.color-purple { background: #a855f7; border-color: #8830d0; }
+  .tt-color-item.color-cyan   { background: #38d4cc; border-color: #18a8a0; }
+  .tt-color-item.color-neutral{ background: #e8e6dc; border-color: #b4b2a8; }
   .tt-color-menu-sep {
     height: 1px;
     background: #4a4a4a;
@@ -5738,6 +5788,11 @@
   .tt-bar.span-bar.color-amber  { background: linear-gradient(180deg, rgba(245,168,40,0.32) 0%, rgba(245,168,40,0.18) 100%) !important; border: 1.5px solid rgba(245,168,40,0.90) !important; }
   .tt-bar.span-bar.color-gray   { background: linear-gradient(180deg, rgba(126,216,72,0.30) 0%, rgba(126,216,72,0.15) 100%) !important; border: 1.5px solid rgba(126,216,72,0.90) !important; }
   .tt-bar.span-bar.color-accent { background: linear-gradient(180deg, rgba(58,160,224,0.32) 0%, rgba(58,160,224,0.18) 100%) !important; border: 1.5px solid rgba(58,160,224,0.90) !important; }
+  /* R383-2: 縦串バーの追加 4 色 */
+  .tt-bar.span-bar.color-red    { background: linear-gradient(180deg, rgba(230,57,70,0.32) 0%, rgba(230,57,70,0.18) 100%) !important; border: 1.5px solid rgba(230,57,70,0.90) !important; }
+  .tt-bar.span-bar.color-purple { background: linear-gradient(180deg, rgba(168,85,247,0.30) 0%, rgba(168,85,247,0.15) 100%) !important; border: 1.5px solid rgba(168,85,247,0.90) !important; }
+  .tt-bar.span-bar.color-cyan   { background: linear-gradient(180deg, rgba(56,212,204,0.30) 0%, rgba(56,212,204,0.15) 100%) !important; border: 1.5px solid rgba(56,212,204,0.90) !important; }
+  .tt-bar.span-bar.color-neutral{ background: linear-gradient(180deg, rgba(232,230,220,0.16) 0%, rgba(232,230,220,0.06) 100%) !important; border: 1.5px solid rgba(232,230,220,0.80) !important; }
   /* R284: 縦串バーラベルを動的に最適表示。デフォルト横書き大きな文字、入らなければ縦書き→改行→小さく。
      JS の fitSpanLabel() で .layout-h / .layout-v / .layout-wrap / .layout-small クラスを切替。 */
   .tt-bar.span-bar { overflow: hidden !important; }
@@ -6051,6 +6106,11 @@
   .tt-legend-chip.color-amber  { background: #c8a078; color: #3a2410; }
   .tt-legend-chip.color-gray   { background: #9aac98; color: #1e2c1c; }
   .tt-legend-chip.color-accent { background: #8a9eb4; color: #102030; }
+  /* R383-2: 凡例の追加 4 色 (muted) */
+  .tt-legend-chip.color-red    { background: #c88090; color: #3a1018; }
+  .tt-legend-chip.color-purple { background: #b09cc8; color: #261438; }
+  .tt-legend-chip.color-cyan   { background: #98c8c4; color: #103a36; }
+  .tt-legend-chip.color-neutral{ background: #cdcabe; color: #2a2820; }
   /* R244: 今の時刻ライン（今日だけ表示） */
   .tt-now-line {
     position: absolute;
@@ -6633,12 +6693,7 @@
           <aside class="tt-side-toolbar">
             <button class="tt-btn" id="tt-btn-time-start" type="button">開始時刻</button>
             <button class="tt-btn" id="tt-btn-time-end" type="button">終了時刻</button>
-            <div class="tt-zoom-group">
-              <button class="tt-zoom-btn" id="tt-btn-zoom-out" type="button" title="縮小">−</button>
-              <span class="tt-zoom-label" id="tt-zoom-label">FIT</span>
-              <button class="tt-zoom-btn" id="tt-btn-zoom-in" type="button" title="拡大">+</button>
-              <button class="tt-zoom-btn fit" id="tt-btn-zoom-fit" type="button" title="画面に合わせる">FIT</button>
-            </div>
+            <!-- R383-1: ズームボタン群削除（常に FIT 動作のため不要） -->
             <button class="tt-btn" id="tt-btn-copy-prev" type="button">前日から複製</button>
             <button class="tt-btn" id="tt-btn-reset-day" type="button" style="color:#d97070;">この日リセット</button>
             <button class="tt-btn" id="tt-btn-print" type="button">📄 PDF 出力</button>
@@ -10126,6 +10181,43 @@ function show(id) {
   }
 
   window.__renderDaySchedule = renderDaySchedule;
+  /* R383-3: タイムテーブルで bar.inFooter=true (⭐メインイベント) 指定したバーを
+     DAY スケジュールにも自動表示する。タイムテーブル → DAY スケジュールの一方向同期。 */
+  function _fmtHourPadded(h){
+    const totalMin = Math.round(h * 60);
+    let hh = Math.floor(totalMin / 60);
+    const mm = totalMin % 60;
+    if (hh >= 24) hh -= 24;
+    return String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0');
+  }
+  function getMainEventsFromTimetable(dateKey){
+    if (typeof timetableByDate === 'undefined' || !timetableByDate || !timetableByDate[dateKey]) return [];
+    const tt = timetableByDate[dateKey];
+    if (!tt || !Array.isArray(tt.bars)) return [];
+    return tt.bars.filter(function(b){ return b.inFooter === true; }).map(function(b){
+      return {
+        id: 'tt-' + b.id,
+        startTime: _fmtHourPadded(b.start),
+        endTime:   _fmtHourPadded(b.end),
+        label:     (b.text || '').trim(),
+        fromTimetable: true,
+        sourceBarId: b.id
+      };
+    });
+  }
+  /* R383-3: タイムテーブル由来カード（読み取り専用） */
+  function dayEventCardReadonlyHtml(ev){
+    var escH = (typeof escapeHtml === 'function') ? escapeHtml : function(s){ return String(s == null ? '' : s); };
+    return ''
+      + '<div class="day-event-card day-event-card-readonly" data-day-event="' + escH(ev.id) + '" title="タイムテーブルで⭐指定したバー（バー側で編集してください）">'
+      +   '<span class="day-event-tt-badge">⭐</span>'
+      +   '<span class="day-event-readonly-time">' + escH(ev.startTime || '--:--') + '</span>'
+      +   '<span class="day-event-tilde">〜</span>'
+      +   '<span class="day-event-readonly-time">' + escH(ev.endTime || '--:--') + '</span>'
+      +   '<span class="day-event-readonly-label">' + escH(ev.label || '（無題）') + '</span>'
+      + '</div>';
+  }
+
   function renderDaySchedule(){
     const list = document.getElementById('day-event-list');
     if (!list) return;
@@ -10139,10 +10231,15 @@ function show(id) {
         else if (_r75IsShowLabel(ev.label) && st.show) ev.startTime = st.show;
       });
     }
-    const sorted = events.slice().sort(function(a,b){
+    /* R383-3: タイムテーブルでメインイベント指定されたバーも混ぜ込む */
+    const ttEvents = getMainEventsFromTimetable(masterDateState.current);
+    const merged = events.concat(ttEvents);
+    const sorted = merged.slice().sort(function(a,b){
       return (a.startTime || '99:99').localeCompare(b.startTime || '99:99');
     });
-    list.innerHTML = sorted.map(dayEventCardHtml).join('');
+    list.innerHTML = sorted.map(function(ev){
+      return ev.fromTimetable ? dayEventCardReadonlyHtml(ev) : dayEventCardHtml(ev);
+    }).join('');
   }
 
   // 入力変更 → データ更新（startTime 変更時は再ソート）
@@ -13945,12 +14042,17 @@ function show(id) {
     const colorRow = document.createElement('div');
     colorRow.className = 'tt-color-row';
     menu.appendChild(colorRow);
+    // R383-2: 9 色に拡張 (red/purple/cyan/neutral を追加)
     const colors = [
       { key: 'white' },
       { key: 'pink' },
       { key: 'amber' },
       { key: 'gray' },
-      { key: 'accent' }
+      { key: 'accent' },
+      { key: 'red' },
+      { key: 'purple' },
+      { key: 'cyan' },
+      { key: 'neutral' }
     ];
     colors.forEach(function(c){
       const item = document.createElement('div');
@@ -14014,6 +14116,8 @@ function show(id) {
       menu.remove();
       saveToStorage();
       render();
+      /* R383-3: DAY SCHEDULE 側にも即反映 */
+      if (typeof window.__renderDaySchedule === 'function') window.__renderDaySchedule();
     });
     menu.appendChild(fToggle);
 
@@ -14965,6 +15069,11 @@ function show(id) {
 #tt-pdf-root .tt-pdf-bar.color-gray   { background:#fff; border:0.6px solid #666;    }
 #tt-pdf-root .tt-pdf-bar.color-accent { background:#fff; border:0.6px solid #444;    }
 #tt-pdf-root .tt-pdf-bar.color-pink   { background:#fff; border:0.6px solid #1a1a1a; font-weight:700; }
+/* R383-2: PDF の追加 4 色（モノクロ印刷を維持しつつ線種で識別） */
+#tt-pdf-root .tt-pdf-bar.color-red    { background:#fff; border:1px solid #000;      font-weight:700; }
+#tt-pdf-root .tt-pdf-bar.color-purple { background:#fff; border:0.6px dotted #333;   }
+#tt-pdf-root .tt-pdf-bar.color-cyan   { background:#fff; border:0.6px solid #555;    }
+#tt-pdf-root .tt-pdf-bar.color-neutral{ background:#fff; border:0.4px solid #aaa;    }
 /* R327c: 狭個別バーは padding 詰め + font 縮小 + 改行許可で全文表示
    white-space:normal + word-break:break-all で日本語が自然に折り返す */
 #tt-pdf-root .tt-pdf-bar.bar-tight   { padding:2px 3px; font-size:8.5px; letter-spacing:0;
@@ -14990,6 +15099,11 @@ function show(id) {
 #tt-pdf-root .tt-pdf-span-bar.color-gray   { background:#dfeec8; border:0.6px solid #5e8c1e; }
 #tt-pdf-root .tt-pdf-span-bar.color-accent { background:#d6e7f4; border:0.6px solid #2670b0; }
 #tt-pdf-root .tt-pdf-span-bar.color-pink   { background:#fcd0dc; border:0.6px solid #c8336a; }
+/* R383-2: PDF 縦串バーの追加 4 色 (薄パステル背景＋濃ボーダー) */
+#tt-pdf-root .tt-pdf-span-bar.color-red    { background:#fbd0d4; border:0.6px solid #c01828; }
+#tt-pdf-root .tt-pdf-span-bar.color-purple { background:#ead4f8; border:0.6px solid #8830d0; }
+#tt-pdf-root .tt-pdf-span-bar.color-cyan   { background:#cdf0ec; border:0.6px solid #18a8a0; }
+#tt-pdf-root .tt-pdf-span-bar.color-neutral{ background:#f0eee4; border:0.6px solid #888;    }
 #tt-pdf-root .tt-pdf-span-bar .b-text { font-weight:800; color:#0a0a0a; word-break:break-all; font-size:14px; letter-spacing:0.06em; }
 #tt-pdf-root .tt-pdf-span-bar .b-time { font-family:'JetBrains Mono','Courier New',monospace; font-weight:600; font-size:10px; color:rgba(0,0,0,0.6); margin-top:5px; letter-spacing:0.10em; }
 /* R322b: 狭い縦串バー (width < 5%) は padding を詰めてタイトルを縦書きで全文表示
