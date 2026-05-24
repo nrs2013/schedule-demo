@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260524.380000">
+<meta name="build-version" content="20260524.381000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -5180,12 +5180,17 @@
     .tt-paper-footer .ev-sep { color: #888 !important; }
     .tt-paper-footer .ev-empty { display: none !important; }
     /* === 画面専用の要素は隠す === */
-    .tt-toolbar, .tt-help, .tab-bar, .tt-time-add, .tt-sec-lanes,
+    .tt-toolbar, .tt-side-toolbar, .tt-help, .tab-bar, .tt-time-add, .tt-sec-lanes,
     .tt-zoom-group, .tt-bar-handle, .tt-legend, .tt-now-line,
     .tt-bar-ghost, .tt-hover-cursor, .tt-sec-add-row,
     .master-date-bar, .pc-header, .tt-bar-corner { display: none !important; }
     /* INFO や CALENDAR タブの中身も隠す */
     .mode-content:not(#mode-timetable) { display: none !important; }
+    /* R381: 編集画面用 display:none (L4924-4926) を Cmd+P 印刷時は上書きで復活
+       — TITLE/DATE/VENUE/PHASE ヘッダと「本日のメインイベント」フッタを紙面に出す。
+         PDF 出力ボタン経由 (buildTtPdfPageHtml) は独立経路なので無関係。 */
+    #mode-timetable .tt-paper-header { display: grid !important; }
+    #mode-timetable .tt-paper-footer { display: block !important; }
   }
   /* R245: ツールバー洗練 */
   .tt-toolbar {
@@ -7779,10 +7784,18 @@ function show(id) {
     btn.addEventListener('click', function(){
       const type = btn.getAttribute('data-add-type');
       const maxOrder = songs.reduce(function(m, s){ return Math.max(m, s.orderIndex || 0); }, 0);
+      // R381: 新規曲の mNo を既存数+1 でセット（M# 空欄 / Excel 書き出し空欄バグ修正）
+      let mNo = '';
+      if (type === 'mc')          mNo = 'MC' + (songs.filter(function(s){ return s.isMC; }).length + 1);
+      else if (type === 'encore') mNo = 'EN' + (songs.filter(function(s){ return s.isEncore; }).length + 1);
+      else if (type === 'event')  mNo = 'VCR';
+      else if (type === 'end')    mNo = 'END';
+      else                        mNo = 'M' + (songs.filter(function(s){ return !s.isMC && !s.isEncore && !s.isEvent && !s.isEnd; }).length + 1);
       const newSong = {
-        id: Date.now(), // 簡易ユニークID
+        id: Date.now() + Math.floor(Math.random()*1000), // R381: ms 衝突回避（連打耐性）
         orderIndex: maxOrder + 1,
         title: type === 'mc' ? 'MC' : (type === 'event' ? 'VCR' : (type === 'end' ? 'END' : '')),
+        mNo: mNo,
         durationSeconds: 0,
         isEvent:  type === 'event',
         isMC:     type === 'mc',
@@ -7790,6 +7803,7 @@ function show(id) {
         isEnd:    type === 'end'
       };
       songs.push(newSong);
+      saveSetlists(); // R381: 保存漏れバグ修正（push 後の永続化）
       render();
     });
   });
@@ -7951,21 +7965,43 @@ function show(id) {
             const _s = (dur || 0) % 60;
             _timeStr = _m + ':' + String(_s).padStart(2, '0');
           }
+          // R381: M# 列の値から MC / VCR / END / Encore を自動判定
+          //   テンプレート DL の往復で種別が消えるバグ修正（ラウンドトリップ対称化）
+          const mNoUpper = mStr.toUpperCase();
+          let _isMC = false, _isEvent = false, _isEnd = false, _isEncore = false;
+          let _title = title;
+          if (/^MC\d*$/.test(mNoUpper))          { _isMC = true;     if (!_title) _title = 'MC'; }
+          else if (mNoUpper === 'VCR')           { _isEvent = true;  if (!_title) _title = 'VCR'; }
+          else if (mNoUpper === 'END')           { _isEnd = true;    if (!_title) _title = 'END'; }
+          else if (/^EN\d+$/.test(mNoUpper))     { _isEncore = true; }
           newSongs.push({
             id: Date.now() + i,
             orderIndex: order++,
             mNo: mStr,
-            title: title || '',
+            title: _title || '',
             durationSeconds: dur,
             timeStr: _timeStr,
-            isEvent: false,
-            isMC: false,
-            isEncore: false,
-            isEnd: false
+            isEvent: _isEvent,
+            isMC: _isMC,
+            isEncore: _isEncore,
+            isEnd: _isEnd
           });
         }
         songs.length = 0;
         Array.prototype.push.apply(songs, newSongs);
+        // R381: 旧 song.id にぶら下がる rehearsalByDate (rhNo/tags/memo) を全日付クリーンアップ
+        //   ID 総入替後、孤立データが残ると drift 検知や Firebase 同期で誤動作する
+        const __newIdSet = new Set(newSongs.map(function(s){ return String(s.id); }));
+        try {
+          Object.keys(rehearsalByDate || {}).forEach(function(dk){
+            const day = rehearsalByDate[dk];
+            if (!day || typeof day !== 'object') return;
+            Object.keys(day).forEach(function(sid){
+              if (!__newIdSet.has(String(sid))) delete day[sid];
+            });
+          });
+          if (typeof saveRehearsals === 'function') saveRehearsals();
+        } catch(e) { /* noop */ }
         // R151: 保存（localStorage 永続化 + Firebase 同期）— 取込結果を確実に残す
         if (typeof saveSetlists === 'function') saveSetlists();
         render();
@@ -10434,21 +10470,9 @@ function show(id) {
   function getArrivalSections(d){
     const k = fmtMKey_arrival(d);
     if (!arrivalSectionsByDate[k]) {
-      if (k === '2026-04-29') {
-        // 4/29 のみ初期サンプル
-        arrivalSectionsByDate[k] = [
-          { id: nextArrivalId++, section:'演出',       time:'08:30' },
-          { id: nextArrivalId++, section:'PA',         time:'09:00' },
-          { id: nextArrivalId++, section:'照明',       time:'09:30' },
-          { id: nextArrivalId++, section:'VJ',         time:'10:00' },
-          { id: nextArrivalId++, section:'機構',       time:'10:30' },
-          { id: nextArrivalId++, section:'特効',       time:'11:00' },
-          { id: nextArrivalId++, section:'早替え',     time:'11:30' },
-          { id: nextArrivalId++, section:'ヘアメイク', time:'12:00' }
-        ];
-      } else {
-        arrivalSectionsByDate[k] = [];
-      }
+      // R381: 2026-04-29 ハードコードのサンプル投入を廃止（次回ツアーで混乱防止）
+      //   既存日付は localStorage から復元される。新規日付は空配列スタート。
+      arrivalSectionsByDate[k] = [];
       saveArrivals(); // R61 M3
     }
     return arrivalSectionsByDate[k];
@@ -13779,7 +13803,10 @@ function show(id) {
           el.style.left = newLeftPx + 'px';
           el.style.width = newWidthPx + 'px';
           if (sec && !isSpan) {
-            el.style.top = (targetLane * LANE_H + BAR_TOP) + 'px';
+            // R381: drag 中も render と同じ「上中下等分」計算を使う（カクッ防止）
+            const dragLayout = computeLaneLayout(parent, sec.lanes);
+            el.style.top = (dragLayout.outerPad + targetLane * (dragLayout.barH + dragLayout.innerGap)) + 'px';
+            el.style.height = dragLayout.barH + 'px';
           }
           if (isSpan && candidateSpanIds && candidateSpanIds !== bar.spanSecIds) {
             bar.spanSecIds = candidateSpanIds;
@@ -14169,7 +14196,7 @@ function show(id) {
         const sec = tt.sections.find(function(s){ return s.id === secId; });
         if (!sec) return;
         const act = btn.getAttribute('data-act');
-        if (act === 'lane-plus') sec.lanes = Math.min(5, sec.lanes + 1);
+        if (act === 'lane-plus') sec.lanes = Math.min(3, sec.lanes + 1); // R381: drag 作成側 MAX_LANES=3 と整合
         else if (act === 'lane-minus') sec.lanes = Math.max(1, sec.lanes - 1);
         else if (act === 'sec-delete') {
           if (!confirm('セクション「' + sec.name + '」を削除しますか？\nこのセクションのバーも消えます。')) return;
@@ -14824,8 +14851,8 @@ function show(id) {
     const modeTT = document.getElementById('mode-timetable');
     if (!modeTT || !modeTT.classList.contains('active')) return;
     if (!e.target.closest('.tt-bar') && !e.target.closest('.tt-sec-body')) {
-      if (selectedBarId) {
-        selectedBarId = null;
+      if (selectedBarId || selectedBarIds.size) {
+        clearSel();
         document.querySelectorAll('.tt-bar.selected').forEach(function(b){ b.classList.remove('selected'); });
       }
     }
