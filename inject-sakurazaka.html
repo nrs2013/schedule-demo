@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>櫻坂46 四期生LIVE データ注入 — SCHEDULE STUDIO</title>
-  <meta name="build-version" content="20260524.385200">
+  <meta name="build-version" content="20260524.385400">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Noto+Sans+JP:wght@400;500;700&family=Bebas+Neue&display=swap" rel="stylesheet">
@@ -39,7 +39,7 @@
 </head>
 <body>
   <h1>櫻坂46 四期生LIVE</h1>
-  <div class="sub">DATA INJECTION · SCHEDULE STUDIO · v.385200</div>
+  <div class="sub">DATA INJECTION · SCHEDULE STUDIO · v.385400</div>
 
   <h2>注入されるデータ</h2>
   <div class="summary">
@@ -95,26 +95,44 @@
     var db = null;
     var fbStatus = document.getElementById("fb-status");
     var runBtn = document.getElementById("run");
+    function enableButton(label){
+      runBtn.disabled = false;
+      runBtn.textContent = label || "▶ データを注入する";
+    }
     try {
       firebase.initializeApp(firebaseConfig);
+      // R385d: 匿名認証が失敗しても localStorage 書き込みは確実にやる + Firebase 書き込みも試行
       firebase.auth().signInAnonymously().then(function(){
         db = firebase.database();
         db.ref(".info/connected").on("value", function(snap){
           if (snap.val() === true) {
-            fbStatus.textContent = "Firebase: 接続成功 ✓ (準備完了)";
+            fbStatus.textContent = "Firebase: 接続成功 ✓ (localStorage + Firebase 両方に書きます)";
             fbStatus.className = "fb-status ok";
-            runBtn.disabled = false;
-            runBtn.textContent = "▶ データを注入する";
+            enableButton("▶ データを注入する (Firebase 同期あり)");
+          } else {
+            fbStatus.textContent = "Firebase: 接続待機中…";
+            enableButton("▶ データを注入する (localStorage のみ)");
           }
         });
       }).catch(function(err){
-        fbStatus.textContent = "Firebase 認証失敗: " + (err && err.message);
-        runBtn.textContent = "⚠ Firebase 接続失敗 (再読み込みしてください)";
+        // R385d: 認証失敗しても DB だけ初期化して、ベストエフォートで書き込み試行
+        try { db = firebase.database(); } catch(e){}
+        fbStatus.textContent = "⚠ Firebase 認証 NG (" + (err && err.code) + ") — localStorage には確実に書きます、Firebase は試行のみ";
+        enableButton("▶ データを注入する (localStorage のみ確実)");
       });
     } catch(e) {
-      fbStatus.textContent = "Firebase 初期化失敗: " + (e && e.message);
-      runBtn.textContent = "⚠ Firebase 初期化失敗";
+      fbStatus.textContent = "⚠ Firebase 初期化 NG (" + (e && e.message) + ") — localStorage のみ書きます";
+      enableButton("▶ データを注入する (localStorage のみ)");
     }
+    // R385d: 5 秒経っても接続成功しなければボタン強制有効化
+    setTimeout(function(){
+      if (runBtn.disabled) {
+        enableButton("▶ データを注入する (localStorage のみ)");
+        if (!fbStatus.classList.contains("ok")) {
+          fbStatus.textContent = "⚠ Firebase 接続タイムアウト — localStorage のみ書きます";
+        }
+      }
+    }, 5000);
 
     function log(msg, ok){
       var prog = document.getElementById("progress");
@@ -127,12 +145,16 @@
     }
 
     function setBoth(key, valStr){
-      // localStorage
+      // localStorage は確実に書く
       localStorage.setItem(key, valStr);
-      // Firebase (key 文字列を encode してから書く)
+      // Firebase はベストエフォート (失敗してもエラーで停止させない)
       if (db) {
         var encKey = key.replace(/[.#$/\[\]]/g, "_");
-        return db.ref("ls/" + encKey).set({ k: key, v: valStr, t: Date.now() });
+        return db.ref("ls/" + encKey).set({ k: key, v: valStr, t: Date.now() })
+          .catch(function(err){
+            log("  Firebase 書込 NG (" + (err && err.code || "?") + ") — localStorage は OK", false);
+            return null; // resolve として扱う
+          });
       }
       return Promise.resolve();
     }
