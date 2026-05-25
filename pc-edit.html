@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260524.385100">
+<meta name="build-version" content="20260524.386000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -88,6 +88,68 @@
   } catch (e) {
     console.error('[Firebase] init 失敗:', e);
   }
+})();
+
+// R386b: URL パラメータ ?inject=name でデータ取り込み
+// 例: pc-edit.html?inject=sakurazaka-4ki → data/sakurazaka-4ki.json を fetch して localStorage + Firebase に書く
+(function checkInjectParam(){
+  var params = new URLSearchParams(location.search);
+  var injectName = params.get('inject');
+  if (!injectName) return;
+  if (!/^[a-zA-Z0-9_-]+$/.test(injectName)) {
+    console.warn('[R386b] invalid inject name:', injectName);
+    history.replaceState(null, '', location.pathname);
+    return;
+  }
+  function waitForFirebaseThenRun(){
+    var attempts = 0;
+    var iv = setInterval(function(){
+      attempts++;
+      if ((window.__db && window.__fbAuthed) || attempts > 50) {
+        clearInterval(iv);
+        runInject();
+      }
+    }, 200);
+  }
+  function setBoth(k, val){
+    var s = (typeof val === 'string') ? val : JSON.stringify(val);
+    localStorage.setItem(k, s);
+    if (window.__db) {
+      var enc = k.replace(/[.#$/\[\]]/g, '_');
+      try { window.__db.ref('ls/' + enc).set({ k: k, v: s, t: Date.now() }); } catch(e){}
+    }
+  }
+  function runInject(){
+    fetch('data/' + injectName + '.json')
+      .then(function(r){
+        if (!r.ok) throw new Error('データファイル取得失敗 HTTP ' + r.status);
+        return r.json();
+      })
+      .then(function(payload){
+        var label = payload.label || injectName;
+        if (!confirm('「' + label + '」のデータを注入します。\n既存の曲リスト・タイムテーブル・DAY スケジュールは上書きされます。\n続行しますか？')) {
+          history.replaceState(null, '', location.pathname);
+          return;
+        }
+        // ls キーを書き込み
+        Object.keys(payload.ls || {}).forEach(function(k){ setBoth(k, payload.ls[k]); });
+        // showTimes はマージ
+        if (payload.showTimesMerge) {
+          var existing = {};
+          try { existing = JSON.parse(localStorage.getItem('schedule-studio:showTimes:v1') || '{}'); } catch(e){}
+          Object.keys(payload.showTimesMerge).forEach(function(k){ existing[k] = payload.showTimesMerge[k]; });
+          setBoth('schedule-studio:showTimes:v1', existing);
+        }
+        history.replaceState(null, '', location.pathname);
+        alert('「' + label + '」の注入完了！\nリロードして反映します。');
+        setTimeout(function(){ location.reload(); }, 300);
+      })
+      .catch(function(err){
+        alert('注入失敗: ' + (err && err.message));
+        history.replaceState(null, '', location.pathname);
+      });
+  }
+  waitForFirebaseThenRun();
 })();
 
 // D142 Phase 2-B+C: localStorage ↔ Firebase 自動同期
