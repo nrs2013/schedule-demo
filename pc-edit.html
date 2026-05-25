@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260524.384000">
+<meta name="build-version" content="20260524.385100">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -10343,9 +10343,29 @@ function show(id) {
   });
 
   // ── マスター日付バー：全タブの日付がここに紐付く ──
+  // R385b: localStorage に保存された masterDate があれば優先 (inject-sakurazaka.html 等から
+  //   日付指定して飛んでこれるよう）。なければデフォルトは「実日付の今日」。
   const masterDateState = {
-    current: (function(){ const d = new Date(); d.setHours(0,0,0,0); return d; })() // D158: 実日付の今日
+    current: (function(){
+      try {
+        var saved = localStorage.getItem('schedule-studio:masterDate');
+        if (saved && /^\d{4}-\d{2}-\d{2}$/.test(saved)) {
+          var p = saved.split('-');
+          var d2 = new Date(parseInt(p[0],10), parseInt(p[1],10)-1, parseInt(p[2],10));
+          d2.setHours(0,0,0,0);
+          if (!isNaN(d2.getTime())) return d2;
+        }
+      } catch(e) {}
+      const d = new Date(); d.setHours(0,0,0,0); return d; // D158: 実日付の今日
+    })()
   };
+  /* R385b: changeMasterDate するたびに localStorage に保存し、次回起動で復元 */
+  function _saveMasterDate(d){
+    try {
+      var y = d.getFullYear(), m = String(d.getMonth()+1).padStart(2,'0'), dd = String(d.getDate()).padStart(2,'0');
+      localStorage.setItem('schedule-studio:masterDate', y + '-' + m + '-' + dd);
+    } catch(e) {}
+  }
   // 別 IIFE（曲データ管理）から参照できるよう window にエクスポート
   window.__masterDateState = masterDateState;
   // D69: 静的 tourSchedule は廃止。日付ラベル（DAY n / 仕込み / 千秋楽 / 移動 / 休 等）と
@@ -10515,6 +10535,7 @@ function show(id) {
       try { document.activeElement.blur(); } catch(e) {}
     }
     masterDateState.current = d;
+    _saveMasterDate(d); /* R385b: 次回起動でも復元 */
     syncAllDateDisplays();
   }
 
