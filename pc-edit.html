@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260524.386100">
+<meta name="build-version" content="20260524.387000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -13305,11 +13305,13 @@ function show(id) {
     });
   }
 
-  /* R284: 縦串バーラベルを動的に最適 layout 化。
-     優先順位：(1) 横書き 1 行で入る → layout-h
-              (2) 縦書き 1 列で入る → layout-v
-              (3) 折り返しで入る → layout-wrap
-              (4) どれもダメ → layout-small（11px 折り返し） */
+  /* R284 + R387: 縦串バーラベルを動的に最適 layout 化。
+     優先順位（R387 で改行を縦書きより優先）：
+       (1) 横書き 1 行で入る                          → layout-h
+       (2) 横書き折り返しで入る（1行 ≥ MIN_CHARS_PER_LINE 文字確保） → layout-wrap
+       (3) 縦書き 1 列で入る（狭くて 1 行に 2 文字以下しか入らない時）   → layout-v
+       (4) どれもダメ                                  → layout-small（11px 折り返し）
+     のむ要望: 縦書きを最終手段に近づけ、改行で読みやすく表示する。 */
   function fitSpanLabel(spanEl, bar){
     if (!spanEl || !bar) return;
     if (spanEl.classList.contains('tt-bar-editing')) return;
@@ -13326,23 +13328,26 @@ function show(id) {
     const PAD_Y = 50;            // 時刻表示＋上下 padding
     const effW = Math.max(0, w - PAD_X);
     const effH = Math.max(0, h - PAD_Y);
+    const MIN_CHARS_PER_LINE = 3; // R387: 1 行にこの文字数以上入るなら横書き折り返しを採用
     // (1) 横書き 1 行で入る？
     if (textLen * CHAR_W <= effW) {
       spanEl.classList.add('layout-h');
       spanEl.style.setProperty('--span-label-fs', FS + 'px');
       return;
     }
-    // (2) 縦書き 1 列で入る？
+    // (2) 横書き折り返しで入る？（縦書きより優先）
+    const charsPerLine = Math.max(1, Math.floor(effW / CHAR_W));
+    if (charsPerLine >= MIN_CHARS_PER_LINE) {
+      const linesNeeded = Math.ceil(textLen / charsPerLine);
+      if (linesNeeded * CHAR_H <= effH) {
+        spanEl.classList.add('layout-wrap');
+        spanEl.style.setProperty('--span-label-fs', FS + 'px');
+        return;
+      }
+    }
+    // (3) 縦書き 1 列で入る？（狭すぎて改行で破綻する時のみ）
     if (textLen * CHAR_H <= effH) {
       spanEl.classList.add('layout-v');
-      spanEl.style.setProperty('--span-label-fs', FS + 'px');
-      return;
-    }
-    // (3) 横書き折り返しで入る？
-    const charsPerLine = Math.max(1, Math.floor(effW / CHAR_W));
-    const linesNeeded = Math.ceil(textLen / charsPerLine);
-    if (linesNeeded * CHAR_H <= effH) {
-      spanEl.classList.add('layout-wrap');
       spanEl.style.setProperty('--span-label-fs', FS + 'px');
       return;
     }
