@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260525.386000">
+<meta name="build-version" content="20260525.387000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="apple-touch-icon" href="favicon.svg">
 <title>SCHEDULE STUDIO — ARTIST</title>
@@ -2096,6 +2096,49 @@
   body.now-fs #screen-now   { position: fixed; inset: 0; z-index: 9990; }
   body.now-fs .now-timer    { font-size: clamp(100px, 28vw, 170px); }
   body.now-fs .now-fs-btn   { color: #c8a878; border-color: #3a3a3a; }
+
+  /* R387: NOW を下タブから外して右上フローティングボタン (FAB) 化。
+     下タブを 4 個 (元) に戻して各タブを広げつつ、NOW は常に手元から
+     アクセスできる位置に。LIVE 中は赤点灯で目立たせる。 */
+  #now-fab {
+    position: fixed;
+    top: 6px; right: 8px;
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: rgba(20, 18, 17, 0.85);
+    border: 1px solid #2a2a2a;
+    color: #666;
+    font-size: 16px;
+    cursor: pointer;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    transition: transform 0.15s, background 0.3s, color 0.3s, border-color 0.3s;
+    padding: 0;
+  }
+  #now-fab:active { transform: scale(0.92); }
+  /* LIVE 中: 赤く点灯 + 周囲発光 + ゆっくり点滅 */
+  #now-fab.live {
+    background: rgba(224, 80, 72, 0.18);
+    border-color: #e05048;
+    color: #e05048;
+    box-shadow: 0 0 12px rgba(224, 80, 72, 0.45);
+    animation: nowBlink 1.4s infinite;
+  }
+  /* フルスクリーン中: FAB は「閉じる」役割に変身 (色変えだけ、位置は同じ) */
+  body.now-fs #now-fab {
+    background: rgba(10, 10, 10, 0.6);
+    border-color: #c8a878;
+    color: #c8a878;
+    box-shadow: none;
+    animation: none;
+    top: 12px; right: 12px;
+    z-index: 9999;
+  }
 </style>
 
 <!-- ツアー日付セレクター（最上部の1行） -->
@@ -2367,12 +2410,16 @@
 <!-- R67 P1: 下タブを統合（テクリハ＋RH→リハーサル1個に） -->
 <!-- D150 ARTIST: 3 タブを英語ラベルに（PC 版と統一感） -->
 <!-- R188: CALENDAR を先頭に追加（R137 復元） -->
+<!-- R387: CDS NOW タブを下タブから FAB（右上フローティング）に変更 -->
+<button id="now-fab" onclick="show('now')" title="LIVE — CDS リアルタイム同期">
+  <span id="now-tab-ico">◉</span>
+</button>
+
 <div class="phone-bottom-tabs" id="bottom-tabs">
   <button onclick="show('tour-calendar')"><span class="ico">▦</span>CALENDAR</button>
   <button class="active" onclick="show('schedule')"><span class="ico">▤</span>DAY</button>
   <button class="rehearsal-btn" onclick="show('rehearsal')"><span class="ico">▶</span>REHEARSAL</button>
   <button onclick="show('info')"><span class="ico">⚑</span>INFO</button>
-  <button onclick="show('now')" id="now-tab-btn"><span class="ico" id="now-tab-ico">◉</span>NOW</button>
 </div>
 
 <!-- ツアー日付選択モーダル -->
@@ -4477,11 +4524,12 @@ renderHotelListPhone();
     if (hasData) {
       var songEl = document.getElementById('now-song');
       if (songEl) songEl.textContent = (cdsState && cdsState.songTitle) ? cdsState.songTitle : '—';
-      var ico = document.getElementById('now-tab-ico');
-      if (ico) ico.style.color = '#e05048';
+      // R387: FAB を赤点灯クラス化 (CSS の #now-fab.live で発光 + 点滅)
+      var fab = document.getElementById('now-fab');
+      if (fab) fab.classList.add('live');
     } else {
-      var ico2 = document.getElementById('now-tab-ico');
-      if (ico2) ico2.style.color = '';
+      var fab2 = document.getElementById('now-fab');
+      if (fab2) fab2.classList.remove('live');
     }
   }
 
@@ -4552,9 +4600,21 @@ renderHotelListPhone();
       startListen();
       if (cdsState && cdsState.isRunning && !rafId) tickNow();
       refreshNow();
+      // R387: NOW タブ表示の瞬間に擬似フルスクリーン (上下タブを隠す)。
+      // 解除は右上の FAB を再タップ。
+      fsOn = true;
+      document.body.classList.add('now-fs');
+      var el = document.getElementById('screen-now');
+      if (el && el.requestFullscreen) {
+        el.requestFullscreen().catch(function(){});
+      }
     } else {
       if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
-      if (fsOn) { fsOn = false; document.body.classList.remove('now-fs'); }
+      if (fsOn) {
+        fsOn = false;
+        document.body.classList.remove('now-fs');
+        if (document.exitFullscreen) document.exitFullscreen().catch(function(){});
+      }
     }
   };
 

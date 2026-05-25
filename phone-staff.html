@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260525.385000">
+<meta name="build-version" content="20260525.387000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="apple-touch-icon" href="favicon.svg">
 <title>SCHEDULE STUDIO — STAFF</title>
@@ -2104,6 +2104,49 @@
   body.now-fs #screen-now   { position: fixed; inset: 0; z-index: 9990; }
   body.now-fs .now-timer    { font-size: clamp(100px, 28vw, 170px); }
   body.now-fs .now-fs-btn   { color: #c8a878; border-color: #3a3a3a; }
+
+  /* R387: NOW を下タブから外して右上フローティングボタン (FAB) 化。
+     下タブを 6 個 (元 7) に戻して各タブを広げつつ、NOW は常に手元から
+     アクセスできる位置に。LIVE 中は赤点灯で目立たせる。 */
+  #now-fab {
+    position: fixed;
+    top: 6px; right: 8px;
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: rgba(20, 18, 17, 0.85);
+    border: 1px solid #2a2a2a;
+    color: #666;
+    font-size: 16px;
+    cursor: pointer;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    transition: transform 0.15s, background 0.3s, color 0.3s, border-color 0.3s;
+    padding: 0;
+  }
+  #now-fab:active { transform: scale(0.92); }
+  /* LIVE 中: 赤く点灯 + 周囲発光 + ゆっくり点滅 */
+  #now-fab.live {
+    background: rgba(224, 80, 72, 0.18);
+    border-color: #e05048;
+    color: #e05048;
+    box-shadow: 0 0 12px rgba(224, 80, 72, 0.45);
+    animation: nowBlink 1.4s infinite;
+  }
+  /* フルスクリーン中: FAB は「閉じる」役割に変身 (色変えだけ、位置は同じ) */
+  body.now-fs #now-fab {
+    background: rgba(10, 10, 10, 0.6);
+    border-color: #c8a878;
+    color: #c8a878;
+    box-shadow: none;
+    animation: none;
+    top: 12px; right: 12px;
+    z-index: 9999;
+  }
 </style>
 
 <!-- ツアー日付セレクター（最上部の1行）/ R154: 診断 alert を外して元の onclick に戻す -->
@@ -2424,6 +2467,11 @@
 
 </div>
 
+<!-- R387: CDS NOW タブを下タブから FAB（右上フローティング）に変更 -->
+<button id="now-fab" onclick="show('now')" title="LIVE — CDS リアルタイム同期">
+  <span id="now-tab-ico">◉</span>
+</button>
+
 <!-- R65 Step 2: PASS タブを復活（passless 入場 + 編集パスワードでロック解除式） -->
 <!-- D150 STAFF: タブを全部英語化（PC 版と統一感） -->
 <!-- R188: bottom-tabs 整理（R137 復元）。入り時間は DAY SCHEDULE のサブタブへ統合 -->
@@ -2433,7 +2481,6 @@
   <button class="rehearsal-btn" onclick="show('rehearsal')"><span class="ico">▶</span>REHEARSAL</button>
   <button onclick="show('hotel')"><span class="ico">★</span>HOTEL</button>
   <button onclick="show('info')"><span class="ico">⚑</span>INFO</button>
-  <button onclick="show('now')" id="now-tab-btn"><span class="ico" id="now-tab-ico">◉</span>NOW</button>
   <button data-pass onclick="show('pass')"><span class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;"><circle cx="9" cy="14" r="3"/><path d="M12 14h9"/><path d="M17 14v4"/><path d="M20 14v3"/></svg></span>PASS</button>
 </div>
 
@@ -5059,12 +5106,12 @@ renderHotelListPhone();
     if (hasData) {
       var songEl = document.getElementById('now-song');
       if (songEl) songEl.textContent = (cdsState && cdsState.songTitle) ? cdsState.songTitle : '—';
-      // NOWタブアイコンを赤く点灯（LIVE表示）
-      var ico = document.getElementById('now-tab-ico');
-      if (ico) ico.style.color = '#e05048';
+      // R387: FAB を赤点灯クラス化 (CSS の #now-fab.live で発光 + 点滅)
+      var fab = document.getElementById('now-fab');
+      if (fab) fab.classList.add('live');
     } else {
-      var ico2 = document.getElementById('now-tab-ico');
-      if (ico2) ico2.style.color = '';
+      var fab2 = document.getElementById('now-fab');
+      if (fab2) fab2.classList.remove('live');
     }
   }
 
@@ -5140,11 +5187,24 @@ renderHotelListPhone();
       startListen();
       if (cdsState && cdsState.isRunning && !rafId) tickNow();
       refreshNow();
+      // R387: NOW タブ表示の瞬間に擬似フルスクリーン (上下タブを隠す)。
+      // 解除は右上の FAB を再タップ。ネイティブ Fullscreen は user gesture
+      // 流れ内で試して iOS は無視・Android/PC は本物の全画面に。
+      fsOn = true;
+      document.body.classList.add('now-fs');
+      var el = document.getElementById('screen-now');
+      if (el && el.requestFullscreen) {
+        el.requestFullscreen().catch(function(){});
+      }
     } else {
       // 画面離れたらRAFを止める（電池節約）
       if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
       // フルスクリーン解除
-      if (fsOn) { fsOn = false; document.body.classList.remove('now-fs'); }
+      if (fsOn) {
+        fsOn = false;
+        document.body.classList.remove('now-fs');
+        if (document.exitFullscreen) document.exitFullscreen().catch(function(){});
+      }
     }
   };
 
