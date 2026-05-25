@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260519.720000">
+<meta name="build-version" content="20260525.386000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="apple-touch-icon" href="favicon.svg">
 <title>SCHEDULE STUDIO — ARTIST</title>
@@ -2011,6 +2011,91 @@
   .cal-day-sheet, .cal-day-sheet.show {
     display: none !important;
   }
+
+  /* ── NOW タブ（CDS リアルタイム同期） ───────── R386: phone-staff から移植 */
+  #screen-now {
+    background: #07070a;
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+  .now-status-bar {
+    position: absolute;
+    top: 12px; left: 12px; right: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .now-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #2a2a2a;
+    flex-shrink: 0;
+    transition: background 0.4s;
+  }
+  .now-dot.connected  { background: #4a7a46; }
+  .now-dot.live       { background: #e05048; box-shadow: 0 0 8px rgba(224,80,72,0.7); animation: nowBlink 1.2s infinite; }
+  @keyframes nowBlink { 0%,100%{opacity:1} 50%{opacity:0.35} }
+  .now-status-label   { font-size: 10px; color: #3a3a3a; letter-spacing: 0.1em; flex: 1; }
+  .now-fs-btn {
+    background: none; border: 1px solid #2a2a2a;
+    color: #444; font-size: 18px; cursor: pointer;
+    padding: 3px 8px; border-radius: 4px; line-height: 1;
+  }
+  .now-offline {
+    text-align: center; padding: 40px 24px;
+  }
+  .now-offline-icon   { font-size: 44px; margin-bottom: 16px; }
+  .now-offline-text   { font-size: 15px; letter-spacing: 0.18em; color: #3a3a3a; margin-bottom: 8px; }
+  .now-offline-sub    { font-size: 11px; color: #2a2a2a; line-height: 1.7; }
+  .now-song           {
+    font-size: clamp(13px, 3.5vw, 18px);
+    color: #686868;
+    letter-spacing: 0.15em;
+    text-align: center;
+    margin-bottom: 12px;
+    font-weight: 500;
+  }
+  .now-timer {
+    font-size: clamp(80px, 22vw, 130px);
+    font-weight: 700;
+    color: #f0e0c8;
+    font-variant-numeric: tabular-nums;
+    font-family: -apple-system, 'Helvetica Neue', sans-serif;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  .now-bar-wrap {
+    width: min(80vw, 280px);
+    height: 3px;
+    background: #1a1a1a;
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 14px;
+  }
+  .now-bar-fill {
+    height: 100%;
+    background: #c8a878;
+    border-radius: 2px;
+    width: 0%;
+    transition: width 0.5s linear;
+  }
+  .now-meta {
+    font-size: 11px;
+    color: #3a3a3a;
+    letter-spacing: 0.12em;
+  }
+  /* iOS擬似フルスクリーン */
+  body.now-fs #bottom-tabs,
+  body.now-fs #top-tabs-bar { display: none !important; }
+  body.now-fs #screen-now   { position: fixed; inset: 0; z-index: 9990; }
+  body.now-fs .now-timer    { font-size: clamp(100px, 28vw, 170px); }
+  body.now-fs .now-fs-btn   { color: #c8a878; border-color: #3a3a3a; }
 </style>
 
 <!-- ツアー日付セレクター（最上部の1行） -->
@@ -2242,6 +2327,26 @@
     <div id="hotel-list-host"></div>
   </div>
 
+  <!-- ════ NOW（CDS リアルタイム同期） ════ R386: phone-staff から移植 -->
+  <div class="screen" id="screen-now">
+    <div class="now-status-bar">
+      <div class="now-dot" id="now-dot"></div>
+      <span class="now-status-label" id="now-label">Firebase接続中...</span>
+      <button class="now-fs-btn" onclick="nowToggleFs()" title="フルスクリーン">⛶</button>
+    </div>
+    <div id="now-offline" class="now-offline">
+      <div class="now-offline-icon">📡</div>
+      <div class="now-offline-text">CDS 送信待ち</div>
+      <div class="now-offline-sub">カウントダウンアプリ（CDS）が<br>カウントを開始すると<br>ここにリアルタイム表示されます</div>
+    </div>
+    <div id="now-live" style="display:none; width:100%; flex-direction:column; align-items:center;">
+      <div class="now-song" id="now-song">—</div>
+      <div class="now-timer" id="now-timer">-:--</div>
+      <div class="now-bar-wrap"><div class="now-bar-fill" id="now-bar"></div></div>
+      <div class="now-meta" id="now-meta"></div>
+    </div>
+  </div>
+
   <!-- ════ PASS ════ -->
   <div class="screen" id="screen-pass">
     <div class="pass-screen" id="pass-input-view">
@@ -2267,6 +2372,7 @@
   <button class="active" onclick="show('schedule')"><span class="ico">▤</span>DAY</button>
   <button class="rehearsal-btn" onclick="show('rehearsal')"><span class="ico">▶</span>REHEARSAL</button>
   <button onclick="show('info')"><span class="ico">⚑</span>INFO</button>
+  <button onclick="show('now')" id="now-tab-btn"><span class="ico" id="now-tab-ico">◉</span>NOW</button>
 </div>
 
 <!-- ツアー日付選択モーダル -->
@@ -2410,6 +2516,9 @@ function show(id) {
 
   const body = document.getElementById('body');
   if (body) body.scrollTop = 0;
+
+  // R386: CDS NOW タブ用フック — タブ切替時に Firebase 購読開始/RAF 停止
+  if (typeof window.__nowOnShow === 'function') window.__nowOnShow(actualScreenId);
 }
 
 // R67 P1: 上タブからのテクリハ／全体リハ切替
@@ -4299,6 +4408,171 @@ renderHotelListPhone();
     bindClearHash();
   }
   console.log('[R185] LINE rich-menu hash router loaded. hash:', location.hash);
+})();
+</script>
+
+<!-- ════ NOW タブ: CDS Firebase リアルタイム同期 ════ R386: phone-staff から移植 -->
+<script>
+(function(){
+  'use strict';
+
+  var cdsState  = null;   // Firebaseから受け取ったCDSの最新状態
+  var rafId     = null;   // requestAnimationFrame ID
+  var fbListening = false;
+  var nowVisible  = false;
+  var fsOn        = false;
+  // R386: CDS は updatedAt に serverTimestamp() を書いてくる（Firebase server 時刻）。
+  // staff/artist スマホのローカル時計 (Date.now()) と直接引き算すると NTP ズレ分
+  // だけ残り時間がズレるので、サーバ時刻との差分を .info/serverTimeOffset で取って
+  // 補正する。
+  var serverTimeOffset = 0;
+
+  // ── Firebase購読開始 ──
+  function startListen() {
+    if (fbListening || !window.__db) return;
+    fbListening = true;
+
+    window.__db.ref('.info/serverTimeOffset').on('value', function(snap) {
+      var off = snap.val();
+      serverTimeOffset = (typeof off === 'number' && isFinite(off)) ? off : 0;
+    });
+
+    window.__db.ref('cds/now').on('value', function(snap) {
+      cdsState = snap.val();
+      refreshNow();
+      if (nowVisible && cdsState && cdsState.isRunning && !rafId) tickNow();
+    });
+
+    window.__db.ref('.info/connected').on('value', function(snap) {
+      var dot = document.getElementById('now-dot');
+      var lbl = document.getElementById('now-label');
+      if (!dot) return;
+      if (snap.val()) {
+        if (!dot.classList.contains('live')) dot.className = 'now-dot connected';
+        if (lbl) lbl.textContent = 'Firebase 接続済み';
+      } else {
+        if (!dot.classList.contains('live')) dot.className = 'now-dot';
+        if (lbl) lbl.textContent = 'Firebase 接続中...';
+      }
+    });
+  }
+
+  // ── 画面状態を更新 ──
+  function refreshNow() {
+    var liveEl    = document.getElementById('now-live');
+    var offlineEl = document.getElementById('now-offline');
+    var dot       = document.getElementById('now-dot');
+    if (!liveEl || !offlineEl) return;
+
+    var hasData = !!(cdsState && (
+      cdsState.isRunning ||
+      cdsState.isPaused  ||
+      (Number.isFinite(cdsState.totalMs) && cdsState.totalMs > 0) ||
+      (typeof cdsState.songTitle === 'string' && cdsState.songTitle.length > 0)
+    ));
+    liveEl.style.display    = hasData ? 'flex'  : 'none';
+    offlineEl.style.display = hasData ? 'none'  : 'block';
+    if (dot) dot.className  = hasData ? 'now-dot live' : 'now-dot connected';
+
+    if (hasData) {
+      var songEl = document.getElementById('now-song');
+      if (songEl) songEl.textContent = (cdsState && cdsState.songTitle) ? cdsState.songTitle : '—';
+      var ico = document.getElementById('now-tab-ico');
+      if (ico) ico.style.color = '#e05048';
+    } else {
+      var ico2 = document.getElementById('now-tab-ico');
+      if (ico2) ico2.style.color = '';
+    }
+  }
+
+  // ── カウントダウン毎フレーム更新 ──
+  function tickNow() {
+    if (!cdsState || !(cdsState.isRunning || cdsState.isPaused || (Number.isFinite(cdsState.totalMs) && cdsState.totalMs > 0))) {
+      rafId = null;
+      return;
+    }
+
+    var rawRem = Number.isFinite(cdsState.remainingMs) ? cdsState.remainingMs : 0;
+    var rem    = Math.max(0, rawRem);
+    if (cdsState.isRunning && Number.isFinite(cdsState.updatedAt)) {
+      var nowServer = Date.now() + serverTimeOffset;
+      rem = Math.max(0, rem - (nowServer - cdsState.updatedAt));
+    }
+
+    var rawTotal = Number.isFinite(cdsState.totalMs) ? cdsState.totalMs : 0;
+    var total  = Math.max(1, rawTotal);
+    var pct    = Math.min(100, (total - rem) / total * 100);
+    var secs   = Math.ceil(rem / 1000);
+    var mm     = Math.floor(secs / 60);
+    var ss     = ('0' + (secs % 60)).slice(-2);
+
+    var timerEl = document.getElementById('now-timer');
+    var barEl   = document.getElementById('now-bar');
+    var metaEl  = document.getElementById('now-meta');
+
+    if (timerEl) timerEl.textContent = mm + ':' + ss;
+    if (barEl)   barEl.style.width   = pct + '%';
+    if (metaEl)  metaEl.textContent  =
+      cdsState.isPaused   ? '⏸  PAUSE' :
+      cdsState.isRunning  ? '▶  LIVE'  :
+      (cdsState.sectionLabel || '');
+
+    if (cdsState.isRunning && rem > 0 && nowVisible) {
+      rafId = requestAnimationFrame(tickNow);
+    } else {
+      rafId = null;
+    }
+  }
+
+  // ── フルスクリーン切替 ──
+  window.nowToggleFs = function() {
+    fsOn = !fsOn;
+    document.body.classList.toggle('now-fs', fsOn);
+    if (fsOn) {
+      var el = document.getElementById('screen-now');
+      if (el && el.requestFullscreen) {
+        el.requestFullscreen().catch(function(){});  // iOS は無視
+      }
+    } else {
+      if (document.exitFullscreen) document.exitFullscreen().catch(function(){});
+    }
+  };
+
+  document.addEventListener('fullscreenchange', function() {
+    if (!document.fullscreenElement && fsOn) {
+      fsOn = false;
+      document.body.classList.remove('now-fs');
+    }
+  });
+
+  // ── show()からのフック ──
+  window.__nowOnShow = function(id) {
+    nowVisible = (id === 'now');
+    if (nowVisible) {
+      startListen();
+      if (cdsState && cdsState.isRunning && !rafId) tickNow();
+      refreshNow();
+    } else {
+      if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+      if (fsOn) { fsOn = false; document.body.classList.remove('now-fs'); }
+    }
+  };
+
+  document.addEventListener('DOMContentLoaded', function() {
+    if (window.__db) {
+      window.__db.ref('.info/connected').on('value', function(snap) {
+        var dot = document.getElementById('now-dot');
+        var lbl = document.getElementById('now-label');
+        if (!dot) return;
+        if (snap.val()) {
+          if (!dot.classList.contains('live')) dot.className = 'now-dot connected';
+          if (lbl) lbl.textContent = 'Firebase 接続済み';
+        }
+      });
+    }
+  });
+
+  console.log('[NOW] (artist) CDS リアルタイム同期モジュール初期化完了');
 })();
 </script>
 </body>
