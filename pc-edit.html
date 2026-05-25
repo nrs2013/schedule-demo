@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260524.389000">
+<meta name="build-version" content="20260524.390000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -5413,8 +5413,37 @@
   .tt-sec-row {
     display: grid;
     border-bottom: 1px solid #3a3a3a;
+    position: relative;
   }
   .tt-sec-row:last-child { border-bottom: none; }
+  /* R390-2: セクション下端のリサイズハンドル — ドラッグで lanes 増減 */
+  .tt-sec-resize {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -3px;
+    height: 6px;
+    cursor: row-resize;
+    z-index: 4;
+    background: transparent;
+    transition: background 0.12s;
+  }
+  .tt-sec-resize::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: 2px;
+    transform: translateX(-50%);
+    width: 30px;
+    height: 2px;
+    border-radius: 1px;
+    background: rgba(200,168,120,0.0);
+    transition: background 0.12s;
+  }
+  .tt-sec-resize:hover::after { background: rgba(200,168,120,0.7); }
+  .tt-sec-resize.is-resizing::after { background: rgba(245,200,120,1); }
+  body.tt-row-resizing { cursor: row-resize !important; user-select: none; }
+  body.tt-row-resizing * { cursor: row-resize !important; }
   .tt-sec-label {
     background: #161616;
     border-right: 1px solid #3a3a3a;
@@ -5637,6 +5666,21 @@
   .tt-bar.bar-shrink-1 .tt-bar-text { font-size: 9px;  line-height: 1.10; }
   .tt-bar.bar-shrink-2 .tt-bar-text { font-size: 8px;  line-height: 1.05; letter-spacing: -0.01em; }
   .tt-bar.bar-shrink-3 .tt-bar-text { font-size: 7px;  line-height: 1.00; letter-spacing: -0.02em; }
+  /* R390-3: 個別バー下端の laneSpan リサイズハンドル (縦串バーの .b とは別仕様で上書き) */
+  .tt-bar.normal .tt-bar-handle.b {
+    position: absolute;
+    top: auto;
+    bottom: 0;
+    left: 9px;     /* 左右リサイズハンドルとぶつからないよう内側 */
+    right: 9px;
+    width: auto;
+    height: 5px;
+    cursor: row-resize;
+    background: rgba(56,212,204,0.10);
+    z-index: 6;
+  }
+  .tt-bar.normal .tt-bar-handle.b:hover { background: rgba(56,212,204,0.55); }
+  .tt-bar.normal.selected .tt-bar-handle.b { background: rgba(245,200,120,0.4); }
   .tt-bar-handle {
     position: absolute;
     top: 0;
@@ -5841,6 +5885,41 @@
     border: 1px solid #c8a878;
     cursor: text;
   }
+  /* R390-1: セクション名 (大) + 会社名 (小) の 2 段 */
+  .tt-sec-name-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1px;
+    flex: 1;
+    min-width: 0;
+  }
+  .tt-sec-name { font-size: 12px; font-weight: 600; line-height: 1.15; color: #e8e6dc; }
+  .tt-sec-company {
+    outline: none;
+    cursor: text;
+    padding: 1px 4px;
+    border-radius: 3px;
+    min-width: 40px;
+    font-size: 9.5px;
+    font-weight: 400;
+    line-height: 1.1;
+    color: #888;
+    letter-spacing: 0.02em;
+  }
+  .tt-sec-company:hover { background: rgba(255,255,255,0.04); color: #aaa; }
+  .tt-sec-company[contenteditable="true"] {
+    background: rgba(200,168,120,0.15);
+    border: 1px solid #c8a878;
+    color: #e8e6dc;
+    cursor: text;
+  }
+  .tt-sec-company:empty::before {
+    content: '＋会社名';
+    color: rgba(255,255,255,0.18);
+    font-style: italic;
+  }
+  .tt-sec-company:empty:hover::before { color: rgba(200,168,120,0.5); }
   /* R238: ズーム操作 */
   .tt-zoom-group {
     display: inline-flex;
@@ -13159,6 +13238,40 @@ function show(id) {
   }
   function isVAll(bar){ return bar && bar.vAll === true; }
   function isSpanBar(bar){ return isVAll(bar) || (getSpanSecIds(bar) !== null); }
+  /* R390-1: セクション名と会社名を分離するヘルパー。
+     文字列に「（会社名）」「(会社名)」が含まれていれば自動分割。
+     既に sec.company が定義されていればそれを返す。 */
+  function splitSectionName(secOrStr){
+    if (secOrStr && typeof secOrStr === 'object') {
+      if (secOrStr.company !== undefined) {
+        return { name: secOrStr.name || '', company: secOrStr.company || '' };
+      }
+      return splitSectionName(secOrStr.name || '');
+    }
+    const s = String(secOrStr || '');
+    // 「セクション名（会社名）」「セクション名(会社名)」
+    const m = s.match(/^(.+?)\s*[\(（]([^\)）]+)[\)）]\s*$/);
+    if (m) return { name: m[1].trim(), company: m[2].trim() };
+    // 「セクション名\n会社名」
+    if (s.indexOf('\n') >= 0) {
+      const ls = s.split('\n').map(function(x){return x.trim();}).filter(Boolean);
+      return { name: ls[0] || '', company: ls.slice(1).join(' / ') };
+    }
+    return { name: s, company: '' };
+  }
+  /* R390-1: 既存 sec.name に「(会社名)」が含まれているデータを sec.name + sec.company に
+     1 度だけ自動分離してマイグレーション。次回以降は 2 段表示・別フィールド編集が使える。 */
+  function migrateSectionCompanies(tt){
+    if (!tt || tt._sectionCompanyMigratedR390 || !Array.isArray(tt.sections)) return;
+    tt.sections.forEach(function(sec){
+      if (sec.company === undefined || sec.company === null) {
+        const sp = splitSectionName(sec.name || '');
+        sec.name = sp.name;
+        sec.company = sp.company || '';
+      }
+    });
+    tt._sectionCompanyMigratedR390 = true;
+  }
   // R252: vAll は撤去方針。既存の vAll バーは「全セクション貫通の spanSecIds」に変換
   function migrateVAll(tt){
     if (!tt || !Array.isArray(tt.bars) || !Array.isArray(tt.sections)) return;
@@ -13314,10 +13427,14 @@ function show(id) {
       el.innerHTML = '<div class="tt-bar-handle l"></div>' +
         '<div class="tt-bar-text">' + escapeHtml(bar.text || '') + '</div>' +
         '<div class="tt-bar-handle r"></div>' +
+        /* R390-3: バー下端の laneSpan リサイズハンドル */
+        (sec.lanes >= 2 ? '<div class="tt-bar-handle b" title="下にドラッグで縦に大きく"></div>' : '') +
         '<div class="tt-bar-corner tl"></div><div class="tt-bar-corner tr"></div>' +
         '<div class="tt-bar-corner bl"></div><div class="tt-bar-corner br"></div>';
       body.appendChild(el);
       bindBarEvents(tt, bar, el, sec);
+      /* R390-3: 下端ハンドルに laneSpan ドラッグを bind */
+      bindBarLaneSpanHandle(tt, bar, el, sec, layout);
       created.push({ el: el, bar: bar });
     });
     // R389-B: 各バーを auto-fit (文字溢れなら font-size 自動縮小)。
@@ -13838,6 +13955,47 @@ function show(id) {
   }
 
   function bindSectionEvents(tt, sec, body){
+    /* R390-2: 行下端の lanes リサイズハンドル設置（行ごとに 1 つだけ） */
+    (function attachLanesResize(){
+      const row = body.closest('.tt-sec-row');
+      if (!row || row.querySelector('.tt-sec-resize')) return;
+      const handle = document.createElement('div');
+      handle.className = 'tt-sec-resize';
+      handle.title = '上下ドラッグで帯（lanes）を増減';
+      row.appendChild(handle);
+      let dragging = false, startY = 0, startLanes = 1, startHeight = 0;
+      handle.addEventListener('mousedown', function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        dragging = true;
+        startY = e.clientY;
+        startLanes = sec.lanes || 1;
+        startHeight = row.getBoundingClientRect().height;
+        handle.classList.add('is-resizing');
+        document.body.classList.add('tt-row-resizing');
+      });
+      function onMove(e){
+        if (!dragging) return;
+        const dy = e.clientY - startY;
+        const laneH = Math.max(14, startHeight / startLanes);
+        // 行を 1 lane 単位で increment/decrement
+        const newLanes = Math.max(1, Math.min(3, startLanes + Math.round(dy / laneH)));
+        if (newLanes !== (sec.lanes || 1)) {
+          sec.lanes = newLanes;
+          if (typeof saveToStorage === 'function') saveToStorage();
+          if (typeof render === 'function') render();
+        }
+      }
+      function onUp(e){
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('is-resizing');
+        document.body.classList.remove('tt-row-resizing');
+      }
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    })();
+
     if (body.__bound) return;
     body.__bound = true;
     // R246: マウスホバー時刻インジケータ
@@ -14049,6 +14207,43 @@ function show(id) {
       document.addEventListener('mousemove', move);
       document.addEventListener('mouseup', up);
     });
+  }
+
+  /* R390-3: バー下端ハンドルで laneSpan を上下ドラッグ増減 */
+  function bindBarLaneSpanHandle(tt, bar, el, sec, layout){
+    const handle = el.querySelector('.tt-bar-handle.b');
+    if (!handle) return;
+    if (!sec || (sec.lanes || 1) < 2) return; // lanes >= 2 のみ有効
+    let dragging = false, startY = 0, startSpan = 1, laneStep = layout.barH + layout.innerGap;
+    handle.addEventListener('mousedown', function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      dragging = true;
+      startY = e.clientY;
+      startSpan = Math.max(1, bar.laneSpan || 1);
+      laneStep = layout.barH + layout.innerGap;
+      document.body.classList.add('tt-row-resizing');
+      el.classList.add('selected');
+    });
+    function onMove(e){
+      if (!dragging) return;
+      const dy = e.clientY - startY;
+      const stepDelta = Math.round(dy / laneStep);
+      const maxAvail = (sec.lanes || 1) - (bar.lane || 0);
+      const next = Math.max(1, Math.min(maxAvail, startSpan + stepDelta));
+      if (next !== (bar.laneSpan || 1)) {
+        bar.laneSpan = next;
+        if (typeof saveToStorage === 'function') saveToStorage();
+        if (typeof render === 'function') render();
+      }
+    }
+    function onUp(){
+      if (!dragging) return;
+      dragging = false;
+      document.body.classList.remove('tt-row-resizing');
+    }
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
   }
 
   function bindBarEvents(tt, bar, el, sec){
@@ -14417,10 +14612,11 @@ function show(id) {
 
     const tt = getTimetableForDate(dateKey);
     const wasMigrated = tt._colorMigratedR249;
+    const wasSecMig = tt._sectionCompanyMigratedR390;
     migrateVAll(tt);  // R238g: 既存データ移行
     migrateBarColors(tt);  // R249b: 既存色をセクション色へ
-    if (!wasMigrated && tt._colorMigratedR249) {
-      // 移行が今走った → 保存して同期
+    migrateSectionCompanies(tt);  // R390-1: sec.name 内「(会社名)」を sec.company に分離
+    if ((!wasMigrated && tt._colorMigratedR249) || (!wasSecMig && tt._sectionCompanyMigratedR390)) {
       try { saveToStorage(); } catch(e){}
     }
     const start = tt.timeStart;
@@ -14480,11 +14676,18 @@ function show(id) {
     // セクション行
     tt.sections.forEach(function(sec){
       const rowH = LANE_H * sec.lanes;
+      /* R390-2: 下端に lanes リサイズハンドルを足す */
       html += '<div class="tt-sec-row" style="display:grid; grid-template-columns:' + LABEL_W + 'px ' + axisW + 'px ' + ADD_W + 'px;" data-sec-id="' + escapeHtml(sec.id) + '">';
+      // resize ハンドルは行末で append する（grid 内に置くと崩れるので、JS で append）
       html += '<div class="tt-sec-label">';
       // R256: ドラッグハンドル（並び替え用）
       html += '<div class="tt-sec-drag" draggable="true" data-sec-id="' + escapeHtml(sec.id) + '" title="ドラッグで並び替え">⋮⋮</div>';
-      html += '<div class="tt-sec-name" data-sec-id="' + escapeHtml(sec.id) + '" contenteditable="false" title="ダブルクリックで編集">' + escapeHtml(sec.name) + '</div>';
+      /* R390-1: セクション名 + 会社名の 2 段表示 */
+      var _ttSplit = (typeof splitSectionName === 'function') ? splitSectionName(sec) : { name: sec.name, company: sec.company || '' };
+      html += '<div class="tt-sec-name-wrap" data-sec-id="' + escapeHtml(sec.id) + '">';
+      html += '<div class="tt-sec-name" data-sec-id="' + escapeHtml(sec.id) + '" data-field="name" contenteditable="false" title="ダブルクリックで編集">' + escapeHtml(_ttSplit.name) + '</div>';
+      html += '<div class="tt-sec-company" data-sec-id="' + escapeHtml(sec.id) + '" data-field="company" contenteditable="false" title="ダブルクリックで会社名編集">' + escapeHtml(_ttSplit.company) + '</div>';
+      html += '</div>';
       html += '<div class="tt-sec-lanes">';
       html += '<span class="tt-sec-lane-btn" data-act="lane-minus" title="レーン減">−</span>';
       html += '<span class="tt-sec-lane-btn" data-act="lane-plus" title="レーン増">＋</span>';
@@ -14680,6 +14883,40 @@ function show(id) {
           const sec = tt.sections.find(function(s){ return s.id === secId; });
           if (sec) nameEl.textContent = sec.name;
           nameEl.blur();
+        }
+      });
+    });
+    /* R390-1: 会社名フィールド編集 */
+    gridEl.querySelectorAll('.tt-sec-company').forEach(function(compEl){
+      compEl.addEventListener('dblclick', function(e){
+        e.stopPropagation();
+        compEl.setAttribute('contenteditable', 'true');
+        compEl.focus();
+        try {
+          const range = document.createRange();
+          range.selectNodeContents(compEl);
+          const sel = window.getSelection();
+          sel.removeAllRanges();
+          sel.addRange(range);
+        } catch(e2){}
+      });
+      compEl.addEventListener('blur', function(){
+        if (compEl.getAttribute('contenteditable') !== 'true') return;
+        compEl.setAttribute('contenteditable', 'false');
+        const secId = compEl.getAttribute('data-sec-id');
+        const sec = tt.sections.find(function(s){ return s.id === secId; });
+        if (sec) {
+          sec.company = compEl.textContent.trim();
+          saveToStorage();
+        }
+      });
+      compEl.addEventListener('keydown', function(e){
+        if (e.key === 'Enter') { e.preventDefault(); compEl.blur(); }
+        if (e.key === 'Escape') {
+          const secId = compEl.getAttribute('data-sec-id');
+          const sec = tt.sections.find(function(s){ return s.id === secId; });
+          if (sec) compEl.textContent = sec.company || '';
+          compEl.blur();
         }
       });
     });
@@ -15281,10 +15518,13 @@ function show(id) {
 #tt-pdf-root .tt-pdf-sec-row { display:flex; flex-direction:row; border-bottom:0.6px solid #d8d6d2;
                                position:relative; min-height:0; }
 #tt-pdf-root .tt-pdf-sec-row:last-child { border-bottom:none; }
-#tt-pdf-root .tt-pdf-sec-label { width:20mm; flex:0 0 20mm; font-size:10px; letter-spacing:0.06em; padding:5px 7px;
+#tt-pdf-root .tt-pdf-sec-label { width:20mm; flex:0 0 20mm; padding:5px 7px;
                                  border-right:0.6px solid #1a1a1a;
-                                 background:#fafaf6; color:#1a1a1a; font-weight:700; display:flex; align-items:center;
-                                 word-break:break-all; line-height:1.2; }
+                                 background:#fafaf6; color:#1a1a1a; display:flex; flex-direction:column; justify-content:center;
+                                 word-break:keep-all; line-height:1.15; gap:1px; }
+/* R390-1: セクション名 + 会社名の 2 段表示 (会社名は小さく灰色) */
+#tt-pdf-root .tt-pdf-sec-label .sec-main { font-size:10px; font-weight:700; letter-spacing:0.04em; color:#1a1a1a; }
+#tt-pdf-root .tt-pdf-sec-label .sec-company { font-size:7.5px; font-weight:400; letter-spacing:0.02em; color:#888; line-height:1.1; }
 #tt-pdf-root .tt-pdf-sec-body { flex:1 1 auto; position:relative; }
 /* R341: 背景の grid line (バー外で見える縦線、z-index 1 でバーで隠れる) */
 #tt-pdf-root .tt-pdf-grid-line { position:absolute; top:0; bottom:0; pointer-events:none; }
@@ -15579,7 +15819,10 @@ function show(id) {
         // R317: lanes 1〜2 は同じ高さ、3 以上で段階的に太く (洗練された設計)
         const flexVal = lanes <= 2 ? 1 : (lanes / 2);
         return '<div class="tt-pdf-sec-row" style="flex:' + flexVal + ' 1 0;">' +
-               '<div class="tt-pdf-sec-label">' + escapeHtml(sec.name || '') + '</div>' +
+               '<div class="tt-pdf-sec-label">' +
+                 '<div class="sec-main">' + escapeHtml(sec.name || '') + '</div>' +
+                 (sec.company ? '<div class="sec-company">' + escapeHtml(sec.company) + '</div>' : '') +
+               '</div>' +
                '<div class="tt-pdf-sec-body">' + barsHtml + '</div></div>';
       }).join('');
       // R341: 背景 grid line は z-index 1 に戻す (バーで隠れる)。
