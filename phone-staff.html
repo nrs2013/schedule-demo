@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260525.393000">
+<meta name="build-version" content="20260525.394000">
 <!-- R389: CDS /output デザインに寄せるための Google Fonts (Bebas Neue + Noto Sans JP) -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -4251,6 +4251,9 @@ const TT_PDF_CSS_PHONE = `
 #tt-pdf-root .tt-pdf-bar.color-gray   { background:linear-gradient(168deg, rgba(126,216,72,0.50) 0%, rgba(126,216,72,0.30) 100%); border:1.5px solid rgba(126,216,72,1.0); }
 #tt-pdf-root .tt-pdf-bar.color-accent { background:linear-gradient(168deg, rgba(58,160,224,0.50) 0%, rgba(58,160,224,0.30) 100%); border:1.5px solid rgba(58,160,224,1.0); }
 #tt-pdf-root .tt-pdf-bar.color-pink   { background:linear-gradient(168deg, rgba(255,88,140,0.55) 0%, rgba(255,88,140,0.35) 100%); border:1.5px solid rgba(255,88,140,1.0); }
+/* R394: green / cyan を正式に追加（命名と実色を一致させる） */
+#tt-pdf-root .tt-pdf-bar.color-green  { background:linear-gradient(168deg, rgba(126,216,72,0.55) 0%, rgba(126,216,72,0.35) 100%); border:1.5px solid rgba(126,216,72,1.0); }
+#tt-pdf-root .tt-pdf-bar.color-cyan   { background:linear-gradient(168deg, rgba(58,160,224,0.55) 0%, rgba(58,160,224,0.35) 100%); border:1.5px solid rgba(58,160,224,1.0); }
 /* 縦串バー — PC screen .span-bar 相当 (半透明グラデ + ネオン枠 + 中央寄せ) */
 #tt-pdf-root .tt-pdf-span-bar { position:absolute; box-sizing:border-box; padding:6px 8px; font-size:10px; font-weight:700;
                                 color:#fafaf8; border-radius:4px; z-index:2;
@@ -4262,6 +4265,9 @@ const TT_PDF_CSS_PHONE = `
 #tt-pdf-root .tt-pdf-span-bar.color-gray   { background:linear-gradient(180deg, rgba(126,216,72,0.30) 0%, rgba(126,216,72,0.15) 100%); border:1.5px solid rgba(126,216,72,0.90); }
 #tt-pdf-root .tt-pdf-span-bar.color-accent { background:linear-gradient(180deg, rgba(58,160,224,0.32) 0%, rgba(58,160,224,0.18) 100%); border:1.5px solid rgba(58,160,224,0.90); }
 #tt-pdf-root .tt-pdf-span-bar.color-pink   { background:linear-gradient(180deg, rgba(255,88,140,0.32) 0%, rgba(255,88,140,0.18) 100%); border:1.5px solid rgba(255,88,140,0.90); }
+/* R394: green / cyan の span bar 版 */
+#tt-pdf-root .tt-pdf-span-bar.color-green  { background:linear-gradient(180deg, rgba(126,216,72,0.30) 0%, rgba(126,216,72,0.15) 100%); border:1.5px solid rgba(126,216,72,0.90); }
+#tt-pdf-root .tt-pdf-span-bar.color-cyan   { background:linear-gradient(180deg, rgba(58,160,224,0.32) 0%, rgba(58,160,224,0.18) 100%); border:1.5px solid rgba(58,160,224,0.90); }
 #tt-pdf-root .tt-pdf-span-bar .b-text { font-weight:800; color:#fafaf8; word-break:break-all; }
 #tt-pdf-root .tt-pdf-span-bar .b-time { font-family:'JetBrains Mono',monospace; font-weight:600; font-size:8.5px; color:rgba(255,255,255,0.85); margin-top:3px; letter-spacing:0.04em; }
 #tt-pdf-root .tt-pdf-foot { margin-top:3mm; padding:6px 10px; border:0.5px solid rgba(255,255,255,0.15); border-radius:3px;
