@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260524.387000">
+<meta name="build-version" content="20260524.388000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -5618,15 +5618,20 @@
   }
   .tt-bar-time { font-weight: 600; opacity: 0.78; font-feature-settings: 'tnum'; margin-right: 2px; }
   .tt-bar-dur { font-weight: 500; opacity: 0.7; font-size: 10px; }
+  /* R388-①: 個別バーの文字も白space:pre-wrap で手動改行 (\n / <br>) を表示できるよう変更。
+     ellipsis 撤廃、word-break:break-word で長単語は折り返し。
+     編集中も同じ表示で「ここで改行」が見える。 */
   .tt-bar-text {
     flex: 1;
     overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    white-space: pre-wrap;
+    word-break: break-word;
     outline: none;
     padding: 2px 0;
+    line-height: 1.15;
+    text-align: center;
   }
-  .tt-bar-text[contenteditable="true"]:focus { white-space: nowrap; background: rgba(0,0,0,0.2); }
+  .tt-bar-text[contenteditable="true"]:focus { white-space: pre-wrap; background: rgba(0,0,0,0.2); }
   .tt-bar-handle {
     position: absolute;
     top: 0;
@@ -5943,7 +5948,7 @@
   .tt-bar.span-bar.layout-wrap .tt-bar-text { flex-direction: column; }
   .tt-bar.span-bar.layout-wrap .tt-span-title,
   .tt-bar.span-bar.layout-wrap .tt-span-title-empty {
-    white-space: normal;
+    white-space: pre-wrap;  /* R388-①: 手動改行を尊重 + 自動折り返し */
     word-break: break-word;
     overflow-wrap: break-word;
   }
@@ -13467,7 +13472,9 @@ function show(id) {
       target.removeEventListener('compositionend', onCompEnd);
       try { target.setAttribute('contenteditable', 'false'); } catch(e){}
       el.classList.remove('tt-bar-editing');
-      const newText = (saveValue ? target.textContent.trim() : (bar.text || ''));
+      // R388-①: innerText で取得 (textContent は <br> を \n に変換しないため改行が消える)。
+      //          末尾の改行・空白だけ trim、内部改行は保持。
+      const newText = (saveValue ? (target.innerText || '').replace(/[ \t\n]+$/,'').replace(/^[ \t\n]+/,'') : (bar.text || ''));
       // R345: R281d の「空バー自動削除」を撤廃。
       //   のむさん指示「バーを書いて名前を書かないと消えてしまうという機能はいらない。
       //   バーを書いて一旦表示するっていう風にした方がいい」(2026-05-23)。
@@ -13487,6 +13494,13 @@ function show(id) {
       // IME 変換確定の Enter は無視（e.isComposing / keyCode 229 / Process）
       const imeEnter = e.isComposing || e.keyCode === 229 || e.key === 'Process' || composing;
       if (e.key === 'Enter' && !imeEnter) {
+        // R388-①: Shift+Enter で改行を許可（ブラウザ標準の <br> 挿入に任せる）。
+        //         Enter (修飾なし) は従来通り確定。
+        if (e.shiftKey) {
+          // 挿入は browser default に任せて preventDefault しない
+          e.stopPropagation();
+          return;
+        }
         e.preventDefault();
         e.stopPropagation();
         finalize(true);
@@ -15213,10 +15227,14 @@ function show(id) {
 #tt-pdf-root .tt-pdf-bar .bar-inline-line.quarter,
 #tt-pdf-root .tt-pdf-span-bar .bar-inline-line.quarter { width: 0.6px; background: #bbb; }
 /* R326+: 個別バー — dashed 撤廃、border-radius 0 で grid 線と完全に揃う直方形 */
-#tt-pdf-root .tt-pdf-bar { position:absolute; box-sizing:border-box; padding:3px 8px; font-size:10px; font-weight:600;
-                           color:#1a1a1a; background:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; line-height:1.2;
-                           border-radius:0; display:flex; align-items:center; justify-content:center; letter-spacing:0.04em; z-index:3; }
-#tt-pdf-root .tt-pdf-bar .b-text { overflow:hidden; text-overflow:ellipsis; }
+/* R388-②: ellipsis 撤廃、自動折り返しでなるべく全文を見せる。
+   white-space:pre-wrap で手動改行 (\n / <br>) も尊重。
+   word-break:break-word で長単語の途中改行は最終手段。 */
+#tt-pdf-root .tt-pdf-bar { position:absolute; box-sizing:border-box; padding:3px 6px; font-size:10px; font-weight:600;
+                           color:#1a1a1a; background:#fff;
+                           white-space:pre-wrap; word-break:break-word; overflow:hidden; line-height:1.15;
+                           border-radius:0; display:flex; align-items:center; justify-content:center; letter-spacing:0.02em; z-index:3; }
+#tt-pdf-root .tt-pdf-bar .b-text { overflow:hidden; white-space:pre-wrap; word-break:break-word; text-align:center; }
 /* R330: バーの左右 border を 0 に、grid 線がバー縁を担う。
    左右の縁＝grid 線（1px 黒）、上下のみ bar border (0.6px) で視認性を確保 */
 /* R344: bar の border を 4 辺すべて同じに (シンプルに四角の縁取り) */
@@ -15260,7 +15278,9 @@ function show(id) {
 #tt-pdf-root .tt-pdf-span-bar.color-purple { background:#ead4f8; border:0.6px solid #8830d0; }
 #tt-pdf-root .tt-pdf-span-bar.color-cyan   { background:#cdf0ec; border:0.6px solid #18a8a0; }
 #tt-pdf-root .tt-pdf-span-bar.color-neutral{ background:#f0eee4; border:0.6px solid #888;    }
-#tt-pdf-root .tt-pdf-span-bar .b-text { font-weight:800; color:#0a0a0a; word-break:break-all; font-size:14px; letter-spacing:0.06em; }
+/* R388-①②: white-space:pre-wrap で手動改行 (\n) を尊重、word-break:break-word で
+   長単語のみ途中改行 (日本語が綺麗に折り返す) */
+#tt-pdf-root .tt-pdf-span-bar .b-text { font-weight:800; color:#0a0a0a; white-space:pre-wrap; word-break:break-word; font-size:14px; letter-spacing:0.06em; }
 #tt-pdf-root .tt-pdf-span-bar .b-time { font-family:'JetBrains Mono','Courier New',monospace; font-weight:600; font-size:10px; color:rgba(0,0,0,0.6); margin-top:5px; letter-spacing:0.10em; }
 /* R322b: 狭い縦串バー (width < 5%) は padding を詰めてタイトルを縦書きで全文表示
    時刻は時刻軸を見れば分かるので非表示にして読みやすさ優先 */
@@ -15520,15 +15540,17 @@ function show(id) {
         const topPct = (startLane / totalLanes) * 100;
         const heightPct = ((endLane - startLane) / totalLanes) * 100;
         const color = b.color || 'white';
-        // R322b: 狭縦串バーは時刻を完全に省略してタイトルだけ縦書き表示
-        // (時刻ラベルは時刻軸を見れば分かる)
+        // R322b + R388-③: 狭縦串バーのみ縦書き (横書き改行を優先)
+        // 旧: width < 5 で縦書き (1時間幅でも縦書きになっていた)
+        // 新: width < 3.5 で縦書き (30 分以下のみ縦書き、それ以外は横書き折り返し)
+        const NARROW_THRESHOLD = 3.5;
         let tm;
-        if (width < 5) {
+        if (width < NARROW_THRESHOLD) {
           tm = '';
         } else {
           tm = fmtTimeFromHour(b.start) + '〜' + fmtTimeFromHour(b.end);
         }
-        const padCls = width < 5 ? ' narrow' : '';
+        const padCls = width < NARROW_THRESHOLD ? ' narrow' : '';
         const text = b.text || '';
         // R338: 縦串バーの基準を 18mm → 20mm に修正。
         //   sec-label 幅 = 20mm、grid line 親 div も left:20mm 開始、個別バーは
