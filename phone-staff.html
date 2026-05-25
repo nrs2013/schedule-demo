@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260525.390000">
+<meta name="build-version" content="20260525.391000">
 <!-- R389: CDS /output デザインに寄せるための Google Fonts (Bebas Neue + Noto Sans JP) -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -2511,34 +2511,13 @@
     </div>
   </div>
 
-  <!-- ════ NOW（CDS リアルタイム同期） ════ -->
+  <!-- ════ NOW（CDS リアルタイム同期） ════ R391: iframe 化で CDS の見た目を完全再現 -->
   <div class="screen" id="screen-now">
-    <div class="now-status-bar">
-      <div class="now-dot" id="now-dot"></div>
-      <span class="now-status-label" id="now-label">Firebase接続中...</span>
-      <button class="now-fs-btn" onclick="nowToggleFs()" title="フルスクリーン">⛶</button>
-    </div>
-    <div id="now-offline" class="now-offline">
-      <div class="now-offline-icon">📡</div>
-      <div class="now-offline-text">CDS 送信待ち</div>
-      <div class="now-offline-sub">カウントダウンアプリ（CDS）が<br>カウントを開始すると<br>ここにリアルタイム表示されます</div>
-    </div>
-    <div id="now-live" style="display:none; width:100%; flex-direction:column; align-items:center;">
-      <div class="now-song" id="now-song">—</div>
-      <div class="now-timer" id="now-timer">-:--</div>
-      <div class="now-bar-wrap"><div class="now-bar-fill" id="now-bar"></div></div>
-      <div class="now-meta" id="now-meta"></div>
-      <!-- R388: 次曲表示 -->
-      <div class="now-next" id="now-next" style="display:none;">
-        <span class="now-next-label">NEXT</span>
-        <span class="now-next-title" id="now-next-title"></span>
-      </div>
-    </div>
-  </div>
-
-  <!-- R388: CDS cue overlay (HOLD! / GO! 等を画面全体に被せる) -->
-  <div id="now-cue-overlay" class="now-cue-overlay" style="display:none;">
-    <div class="now-cue-label" id="now-cue-label"></div>
+    <iframe id="now-iframe"
+            title="CDS Live"
+            allow="fullscreen"
+            loading="lazy"
+            style="width:100%; height:100%; border:0; background:#000; display:block;"></iframe>
   </div>
 
   <!-- ════ PASS ════ -->
@@ -5347,29 +5326,39 @@ renderHotelListPhone();
   });
 
   // ── show()からのフック ──
+  // R391: iframe アプローチ — NOW 表示時に CDS /output-firebase をロード、
+  // 解除時は about:blank で停止 (電池/帯域節約)。既存の startListen も
+  // FAB の live クラス制御のために走らせ続ける (iframe 外側の FAB は
+  // 別 origin の iframe からは触れないため、こちら側で Firebase 監視)。
   window.__nowOnShow = function(id) {
     nowVisible = (id === 'now');
+    var iframe = document.getElementById('now-iframe');
     if (nowVisible) {
       startListen();
       if (cdsState && cdsState.isRunning && !rafId) tickNow();
       refreshNow();
-      // R387: NOW タブ表示の瞬間に擬似フルスクリーン (上下タブを隠す)。
-      // 解除は右上の FAB を再タップ。ネイティブ Fullscreen は user gesture
-      // 流れ内で試して iOS は無視・Android/PC は本物の全画面に。
       fsOn = true;
       document.body.classList.add('now-fs');
       var el = document.getElementById('screen-now');
       if (el && el.requestFullscreen) {
         el.requestFullscreen().catch(function(){});
       }
+      // R391: iframe に CDS /output-firebase を読み込む (初回 or 再表示)
+      var targetSrc = 'https://nrs2013.github.io/count-down-studio/output-firebase';
+      if (iframe && iframe.src !== targetSrc) {
+        iframe.src = targetSrc;
+      }
     } else {
-      // 画面離れたらRAFを止める（電池節約）
       if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
-      // フルスクリーン解除
       if (fsOn) {
         fsOn = false;
         document.body.classList.remove('now-fs');
         if (document.exitFullscreen) document.exitFullscreen().catch(function(){});
+      }
+      // R391: iframe 停止 — about:blank に戻して CDS のロードを切り、
+      // Firebase 接続/CPU/帯域を節約。次回表示時に再ロード。
+      if (iframe && iframe.src && iframe.src !== 'about:blank') {
+        iframe.src = 'about:blank';
       }
     }
   };
