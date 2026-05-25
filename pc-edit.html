@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260524.390000">
+<meta name="build-version" content="20260525.391000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -5447,17 +5447,18 @@
   .tt-sec-label {
     background: #161616;
     border-right: 1px solid #3a3a3a;
-    padding: 8px 6px 8px 10px;
-    font-size: 13px;
+    padding: 4px 4px 4px 16px; /* R391: 縦余白詰めて高さ圧縮、左 16px は drag handle 用 */
+    font-size: 12px;
     font-weight: 500;
     color: #e8e6dc;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-direction: column;
-    gap: 6px;
+    gap: 2px; /* R391: 6→2px */
     text-align: center;
     position: relative;
+    overflow: hidden; /* R391: はみ出し防止 */
   }
   /* R251: 部門色マーカーは撤去（落ち着いた印象優先）*/
   /* R256+R273: セクション並び替え用ドラッグハンドル — 常時薄く表示して発見性 UP */
@@ -5666,28 +5667,28 @@
   .tt-bar.bar-shrink-1 .tt-bar-text { font-size: 9px;  line-height: 1.10; }
   .tt-bar.bar-shrink-2 .tt-bar-text { font-size: 8px;  line-height: 1.05; letter-spacing: -0.01em; }
   .tt-bar.bar-shrink-3 .tt-bar-text { font-size: 7px;  line-height: 1.00; letter-spacing: -0.02em; }
-  /* R390-3: 個別バー下端の laneSpan リサイズハンドル (縦串バーの .b とは別仕様で上書き) */
+  /* R390-3 + R391: 個別バー下端の laneSpan リサイズハンドル — 常時可視 UP */
   .tt-bar.normal .tt-bar-handle.b {
     position: absolute;
     top: auto;
     bottom: 0;
-    left: 9px;     /* 左右リサイズハンドルとぶつからないよう内側 */
-    right: 9px;
+    left: 12px;    /* R391: 9→12px、左右ハンドルと整合 */
+    right: 12px;
     width: auto;
-    height: 5px;
+    height: 6px;   /* R391: 5→6px */
     cursor: row-resize;
-    background: rgba(56,212,204,0.10);
+    background: rgba(56,212,204,0.20); /* R391: 0.10→0.20 常時もう少し見える */
     z-index: 6;
   }
-  .tt-bar.normal .tt-bar-handle.b:hover { background: rgba(56,212,204,0.55); }
-  .tt-bar.normal.selected .tt-bar-handle.b { background: rgba(245,200,120,0.4); }
+  .tt-bar.normal .tt-bar-handle.b:hover { background: rgba(56,212,204,0.65); }
+  .tt-bar.normal.selected .tt-bar-handle.b { background: rgba(245,200,120,0.5); }
   .tt-bar-handle {
     position: absolute;
     top: 0;
-    width: 9px; /* R382-B: 6→9px に拡張、リサイズしやすく */
+    width: 12px; /* R382-B + R391: 9→12px、ヒットエリア拡大 */
     height: 100%;
     cursor: ew-resize;
-    background: rgba(200,168,120,0.08); /* R382-B: 常時うっすら色 → 「掴める」が見える */
+    background: rgba(200,168,120,0.18); /* R391: 0.08→0.18 常時もう少し見える */
   }
   .tt-bar-handle.l { left: 0; }
   .tt-bar-handle.r { right: 0; }
@@ -5885,27 +5886,43 @@
     border: 1px solid #c8a878;
     cursor: text;
   }
-  /* R390-1: セクション名 (大) + 会社名 (小) の 2 段 */
+  /* R390-1 + R391: セクション名 (大) + 会社名 (小) の 2 段、各 1 行 ellipsis */
   .tt-sec-name-wrap {
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    gap: 1px;
+    align-items: stretch; /* R391: flex-start → stretch で width:100% を効かせる */
+    gap: 0;
     flex: 1;
+    width: 100%;
     min-width: 0;
   }
-  .tt-sec-name { font-size: 12px; font-weight: 600; line-height: 1.15; color: #e8e6dc; }
+  .tt-sec-name {
+    font-size: 11px; /* R391: 12→11px */
+    font-weight: 600;
+    line-height: 1.15;
+    color: #e8e6dc;
+    white-space: nowrap;        /* R391: 1 行強制 */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+    text-align: center;
+  }
   .tt-sec-company {
     outline: none;
     cursor: text;
-    padding: 1px 4px;
+    padding: 0 2px; /* R391: 1px 4px → 0 2px */
     border-radius: 3px;
-    min-width: 40px;
-    font-size: 9.5px;
+    min-width: 0;   /* R391: 40px → 0 */
+    font-size: 9px; /* R391: 9.5→9px */
     font-weight: 400;
     line-height: 1.1;
     color: #888;
     letter-spacing: 0.02em;
+    white-space: nowrap;        /* R391: 1 行強制 */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+    text-align: center;
   }
   .tt-sec-company:hover { background: rgba(255,255,255,0.04); color: #aaa; }
   .tt-sec-company[contenteditable="true"] {
@@ -13166,7 +13183,7 @@ function show(id) {
   let LANE_H = 40;
   let BAR_H = 32;
   let BAR_TOP = 4;
-  const LABEL_W = 110;
+  const LABEL_W = 100;
   const ADD_W = 36;
   let selectedBarId = null;
   let selectedBarIds = new Set();  // R259: マルチ選択用
