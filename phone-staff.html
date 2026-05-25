@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260525.389000">
+<meta name="build-version" content="20260525.390000">
 <!-- R389: CDS /output デザインに寄せるための Google Fonts (Bebas Neue + Noto Sans JP) -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -2557,10 +2557,21 @@
 
 </div>
 
-<!-- R387: CDS NOW タブを下タブから FAB（右上フローティング）に変更 -->
-<button id="now-fab" onclick="show('now')" title="LIVE — CDS リアルタイム同期">
+<!-- R390: FAB を toggle 化 — 1 回目で NOW フルスクリーン、もう 1 回で DAY に戻る -->
+<button id="now-fab" onclick="nowFabClick()" title="LIVE — CDS リアルタイム同期 / 再タップで戻る">
   <span id="now-tab-ico">◉</span>
 </button>
+<script>
+window.nowFabClick = function() {
+  var nowActive = document.body.classList.contains('now-fs');
+  if (nowActive) {
+    // フルスクリーン中 → DAY タブに戻る
+    if (typeof show === 'function') show('schedule');
+  } else {
+    if (typeof show === 'function') show('now');
+  }
+};
+</script>
 
 <!-- R65 Step 2: PASS タブを復活（passless 入場 + 編集パスワードでロック解除式） -->
 <!-- D150 STAFF: タブを全部英語化（PC 版と統一感） -->
