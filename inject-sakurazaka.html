@@ -4,10 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>櫻坂46 四期生LIVE データ注入 — SCHEDULE STUDIO</title>
-  <meta name="build-version" content="20260524.385000">
+  <meta name="build-version" content="20260524.385200">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Noto+Sans+JP:wght@400;500;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+  <!-- R385c: Firebase SDK を組み込んで Firebase にも直接書き込む -->
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
   <style>
     body { background:#0f0e0c; color:#e8e6dc; font-family:"Noto Sans JP",Inter,sans-serif; padding:40px 24px; max-width:720px; margin:0 auto; line-height:1.6; }
     h1 { font-family:"Bebas Neue", Inter, sans-serif; font-size:48px; letter-spacing:0.08em; color:#f5c878; margin:0 0 4px; line-height:1; }
@@ -23,12 +27,19 @@
     .warn { background:rgba(230,57,70,0.08); border:1px dashed rgba(230,57,70,0.4); border-radius:6px; padding:12px 16px; font-size:12px; color:#f5b8b0; margin-top:14px; }
     .ok { background:rgba(126,216,72,0.08); border:1px dashed rgba(126,216,72,0.5); border-radius:6px; padding:18px 22px; font-size:14px; color:#c8e8a8; margin-top:18px; display:none; }
     .ok a { color:#c8e8a8; text-decoration:underline; font-weight:600; }
+    .progress { background:#1c1b19; border:1px solid #2c2a27; border-radius:6px; padding:12px 16px; margin-top:18px; font-family:"JetBrains Mono",monospace; font-size:12px; color:#c8c8c8; max-height:240px; overflow-y:auto; display:none; }
+    .progress.show { display:block; }
+    .progress .row { padding:2px 0; }
+    .progress .ok { display:inline; background:none; border:none; padding:0; color:#7ed848; }
+    .progress .fail { color:#e63946; }
     code { background:#2a2a27; color:#f5c878; padding:1px 6px; border-radius:3px; font-family:"JetBrains Mono",monospace; font-size:12px; }
+    .fb-status { font-family:"JetBrains Mono",monospace; font-size:11px; color:#888; margin-top:8px; letter-spacing:0.04em; }
+    .fb-status.ok { color:#7ed848; }
   </style>
 </head>
 <body>
   <h1>櫻坂46 四期生LIVE</h1>
-  <div class="sub">DATA INJECTION · SCHEDULE STUDIO</div>
+  <div class="sub">DATA INJECTION · SCHEDULE STUDIO · v.385200</div>
 
   <h2>注入されるデータ</h2>
   <div class="summary">
@@ -42,18 +53,21 @@
           <li>2026-06-03（水）本番②／撤去・搬出</li>
         </ul>
       </li>
-      <li>🎤 <b>DAY スケジュール（6/2・6/3）</b>
-        — 開場 <code>17:30</code> / 開演 <code>19:00</code> など主要イベント</li>
+      <li>🎤 <b>DAY スケジュール（6/2・6/3）</b> 開場 <code>17:30</code> / 開演 <code>19:00</code></li>
       <li>🏟 <b>会場</b> LaLa arena TOKYO-BAY</li>
     </ul>
   </div>
 
   <div class="warn">
     ⚠️ <b>既存の曲リスト・タイムテーブル・DAY スケジュールは上書きされます。</b><br>
-    リハーサルデータ（rhNo/タグ/メモ）も一旦リセットされます。
+    リハーサルデータ（rhNo/タグ/メモ）も一旦リセットされます。<br>
+    <b>localStorage と Firebase の両方に書き込みます</b>（他端末でも同じデータが見えるように）。
   </div>
 
-  <button class="primary" id="run">▶ データを注入する</button>
+  <button class="primary" id="run" disabled>⏳ Firebase 接続中…</button>
+  <div class="fb-status" id="fb-status">Firebase: 未接続</div>
+
+  <div class="progress" id="progress"></div>
 
   <div class="ok" id="ok">
     ✅ <b>注入完了！</b><br>
@@ -68,31 +82,114 @@
     var DAYEVENTS = {"2026-06-02": [{"id": 1, "startTime": "09:00", "endTime": "11:00", "label": "調整時間 Check"}, {"id": 2, "startTime": "11:30", "endTime": "13:00", "label": "テクリハ"}, {"id": 3, "startTime": "13:00", "endTime": "16:00", "label": "Rehearsal"}, {"id": 4, "startTime": "16:00", "endTime": "17:30", "label": "開場準備"}, {"id": 5, "startTime": "17:30", "endTime": "19:00", "label": "DOOR OPEN（開場）"}, {"id": 6, "startTime": "19:00", "endTime": "20:50", "label": "SHOW TIME（開演）"}, {"id": 7, "startTime": "21:00", "endTime": "24:00", "label": "客出し〜修正作業"}], "2026-06-03": [{"id": 1, "startTime": "09:00", "endTime": "11:00", "label": "調整時間 Check"}, {"id": 2, "startTime": "11:30", "endTime": "13:00", "label": "テクリハ"}, {"id": 3, "startTime": "13:00", "endTime": "16:00", "label": "Rehearsal"}, {"id": 4, "startTime": "16:00", "endTime": "17:30", "label": "開場準備"}, {"id": 5, "startTime": "17:30", "endTime": "19:00", "label": "DOOR OPEN（開場）"}, {"id": 6, "startTime": "19:00", "endTime": "20:50", "label": "SHOW TIME（開演）"}, {"id": 7, "startTime": "21:00", "endTime": "26:00", "label": "客出し〜撤去/搬出 / 26:00 終了予定"}]};
     var SHOWTIMES = {"default": {"door": "17:30", "show": "19:00"}};
 
-    document.getElementById("run").addEventListener("click", function(){
-      if (!confirm("櫻坂46 四期生LIVE のデータを注入します。\n既存の曲リスト・タイムテーブル・DAY スケジュールは上書きされます。\n続行しますか？")) return;
-      try {
-        localStorage.setItem("schedule-studio:setlists:v1", JSON.stringify(SETLISTS));
-        localStorage.setItem("schedule-studio:activeSetlistId", SETLISTS[0].id);
-        localStorage.setItem("schedule-studio:timetableByDate:v1", JSON.stringify(TIMETABLE));
-        localStorage.setItem("schedule-studio:dayEvents:v1", JSON.stringify(DAYEVENTS));
-        localStorage.setItem("schedule-studio:rehearsalByDate:v1", JSON.stringify({}));
-        try {
-          var existing = JSON.parse(localStorage.getItem("schedule-studio:showTimes:v1") || "{}");
-          Object.keys(SHOWTIMES).forEach(function(k){ existing[k] = SHOWTIMES[k]; });
-          localStorage.setItem("schedule-studio:showTimes:v1", JSON.stringify(existing));
-        } catch(e) {
-          localStorage.setItem("schedule-studio:showTimes:v1", JSON.stringify(SHOWTIMES));
-        }
-        // master date を 6/2 にセット（本番①初日）
-        try {
-          localStorage.setItem("schedule-studio:masterDate", "2026-06-02");
-        } catch(e) {}
-        document.getElementById("run").disabled = true;
-        document.getElementById("run").textContent = "✅ 注入済み";
-        document.getElementById("ok").style.display = "block";
-      } catch(err) {
-        alert("注入失敗: " + (err && err.message));
+    // ===== Firebase 初期化 (pc-edit.html と同じ設定) =====
+    var firebaseConfig = {
+      apiKey: "AIzaSyB0g9NU2jHWLgHSpgxyvWjizdloLbkJ_aM",
+      authDomain: "schedule-studio-2b14f.firebaseapp.com",
+      databaseURL: "https://schedule-studio-2b14f-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "schedule-studio-2b14f",
+      storageBucket: "schedule-studio-2b14f.firebasestorage.app",
+      messagingSenderId: "480145267674",
+      appId: "1:480145267674:web:8d1a8e9b11d3ee69613ee3"
+    };
+    var db = null;
+    var fbStatus = document.getElementById("fb-status");
+    var runBtn = document.getElementById("run");
+    try {
+      firebase.initializeApp(firebaseConfig);
+      firebase.auth().signInAnonymously().then(function(){
+        db = firebase.database();
+        db.ref(".info/connected").on("value", function(snap){
+          if (snap.val() === true) {
+            fbStatus.textContent = "Firebase: 接続成功 ✓ (準備完了)";
+            fbStatus.className = "fb-status ok";
+            runBtn.disabled = false;
+            runBtn.textContent = "▶ データを注入する";
+          }
+        });
+      }).catch(function(err){
+        fbStatus.textContent = "Firebase 認証失敗: " + (err && err.message);
+        runBtn.textContent = "⚠ Firebase 接続失敗 (再読み込みしてください)";
+      });
+    } catch(e) {
+      fbStatus.textContent = "Firebase 初期化失敗: " + (e && e.message);
+      runBtn.textContent = "⚠ Firebase 初期化失敗";
+    }
+
+    function log(msg, ok){
+      var prog = document.getElementById("progress");
+      prog.classList.add("show");
+      var row = document.createElement("div");
+      row.className = "row";
+      row.innerHTML = (ok === false ? "<span class=fail>✗</span> " : (ok === true ? "<span class=ok>✓</span> " : "&nbsp;&nbsp;")) + msg;
+      prog.appendChild(row);
+      prog.scrollTop = prog.scrollHeight;
+    }
+
+    function setBoth(key, valStr){
+      // localStorage
+      localStorage.setItem(key, valStr);
+      // Firebase (key 文字列を encode してから書く)
+      if (db) {
+        var encKey = key.replace(/[.#$/\[\]]/g, "_");
+        return db.ref("ls/" + encKey).set({ k: key, v: valStr, t: Date.now() });
       }
+      return Promise.resolve();
+    }
+
+    document.getElementById("run").addEventListener("click", function(){
+      if (!confirm("櫻坂46 四期生LIVE のデータを注入します。\nlocalStorage と Firebase の両方を上書きします。\n他端末でも同じデータが見えるようになります。\n\n続行しますか？")) return;
+      runBtn.disabled = true;
+      runBtn.textContent = "🔄 注入中…";
+
+      var writes = [];
+      function w(key, val){
+        var s = JSON.stringify(val);
+        log("→ " + key + " (" + s.length + " bytes)");
+        writes.push(setBoth(key, s).then(function(){
+          log(key, true);
+        }).catch(function(e){
+          log(key + " : " + (e && e.message), false);
+        }));
+      }
+
+      // セトリ
+      w("schedule-studio:setlists:v1", SETLISTS);
+      // active セトリ ID (普通の string)
+      localStorage.setItem("schedule-studio:activeSetlistId", SETLISTS[0].id);
+      if (db) {
+        var k = "schedule-studio:activeSetlistId";
+        var encKey = k.replace(/[.#$/\[\]]/g, "_");
+        writes.push(db.ref("ls/" + encKey).set({ k: k, v: SETLISTS[0].id, t: Date.now() }).then(function(){ log(k, true); }));
+      }
+
+      // タイムテーブル
+      w("schedule-studio:timetableByDate:v1", TIMETABLE);
+      // DAY スケジュール
+      w("schedule-studio:dayEvents:v1", DAYEVENTS);
+      // リハーサルデータをクリア
+      w("schedule-studio:rehearsalByDate:v1", {});
+      // 開場/開演時刻
+      var existingShow = {};
+      try { existingShow = JSON.parse(localStorage.getItem("schedule-studio:showTimes:v1") || "{}"); } catch(e){}
+      Object.keys(SHOWTIMES).forEach(function(k){ existingShow[k] = SHOWTIMES[k]; });
+      w("schedule-studio:showTimes:v1", existingShow);
+      // master date
+      localStorage.setItem("schedule-studio:masterDate", "2026-06-02");
+      if (db) {
+        var mk = "schedule-studio:masterDate";
+        var mEnc = mk.replace(/[.#$/\[\]]/g, "_");
+        writes.push(db.ref("ls/" + mEnc).set({ k: mk, v: "2026-06-02", t: Date.now() }).then(function(){ log(mk, true); }));
+      }
+
+      Promise.all(writes).then(function(){
+        log("✅ 全データ書き込み完了 (Firebase 含む)", true);
+        runBtn.textContent = "✅ 注入済み";
+        document.getElementById("ok").style.display = "block";
+      }).catch(function(err){
+        log("失敗: " + (err && err.message), false);
+        runBtn.textContent = "⚠ 一部失敗 (上記参照)";
+      });
     });
   </script>
 </body>
