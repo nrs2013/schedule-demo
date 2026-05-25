@@ -11,7 +11,11 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260525.388000">
+<meta name="build-version" content="20260525.389000">
+<!-- R389: CDS /output デザインに寄せるための Google Fonts (Bebas Neue + Noto Sans JP) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+JP:wght@300;400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="apple-touch-icon" href="favicon.svg">
 <title>SCHEDULE STUDIO — STAFF</title>
@@ -2059,44 +2063,67 @@
   .now-offline-icon   { font-size: 44px; margin-bottom: 16px; }
   .now-offline-text   { font-size: 15px; letter-spacing: 0.18em; color: #3a3a3a; margin-bottom: 8px; }
   .now-offline-sub    { font-size: 11px; color: #2a2a2a; line-height: 1.7; }
+  /* R389: CDS /output デザインに寄せる
+     - タイマー: Bebas Neue + 状態別色変化
+     - 曲名: Noto Sans JP
+     - 進行バー: fuchsia → cyan グラデ + グロー
+     - 全体的に CDS の Brutalist Vivid 配色 */
   .now-song           {
-    font-size: clamp(13px, 3.5vw, 18px);
-    color: #686868;
-    letter-spacing: 0.15em;
+    font-family: 'Noto Sans JP', 'Inter', -apple-system, sans-serif;
+    font-size: clamp(14px, 3.8vw, 20px);
+    color: #888;
+    letter-spacing: 0.12em;
     text-align: center;
-    margin-bottom: 12px;
+    margin-bottom: 16px;
     font-weight: 500;
+    max-width: 92vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   .now-timer {
-    font-size: clamp(80px, 22vw, 130px);
-    font-weight: 700;
-    color: #f0e0c8;
+    font-family: 'Bebas Neue', Impact, 'Arial Black', sans-serif;
+    font-size: clamp(120px, 38vw, 240px);
+    font-weight: 400;
+    color: #ffffff;
     font-variant-numeric: tabular-nums;
-    font-family: -apple-system, 'Helvetica Neue', sans-serif;
-    line-height: 1;
-    letter-spacing: -0.02em;
-    margin-bottom: 20px;
+    line-height: 0.9;
+    letter-spacing: 0;
+    margin-bottom: 24px;
     text-align: center;
+    transition: color 0.3s;
   }
+  /* CDS と同じ状態別色変化 */
+  .now-timer.timer-mc      { color: #7dd3fc; }              /* sky-300 */
+  .now-timer.timer-encore  { color: #4ade80; }              /* green-400 */
+  .now-timer.timer-event   { color: #fbbf24; }              /* amber-400 */
+  .now-timer.timer-warning { color: #fbbf24; }              /* amber-400 (≤30s) */
+  .now-timer.timer-critical{ color: #f87171; }              /* red-400 (≤10s) */
+  .now-timer.timer-finished{ color: #ef4444; }              /* red-500 */
+  .now-timer.timer-paused  { color: rgba(255,255,255,0.55); }
+
   .now-bar-wrap {
-    width: min(80vw, 280px);
-    height: 3px;
+    width: min(85vw, 320px);
+    height: 4px;
     background: #1a1a1a;
     border-radius: 2px;
     overflow: hidden;
-    margin-bottom: 14px;
+    margin-bottom: 18px;
   }
   .now-bar-fill {
     height: 100%;
-    background: #c8a878;
+    background: linear-gradient(90deg, #c186c8 0%, #7bc5e8 100%);
     border-radius: 2px;
     width: 0%;
     transition: width 0.5s linear;
+    box-shadow: 0 0 8px rgba(193,134,200,0.4), 0 0 20px rgba(193,134,200,0.15);
   }
   .now-meta {
-    font-size: 11px;
-    color: #3a3a3a;
-    letter-spacing: 0.12em;
+    font-family: 'Inter', -apple-system, sans-serif;
+    font-size: 12px;
+    color: #888;
+    letter-spacing: 0.14em;
+    font-weight: 500;
   }
   /* iOS擬似フルスクリーン */
   body.now-fs #bottom-tabs,
@@ -5266,6 +5293,17 @@ renderHotelListPhone();
       else if (cdsState.isRunning)  metaText = '▶  LIVE';
       else                          metaText = cdsState.sectionLabel || '';
       metaEl.textContent = metaText;
+    }
+    // R389: タイマー色を CDS と同じ状態別ロジックで切替
+    if (timerEl) {
+      var tc = 'now-timer';
+      if (cdsState.isEncore)             tc += ' timer-encore';
+      else if (cdsState.isMC)            tc += ' timer-mc';
+      else if (cdsState.isEvent)         tc += ' timer-event';
+      else if (rem <= 10000)             tc += ' timer-critical';
+      else if (rem <= 30000)             tc += ' timer-warning';
+      if (cdsState.isPaused)             tc += ' timer-paused';
+      timerEl.className = tc;
     }
 
     if (cdsState.isRunning && rem > 0 && nowVisible) {
