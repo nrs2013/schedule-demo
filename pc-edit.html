@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260524.388000">
+<meta name="build-version" content="20260524.389000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -5630,8 +5630,13 @@
     padding: 2px 0;
     line-height: 1.15;
     text-align: center;
+    font-size: 11px;
   }
   .tt-bar-text[contenteditable="true"]:focus { white-space: pre-wrap; background: rgba(0,0,0,0.2); }
+  /* R389-B: 自動 fit — バーが狭くて文字が入らない時、JS が段階的に shrink class を付与 */
+  .tt-bar.bar-shrink-1 .tt-bar-text { font-size: 9px;  line-height: 1.10; }
+  .tt-bar.bar-shrink-2 .tt-bar-text { font-size: 8px;  line-height: 1.05; letter-spacing: -0.01em; }
+  .tt-bar.bar-shrink-3 .tt-bar-text { font-size: 7px;  line-height: 1.00; letter-spacing: -0.02em; }
   .tt-bar-handle {
     position: absolute;
     top: 0;
@@ -13287,16 +13292,22 @@ function show(id) {
     //   lanes=1 では中央配置。lanes>=2 では「ほんのちょっと」外側を広く、内側を狭く。
     const layout = computeLaneLayout(body, sec.lanes);
     const barH = layout.barH;
+    const created = [];
     tt.bars.filter(function(b){ return b.secId === sec.id && !isVAll(b) && !getSpanSecIds(b); }).forEach(function(bar){
       const lane = Math.max(0, Math.min(sec.lanes - 1, bar.lane || 0));
       const left = timeToPixel(bar.start, tt);
       const width = Math.max(SLOT_W(), timeToPixel(bar.end, tt) - left);
       const top = layout.outerPad + lane * (barH + layout.innerGap);
+      // R389-A: laneSpan — 1 本のバーが複数 lane を縦に占有できる (Excel セル結合のように)
+      const requestedSpan = Math.max(1, bar.laneSpan || 1);
+      const maxSpan = sec.lanes - lane; // この lane から下に最大何 lane 使えるか
+      const laneSpan = Math.min(requestedSpan, maxSpan);
+      const height = laneSpan * barH + (laneSpan - 1) * layout.innerGap;
       const color = bar.color || 'white';
       const el = document.createElement('div');
-      el.className = 'tt-bar normal color-' + color + (isSel(bar.id) ? ' selected' : '');
+      el.className = 'tt-bar normal color-' + color + (isSel(bar.id) ? ' selected' : '') + (laneSpan > 1 ? ' lane-span-' + laneSpan : '');
       el.setAttribute('data-bar-id', bar.id);
-      el.style.cssText = 'left:' + left + 'px; width:' + width + 'px; top:' + top + 'px; height:' + barH + 'px;';
+      el.style.cssText = 'left:' + left + 'px; width:' + width + 'px; top:' + top + 'px; height:' + height + 'px;';
       // R248: 単品バーは時刻表示なし。テキストのみ。tooltip にだけ時刻を入れる
       const timeLabel = fmtTimeFromHour(bar.start) + '〜' + fmtTimeFromHour(bar.end);
       el.title = (bar.text || '(無題)') + '  ' + timeLabel;
@@ -13307,7 +13318,52 @@ function show(id) {
         '<div class="tt-bar-corner bl"></div><div class="tt-bar-corner br"></div>';
       body.appendChild(el);
       bindBarEvents(tt, bar, el, sec);
+      created.push({ el: el, bar: bar });
     });
+    // R389-B: 各バーを auto-fit (文字溢れなら font-size 自動縮小)。
+    //         render 完了後の次フレームで測定する。
+    if (typeof requestAnimationFrame === 'function') {
+      requestAnimationFrame(function(){ created.forEach(function(p){ fitBarText(p.el, p.bar); }); });
+    } else {
+      created.forEach(function(p){ fitBarText(p.el, p.bar); });
+    }
+  }
+
+  /* R389-B: 個別バーの文字を自動 fit。文字数 × フォント幅 で必要行数を見積もって、
+     入らなければ段階的に font-size を縮小する shrink class を付与。
+     測定ベースではなく、CSS 変数を避けるため事前計算（render の都度 1 回）。 */
+  function fitBarText(el, bar){
+    if (!el || !bar) return;
+    el.classList.remove('bar-shrink-1','bar-shrink-2','bar-shrink-3');
+    const text = (bar.text || '').trim();
+    if (!text) return;
+    const rect = el.getBoundingClientRect();
+    const w = rect.width;
+    const h = rect.height;
+    if (w < 1 || h < 1) return;
+    // \n を考慮した最長行と総行数
+    const lines = text.split('\n');
+    const longest = lines.reduce(function(m, s){ return Math.max(m, s.length); }, 0);
+    // CSS の padding を控除（左右合計 ~6px、上下 ~4px）
+    const effW = Math.max(0, w - 6);
+    const effH = Math.max(0, h - 4);
+    function fits(fs){
+      const cw = fs * 0.65;  // 全角概算幅
+      const lh = fs * 1.15;
+      const cpl = Math.max(1, Math.floor(effW / cw));
+      // 各行を cpl で折り返し → 必要行数の総和
+      let needLines = 0;
+      lines.forEach(function(s){ needLines += Math.max(1, Math.ceil(s.length / cpl)); });
+      const avail = Math.max(1, Math.floor(effH / lh));
+      return needLines <= avail;
+    }
+    if (fits(11)) return;             // default で OK
+    el.classList.add('bar-shrink-1');
+    if (fits(9))  return;
+    el.classList.add('bar-shrink-2');
+    if (fits(8))  return;
+    el.classList.add('bar-shrink-3');
+    // 7px でも入らない時はそのまま hidden で切れる
   }
 
   /* R284 + R387: 縦串バーラベルを動的に最適 layout 化。
@@ -14290,6 +14346,29 @@ function show(id) {
       if (typeof window.__renderDaySchedule === 'function') window.__renderDaySchedule();
     });
     menu.appendChild(fToggle);
+
+    /* R389-A: lane 跨ぎトグル — lanes>=2 のセクションかつ個別バー (縦串ではない) でのみ表示 */
+    (function appendLaneSpanToggle(){
+      if (getSpanSecIds(bar)) return; // 縦串バーは対象外
+      const _tt = getTimetableForDate(getCurrentDateKey());
+      if (!_tt) return;
+      const _sec = (_tt.sections || []).find(function(s){ return s.id === bar.secId; });
+      if (!_sec || (_sec.lanes || 1) < 2) return;
+      const cur = Math.max(1, bar.laneSpan || 1);
+      const maxAvail = (_sec.lanes || 1) - (bar.lane || 0);
+      const sToggle = document.createElement('div');
+      sToggle.className = 'tt-color-action';
+      sToggle.style.cssText = 'background:rgba(56,212,204,0.18); color:#cdf0ec; border-color:#18a8a0;';
+      sToggle.textContent = '↕ 縦サイズ ' + cur + ' / ' + maxAvail + '  (クリックで増減)';
+      sToggle.addEventListener('click', function(){
+        const next = (cur >= maxAvail) ? 1 : (cur + 1);
+        bar.laneSpan = next;
+        menu.remove();
+        saveToStorage();
+        render();
+      });
+      menu.appendChild(sToggle);
+    })();
 
     // 削除
     const del = document.createElement('div');
@@ -15473,8 +15552,13 @@ function show(id) {
           const left  = timeToPct(b.start);
           const right = timeToPct(b.end);
           const width = Math.max(0, right - left);
-          const top   = ((b.lane || 0) / lanes) * 100;
-          const h     = (1 / lanes) * 100;
+          /* R389-A: laneSpan 対応 — top/height を laneSpan で計算 */
+          const laneStart = b.lane || 0;
+          const requestedSpan = Math.max(1, b.laneSpan || 1);
+          const maxAvail = lanes - laneStart;
+          const laneSpan = Math.min(requestedSpan, maxAvail);
+          const top   = (laneStart / lanes) * 100;
+          const h     = (laneSpan / lanes) * 100;
           const color = b.color || 'white';
           const text = b.text || '';
           // R336: 個別バーの shift を撤廃。grid line (0.5px幅、z-index 5) が
@@ -15484,6 +15568,8 @@ function show(id) {
           if (width > 0 && width < 1.8) sizeCls = ' bar-vnarrow';
           else if (width < 3.5) sizeCls = ' bar-narrow';
           else if (width < 7) sizeCls = ' bar-tight';
+          /* R389-A: laneSpan > 1 のバーには 'lane-span-N' class を付与 (将来の CSS 拡張用) */
+          if (laneSpan > 1) sizeCls += ' lane-span-' + laneSpan;
           // R344: bar の border は CSS で全方向同じ太さ・色 (color 別)。inline style での
           //   getBorderForTime 計算は撤廃、bar が普通の四角として縁取られればOK。
           return '<div class="tt-pdf-bar color-' + color + sizeCls + '" style="left:' + left + '%;width:' + width +
