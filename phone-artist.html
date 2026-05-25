@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260525.391000">
+<meta name="build-version" content="20260525.392000">
 <!-- R389: CDS /output デザインに寄せるための Google Fonts (Bebas Neue + Noto Sans JP) -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -2017,7 +2017,9 @@
   }
 
   /* ── NOW タブ（CDS リアルタイム同期） ───────── R386: phone-staff から移植 */
-  #screen-now {
+  /* R392: ".screen.active 以外は display:none" の制御を上書きしないよう
+     active 限定セレクタにする */
+  #screen-now.active {
     background: #07070a;
     min-height: 100%;
     display: flex;
@@ -2119,28 +2121,37 @@
   body.now-fs .now-timer    { font-size: clamp(100px, 28vw, 170px); }
   body.now-fs .now-fs-btn   { color: #c8a878; border-color: #3a3a3a; }
 
-  /* R387: NOW を下タブから外して右上フローティングボタン (FAB) 化。
-     下タブを 4 個 (元) に戻して各タブを広げつつ、NOW は常に手元から
-     アクセスできる位置に。LIVE 中は赤点灯で目立たせる。 */
+  /* R392: NOW FAB を pill 形状 "● LIVE" に */
   #now-fab {
     position: fixed;
     top: 6px; right: 8px;
-    width: 44px; height: 44px;
-    border-radius: 50%;
+    height: 44px;
+    min-width: 44px;
+    padding: 0 14px;
+    border-radius: 22px;
     background: rgba(20, 18, 17, 0.85);
     border: 1px solid #2a2a2a;
-    color: #666;
-    font-size: 16px;
+    color: #888;
     cursor: pointer;
     z-index: 100;
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: 7px;
     -webkit-tap-highlight-color: transparent;
     -webkit-backdrop-filter: blur(8px);
     backdrop-filter: blur(8px);
     transition: transform 0.15s, background 0.3s, color 0.3s, border-color 0.3s;
-    padding: 0;
+    font-family: 'Inter', -apple-system, sans-serif;
+  }
+  #now-fab-dot {
+    font-size: 10px;
+    line-height: 1;
+  }
+  #now-fab-label {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
   }
   #now-fab:active { transform: scale(0.92); }
   /* LIVE 中: 赤く点灯 + 周囲発光 + ゆっくり点滅 */
@@ -2476,7 +2487,9 @@
 <!-- R188: CALENDAR を先頭に追加（R137 復元） -->
 <!-- R390: FAB を toggle 化 — 1 回目で NOW フルスクリーン、もう 1 回で DAY に戻る -->
 <button id="now-fab" onclick="nowFabClick()" title="LIVE — CDS リアルタイム同期 / 再タップで戻る">
-  <span id="now-tab-ico">◉</span>
+  <span id="now-fab-dot">●</span>
+  <span id="now-fab-label">LIVE</span>
+  <span id="now-tab-ico" style="display:none"></span>
 </button>
 <script>
 window.nowFabClick = function() {
