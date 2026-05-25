@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260525.392000">
+<meta name="build-version" content="20260525.393000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -5308,7 +5308,8 @@
     .tt-toolbar, .tt-side-toolbar, .tt-help, .tab-bar, .tt-time-add, .tt-sec-lanes,
     .tt-zoom-group, .tt-bar-handle, .tt-legend, .tt-now-line,
     .tt-bar-ghost, .tt-hover-cursor, .tt-sec-add-row,
-    .master-date-bar, .pc-header, .tt-bar-corner { display: none !important; }
+    .master-date-bar, .pc-header, .tt-bar-corner,
+    #wizard-overlay { display: none !important; }
     /* INFO や CALENDAR タブの中身も隠す */
     .mode-content:not(#mode-timetable) { display: none !important; }
     /* R381: 編集画面用 display:none (L4924-4926) を Cmd+P 印刷時は上書きで復活
@@ -11544,7 +11545,7 @@ function show(id) {
             return '<div style="padding:6px 8px;margin:3px 0;background:rgba(255,255,255,0.04);border-radius:4px;">' +
                    '<strong style="color:#e8e8e2;">' + (g.name || '(名前未取得)') + '</strong>' +
                    '<br><code style="font-size:10px;color:#a8a8a0;">' + g.id + '</code>' +
-                   '<button type="button" onclick="document.getElementById(\'info-line-group-id\').value=\'' + g.id + '\'" style="margin-left:8px;background:#333;border:1px solid #555;color:#e8e8e2;font-size:10px;padding:2px 8px;border-radius:3px;cursor:pointer;">この公演に使う</button>' +
+                   '<button type="button" onclick="var v=\'' + g.id + '\';var o=document.getElementById(\'info-line-group-id\');if(o)o.value=v;var w=document.getElementById(\'wiz-group-id-input\');if(w)w.value=v;" style="margin-left:8px;background:#333;border:1px solid #555;color:#e8e8e2;font-size:10px;padding:2px 8px;border-radius:3px;cursor:pointer;">この公演に使う</button>' +
                    '</div>';
           }).join('');
       }
@@ -12872,7 +12873,21 @@ function show(id) {
     };
     /* R122: 新規コンサート作成時、既存のデータを全部消す（concert メタ情報以外） */
     if (confirm('新規コンサートを作成すると、現在の CALENDAR / SETLIST / HOTEL / 入り時間 / DAY SCHEDULE などのデータが消去されます。よろしいですか？')) {
-      const KEEP = ['schedule-studio:concerts:v1', 'schedule-studio:active-concert-id', 'schedule-studio:grand-password'];
+      /* R393: LINE 連携の設定は公演を跨いで保持する。新規公演を作るたびに
+         Wizard の完了マーク・GAS URL・トークン確認状態が消えると、
+         社員が毎回ゼロから設定し直す羽目になり、Firebase 経由で他デバイスも巻き込まれる。 */
+      const KEEP = [
+        'schedule-studio:concerts:v1',
+        'schedule-studio:active-concert-id',
+        'schedule-studio:grand-password',
+        'schedule-studio:line-gas-url',
+        'schedule-studio:wiz-official-confirmed',
+        'schedule-studio:wiz-messaging-api-confirmed',
+        'schedule-studio:line-token-confirmed',
+        'schedule-studio:wiz-gas-deployed-confirmed',
+        'schedule-studio:wiz-webhook-confirmed',
+        'schedule-studio:line-test-passed',
+      ];
       const toRemove = [];
       for (let i = 0; i < localStorage.length; i++) {
         const k = localStorage.key(i);
@@ -16598,7 +16613,9 @@ function show(id) {
 
   function getCurrentConcert() {
     try {
-      const concerts = JSON.parse(localStorage.getItem('schedule-studio:concerts') || '[]');
+      /* R393: 他箇所は全て `schedule-studio:concerts:v1` を読む。
+         `:v1` 抜けだと公演一覧が空扱いになり、診断の groupId が常に null になる */
+      const concerts = JSON.parse(localStorage.getItem('schedule-studio:concerts:v1') || '[]');
       const activeId = localStorage.getItem('schedule-studio:active-concert-id');
       return concerts.find(x => x.id === activeId) || concerts[0] || null;
     } catch (e) { return null; }
@@ -16639,10 +16656,12 @@ function show(id) {
     diagnose();
     state.currentStep = 0;
     document.getElementById('wizard-overlay').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
     render();
   };
   window.__wizardClose = function() {
     document.getElementById('wizard-overlay').style.display = 'none';
+    document.body.style.overflow = '';
   };
   window.__wizardNext = function() {
     if (state.currentStep < state.steps.length - 1) {
