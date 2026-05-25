@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260525.387000">
+<meta name="build-version" content="20260525.388000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="apple-touch-icon" href="favicon.svg">
 <title>SCHEDULE STUDIO — STAFF</title>
@@ -2147,6 +2147,59 @@
     top: 12px; right: 12px;
     z-index: 9999;
   }
+
+  /* R388: 次曲表示 (NEXT: …) */
+  .now-next {
+    margin-top: 28px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    max-width: 90vw;
+  }
+  .now-next-label {
+    font-size: 9px;
+    color: #555;
+    letter-spacing: 0.3em;
+    font-weight: 700;
+  }
+  .now-next-title {
+    font-size: clamp(12px, 3.2vw, 16px);
+    color: #888;
+    letter-spacing: 0.08em;
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 90vw;
+  }
+
+  /* R388: cue overlay (HOLD! / GO! 等を画面全体に被せる) */
+  .now-cue-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    background: rgba(0, 0, 0, 0.5);
+    animation: cueFadeIn 0.12s ease-out;
+  }
+  .now-cue-overlay.blink {
+    animation: cueFadeIn 0.12s ease-out, nowBlink 0.7s infinite;
+  }
+  .now-cue-label {
+    font-family: 'Bebas Neue', 'Helvetica Neue', Impact, sans-serif;
+    font-weight: 900;
+    font-size: clamp(80px, 22vw, 200px);
+    letter-spacing: 0.04em;
+    text-align: center;
+    padding: 24px 36px;
+    border-radius: 12px;
+    line-height: 1;
+  }
+  @keyframes cueFadeIn { from { opacity: 0 } to { opacity: 1 } }
 </style>
 
 <!-- ツアー日付セレクター（最上部の1行）/ R154: 診断 alert を外して元の onclick に戻す -->
@@ -2443,12 +2496,22 @@
       <div class="now-offline-text">CDS 送信待ち</div>
       <div class="now-offline-sub">カウントダウンアプリ（CDS）が<br>カウントを開始すると<br>ここにリアルタイム表示されます</div>
     </div>
-    <div id="now-live" style="display:none; width:100%; display:none; flex-direction:column; align-items:center;">
+    <div id="now-live" style="display:none; width:100%; flex-direction:column; align-items:center;">
       <div class="now-song" id="now-song">—</div>
       <div class="now-timer" id="now-timer">-:--</div>
       <div class="now-bar-wrap"><div class="now-bar-fill" id="now-bar"></div></div>
       <div class="now-meta" id="now-meta"></div>
+      <!-- R388: 次曲表示 -->
+      <div class="now-next" id="now-next" style="display:none;">
+        <span class="now-next-label">NEXT</span>
+        <span class="now-next-title" id="now-next-title"></span>
+      </div>
     </div>
+  </div>
+
+  <!-- R388: CDS cue overlay (HOLD! / GO! 等を画面全体に被せる) -->
+  <div id="now-cue-overlay" class="now-cue-overlay" style="display:none;">
+    <div class="now-cue-label" id="now-cue-label"></div>
   </div>
 
   <!-- ════ PASS ════ -->
@@ -5106,13 +5169,59 @@ renderHotelListPhone();
     if (hasData) {
       var songEl = document.getElementById('now-song');
       if (songEl) songEl.textContent = (cdsState && cdsState.songTitle) ? cdsState.songTitle : '—';
-      // R387: FAB を赤点灯クラス化 (CSS の #now-fab.live で発光 + 点滅)
+      // R388: 次曲表示
+      var nextWrap = document.getElementById('now-next');
+      var nextTitle = document.getElementById('now-next-title');
+      if (nextWrap && nextTitle) {
+        var nx = cdsState && cdsState.nextSongTitle;
+        if (typeof nx === 'string' && nx.length > 0) {
+          nextTitle.textContent = nx;
+          nextWrap.style.display = 'flex';
+        } else {
+          nextWrap.style.display = 'none';
+        }
+      }
+      // R387: FAB を赤点灯クラス化
       var fab = document.getElementById('now-fab');
       if (fab) fab.classList.add('live');
     } else {
+      var nextWrap2 = document.getElementById('now-next');
+      if (nextWrap2) nextWrap2.style.display = 'none';
       var fab2 = document.getElementById('now-fab');
       if (fab2) fab2.classList.remove('live');
     }
+
+    // R388: cue overlay 表示制御 (HOLD! / GO! 等)
+    var overlay = document.getElementById('now-cue-overlay');
+    var cueLabelEl = document.getElementById('now-cue-label');
+    if (overlay && cueLabelEl) {
+      if (cdsState && cdsState.activeCueId != null && cdsState.activeCueLabel) {
+        var bg = cdsState.activeCueColor || '#e05048';
+        var fg = cdsState.activeCueTextColor || nowAutoTextColor(bg);
+        cueLabelEl.textContent = cdsState.activeCueLabel;
+        cueLabelEl.style.background = bg;
+        cueLabelEl.style.color = fg;
+        overlay.classList.add('blink');
+        overlay.style.display = 'flex';
+      } else {
+        overlay.style.display = 'none';
+        overlay.classList.remove('blink');
+      }
+    }
+  }
+
+  // R388: 背景色から白/黒テキストを自動選択 (CDS 側 autoTextColor と同等)
+  function nowAutoTextColor(hex) {
+    if (!hex || typeof hex !== 'string') return '#f5f1e0';
+    var h = hex.replace('#', '');
+    if (h.length === 3) h = h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
+    if (h.length < 6) return '#f5f1e0';
+    var r = parseInt(h.slice(0,2), 16);
+    var g = parseInt(h.slice(2,4), 16);
+    var b = parseInt(h.slice(4,6), 16);
+    if (isNaN(r) || isNaN(g) || isNaN(b)) return '#f5f1e0';
+    var lum = (0.299*r + 0.587*g + 0.114*b) / 255;
+    return lum > 0.55 ? '#1a1410' : '#f5f1e0';
   }
 
   // ── カウントダウン毎フレーム更新 ──
@@ -5146,10 +5255,18 @@ renderHotelListPhone();
 
     if (timerEl) timerEl.textContent = mm + ':' + ss;
     if (barEl)   barEl.style.width   = pct + '%';
-    if (metaEl)  metaEl.textContent  =
-      cdsState.isPaused   ? '⏸  PAUSE' :
-      cdsState.isRunning  ? '▶  LIVE'  :
-      (cdsState.sectionLabel || '');
+    // R388: カテゴリ flag を見てラベル切替 (MC / SE / ENCORE / X-TIME)
+    if (metaEl) {
+      var metaText = '';
+      if (cdsState.isPaused)        metaText = '⏸  PAUSE';
+      else if (cdsState.isMC)       metaText = '▶  MC';
+      else if (cdsState.isEvent)    metaText = '▶  SE';
+      else if (cdsState.isEncore)   metaText = '▶  ENCORE';
+      else if (cdsState.xTime)      metaText = '▶  X-TIME';
+      else if (cdsState.isRunning)  metaText = '▶  LIVE';
+      else                          metaText = cdsState.sectionLabel || '';
+      metaEl.textContent = metaText;
+    }
 
     if (cdsState.isRunning && rem > 0 && nowVisible) {
       rafId = requestAnimationFrame(tickNow);
