@@ -256,7 +256,10 @@ function handlePush(body) {
     const res = pushToGroup(to, text);
     return _json({ ok: true, lineStatus: res.getResponseCode() });
   } catch (e) {
-    return _json({ ok: false, error: String(e) });
+    /* R398: 内部例外メッセージ (スタックトレース等) の外部漏洩を防止。
+       詳細は GAS 実行ログ側で確認 */
+    console.error('[GAS Error]', e);
+    return _json({ ok: false, error: 'internal error' });
   }
 }
 
@@ -285,7 +288,10 @@ function handlePushMenu(body) {
     const res = pushFlexToGroup(to, 'SCHEDULE STUDIO メニュー', buildMenuFlex());
     return _json({ ok: true, lineStatus: res.getResponseCode() });
   } catch (e) {
-    return _json({ ok: false, error: String(e) });
+    /* R398: 内部例外メッセージ (スタックトレース等) の外部漏洩を防止。
+       詳細は GAS 実行ログ側で確認 */
+    console.error('[GAS Error]', e);
+    return _json({ ok: false, error: 'internal error' });
   }
 }
 
@@ -313,7 +319,10 @@ function handleGetGroupName(body) {
     const data = JSON.parse(res.getContentText());
     return _json({ ok: true, groupName: data.groupName || '', memberCount: data.memberCount });
   } catch (e) {
-    return _json({ ok: false, error: String(e) });
+    /* R398: 内部例外メッセージ (スタックトレース等) の外部漏洩を防止。
+       詳細は GAS 実行ログ側で確認 */
+    console.error('[GAS Error]', e);
+    return _json({ ok: false, error: 'internal error' });
   }
 }
 

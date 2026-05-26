@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260525.397000">
+<meta name="build-version" content="20260525.398000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -42,6 +42,25 @@
 <!-- R68: Firebase 匿名認証 SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
 <script>
+// R398: グローバル keydown — Wizard Esc 閉じ + Cmd+S 防止
+(function(){
+  document.addEventListener('keydown', function(e){
+    /* Cmd+S / Ctrl+S 防止: SCHEDULE STUDIO は全自動保存のため不要。
+       ブラウザの「ページを名前付け保存」ダイアログを抑制 */
+    if ((e.metaKey || e.ctrlKey) && (e.key === 's' || e.key === 'S')) {
+      e.preventDefault();
+      return;
+    }
+    /* Wizard モーダル Esc キー閉じ (a11y) */
+    if (e.key === 'Escape') {
+      var overlay = document.getElementById('wizard-overlay');
+      if (overlay && overlay.style.display && overlay.style.display !== 'none' && typeof window.__wizardClose === 'function') {
+        window.__wizardClose();
+      }
+    }
+  });
+})();
+
 // Firebase 初期化 + 接続確認
 (function initFirebase(){
   const firebaseConfig = {
@@ -193,7 +212,20 @@
   const _removeItem = localStorage.removeItem.bind(localStorage);
   let suppressFbWrite = false; // Firebase からの逆流を防ぐフラグ
   localStorage.setItem = function(key, value){
-    _setItem(key, value);
+    /* R398: QuotaExceededError 対策。容量満杯時に silent fail だとデータ消失するので明示通知 */
+    try {
+      _setItem(key, value);
+    } catch(e) {
+      if (e && (e.name === 'QuotaExceededError' || e.code === 22 || e.code === 1014)) {
+        if (!window.__quotaAlertShown) {
+          window.__quotaAlertShown = true;
+          alert('⚠️ ローカルストレージが満杯です。\n\n以下を試してください:\n・不要な公演を削除\n・ブラウザの設定でこのサイトのデータをクリア (Firebase に保存済みのデータは復元されます)\n・別のブラウザで開く');
+        }
+        console.error('[Storage] QuotaExceeded', key, value && value.length, e);
+        return;  // Firebase 同期もしない
+      }
+      throw e;
+    }
     if (suppressFbWrite) return;
     if (typeof key === 'string' && key.indexOf('schedule-studio:') === 0) {
       try {
@@ -12599,20 +12631,34 @@ function show(id) {
     document.body.addEventListener('drop', function(e){
       document.body.classList.remove('excel-drop-hint');
       if (!e.dataTransfer || !e.dataTransfer.files || !e.dataTransfer.files.length) return;
-      const file = e.dataTransfer.files[0];
-      if (!/\.(xlsx|xls)$/i.test(file.name)) return;
+      /* R398: 複数ファイル同時 drop に対応 (旧: files[0] のみで silent fail) */
+      const allFiles = Array.from(e.dataTransfer.files);
+      const xlsxFiles = allFiles.filter(function(f){ return /\.(xlsx|xls)$/i.test(f.name); });
+      if (xlsxFiles.length === 0) return;
       e.preventDefault();
+      if (allFiles.length > xlsxFiles.length) {
+        console.warn('[Drop] 非 Excel ファイル ' + (allFiles.length - xlsxFiles.length) + ' 件をスキップ');
+      }
       const modeRh = document.getElementById('mode-rehearsal');
       const subHotel = document.getElementById('sub-hotel');
       const subArrival = document.getElementById('sub-arrival');
+      let handler = null;
+      let label = '';
       if (modeRh && modeRh.classList.contains('active') && typeof window.__handleRhExcelFile === 'function') {
-        window.__handleRhExcelFile(file);
+        handler = window.__handleRhExcelFile; label = 'REHEARSAL';
       } else if (subHotel && subHotel.classList.contains('active') && typeof window.__handleHotelExcelFile === 'function') {
-        window.__handleHotelExcelFile(file);
+        handler = window.__handleHotelExcelFile; label = 'HOTEL';
       } else if (subArrival && subArrival.classList.contains('active') && typeof window.__handleArrivalExcelFile === 'function') {
-        window.__handleArrivalExcelFile(file);
+        handler = window.__handleArrivalExcelFile; label = '入り時間';
       } else {
         alert('Excel をドロップする場所が分かりません。\nREHEARSAL / HOTEL / 入り時間 タブを開いてからドロップしてください。');
+        return;
+      }
+      if (xlsxFiles.length === 1) {
+        handler(xlsxFiles[0]);
+      } else {
+        if (!confirm('Excel ファイル ' + xlsxFiles.length + ' 件を「' + label + '」タブに順番に取り込みますか？')) return;
+        xlsxFiles.forEach(function(f){ handler(f); });
       }
     });
   })();
