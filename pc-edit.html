@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260525.396000">
+<meta name="build-version" content="20260525.397000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -12846,6 +12846,8 @@ function show(id) {
     if (!artist || !edit) { alert('ARTIST と 編集の 2 つのパスワードを両方入力してください'); return; }
     if (artist === edit) { alert('ARTIST と 編集 は別々の値にしてください'); return; }
     if (!entry) { alert('入場パスワード（4 桁）も入力してください'); return; }
+    /* R397: 4桁数字バリデーション。「abcd」「12345」等の不正値を弾く (セキュリティ) */
+    if (!/^\d{4}$/.test(entry)) { alert('入場パスワードは半角数字 4 桁で入力してください'); return; }
     /* R117: STAFF は passless 設計のため作成フォームでは聞かない。
        Phone STAFF の PASS タブは fallback の '1111' で動作する */
     const newC = {
@@ -14024,7 +14026,9 @@ function show(id) {
     // R246: マウスホバー時刻インジケータ
     // R396: requestAnimationFrame で 60fps に同期。120Hz モニタや高頻度マウスで
     //       mousemove が毎秒 1000 回飛んできても、描画は毎秒 60 回に束ねる。
-    let __hoverRectCache = null;
+    // R397: rect cache を廃止。getPaperScale() と body の getBoundingClientRect() は
+    //       transform: scale 下でズレるケース (印刷プレビュー、DevTools zoom) があり、
+    //       毎フレーム取得が安全。60 回/秒の getBoundingClientRect() は許容範囲。
     let __hoverPendingEv = null;
     let __hoverRafScheduled = false;
     body.addEventListener('mousemove', function(e){
@@ -14038,8 +14042,7 @@ function show(id) {
         __hoverPendingEv = null;
         if (!ev) return;
         const scale = getPaperScale();
-        if (!__hoverRectCache) __hoverRectCache = body.getBoundingClientRect();
-        const rect = __hoverRectCache;
+        const rect = body.getBoundingClientRect();  /* R397: 毎回取得 (scale ズレ防止) */
         const x = (ev.clientX - rect.left) / scale;
         if (x < 0) return;
         const t = snapTime(pixelToTime(x, tt), tt.timeStart);
@@ -14055,9 +14058,6 @@ function show(id) {
         cur.setAttribute('data-time', fmtTimeFromHour(t));
       });
     });
-    // R396: scroll/resize 時に rect キャッシュを破棄
-    body.addEventListener('scroll', function(){ __hoverRectCache = null; }, { passive: true });
-    window.addEventListener('resize', function(){ __hoverRectCache = null; }, { passive: true });
     body.addEventListener('mouseleave', function(){
       if (body.__hoverCur) { body.__hoverCur.remove(); body.__hoverCur = null; }
     });
