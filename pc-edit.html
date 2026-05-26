@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260525.394000">
+<meta name="build-version" content="20260525.395000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -6948,61 +6948,13 @@
         <span class="info-login-hint">無記入だと「匿名」として記録されます</span>
       </div>
       <div class="info-form" id="info-form">
+        <!-- R395: 旧「⚙ LINE 連携 設定」UI を撤去 (Wizard で全機能カバー済み)。
+             入場パスワード設定だけ別の <details> として保持 -->
         <details style="margin-bottom:16px;background:rgba(255,255,255,0.03);padding:12px 16px;border-radius:6px;border:1px solid rgba(255,255,255,0.08);">
-          <summary style="cursor:pointer;color:#a8a8a0;font-size:12px;letter-spacing:0.06em;">⚙ LINE 連携 設定（初回のみ）— 順番に押すだけ</summary>
-          <!-- R167: 押すだけセットアップウィザード -->
-          <div style="margin-top:10px;font-size:11px;color:#888;line-height:1.6;">
-            下のボタンを <strong style="color:#e8e8e2;">1 → 2 → 3 → 4 → 5 → 6 → 7</strong> の順に押してください。
-            各ボタンが必要な画面を新しいタブで開きます。
-          </div>
-          <div style="display:flex;flex-direction:column;gap:6px;margin-top:10px;">
-            <button type="button" onclick="window.open('https://manager.line.biz/account/@242uoxqo/setting/messaging-api','_blank')" style="background:#1d1d1d;border:1px solid rgba(216,184,120,0.5);color:#f0e0c8;padding:8px 12px;border-radius:4px;font-size:12px;cursor:pointer;text-align:left;">
-              <strong>1.</strong> LINE 公式アカウント管理画面を開く（Messaging API を有効化）
-            </button>
-            <button type="button" onclick="window.open('https://developers.line.biz/console/','_blank')" style="background:#1d1d1d;border:1px solid rgba(216,184,120,0.5);color:#f0e0c8;padding:8px 12px;border-radius:4px;font-size:12px;cursor:pointer;text-align:left;">
-              <strong>2.</strong> LINE Developers を開く（チャネルアクセストークンを取得 → コピー）
-            </button>
-            <button type="button" onclick="window.open('https://script.google.com/home','_blank')" style="background:#1d1d1d;border:1px solid rgba(216,184,120,0.5);color:#f0e0c8;padding:8px 12px;border-radius:4px;font-size:12px;cursor:pointer;text-align:left;">
-              <strong>3.</strong> Google Apps Script を新規プロジェクトで開く
-            </button>
-            <button type="button" onclick="window.__r167ShowGasCode()" style="background:#1d1d1d;border:1px solid rgba(216,184,120,0.5);color:#f0e0c8;padding:8px 12px;border-radius:4px;font-size:12px;cursor:pointer;text-align:left;">
-              <strong>3-b.</strong> GAS に貼るコードを表示する（コピーボタン付き）
-            </button>
-            <div style="background:rgba(255,255,255,0.04);padding:6px 10px;border-radius:4px;font-size:11px;color:#888;margin:4px 0;">
-              <strong style="color:#e8e8e2;">4.</strong> 上記 GAS をデプロイして、ウェブアプリ URL をここに貼って「保存」：
-            </div>
-          <input type="text" id="info-line-gas-url" class="info-input" placeholder="https://script.google.com/macros/s/.../exec" style="margin-top:8px;font-family:'JetBrains Mono',monospace;font-size:11px;">
-          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
-            <button type="button" class="info-push-btn" style="background:#444;border-color:#666;font-size:12px;padding:6px 14px;" onclick="window.__r125SaveLineUrl()">保存</button>
-            <button type="button" class="info-push-btn" style="background:#444;border-color:#666;font-size:12px;padding:6px 14px;" onclick="window.__r125TestLine()">テスト送信</button>
-            <button type="button" class="info-push-btn" style="background:#2a4a2a;border-color:#3d6d3d;color:#c9e8c9;font-size:12px;padding:6px 14px;" onclick="window.__r186SendMenu()">📋 メニューカード送信</button>
-            <button type="button" class="info-push-btn" style="background:#1d1d1d;border:1px solid rgba(216,184,120,0.5);color:#f0e0c8;font-size:12px;padding:6px 14px;" onclick="window.__r167CopyGasUrl()">📋 5. この URL をコピー</button>
-            <button type="button" class="info-push-btn" style="background:#1d1d1d;border:1px solid rgba(216,184,120,0.5);color:#f0e0c8;font-size:12px;padding:6px 14px;" onclick="window.open('https://developers.line.biz/console/','_blank')">6. Webhook 登録のため LINE Developers を開く</button>
-            <span id="info-line-status" style="color:#888;font-size:11px;align-self:center;"></span>
-          </div>
-          <div style="background:rgba(255,255,255,0.04);padding:6px 10px;border-radius:4px;font-size:11px;color:#888;margin-top:8px;line-height:1.6;">
-            <strong style="color:#e8e8e2;">7.</strong> あなたの LINE で「○○公演スタッフ」グループを作り、<strong style="color:#e8e8e2;">SCHEDULE STUDIO Bot を招待</strong>してください。招待された瞬間、Bot が自動で参加メッセージを送ります。<br>
-            その後、下の「この公演 のグループ ID」セクションで「グループ一覧を取得」を押すと一覧から選べます。
-          </div>
-          <!-- R164: 現在の公演に紐付ける LINE グループ ID（公演ごとに変える） -->
-          <div style="margin-top:14px;padding-top:12px;border-top:1px dashed rgba(255,255,255,0.12);">
-            <div style="font-size:11px;color:#888;line-height:1.6;margin-bottom:6px;">
-              <strong style="color:#a8a8a0;">この公演 のグループ ID</strong><br>
-              SCHEDULE STUDIO Bot を LINE グループに招待すると、自動で登録されます。<br>
-              「グループ一覧」で確認 → 公演にひもづける ID を貼ってください。
-            </div>
-            <input type="text" id="info-line-group-id" class="info-input" placeholder="C1234abcd... (LINE グループ ID)" style="margin-top:4px;font-family:'JetBrains Mono',monospace;font-size:11px;">
-            <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
-              <button type="button" class="info-push-btn" style="background:#444;border-color:#666;font-size:12px;padding:6px 14px;" onclick="window.__r164SaveGroupId()">保存</button>
-              <button type="button" class="info-push-btn" style="background:#444;border-color:#666;font-size:12px;padding:6px 14px;" onclick="window.__r164ListGroups()">グループ一覧を取得</button>
-              <span id="info-line-group-status" style="color:#888;font-size:11px;align-self:center;"></span>
-            </div>
-            <div id="info-line-group-list" style="margin-top:8px;font-size:11px;color:#a8a8a0;"></div>
-          </div>
+          <summary style="cursor:pointer;color:#a8a8a0;font-size:12px;letter-spacing:0.06em;">🔐 この公演の入場パスワード（4 桁）— LINE スタッフ用</summary>
           <!-- R176: この公演の「入場パスワード（4 桁）」を後付けで設定 / 変更できる UI -->
-          <div style="margin-top:14px;padding-top:12px;border-top:1px dashed rgba(255,255,255,0.12);">
+          <div style="margin-top:14px;">
             <div style="font-size:11px;color:#888;line-height:1.6;margin-bottom:6px;">
-              <strong style="color:#a8a8a0;">この公演 の入場パスワード（4 桁）</strong><br>
               LINE グループから来た新しいスタッフが初回だけ入力するパスワード。<br>
               一度入場すれば、その端末は次回からパスワード不要で自動入場。
             </div>
@@ -16611,6 +16563,7 @@ function show(id) {
     currentStep: 0,
     diagnosed: false,
     status: {},
+    gasTestPassed: false,  /* R395: Step 5 通信テスト成功フラグ。「次へ」ブロックに使う */
     steps: [
       { id: 0, title: '自動診断',                         icon: '🩺' },
       { id: 1, title: '公式アカウント',                   icon: '①' },
@@ -16668,6 +16621,7 @@ function show(id) {
   window.__wizardOpen = function() {
     diagnose();
     state.currentStep = 0;
+    state.gasTestPassed = false;  /* R395: 開くたびに通信テスト要再実行 */
     document.getElementById('wizard-overlay').style.display = 'flex';
     document.body.style.overflow = 'hidden';
     render();
@@ -16676,6 +16630,9 @@ function show(id) {
     document.getElementById('wizard-overlay').style.display = 'none';
     document.body.style.overflow = '';
   };
+  /* R395: Step 5 通信テスト成功/失敗を state に記録、「次へ」ガードに使う */
+  window.__wizardSetTestPassed = function(v) { state.gasTestPassed = !!v; };
+  window.__wizardCanNext = function() { return state.gasTestPassed; };
   window.__wizardNext = function() {
     if (state.currentStep < state.steps.length - 1) {
       state.currentStep++;
@@ -16846,12 +16803,12 @@ function show(id) {
       + '<p>Step ④ でコピーした <code>https://script.google.com/macros/s/.../exec</code> 形式の URL を貼り付けます。</p>'
       + '<input type="text" class="lw-input" id="wiz-gas-url-input" placeholder="https://script.google.com/macros/s/.../exec" value="' + escapeAttr(gasUrl) + '">'
       + '<div class="lw-action-row">'
-      + '<button class="lw-btn lw-btn-primary" onclick="(function(){var v=document.getElementById(\'wiz-gas-url-input\').value.trim();if(!v){alert(\'URL を入力してください\');return;}localStorage.setItem(\'schedule-studio:line-gas-url\', v);var inp=document.getElementById(\'info-line-gas-url\'); if(inp) inp.value=v;alert(\'保存しました\');__wizardMarkDone(5);})()">保存</button>'
-      + '<button class="lw-btn" onclick="(async function(){var url=document.getElementById(\'wiz-gas-url-input\').value.trim();if(!url){alert(\'URL を入力 → 保存してから\');return;}var status=document.getElementById(\'wiz-gas-test-status\');status.textContent=\'送信中...\';status.className=\'lw-status\';try{var res=await fetch(url+\'?cb=\'+Date.now());var text=await res.text();if(text.indexOf(\'is running\')>=0){status.textContent=\'✅ 通信成功\';status.className=\'lw-status is-ok\';}else{status.textContent=\'⚠️ 想定外の応答: \'+text.slice(0,60);status.className=\'lw-status is-err\';}}catch(e){status.textContent=\'❌ 通信失敗: \'+e.message;status.className=\'lw-status is-err\';}})()">🩺 通信テスト</button>'
+      + '<button class="lw-btn lw-btn-primary" onclick="(function(){var v=document.getElementById(\'wiz-gas-url-input\').value.trim();if(!v){alert(\'URL を入力してください\');return;}if(!/^https:\\/\\/script\\.google\\.com\\/macros\\//.test(v)){alert(\'GAS のウェブアプリ URL ではないようです。\\n正しい形式: https://script.google.com/macros/s/.../exec\');return;}localStorage.setItem(\'schedule-studio:line-gas-url\', v);var inp=document.getElementById(\'info-line-gas-url\'); if(inp) inp.value=v;window.__wizardSetTestPassed(false);alert(\'保存しました — 続けて 🩺 通信テスト を実行してください\');__wizardMarkDone(5);})()">保存</button>'
+      + '<button class="lw-btn" onclick="(async function(){var url=document.getElementById(\'wiz-gas-url-input\').value.trim();if(!url){alert(\'URL を入力 → 保存してから\');return;}var status=document.getElementById(\'wiz-gas-test-status\');status.textContent=\'送信中...\';status.className=\'lw-status\';try{var res=await fetch(url+\'?cb=\'+Date.now());var text=await res.text();if(text.indexOf(\'is running\')>=0){status.textContent=\'✅ 通信成功 — 次へ進めます\';status.className=\'lw-status is-ok\';window.__wizardSetTestPassed(true);}else{status.textContent=\'⚠️ 想定外の応答: \'+text.slice(0,60);status.className=\'lw-status is-err\';window.__wizardSetTestPassed(false);}}catch(e){status.textContent=\'❌ 通信失敗: \'+e.message;status.className=\'lw-status is-err\';window.__wizardSetTestPassed(false);}})()">🩺 通信テスト</button>'
       + '<span class="lw-status" id="wiz-gas-test-status"></span>'
       + '</div>'
       + '<div class="lw-action-row">'
-      + '<button class="lw-btn lw-btn-success" onclick="__wizardNext()">⑤ 完了 → 次へ</button>'
+      + '<button class="lw-btn lw-btn-success" onclick="if(!window.__wizardCanNext()){alert(\'先に 🩺 通信テスト で ✅ を出してください。\\n失敗のまま進めると Step 6・7・8 が動きません\');return;}__wizardNext()">⑤ 完了 → 次へ</button>'
       + '</div>'
       + '<div class="lw-help-toggle" onclick="__wizardToggleHelp(\'help-5\')">❓ 通信テストで失敗する</div>'
       + '<div class="lw-help-body" id="help-5"><p>「❌ 通信失敗」の場合、Step ④ のデプロイで「アクセスできるユーザー」が「全員」になっていない可能性が高いです。</p><p>GAS の「デプロイを管理」→ 鉛筆アイコン → 設定変更 → 新バージョンでデプロイし直してください。</p><p>「⚠️ 想定外の応答」の場合、コードが正しく貼れていない or トークンの置換ミスが考えられます。Step ④ をやり直してください。</p></div>';
