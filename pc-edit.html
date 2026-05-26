@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260525.393000">
+<meta name="build-version" content="20260525.394000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -11516,13 +11516,27 @@ function show(id) {
 
   window.__r164ListGroups = function() {
     const url = localStorage.getItem('schedule-studio:line-gas-url') || '';
-    const status = document.getElementById('info-line-group-status');
-    const listEl = document.getElementById('info-line-group-list');
+    /* R394: Wizard を開いている時、結果が旧 INFO タブにしか出ない問題を修正。
+       旧 UI と Wizard 内の表示エリア両方に同じ HTML を描画する */
+    const statusEls = [
+      document.getElementById('info-line-group-status'),
+      document.getElementById('wiz-group-list-status'),
+    ].filter(Boolean);
+    const listEls = [
+      document.getElementById('info-line-group-list'),
+      document.getElementById('wiz-group-list'),
+    ].filter(Boolean);
+    function setStatus(text, color) {
+      statusEls.forEach(function(s){ s.textContent = text; s.style.color = color; });
+    }
+    function setList(html) {
+      listEls.forEach(function(el){ el.innerHTML = html; });
+    }
     if (!url) {
-      if (status) { status.textContent = '✗ 先に GAS URL を保存してください'; status.style.color = '#e07a5f'; }
+      setStatus('✗ 先に GAS URL を保存してください', '#e07a5f');
       return;
     }
-    if (status) { status.textContent = '取得中…'; status.style.color = '#888'; }
+    setStatus('取得中…', '#888');
     // GAS は CORS preflight 不可なので text/plain で送る
     fetch(url, {
       method: 'POST',
@@ -11530,28 +11544,26 @@ function show(id) {
       body: JSON.stringify({ action: 'listGroups' })
     }).then(function(r){ return r.json(); }).then(function(data){
       if (!data || !data.ok) {
-        if (status) { status.textContent = '✗ 取得失敗: ' + (data && data.error || '不明'); status.style.color = '#e07a5f'; }
+        setStatus('✗ 取得失敗: ' + (data && data.error || '不明'), '#e07a5f');
         return;
       }
       const groups = data.groups || [];
       if (groups.length === 0) {
-        if (listEl) listEl.innerHTML = '<em style="color:#888;">登録されたグループがありません。LINE で SCHEDULE STUDIO Bot をグループに招待してください。</em>';
-        if (status) { status.textContent = '✓ グループ 0 件'; status.style.color = '#888'; }
+        setList('<em style="color:#888;">登録されたグループがありません。LINE で SCHEDULE STUDIO Bot をグループに招待してください。</em>');
+        setStatus('✓ グループ 0 件', '#888');
         return;
       }
-      if (listEl) {
-        listEl.innerHTML = '<div style="font-size:11px;color:#888;margin-bottom:4px;">下記からコピーしてグループ ID 欄に貼ってください：</div>' +
-          groups.map(function(g){
-            return '<div style="padding:6px 8px;margin:3px 0;background:rgba(255,255,255,0.04);border-radius:4px;">' +
-                   '<strong style="color:#e8e8e2;">' + (g.name || '(名前未取得)') + '</strong>' +
-                   '<br><code style="font-size:10px;color:#a8a8a0;">' + g.id + '</code>' +
-                   '<button type="button" onclick="var v=\'' + g.id + '\';var o=document.getElementById(\'info-line-group-id\');if(o)o.value=v;var w=document.getElementById(\'wiz-group-id-input\');if(w)w.value=v;" style="margin-left:8px;background:#333;border:1px solid #555;color:#e8e8e2;font-size:10px;padding:2px 8px;border-radius:3px;cursor:pointer;">この公演に使う</button>' +
-                   '</div>';
-          }).join('');
-      }
-      if (status) { status.textContent = '✓ ' + groups.length + ' 件取得'; status.style.color = '#7ec27a'; }
+      setList('<div style="font-size:11px;color:#888;margin-bottom:4px;">下記からコピーしてグループ ID 欄に貼ってください：</div>' +
+        groups.map(function(g){
+          return '<div style="padding:6px 8px;margin:3px 0;background:rgba(255,255,255,0.04);border-radius:4px;">' +
+                 '<strong style="color:#e8e8e2;">' + (g.name || '(名前未取得)') + '</strong>' +
+                 '<br><code style="font-size:10px;color:#a8a8a0;">' + g.id + '</code>' +
+                 '<button type="button" onclick="var v=\'' + g.id + '\';var o=document.getElementById(\'info-line-group-id\');if(o)o.value=v;var w=document.getElementById(\'wiz-group-id-input\');if(w)w.value=v;" style="margin-left:8px;background:#333;border:1px solid #555;color:#e8e8e2;font-size:10px;padding:2px 8px;border-radius:3px;cursor:pointer;">この公演に使う</button>' +
+                 '</div>';
+        }).join(''));
+      setStatus('✓ ' + groups.length + ' 件取得', '#7ec27a');
     }).catch(function(err){
-      if (status) { status.textContent = '✗ 通信エラー: ' + err.message; status.style.color = '#e07a5f'; }
+      setStatus('✗ 通信エラー: ' + err.message, '#e07a5f');
     });
   };
 
@@ -11623,9 +11635,10 @@ function show(id) {
     reader.onload = function(ev){
       try {
         const data = new Uint8Array(ev.target.result);
-        const wb = XLSX.read(data, { type: 'array' });
+        /* R394: arrival と統一して cellDates:false 明示。日付が Date オブジェクトに化けて文字列比較が壊れる問題を防止 */
+        const wb = XLSX.read(data, { type: 'array', cellDates: false });
         const ws = wb.Sheets[wb.SheetNames[0]];
-        const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
+        const rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true });
         importHotelsFromRows(rows);
       } catch (err) {
         alert('Excel の読み込みに失敗しました：' + err.message);
@@ -16878,9 +16891,11 @@ function show(id) {
       + '4. Bot が「グループに参加しました」とメッセージを送れば成功<br>'
       + '5. pc-edit に戻って下の「グループ一覧を取得」を押す</div>'
       + '<div class="lw-action-row">'
-      + '<button class="lw-btn lw-btn-primary" onclick="(async function(){var status=document.getElementById(\'wiz-group-list-status\');status.textContent=\'取得中...\';status.className=\'lw-status\';try{if(typeof window.__r164ListGroups===\'function\'){await window.__r164ListGroups();status.textContent=\'✅ INFO タブの「グループ一覧」を確認してください\';status.className=\'lw-status is-ok\';}else{status.textContent=\'❌ 既存機能が見つかりません\';status.className=\'lw-status is-err\';}}catch(e){status.textContent=\'❌ 失敗: \'+e.message;status.className=\'lw-status is-err\';}})()">📥 グループ一覧を取得</button>'
+      + '<button class="lw-btn lw-btn-primary" onclick="(function(){if(typeof window.__r164ListGroups===\'function\'){window.__r164ListGroups();}else{var s=document.getElementById(\'wiz-group-list-status\');s.textContent=\'❌ 既存機能が見つかりません\';s.className=\'lw-status is-err\';}})()">📥 グループ一覧を取得</button>'
       + '<span class="lw-status" id="wiz-group-list-status"></span>'
       + '</div>'
+      /* R394: Wizard 内にグループ一覧表示エリアを追加 (旧 UI にしか出なかった問題の修正) */
+      + '<div id="wiz-group-list" style="margin-top:10px;"></div>'
       + '<p style="margin-top:18px;">この公演に紐付ける LINE グループ ID を貼ってください:</p>'
       + '<input type="text" class="lw-input" id="wiz-group-id-input" placeholder="C1234abcd... (LINE グループ ID)" value="' + escapeAttr(groupId) + '">'
       + '<div class="lw-action-row">'
