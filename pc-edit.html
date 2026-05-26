@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260525.399000">
+<meta name="build-version" content="20260525.400000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -5451,12 +5451,12 @@
     position: relative;
   }
   .tt-sec-row:last-child { border-bottom: none; }
-  /* R399: 編集画面でセクション行の最低高さを保証 — バー操作の余裕を確保。
-     lanes 別に段階的に大きく。印刷時は @media print の min-height:0 !important で上書きされ
-     A4 1 枚に等分配される (PDF/Cmd+P 共通)。 */
-  .tt-paper .tt-sec-row[data-lanes="1"] { min-height: 80px; }
-  .tt-paper .tt-sec-row[data-lanes="2"] { min-height: 130px; }
-  .tt-paper .tt-sec-row[data-lanes="3"] { min-height: 180px; }
+  /* R399→R400: 編集画面でセクション行の最低高さを保証。
+     R400 で常識的サイズに縮小 (A4 印刷の 1 セクション = 約 60px 相当)。
+     印刷時は @media print の min-height:0 !important で上書きされ A4 1 枚に等分配。 */
+  .tt-paper .tt-sec-row[data-lanes="1"] { min-height: 60px; }
+  .tt-paper .tt-sec-row[data-lanes="2"] { min-height: 95px; }
+  .tt-paper .tt-sec-row[data-lanes="3"] { min-height: 130px; }
   /* R390-2: セクション下端のリサイズハンドル — ドラッグで lanes 増減 */
   .tt-sec-resize {
     position: absolute;
