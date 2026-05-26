@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260525.403000">
+<meta name="build-version" content="20260527.404000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -211,6 +211,19 @@
   const _setItem = localStorage.setItem.bind(localStorage);
   const _removeItem = localStorage.removeItem.bind(localStorage);
   let suppressFbWrite = false; // Firebase からの逆流を防ぐフラグ
+  /* R404: Wizard 進捗マーク (端末ローカル属性) は Firebase 同期から除外 — 他端末への伝染を防ぐ。
+     実データ (line-gas-url / concerts:v1 / active-concert-id 等) は引き続き同期 */
+  const FB_SYNC_EXCLUDE = new Set([
+    'schedule-studio:wiz-official-confirmed',
+    'schedule-studio:wiz-messaging-api-confirmed',
+    'schedule-studio:line-token-confirmed',
+    'schedule-studio:wiz-gas-deployed-confirmed',
+    'schedule-studio:wiz-webhook-confirmed',
+    'schedule-studio:line-test-passed',
+  ]);
+  function shouldSyncFb(key) {
+    return typeof key === 'string' && key.indexOf('schedule-studio:') === 0 && !FB_SYNC_EXCLUDE.has(key);
+  }
   localStorage.setItem = function(key, value){
     /* R398: QuotaExceededError 対策。容量満杯時に silent fail だとデータ消失するので明示通知 */
     try {
@@ -227,7 +240,7 @@
       throw e;
     }
     if (suppressFbWrite) return;
-    if (typeof key === 'string' && key.indexOf('schedule-studio:') === 0) {
+    if (shouldSyncFb(key)) {
       try {
         window.__db.ref(FB_ROOT + '/' + encKey(key)).set({ k: key, v: String(value), t: Date.now() });
         window.__lastFbWrite = { time: Date.now(), key: key };
@@ -237,7 +250,7 @@
   localStorage.removeItem = function(key){
     _removeItem(key);
     if (suppressFbWrite) return;
-    if (typeof key === 'string' && key.indexOf('schedule-studio:') === 0) {
+    if (shouldSyncFb(key)) {
       try { window.__db.ref(FB_ROOT + '/' + encKey(key)).remove(); } catch(e) {}
     }
   };
@@ -248,6 +261,8 @@
     Object.keys(all).forEach(function(escKey){
       const item = all[escKey];
       if (item && item.k && typeof item.v === 'string') {
+        /* R404: Wizard 進捗マークは端末ローカル属性なので pull もスキップ */
+        if (FB_SYNC_EXCLUDE.has(item.k)) return;
         const localVal = localStorage.getItem(item.k);
         if (localVal !== item.v) _setItem(item.k, item.v);
       }
@@ -285,6 +300,8 @@
     // R95: child_changed と child_added を統一処理（初回書き込みも反映するため）
     function applyFbItem(item) {
       if (!item || !item.k || typeof item.v !== 'string') return;
+      /* R404: Wizard 進捗マークは端末ローカル属性なのでリアルタイム購読でも反映しない */
+      if (FB_SYNC_EXCLUDE.has(item.k)) return;
       // R177: R173 の「自分の write を 3 秒間無視」は他端末からの正当な更新も巻き込んでしまうため撤去。
       //       代わりに次の `localVal === item.v` フルスキップだけで echo を弾く（同じ値なら何もしない）。
       const localVal = localStorage.getItem(item.k);
@@ -16647,12 +16664,11 @@ function show(id) {
         <button class="lw-btn lw-btn-ghost" onclick="window.__wizardPrev()">← 前のステップ</button>
       </div>
       <div style="text-align:center;">
-        <div class="lw-progress" id="lw-progress">Step 1 / 9</div>
-        <div class="lw-progress-bar"><div class="lw-progress-bar-inner" id="lw-progress-bar" style="width:11%;"></div></div>
+        <div class="lw-progress" id="lw-progress">Step 1 / 6</div>
+        <div class="lw-progress-bar"><div class="lw-progress-bar-inner" id="lw-progress-bar" style="width:17%;"></div></div>
       </div>
-      <div>
-        <button class="lw-btn lw-btn-primary" onclick="window.__wizardNext()">次のステップ →</button>
-      </div>
+      <!-- R404: フッタ「次のステップ」削除 (各 Step content 内に「完了 → 次へ」ボタンがあるので二重ボタン構造を解消) -->
+      <div></div>
     </footer>
   </div>
 </div>
@@ -16666,15 +16682,12 @@ function show(id) {
     status: {},
     gasTestPassed: false,  /* R395: Step 5 通信テスト成功フラグ。「次へ」ブロックに使う */
     steps: [
-      { id: 0, title: '自動診断',                         icon: '🩺' },
-      { id: 1, title: '公式アカウント',                   icon: '①' },
-      { id: 2, title: 'Messaging API 有効化',             icon: '②' },
-      { id: 3, title: 'チャネルアクセストークン取得',     icon: '③' },
-      { id: 4, title: 'GAS デプロイ',                     icon: '④' },
-      { id: 5, title: 'pc-edit に GAS URL 貼る',          icon: '⑤' },
-      { id: 6, title: 'LINE Developers に Webhook 登録', icon: '⑥' },
-      { id: 7, title: 'Bot を LINE グループに招待',       icon: '⑦' },
-      { id: 8, title: 'テスト送信 → 完了',                icon: '🎉' },
+      { id: 1, title: 'LINE 公式アカウント + Messaging API', icon: '①' },
+      { id: 2, title: 'トークン取得 + GAS デプロイ',         icon: '②' },
+      { id: 3, title: 'pc-edit に GAS URL 貼る',             icon: '③' },
+      { id: 4, title: 'LINE Developers に Webhook 登録',     icon: '④' },
+      { id: 5, title: 'Bot を LINE グループに招待',          icon: '⑤' },
+      { id: 6, title: 'テスト送信 → 完了',                   icon: '🎉' },
     ],
   };
 
@@ -16700,28 +16713,33 @@ function show(id) {
     const status = {};
     const gasUrl = localStorage.getItem('schedule-studio:line-gas-url') || '';
     const groupId = getCurrentConcertLineGroupId();
-    status[1] = !!localStorage.getItem('schedule-studio:wiz-official-confirmed');
-    status[2] = !!localStorage.getItem('schedule-studio:wiz-messaging-api-confirmed');
-    status[3] = !!localStorage.getItem('schedule-studio:line-token-confirmed');
-    status[4] = !!localStorage.getItem('schedule-studio:wiz-gas-deployed-confirmed');
-    status[5] = !!gasUrl;
-    status[6] = !!localStorage.getItem('schedule-studio:wiz-webhook-confirmed');
-    status[7] = !!groupId;
-    status[8] = !!localStorage.getItem('schedule-studio:line-test-passed');
+    /* R404: 統合 — Step 1 (旧1+2) は LINE Manager 系 2 つ揃って完了 */
+    status[1] = !!localStorage.getItem('schedule-studio:wiz-official-confirmed')
+             && !!localStorage.getItem('schedule-studio:wiz-messaging-api-confirmed');
+    /* R404: 統合 — Step 2 (旧3+4) はトークン取得 + GAS デプロイ揃って完了 */
+    status[2] = !!localStorage.getItem('schedule-studio:line-token-confirmed')
+             && !!localStorage.getItem('schedule-studio:wiz-gas-deployed-confirmed');
+    status[3] = !!gasUrl;
+    status[4] = !!localStorage.getItem('schedule-studio:wiz-webhook-confirmed');
+    status[5] = !!groupId;
+    status[6] = !!localStorage.getItem('schedule-studio:line-test-passed');
     state.status = status;
     state.diagnosed = true;
   }
 
   function nextUnfinishedStep() {
-    for (let i = 1; i <= 8; i++) {
+    for (let i = 1; i <= 6; i++) {
       if (!state.status[i]) return i;
     }
-    return 8;
+    return 6;
   }
 
   window.__wizardOpen = function() {
     diagnose();
-    state.currentStep = 0;
+    /* R404: 旧 Step 0 (自動診断) 廃止 — 次にやるべき未完了 Step に自動ジャンプ。
+       nextUnfinishedStep は 1-6 (1-based)、currentStep は 0-5 (0-based) なので -1 する */
+    const nextIdx = nextUnfinishedStep() - 1;
+    state.currentStep = Math.max(0, Math.min(5, nextIdx));
     state.gasTestPassed = false;  /* R395: 開くたびに通信テスト要再実行 */
     document.getElementById('wizard-overlay').style.display = 'flex';
     document.body.style.overflow = 'hidden';
@@ -16753,176 +16771,110 @@ function show(id) {
     }
   };
   window.__wizardMarkDone = function(stepIdx) {
+    /* R404: 新 index 用、旧 1+2 と 3+4 は配列で複数キーを同時セット */
     const keys = {
-      1: 'schedule-studio:wiz-official-confirmed',
-      2: 'schedule-studio:wiz-messaging-api-confirmed',
-      3: 'schedule-studio:line-token-confirmed',
-      4: 'schedule-studio:wiz-gas-deployed-confirmed',
-      6: 'schedule-studio:wiz-webhook-confirmed',
-      8: 'schedule-studio:line-test-passed',
+      1: ['schedule-studio:wiz-official-confirmed', 'schedule-studio:wiz-messaging-api-confirmed'],
+      2: ['schedule-studio:line-token-confirmed', 'schedule-studio:wiz-gas-deployed-confirmed'],
+      4: ['schedule-studio:wiz-webhook-confirmed'],
+      6: ['schedule-studio:line-test-passed'],
     };
     if (keys[stepIdx]) {
-      localStorage.setItem(keys[stepIdx], '1');
+      keys[stepIdx].forEach(function(k){ localStorage.setItem(k, '1'); });
       diagnose();
     }
   };
-  window.__wizardReset = function() {
-    if (!confirm('このセットアップの「完了マーク」をすべて解除して、自動診断をやり直しますか？(設定値は消しません)')) return;
-    ['schedule-studio:wiz-official-confirmed',
-     'schedule-studio:wiz-messaging-api-confirmed',
-     'schedule-studio:line-token-confirmed',
-     'schedule-studio:wiz-gas-deployed-confirmed',
-     'schedule-studio:wiz-webhook-confirmed',
-     'schedule-studio:line-test-passed'].forEach(k => localStorage.removeItem(k));
-    diagnose();
-    state.currentStep = 0;
-    render();
-  };
+  /* R404: __wizardReset 削除 (旧 content_0 から呼ばれていたが、Step 0 廃止により呼び出し元が消えた。
+     社員運用で誤って進捗マークを消すリスクもあるため、関数定義ごと削除) */
   window.__wizardToggleHelp = function(id) {
     const el = document.getElementById(id);
     if (el) el.classList.toggle('is-open');
   };
 
   function escapeHtml(s){return String(s||'').replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]));}
-  function escapeAttr(s){return String(s||'').replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]));}
+  /* R404: escapeAttr は escapeHtml と完全同一実装だったので alias 化 */
+  const escapeAttr = escapeHtml;
 
-  function content_0() {
-    const items = [
-      { idx: 1, label: '① LINE 公式アカウントを作成済み' },
-      { idx: 2, label: '② Messaging API を有効化済み' },
-      { idx: 3, label: '③ チャネルアクセストークンを発行済み' },
-      { idx: 4, label: '④ GAS をデプロイ済み' },
-      { idx: 5, label: '⑤ pc-edit に GAS URL を貼った' },
-      { idx: 6, label: '⑥ LINE Developers に Webhook URL を登録済み' },
-      { idx: 7, label: '⑦ Bot を LINE グループに招待 + 紐付け済み' },
-      { idx: 8, label: '⑧ テスト送信が成功した' },
-    ];
-    const next = nextUnfinishedStep();
-    const allDone = items.every(it => state.status[it.idx]);
-    return '<h3>🩺 自動診断</h3>'
-      + '<div class="lw-h-sub">現在の SCHEDULE STUDIO LINE 連携の設定状況をチェックしました</div>'
-      + '<p>現在の公演: <strong>' + escapeHtml(getCurrentConcertTitle()) + '</strong></p>'
-      + '<ul class="lw-diag-list">'
-      + items.map(function(it){
-          var ok = state.status[it.idx];
-          return '<li class="lw-diag-item">'
-            + '<span class="lw-diag-icon ' + (ok ? 'is-ok' : 'is-ng') + '">' + (ok ? '✓' : '!') + '</span>'
-            + '<span class="lw-diag-label">' + it.label + '</span>'
-            + '<a class="lw-diag-link" onclick="__wizardJump(' + it.idx + ')">' + (ok ? '見る' : '設定する →') + '</a>'
-            + '</li>';
-        }).join('')
-      + '</ul>'
-      + (allDone
-        ? '<div class="lw-completed-banner"><div class="lw-completed-title">🎉 すべて完了しています！</div><p>LINE プッシュ送信の準備は整っています。INFO タブに戻って配信できます。</p></div>'
-        : '<div class="lw-card-tip"><strong>次に設定すべき:</strong> Step ' + next + '(' + escapeHtml(state.steps[next].title) + ')<br>下の「次のステップ →」or 左サイドバーから ' + next + ' をクリックして進めましょう。</div>')
-      + '<div class="lw-action-row">'
-      + '<button class="lw-btn" onclick="__wizardJump(' + next + ')">→ Step ' + next + ' に進む</button>'
-      + '<button class="lw-btn lw-btn-ghost" onclick="__wizardReset()">完了マークをリセット (再診断)</button>'
-      + '</div>';
-  }
+  /* R404: 旧 content_0 (自動診断) 削除。__wizardOpen で次の未完了 Step に直接ジャンプする方式に変更 */
 
   function content_1() {
-    return '<h3>① LINE 公式アカウントを作成 / 確認</h3>'
-      + '<div class="lw-h-sub">SCHEDULE STUDIO Bot は LINE 公式アカウントとして動きます</div>'
-      + '<p>SCHEDULE STUDIO 用に作った公式アカウント (例: <strong>@242uoxqo「スタジオのスケジュール」</strong>) があるか確認します。</p>'
-      + '<div class="lw-card-tip"><strong>既に作成済みの方:</strong> 下の「LINE Manager を開く」ボタンを押してログインできれば OK。確認できたら「① 完了とする」を押してください。</div>'
+    return '<h3>① LINE 公式アカウント + Messaging API</h3>'
+      + '<div class="lw-h-sub">公式アカウントを作って、Messaging API (Bot 機能) を有効化</div>'
+      + '<p>SCHEDULE STUDIO 用に <strong>LINE 公式アカウント</strong> を作成し、続けて <strong>Messaging API</strong> を有効化します。LINE Manager で 1 セッションで完結。</p>'
+      + '<div class="lw-card"><strong>手順 (LINE Manager で):</strong><br>'
+      + '1. 下の「LINE Manager を開く」を押す → LINE アカウントでログイン<br>'
+      + '2. アカウントがなければ「新規アカウント作成」(例: 「スタジオのスケジュール」)<br>'
+      + '3. 右上「⚙ 設定」→ 左メニュー「Messaging API」<br>'
+      + '4. 「Messaging API を利用する」→ プロバイダー選択 or 新規作成 (例: nrs2013) → 同意して有効化<br>'
+      + '5. 「ステータス: 利用中」になれば完了</div>'
       + '<div class="lw-action-row">'
       + '<button class="lw-btn lw-btn-primary" onclick="window.open(\'https://manager.line.biz/\',\'_blank\')">LINE Manager を開く</button>'
       + '<button class="lw-btn lw-btn-success" onclick="__wizardMarkDone(1); __wizardNext()">① 完了とする → 次へ</button>'
       + '</div>'
-      + '<div class="lw-help-toggle" onclick="__wizardToggleHelp(\'help-1\')">❓ まだ作ってない / 作り方が分からない</div>'
+      + '<div class="lw-help-toggle" onclick="__wizardToggleHelp(\'help-1\')">❓ アカウント作成 / Messaging API のボタンが見つからない</div>'
       + '<div class="lw-help-body" id="help-1">'
-      + '<p>1. 上の「LINE Manager を開く」を押す</p>'
-      + '<p>2. LINE アカウントでログイン (QR コードログインが楽)</p>'
-      + '<p>3.「新規アカウント作成」ボタン → アカウント名 (例: 「スタジオのスケジュール」) と業種を入力</p>'
-      + '<p>4. 作成完了したら、このページに戻って「① 完了とする」を押す</p>'
+      + '<p><strong>アカウント未作成の場合:</strong> LINE Manager にログイン後、「新規アカウント作成」→ アカウント名と業種を入力。</p>'
+      + '<p><strong>Messaging API ボタンが見つからない場合:</strong> 画面右上の「⚙ 設定」→ 左メニューの「Messaging API」を開く。既に有効化済みなら「ステータス: 利用中」と表示。</p>'
       + '</div>';
   }
 
   function content_2() {
-    return '<h3>② Messaging API を有効化</h3>'
-      + '<div class="lw-h-sub">Bot として動作させるために必須の設定</div>'
-      + '<p>LINE Manager の「設定 → Messaging API」で API を有効化します。</p>'
-      + '<div class="lw-card"><strong>手順:</strong><br>'
-      + '1. 下の「LINE Manager を開く」を押す<br>'
-      + '2. 「Messaging API を利用する」ボタンを押す<br>'
-      + '3. プロバイダーを選ぶ or 新規作成 (例: <code>nrs2013</code>)<br>'
-      + '4. 同意して有効化</div>'
-      + '<div class="lw-action-row">'
-      + '<button class="lw-btn lw-btn-primary" onclick="window.open(\'https://manager.line.biz/\',\'_blank\')">LINE Manager を開く</button>'
-      + '<button class="lw-btn lw-btn-success" onclick="__wizardMarkDone(2); __wizardNext()">② 完了とする → 次へ</button>'
-      + '</div>'
-      + '<div class="lw-help-toggle" onclick="__wizardToggleHelp(\'help-2\')">❓ 「Messaging API を利用する」ボタンが見つからない</div>'
-      + '<div class="lw-help-body" id="help-2"><p>LINE Manager にログイン後、画面右上の <strong>「⚙ 設定」</strong> をクリック → 左メニューの <strong>「Messaging API」</strong> を開きます。</p><p>既に有効化済みなら「ステータス: 利用中」となっているはず。その場合は「② 完了とする」を押して次へ。</p></div>';
-  }
-
-  function content_3() {
-    return '<h3>③ チャネルアクセストークン取得</h3>'
-      + '<div class="lw-h-sub">Bot から LINE へメッセージを送信するための「鍵」</div>'
-      + '<p><strong>LINE Developers</strong> から、長期チャネルアクセストークンを発行 → コピーします。</p>'
-      + '<div class="lw-card"><strong>手順:</strong><br>'
-      + '1. 下の「LINE Developers を開く」を押す<br>'
-      + '2. プロバイダー (例: nrs2013) → SCHEDULE STUDIO チャネルを選ぶ<br>'
-      + '3. 上タブ「Messaging API設定」をクリック<br>'
-      + '4. ページ下部「チャネルアクセストークン(長期)」の「発行」or「再発行」を押す<br>'
-      + '5. 表示された長いトークンを「コピー」ボタンでコピー</div>'
-      + '<div class="lw-card-warn">⚠️ <strong>トークンは絶対にスクショに映さない、他人に見せない</strong>。漏れた場合は再発行で即無効化できます。<br>トークンは次の Step 4 で GAS の中に貼り付けます。</div>'
+    return '<h3>② トークン取得 + GAS デプロイ</h3>'
+      + '<div class="lw-h-sub">LINE Developers でトークン発行 → GAS にコードを貼ってデプロイ</div>'
+      + '<p>LINE Developers で <strong>長期チャネルアクセストークン</strong> を発行 → コピーし、続けて GAS に Bot コードを貼り付け、トークンを埋め込んでデプロイします。</p>'
+      + '<div class="lw-card"><strong>パート A: トークン発行 (LINE Developers で)</strong><br>'
+      + '1. 「LINE Developers を開く」→ プロバイダー (例: nrs2013) → SCHEDULE STUDIO チャネル<br>'
+      + '2. 上タブ「Messaging API 設定」<br>'
+      + '3. ページ下部「チャネルアクセストークン(長期)」の「発行」or「再発行」<br>'
+      + '4. 表示されたトークンを「コピー」ボタンでコピー</div>'
+      + '<div class="lw-card-warn">⚠️ <strong>トークンは絶対にスクショに映さない、他人に見せない</strong>。漏れた場合は再発行で即無効化できます。</div>'
       + '<div class="lw-action-row">'
       + '<button class="lw-btn lw-btn-primary" onclick="window.open(\'https://developers.line.biz/console/\',\'_blank\')">LINE Developers を開く</button>'
-      + '<button class="lw-btn lw-btn-success" onclick="__wizardMarkDone(3); __wizardNext()">③ コピー完了 → 次へ</button>'
-      + '</div>';
-  }
-
-  function content_4() {
-    return '<h3>④ Google Apps Script (GAS) でデプロイ</h3>'
-      + '<div class="lw-h-sub">pc-edit ↔ LINE の橋渡し役。Google アカウント無料で運用可能</div>'
-      + '<p>GAS に SCHEDULE STUDIO 用の Bot コードを貼り付け → デプロイします。</p>'
-      + '<div class="lw-action-row">'
-      + '<button class="lw-btn lw-btn-primary" onclick="window.open(\'https://script.google.com/home\',\'_blank\')">GAS を開く</button>'
-      + '<button class="lw-btn" onclick="if(typeof window.__r167ShowGasCode===\'function\') window.__r167ShowGasCode(); else alert(\'既存の GAS コード表示機能が見つかりません。INFO タブの 3-b ボタンを使ってください。\')">📋 GAS に貼るコードを表示 (コピーボタン付き)</button>'
       + '</div>'
-      + '<div class="lw-card"><strong>手順:</strong><br>'
-      + '1.「GAS を開く」→「新しいプロジェクト」<br>'
+      + '<hr style="border:none;border-top:0.5px solid #2c2c30;margin:18px 0;">'
+      + '<div class="lw-card"><strong>パート B: GAS デプロイ</strong><br>'
+      + '1. 「GAS を開く」→「新しいプロジェクト」<br>'
       + '2. デフォルトの <code>function myFunction()</code> を全部削除<br>'
-      + '3. 上の「GAS に貼るコードを表示」でコードをコピー → GAS に貼り付け<br>'
-      + '4. 1 行目あたりの <code>CHANNEL_ACCESS_TOKEN = \'...\'</code> の中身を、Step ③ でコピーしたトークンに置き換え<br>'
+      + '3. 下の「GAS に貼るコードを表示」でコードをコピー → GAS に貼り付け<br>'
+      + '4. 1 行目あたりの <code>CHANNEL_ACCESS_TOKEN = \'...\'</code> の中身を、パート A でコピーしたトークンに置き換え<br>'
       + '5. プロジェクト名を「SCHEDULE STUDIO LINE Bot」等に rename<br>'
       + '6. 右上「デプロイ」→「新しいデプロイ」→ 種類「ウェブアプリ」<br>'
       + '7. アクセス権「全員」(必ず！) → デプロイ<br>'
-      + '8. 表示された「ウェブアプリ URL」をコピー</div>'
+      + '8. 表示された「ウェブアプリ URL」をコピー (次の Step ③ で使う)</div>'
       + '<div class="lw-action-row">'
-      + '<button class="lw-btn lw-btn-success" onclick="__wizardMarkDone(4); __wizardNext()">④ デプロイ完了 → 次へ</button>'
+      + '<button class="lw-btn lw-btn-primary" onclick="window.open(\'https://script.google.com/home\',\'_blank\')">GAS を開く</button>'
+      + '<button class="lw-btn" onclick="if(typeof window.__r167ShowGasCode===\'function\') window.__r167ShowGasCode(); else alert(\'既存の GAS コード表示機能が見つかりません。INFO タブの 3-b ボタンを使ってください。\')">📋 GAS に貼るコードを表示 (コピーボタン付き)</button>'
+      + '<button class="lw-btn lw-btn-success" onclick="__wizardMarkDone(2); __wizardNext()">② トークン + デプロイ完了 → 次へ</button>'
       + '</div>'
-      + '<div class="lw-help-toggle" onclick="__wizardToggleHelp(\'help-4\')">❓ 「アクセスできるユーザー」がよく分からない / Webhook 検証で失敗する</div>'
-      + '<div class="lw-help-body" id="help-4"><p>デプロイ時の「アクセスできるユーザー」は必ず <strong>「全員」</strong> にしてください。</p><p>「自分のみ」or「ドメイン内のみ」になっていると、LINE 側から Webhook を呼べないため、Step 6 の検証で失敗します。</p><p>失敗した場合は「デプロイを管理」→ 鉛筆アイコン → 設定変更 → 新バージョンでデプロイ。</p></div>';
+      + '<div class="lw-help-toggle" onclick="__wizardToggleHelp(\'help-2\')">❓ 「アクセスできるユーザー」がよく分からない / Webhook 検証で失敗する</div>'
+      + '<div class="lw-help-body" id="help-2"><p>デプロイ時の「アクセスできるユーザー」は必ず <strong>「全員」</strong> にしてください。「自分のみ」or「ドメイン内のみ」になっていると、LINE 側から Webhook を呼べないため、後で Step ④ の検証で失敗します。</p><p>失敗した場合は GAS の「デプロイを管理」→ 鉛筆アイコン → 設定変更 → 新バージョンでデプロイ。</p></div>';
   }
 
-  function content_5() {
+  function content_3() {
     const gasUrl = localStorage.getItem('schedule-studio:line-gas-url') || '';
-    return '<h3>⑤ pc-edit に GAS の URL を貼る</h3>'
-      + '<div class="lw-h-sub">Step ④ でコピーしたウェブアプリ URL を pc-edit に登録</div>'
-      + '<p>Step ④ でコピーした <code>https://script.google.com/macros/s/.../exec</code> 形式の URL を貼り付けます。</p>'
+    return '<h3>③ pc-edit に GAS の URL を貼る</h3>'
+      + '<div class="lw-h-sub">Step ② でコピーしたウェブアプリ URL を pc-edit に登録</div>'
+      + '<p>Step ② でコピーした <code>https://script.google.com/macros/s/.../exec</code> 形式の URL を貼り付けます。</p>'
       + '<input type="text" class="lw-input" id="wiz-gas-url-input" placeholder="https://script.google.com/macros/s/.../exec" value="' + escapeAttr(gasUrl) + '">'
       + '<div class="lw-action-row">'
-      + '<button class="lw-btn lw-btn-primary" onclick="(function(){var v=document.getElementById(\'wiz-gas-url-input\').value.trim();if(!v){alert(\'URL を入力してください\');return;}if(!/^https:\\/\\/script\\.google\\.com\\/macros\\//.test(v)){alert(\'GAS のウェブアプリ URL ではないようです。\\n正しい形式: https://script.google.com/macros/s/.../exec\');return;}localStorage.setItem(\'schedule-studio:line-gas-url\', v);var inp=document.getElementById(\'info-line-gas-url\'); if(inp) inp.value=v;window.__wizardSetTestPassed(false);alert(\'保存しました — 続けて 🩺 通信テスト を実行してください\');__wizardMarkDone(5);})()">保存</button>'
+      + '<button class="lw-btn lw-btn-primary" onclick="(function(){var v=document.getElementById(\'wiz-gas-url-input\').value.trim();if(!v){alert(\'URL を入力してください\');return;}if(!/^https:\\/\\/script\\.google\\.com\\/macros\\//.test(v)){alert(\'GAS のウェブアプリ URL ではないようです。\\n正しい形式: https://script.google.com/macros/s/.../exec\');return;}localStorage.setItem(\'schedule-studio:line-gas-url\', v);var inp=document.getElementById(\'info-line-gas-url\'); if(inp) inp.value=v;window.__wizardSetTestPassed(false);alert(\'保存しました — 続けて 🩺 通信テスト を実行してください\');})()">保存</button>'
       + '<button class="lw-btn" onclick="(async function(){var url=document.getElementById(\'wiz-gas-url-input\').value.trim();if(!url){alert(\'URL を入力 → 保存してから\');return;}var status=document.getElementById(\'wiz-gas-test-status\');status.textContent=\'送信中...\';status.className=\'lw-status\';try{var res=await fetch(url+\'?cb=\'+Date.now());var text=await res.text();if(text.indexOf(\'is running\')>=0){status.textContent=\'✅ 通信成功 — 次へ進めます\';status.className=\'lw-status is-ok\';window.__wizardSetTestPassed(true);}else{status.textContent=\'⚠️ 想定外の応答: \'+text.slice(0,60);status.className=\'lw-status is-err\';window.__wizardSetTestPassed(false);}}catch(e){status.textContent=\'❌ 通信失敗: \'+e.message;status.className=\'lw-status is-err\';window.__wizardSetTestPassed(false);}})()">🩺 通信テスト</button>'
       + '<span class="lw-status" id="wiz-gas-test-status"></span>'
       + '</div>'
       + '<div class="lw-action-row">'
-      + '<button class="lw-btn lw-btn-success" onclick="if(!window.__wizardCanNext()){alert(\'先に 🩺 通信テスト で ✅ を出してください。\\n失敗のまま進めると Step 6・7・8 が動きません\');return;}__wizardNext()">⑤ 完了 → 次へ</button>'
+      + '<button class="lw-btn lw-btn-success" onclick="if(!window.__wizardCanNext()){alert(\'先に 🩺 通信テスト で ✅ を出してください。\\n失敗のまま進めると Step ④・⑤・⑥ が動きません\');return;}__wizardNext()">③ 完了 → 次へ</button>'
       + '</div>'
-      + '<div class="lw-help-toggle" onclick="__wizardToggleHelp(\'help-5\')">❓ 通信テストで失敗する</div>'
-      + '<div class="lw-help-body" id="help-5"><p>「❌ 通信失敗」の場合、Step ④ のデプロイで「アクセスできるユーザー」が「全員」になっていない可能性が高いです。</p><p>GAS の「デプロイを管理」→ 鉛筆アイコン → 設定変更 → 新バージョンでデプロイし直してください。</p><p>「⚠️ 想定外の応答」の場合、コードが正しく貼れていない or トークンの置換ミスが考えられます。Step ④ をやり直してください。</p></div>';
+      + '<div class="lw-help-toggle" onclick="__wizardToggleHelp(\'help-3\')">❓ 通信テストで失敗する</div>'
+      + '<div class="lw-help-body" id="help-3"><p>「❌ 通信失敗」の場合、Step ② のデプロイで「アクセスできるユーザー」が「全員」になっていない可能性が高いです。</p><p>GAS の「デプロイを管理」→ 鉛筆アイコン → 設定変更 → 新バージョンでデプロイし直してください。</p><p>「⚠️ 想定外の応答」の場合、コードが正しく貼れていない or トークンの置換ミスが考えられます。Step ② をやり直してください。</p></div>';
   }
 
-  function content_6() {
+  function content_4() {
     const gasUrl = localStorage.getItem('schedule-studio:line-gas-url') || '';
-    return '<h3>⑥ LINE Developers に Webhook URL を登録</h3>'
+    return '<h3>④ LINE Developers に Webhook URL を登録</h3>'
       + '<div class="lw-h-sub">Bot がメッセージを受け取れるように設定</div>'
-      + '<p>Step ④ の GAS URL を LINE 側の「Webhook URL」として登録します。</p>'
+      + '<p>Step ② の GAS URL を LINE 側の「Webhook URL」として登録します。</p>'
       + (gasUrl
         ? '<div class="lw-copy-block"><span class="lw-copy-block-text">' + escapeHtml(gasUrl) + '</span><button class="lw-btn" onclick="navigator.clipboard.writeText(\'' + escapeAttr(gasUrl) + '\').then(function(){var b=event.target; b.textContent=\'コピー済 ✓\'; setTimeout(function(){b.textContent=\'コピー\';},1500);})">コピー</button></div>'
-        : '<div class="lw-card-error">⚠️ Step ⑤ で GAS URL を保存してから戻ってきてください</div>')
+        : '<div class="lw-card-error">⚠️ Step ③ で GAS URL を保存してから戻ってきてください</div>')
       + '<div class="lw-card"><strong>手順:</strong><br>'
       + '1. 下の「LINE Developers を開く」<br>'
       + '2. SCHEDULE STUDIO チャネル → 上タブ「Messaging API 設定」<br>'
@@ -16932,14 +16884,14 @@ function show(id) {
       + '<div class="lw-card-warn">⚠️ 同じ Messaging API 設定ページの少し上にある <strong>「応答メッセージ」を OFF</strong>、<strong>「あいさつメッセージ」を OFF</strong> も忘れずに (Bot が雑談に勝手に返事しないように)。</div>'
       + '<div class="lw-action-row">'
       + '<button class="lw-btn lw-btn-primary" onclick="window.open(\'https://developers.line.biz/console/\',\'_blank\')">LINE Developers を開く</button>'
-      + '<button class="lw-btn lw-btn-success" onclick="__wizardMarkDone(6); __wizardNext()">⑥ Webhook 検証成功 → 次へ</button>'
+      + '<button class="lw-btn lw-btn-success" onclick="__wizardMarkDone(4); __wizardNext()">④ Webhook 検証成功 → 次へ</button>'
       + '</div>';
   }
 
-  function content_7() {
+  function content_5() {
     const c = getCurrentConcert();
     const groupId = c && c.lineGroupId ? c.lineGroupId : '';
-    return '<h3>⑦ Bot を LINE グループに招待 + 紐付け</h3>'
+    return '<h3>⑤ Bot を LINE グループに招待 + 紐付け</h3>'
       + '<div class="lw-h-sub">公演ごとに別のスタッフ LINE グループに紐付けられます</div>'
       + '<p>現在の公演 <strong>「' + escapeHtml(getCurrentConcertTitle()) + '」</strong> 用のスタッフ LINE グループに Bot を招待します。</p>'
       + '<div class="lw-card"><strong>スマホで行う手順:</strong><br>'
@@ -16954,34 +16906,43 @@ function show(id) {
       + '</div>'
       /* R394: Wizard 内にグループ一覧表示エリアを追加 (旧 UI にしか出なかった問題の修正) */
       + '<div id="wiz-group-list" style="margin-top:10px;"></div>'
-      + '<p style="margin-top:18px;">この公演に紐付ける LINE グループ ID を貼ってください:</p>'
+      /* R404: 手貼り欄を <details> で折りたたみ (R393 で自動セットされるようになったので普段は使わない) */
+      + '<details style="margin-top:18px;"><summary style="cursor:pointer;color:#888;font-size:12px;">🔧 グループ ID を手動で貼る (上の「一覧から選ぶ」で埋まらない時のみ)</summary>'
+      + '<p style="margin-top:10px;">この公演に紐付ける LINE グループ ID を貼ってください:</p>'
       + '<input type="text" class="lw-input" id="wiz-group-id-input" placeholder="C1234abcd... (LINE グループ ID)" value="' + escapeAttr(groupId) + '">'
+      + '</details>'
       + '<div class="lw-action-row">'
-      + '<button class="lw-btn lw-btn-primary" onclick="(function(){var v=document.getElementById(\'wiz-group-id-input\').value.trim();if(!v){alert(\'グループ ID を貼ってください\');return;}var inp=document.getElementById(\'info-line-group-id\'); if(inp){inp.value=v;}if(typeof window.__r164SaveGroupId===\'function\'){window.__r164SaveGroupId();}alert(\'紐付け完了\');})()">この公演に紐付けて保存</button>'
-      + '<button class="lw-btn lw-btn-success" onclick="__wizardNext()">⑦ 完了 → 次へ</button>'
+      /* R404: 「保存」と「次へ」を 1 ボタンに統合: 紐付け保存して次へ */
+      + '<button class="lw-btn lw-btn-success" onclick="(function(){var v=document.getElementById(\'wiz-group-id-input\').value.trim();if(!v){alert(\'グループ ID が空です。上の「📥 グループ一覧を取得」→「この公演に使う」をクリックしてください\');return;}var inp=document.getElementById(\'info-line-group-id\'); if(inp){inp.value=v;}if(typeof window.__r164SaveGroupId===\'function\'){window.__r164SaveGroupId();}__wizardNext();})()">⑤ この公演に紐付けて次へ</button>'
       + '</div>';
   }
 
-  function content_8() {
-    return '<h3>⑧ テスト送信 → セットアップ完了</h3>'
+  function content_6() {
+    /* R404: 完了バナーは line-test-passed フラグが立った時のみ表示 (フライング解消) */
+    const testPassed = !!localStorage.getItem('schedule-studio:line-test-passed');
+    return '<h3>⑥ テスト送信 → セットアップ完了</h3>'
       + '<div class="lw-h-sub">最後に、実際の LINE グループにテストメッセージを送って動作確認</div>'
       + '<p>下のボタンで <strong>「' + escapeHtml(getCurrentConcertTitle()) + '」</strong> に紐付けた LINE グループに、メニューカードを試送します。</p>'
       + '<div class="lw-action-row">'
-      + '<button class="lw-btn lw-btn-primary" onclick="(function(){if(typeof window.__r186SendMenu===\'function\'){window.__r186SendMenu();setTimeout(function(){if(confirm(\'LINE グループにメニューカードは届きましたか？\')){__wizardMarkDone(8);alert(\'🎉 セットアップ完了！INFO タブから配信できます。\');}},1500);}else{alert(\'既存のメニュー送信機能が見つかりません\');}})()">📱 メニューカードを送信</button>'
-      + '<button class="lw-btn" onclick="(async function(){var status=document.getElementById(\'wiz-final-status\');var url=localStorage.getItem(\'schedule-studio:line-gas-url\')||\'\';status.textContent=\'送信中...\';status.className=\'lw-status\';try{var r=await fetch(url,{method:\'POST\',headers:{\'Content-Type\':\'application/json\'},body:JSON.stringify({action:\'ping\'})});var j=await r.json();if(j.ok){status.textContent=\'✅ ping 成功 (msg=\'+j.msg+\')\';status.className=\'lw-status is-ok\';}else{status.textContent=\'⚠️ \'+JSON.stringify(j);status.className=\'lw-status is-err\';}}catch(e){status.textContent=\'❌ \'+e.message;status.className=\'lw-status is-err\';}})()">🩺 ping テスト (LINE には届かないが疎通確認)</button>'
-      + '<span class="lw-status" id="wiz-final-status"></span>'
+      /* R404: ping テストボタン削除 (Step ③ 通信テストと役割被り) */
+      + '<button class="lw-btn lw-btn-primary" onclick="(function(){if(typeof window.__r186SendMenu===\'function\'){window.__r186SendMenu();setTimeout(function(){if(confirm(\'LINE グループにメニューカードは届きましたか？\')){__wizardMarkDone(6);alert(\'🎉 セットアップ完了！INFO タブから配信できます。\');render();}},1500);}else{alert(\'既存のメニュー送信機能が見つかりません\');}})()">📱 メニューカードを送信</button>'
       + '</div>'
-      + '<div class="lw-completed-banner" style="margin-top:24px;">'
-      + '<div class="lw-completed-title">🎉 セットアップ完了!</div>'
-      + '<p>これで INFO タブの「📱 LINE プッシュ送信」が動きます。</p>'
-      + '<p>別の公演を追加するときは、その公演を選んでから再度 Step ⑦ だけ実行してください。</p>'
-      + '</div>'
+      + (testPassed
+        ? '<div class="lw-completed-banner" style="margin-top:24px;">'
+          + '<div class="lw-completed-title">🎉 セットアップ完了!</div>'
+          + '<p>これで INFO タブの「📱 LINE プッシュ送信」が動きます。</p>'
+          + '<p>別の公演を追加するときは、その公演を選んでから再度 Step ⑤ だけ実行してください。</p>'
+          + '</div>'
+        : '<div class="lw-card-tip" style="margin-top:24px;">'
+          + '上の「📱 メニューカードを送信」を押して、LINE グループに届くか確認してください。届けばこのステップが「完了」になります。'
+          + '</div>')
       + '<div class="lw-action-row">'
-      + '<button class="lw-btn lw-btn-success" onclick="__wizardMarkDone(8); __wizardClose();">完了して閉じる</button>'
+      + '<button class="lw-btn lw-btn-success" onclick="__wizardClose();">完了して閉じる</button>'
       + '</div>';
   }
 
-  const contentFns = [content_0, content_1, content_2, content_3, content_4, content_5, content_6, content_7, content_8];
+  /* R404: 9 ステップ → 6 ステップに縮約。Step 0 (自動診断) は廃止 → __wizardOpen で次の未完了 Step に自動ジャンプ */
+  const contentFns = [content_1, content_2, content_3, content_4, content_5, content_6];
 
   function render() {
     const stepsEl = document.getElementById('lw-steps');
@@ -16992,8 +16953,9 @@ function show(id) {
     stepsEl.innerHTML = state.steps.map(function(s, i){
       var cls = [];
       if (i === state.currentStep) cls.push('is-active');
-      if (i > 0 && state.status[i]) cls.push('is-done');
-      var isDone = i > 0 && state.status[i];
+      /* R404: 新 index — contentFns の i 番目 = state.steps の i 番目 = state.status の (i+1) 番目 */
+      if (state.status[i + 1]) cls.push('is-done');
+      var isDone = state.status[i + 1];
       var num = isDone ? '' : '<span class="lw-step-num-inner">' + s.icon + '</span>';
       return '<li class="lw-step ' + cls.join(' ') + '" onclick="__wizardJump(' + i + ')">'
         + '<span class="lw-step-num">' + num + '</span>'
