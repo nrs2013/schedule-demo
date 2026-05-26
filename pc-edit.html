@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260527.404000">
+<meta name="build-version" content="20260527.405000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -42,7 +42,7 @@
 <!-- R68: Firebase 匿名認証 SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
 <script>
-// R398: グローバル keydown — Wizard Esc 閉じ + Cmd+S 防止
+// R398: グローバル keydown — Cmd+S 防止 (R405 で Wizard Esc ハンドラ削除)
 (function(){
   document.addEventListener('keydown', function(e){
     /* Cmd+S / Ctrl+S 防止: SCHEDULE STUDIO は全自動保存のため不要。
@@ -50,13 +50,6 @@
     if ((e.metaKey || e.ctrlKey) && (e.key === 's' || e.key === 'S')) {
       e.preventDefault();
       return;
-    }
-    /* Wizard モーダル Esc キー閉じ (a11y) */
-    if (e.key === 'Escape') {
-      var overlay = document.getElementById('wizard-overlay');
-      if (overlay && overlay.style.display && overlay.style.display !== 'none' && typeof window.__wizardClose === 'function') {
-        window.__wizardClose();
-      }
     }
   });
 })();
@@ -211,14 +204,10 @@
   const _setItem = localStorage.setItem.bind(localStorage);
   const _removeItem = localStorage.removeItem.bind(localStorage);
   let suppressFbWrite = false; // Firebase からの逆流を防ぐフラグ
-  /* R404: Wizard 進捗マーク (端末ローカル属性) は Firebase 同期から除外 — 他端末への伝染を防ぐ。
+  /* R405: Wizard 廃止により wiz-*-confirmed 系は書き込まれなくなる。
+     line-test-passed のみ「送信履歴」として localStorage に残るが、端末ローカル属性のため Firebase 同期は不要。
      実データ (line-gas-url / concerts:v1 / active-concert-id 等) は引き続き同期 */
   const FB_SYNC_EXCLUDE = new Set([
-    'schedule-studio:wiz-official-confirmed',
-    'schedule-studio:wiz-messaging-api-confirmed',
-    'schedule-studio:line-token-confirmed',
-    'schedule-studio:wiz-gas-deployed-confirmed',
-    'schedule-studio:wiz-webhook-confirmed',
     'schedule-studio:line-test-passed',
   ]);
   function shouldSyncFb(key) {
@@ -371,6 +360,19 @@
   }).catch(function(e){
     console.error('[FB] pull 失敗:', e);
   });
+})();
+/* R405: Wizard 廃止に伴う旧 localStorage キー一掃 (1 回限り、フラグで再実行を防ぐ) */
+(function r405CleanupOldWizardKeys(){
+  if (localStorage.getItem('schedule-studio:r405-cleaned') === '1') return;
+  ['schedule-studio:wiz-official-confirmed',
+   'schedule-studio:wiz-messaging-api-confirmed',
+   'schedule-studio:line-token-confirmed',
+   'schedule-studio:wiz-gas-deployed-confirmed',
+   'schedule-studio:wiz-webhook-confirmed'].forEach(function(k){
+    localStorage.removeItem(k);
+  });
+  localStorage.setItem('schedule-studio:r405-cleaned', '1');
+  console.log('[R405] cleaned up old wizard progress keys');
 })();
 </script>
 <style>
@@ -5359,8 +5361,7 @@
     .tt-toolbar, .tt-side-toolbar, .tt-help, .tab-bar, .tt-time-add, .tt-sec-lanes,
     .tt-zoom-group, .tt-bar-handle, .tt-legend, .tt-now-line,
     .tt-bar-ghost, .tt-hover-cursor, .tt-sec-add-row,
-    .master-date-bar, .pc-header, .tt-bar-corner,
-    #wizard-overlay { display: none !important; }
+    .master-date-bar, .pc-header, .tt-bar-corner { display: none !important; }
     /* INFO や CALENDAR タブの中身も隠す */
     .mode-content:not(#mode-timetable) { display: none !important; }
     /* R381: 編集画面用 display:none (L4924-4926) を Cmd+P 印刷時は上書きで復活
@@ -7014,13 +7015,40 @@
       <div class="info-header">
         <h2 class="info-title">INFO — お知らせ配信</h2>
       </div>
-      <!-- R392: LINE 連携セットアップ Wizard 起動ボタン -->
-      <div style="margin-bottom:18px;padding:14px 18px;background:linear-gradient(135deg,rgba(245,200,120,0.10) 0%,rgba(93,202,165,0.06) 100%);border:0.5px solid rgba(245,200,120,0.45);border-radius:8px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;">
-        <div style="flex:1;min-width:0;">
-          <div style="font-size:14px;font-weight:600;color:#f0e0c8;letter-spacing:0.03em;margin-bottom:3px;">🔧 LINE 連携セットアップ Wizard</div>
-          <div style="font-size:11px;color:#a8a8a0;line-height:1.5;">初めての方・別公演を追加する方は、こちらから順番に進めれば設定完了。途中で詰まっても自動診断 + やり直し可能。</div>
+      <!-- R405: LINE 連携ミニマル化 — Wizard 廃止、INFO タブに直置き -->
+      <div id="info-line-section" style="background:#1c1c1f;border:0.5px solid #2c2c30;border-radius:8px;padding:18px 20px;margin:0 0 16px 0;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
+          <h3 style="margin:0;font-size:15px;color:#e8e8e2;font-weight:600;letter-spacing:0.04em;">📱 LINE グループ連携</h3>
+          <span style="font-size:11px;color:#888;">公演ごとに別の LINE スタッフグループに通知できます</span>
         </div>
-        <button type="button" onclick="window.__wizardOpen()" style="background:#c8a878;color:#1a1a1a;border:none;padding:10px 22px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;letter-spacing:0.04em;white-space:nowrap;">セットアップを始める →</button>
+        <div id="info-line-current" style="font-size:12.5px;color:#a8a8a0;line-height:1.7;margin-bottom:14px;">
+          <!-- __r405UpdateLineCurrent() で動的に描画 -->
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px;">
+          <button type="button" onclick="window.__r164ListGroups()" style="background:#2c2c30;border:0.5px solid #444;color:#e8e8e2;font-size:12px;padding:7px 14px;border-radius:4px;cursor:pointer;">📥 LINE グループ一覧を取得</button>
+          <span id="wiz-group-list-status" style="font-size:11.5px;color:#888;"></span>
+        </div>
+        <div id="wiz-group-list" style="margin:8px 0 14px 0;"></div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding-top:14px;border-top:0.5px solid #2c2c30;">
+          <button type="button" onclick="window.__r186SendMenu()" style="background:#f5c878;border:0.5px solid #f5c878;color:#1c1c1f;font-size:12px;padding:7px 14px;border-radius:4px;cursor:pointer;font-weight:600;">📱 メニューカードを送信</button>
+          <span id="info-line-status" style="font-size:11.5px;color:#888;"></span>
+        </div>
+        <details style="margin-top:16px;">
+          <summary style="cursor:pointer;color:#888;font-size:11.5px;list-style:none;">❓ 初めての方へ (Bot 招待手順)</summary>
+          <div style="background:rgba(0,0,0,0.25);border-left:2px solid #444;padding:10px 14px;margin:8px 0;font-size:11.5px;color:#a8a8a0;line-height:1.7;">
+            <p style="margin:4px 0;"><strong>1.</strong> スマホの LINE で <strong>友だち追加</strong> → ID 検索 → <code>@242uoxqo</code> を友だち追加</p>
+            <p style="margin:4px 0;"><strong>2.</strong> この公演用の <strong>スタッフ LINE グループ</strong>を開く (新規でも既存でも可)</p>
+            <p style="margin:4px 0;"><strong>3.</strong> グループメニュー → 「招待」 → 「スタジオのスケジュール」を選んで招待</p>
+            <p style="margin:4px 0;"><strong>4.</strong> Bot が「グループに参加しました」と返信したら、上の「📥 LINE グループ一覧を取得」を押して、表示されたグループの「この公演に使う」をクリック</p>
+          </div>
+        </details>
+        <details style="margin-top:8px;">
+          <summary style="cursor:pointer;color:#888;font-size:11.5px;list-style:none;">🔧 上級者向け (グループ ID を手動入力)</summary>
+          <div style="padding:10px 0;">
+            <input type="text" id="info-line-group-id" placeholder="C1234abcd... (LINE グループ ID)" style="width:100%;background:#0e0e10;border:0.5px solid #2c2c30;color:#e8e8e2;font-size:12px;padding:7px 10px;border-radius:4px;font-family:'JetBrains Mono',monospace;box-sizing:border-box;">
+            <button type="button" onclick="window.__r164SaveGroupId(); if(window.__r405UpdateLineCurrent)window.__r405UpdateLineCurrent();" style="margin-top:8px;background:#2c2c30;border:0.5px solid #444;color:#e8e8e2;font-size:11.5px;padding:6px 12px;border-radius:4px;cursor:pointer;">この公演に紐付け保存</button>
+          </div>
+        </details>
       </div>
       <!-- D123/D124: パスワード認証撤去、placeholder シンプル化 -->
       <div class="info-auth">
@@ -11442,6 +11470,24 @@ function show(id) {
       } catch(e) {}
     }
   }, 500);
+
+  /* R405: INFO タブ LINE 連携セクションの「公演 / 連携グループ」表示更新 */
+  window.__r405UpdateLineCurrent = function() {
+    const el = document.getElementById('info-line-current');
+    if (!el) return;
+    try {
+      const concerts = JSON.parse(localStorage.getItem('schedule-studio:concerts:v1') || '[]');
+      const aid = localStorage.getItem('schedule-studio:active-concert-id');
+      const c = (aid && concerts.find(function(x){return x.id===aid;})) || concerts[0];
+      const title = (c && c.title) || '(公演未選択)';
+      const gid = (c && c.lineGroupId) || '';
+      const safeTitle = String(title).replace(/[&<>]/g, function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[m];});
+      el.innerHTML = '公演: <strong style="color:#e8e8e2;">' + safeTitle + '</strong><br>' +
+        '連携中の LINE グループ: ' + (gid ? '<code style="color:#7ec27a;">' + gid + '</code>' : '<span style="color:#e07a5f;">未紐付け</span>');
+    } catch(e) { el.textContent = '(描画エラー)'; }
+  };
+  /* 起動時に 1 回呼ぶ (DOM 構築後を待つため遅延) */
+  setTimeout(function(){ if (window.__r405UpdateLineCurrent) window.__r405UpdateLineCurrent(); }, 600);
 
   // ────────────────────────────────────────────────────────────
   // R164: 公演ごとの LINE グループ ID 管理
@@ -16419,561 +16465,5 @@ function show(id) {
   </div>
 </div>
 
-<!-- ════════════════════════════════════════════════════════════════
-     R392: LINE 連携セットアップ Wizard
-     ──────────────────────────────────────────────────────────────
-     コード未経験のユーザーでも 30 分で完走できる、迷わない設計。
-     既存の __r125* / __r164* / __r167* / __r186* / __r176* 関数を流用。
-     ════════════════════════════════════════════════════════════════ -->
-<style id="line-wizard-styles">
-  .lw-overlay {
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,0.88);
-    z-index: 99990;
-    display: flex; align-items: center; justify-content: center;
-    backdrop-filter: blur(4px);
-    animation: lw-fade-in 0.18s ease-out;
-  }
-  @keyframes lw-fade-in { from { opacity: 0; } to { opacity: 1; } }
-  .lw-modal {
-    width: 92vw; max-width: 1180px;
-    height: 88vh; max-height: 820px;
-    background: #16161B;
-    border: 0.5px solid #2C2C30;
-    border-radius: 12px;
-    display: flex; flex-direction: column;
-    box-shadow: 0 24px 80px rgba(0,0,0,0.7);
-    overflow: hidden;
-  }
-  .lw-header {
-    padding: 18px 28px;
-    border-bottom: 0.5px solid #2C2C30;
-    display: flex; align-items: center; justify-content: space-between;
-    flex-shrink: 0;
-  }
-  .lw-title { font-size: 17px; font-weight: 600; letter-spacing: 0.04em; color: #f0e0c8; }
-  .lw-title-sub { font-size: 11px; color: #888; margin-top: 2px; font-weight: 400; letter-spacing: 0.02em; }
-  .lw-close {
-    background: transparent; border: 0.5px solid #444;
-    color: #888; width: 32px; height: 32px;
-    border-radius: 6px; cursor: pointer;
-    font-size: 18px; line-height: 1;
-    transition: all 0.15s;
-  }
-  .lw-close:hover { color: #f88; border-color: #844; background: rgba(255,80,80,0.08); }
-  .lw-body { display: grid; grid-template-columns: 260px 1fr; flex: 1; overflow: hidden; }
-  .lw-sidebar {
-    border-right: 0.5px solid #2C2C30;
-    padding: 16px 0;
-    overflow-y: auto;
-    background: rgba(0,0,0,0.18);
-  }
-  .lw-sidebar-head {
-    padding: 0 20px 12px;
-    font-size: 10px; color: #6e6c66;
-    letter-spacing: 0.12em; text-transform: uppercase;
-    border-bottom: 0.5px dashed #2c2c30;
-    margin-bottom: 8px;
-  }
-  .lw-steps { list-style: none; padding: 0; margin: 0; }
-  .lw-step {
-    padding: 11px 20px 11px 22px;
-    font-size: 12.5px; color: #9a9890;
-    cursor: pointer;
-    border-left: 3px solid transparent;
-    transition: all 0.15s;
-    display: flex; align-items: center; gap: 10px;
-    line-height: 1.3;
-  }
-  .lw-step:hover { background: rgba(255,255,255,0.04); color: #e0e0d8; }
-  .lw-step.is-active {
-    border-left-color: #f5c878;
-    color: #f5c878;
-    background: rgba(245,200,120,0.06);
-    font-weight: 600;
-  }
-  .lw-step.is-done { color: #5DCAA5; }
-  .lw-step.is-done.is-active { color: #f5c878; }
-  .lw-step-num {
-    display: inline-flex; align-items: center; justify-content: center;
-    width: 22px; height: 22px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.06);
-    border: 0.5px solid #444;
-    color: inherit;
-    font-size: 10px; font-weight: 600;
-    flex-shrink: 0;
-  }
-  .lw-step.is-done .lw-step-num {
-    background: rgba(93,202,165,0.18);
-    border-color: #5DCAA5; color: #5DCAA5;
-  }
-  .lw-step.is-done .lw-step-num::after { content: '✓'; }
-  .lw-step.is-done .lw-step-num-inner { display: none; }
-  .lw-step.is-active .lw-step-num {
-    background: rgba(245,200,120,0.18);
-    border-color: #f5c878; color: #f5c878;
-  }
-  .lw-content { padding: 28px 40px; overflow-y: auto; color: #d0d0c8; line-height: 1.75; }
-  .lw-content h3 { color: #f0e0c8; margin: 0 0 6px; font-size: 22px; letter-spacing: 0.02em; font-weight: 600; }
-  .lw-content .lw-h-sub { color: #888; font-size: 12px; margin-bottom: 24px; letter-spacing: 0.04em; }
-  .lw-content p { font-size: 14px; margin: 12px 0; }
-  .lw-content strong { color: #f0e0c8; }
-  .lw-content code { background: #0E0E12; border: 0.5px solid #2c2c30; border-radius: 3px; padding: 1px 5px; font-size: 11.5px; color: #f5c878; font-family: 'JetBrains Mono', monospace; }
-  .lw-card { background: rgba(255,255,255,0.03); border: 0.5px solid #2c2c30; border-radius: 8px; padding: 16px 20px; margin: 16px 0; font-size: 13px; line-height: 1.8; }
-  .lw-card-tip { background: rgba(93,202,165,0.06); border: 0.5px solid rgba(93,202,165,0.35); border-radius: 6px; padding: 12px 16px; margin: 12px 0; font-size: 12.5px; color: #b8e0cc; line-height: 1.6; }
-  .lw-card-warn { background: rgba(245,200,120,0.06); border: 0.5px solid rgba(245,200,120,0.35); border-radius: 6px; padding: 12px 16px; margin: 12px 0; font-size: 12.5px; color: #f0d8a8; line-height: 1.6; }
-  .lw-card-error { background: rgba(226,75,74,0.08); border: 0.5px solid rgba(226,75,74,0.45); border-radius: 6px; padding: 12px 16px; margin: 12px 0; font-size: 12.5px; color: #f0a8a8; line-height: 1.6; }
-  .lw-action-row { display: flex; gap: 10px; flex-wrap: wrap; margin: 16px 0; align-items: center; }
-  .lw-btn {
-    padding: 9px 18px;
-    border-radius: 6px;
-    font-size: 12.5px; font-weight: 500;
-    cursor: pointer;
-    border: 0.5px solid #444;
-    background: #1d1d1d; color: #d0d0c8;
-    letter-spacing: 0.03em;
-    transition: all 0.15s;
-    font-family: inherit;
-  }
-  .lw-btn:hover { background: #2a2a2a; border-color: #666; }
-  .lw-btn-primary { background: #c8a878; color: #1a1a1a; border-color: #c8a878; font-weight: 600; }
-  .lw-btn-primary:hover { background: #d8b888; border-color: #d8b888; }
-  .lw-btn-success { background: #2a4a2a; border-color: #5DCAA5; color: #b8e8cc; }
-  .lw-btn-success:hover { background: #335f33; }
-  .lw-btn-ghost { background: transparent; border: 0.5px dashed #666; color: #888; }
-  .lw-btn-ghost:hover { color: #d0d0c8; border-color: #888; border-style: solid; }
-  .lw-input {
-    width: 100%;
-    background: #0E0E12;
-    border: 0.5px solid #2c2c30;
-    border-radius: 6px;
-    padding: 10px 12px;
-    color: #e8e6dc;
-    font-size: 12.5px;
-    font-family: 'JetBrains Mono', 'Consolas', monospace;
-    margin: 8px 0;
-    box-sizing: border-box;
-  }
-  .lw-input:focus { outline: none; border-color: #f5c878; background: #16161B; }
-  .lw-copy-block {
-    background: #0E0E12;
-    border: 0.5px solid #2c2c30;
-    border-radius: 6px;
-    padding: 12px 14px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11.5px;
-    color: #b8b8b0;
-    word-break: break-all;
-    display: flex; align-items: center; gap: 10px;
-    margin: 8px 0;
-  }
-  .lw-copy-block-text { flex: 1; min-width: 0; }
-  .lw-status { font-size: 11.5px; color: #888; padding: 4px 8px; margin-left: 6px; display: inline-block; }
-  .lw-status.is-ok { color: #5DCAA5; }
-  .lw-status.is-err { color: #f88; }
-  .lw-footer {
-    padding: 14px 28px;
-    border-top: 0.5px solid #2C2C30;
-    display: flex; align-items: center; justify-content: space-between;
-    gap: 16px;
-    flex-shrink: 0;
-    background: rgba(0,0,0,0.18);
-  }
-  .lw-progress { font-size: 11px; color: #888; letter-spacing: 0.08em; }
-  .lw-progress-bar { width: 200px; height: 4px; background: #2c2c30; border-radius: 2px; margin: 6px 0 0; overflow: hidden; }
-  .lw-progress-bar-inner { height: 100%; background: linear-gradient(90deg, #5DCAA5, #f5c878); border-radius: 2px; transition: width 0.3s ease; }
-  .lw-diag-list { list-style: none; padding: 0; margin: 16px 0; }
-  .lw-diag-item {
-    display: flex; align-items: center; gap: 12px;
-    padding: 10px 14px;
-    border-radius: 6px;
-    margin: 6px 0;
-    font-size: 13px;
-    background: rgba(255,255,255,0.025);
-    border: 0.5px solid #2c2c30;
-  }
-  .lw-diag-icon {
-    width: 24px; height: 24px; flex-shrink: 0;
-    display: inline-flex; align-items: center; justify-content: center;
-    border-radius: 50%;
-    font-size: 14px; font-weight: 700;
-  }
-  .lw-diag-icon.is-ok { background: rgba(93,202,165,0.18); color: #5DCAA5; border: 0.5px solid #5DCAA5; }
-  .lw-diag-icon.is-ng { background: rgba(226,75,74,0.18); color: #f88; border: 0.5px solid #844; }
-  .lw-diag-icon.is-unknown { background: rgba(255,255,255,0.04); color: #888; border: 0.5px solid #444; }
-  .lw-diag-label { flex: 1; color: #d0d0c8; }
-  .lw-diag-link { color: #f5c878; font-size: 11.5px; text-decoration: none; cursor: pointer; }
-  .lw-diag-link:hover { text-decoration: underline; }
-  .lw-help-toggle {
-    display: inline-block;
-    margin-top: 12px;
-    cursor: pointer;
-    color: #888;
-    font-size: 12px;
-    user-select: none;
-  }
-  .lw-help-toggle:hover { color: #f5c878; }
-  .lw-help-body {
-    background: rgba(0,0,0,0.25);
-    border-left: 2px solid #444;
-    padding: 12px 16px;
-    margin: 10px 0;
-    font-size: 12.5px;
-    color: #a8a8a0;
-    line-height: 1.7;
-    display: none;
-  }
-  .lw-help-body.is-open { display: block; }
-  .lw-completed-banner {
-    background: linear-gradient(135deg, rgba(93,202,165,0.15) 0%, rgba(245,200,120,0.10) 100%);
-    border: 1px solid #5DCAA5;
-    border-radius: 8px;
-    padding: 20px 24px;
-    margin: 16px 0;
-    text-align: center;
-  }
-  .lw-completed-banner .lw-completed-title {
-    color: #5DCAA5;
-    font-size: 22px;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    margin-bottom: 8px;
-  }
-  .lw-completed-banner p { color: #d0d0c8; font-size: 13px; margin: 6px 0; }
-</style>
-
-<div id="wizard-overlay" class="lw-overlay" style="display:none;" onclick="if(event.target===this) window.__wizardClose()">
-  <div class="lw-modal" onclick="event.stopPropagation()">
-    <header class="lw-header">
-      <div>
-        <div class="lw-title">🔧 LINE 連携セットアップ</div>
-        <div class="lw-title-sub">SCHEDULE STUDIO Bot との連携を順番に設定 — 迷ったら左側のステップをクリック</div>
-      </div>
-      <button class="lw-close" onclick="window.__wizardClose()" title="閉じる">×</button>
-    </header>
-    <div class="lw-body">
-      <aside class="lw-sidebar">
-        <div class="lw-sidebar-head">セットアップステップ</div>
-        <ol class="lw-steps" id="lw-steps"></ol>
-      </aside>
-      <main class="lw-content" id="lw-content"></main>
-    </div>
-    <footer class="lw-footer">
-      <div>
-        <button class="lw-btn lw-btn-ghost" onclick="window.__wizardPrev()">← 前のステップ</button>
-      </div>
-      <div style="text-align:center;">
-        <div class="lw-progress" id="lw-progress">Step 1 / 6</div>
-        <div class="lw-progress-bar"><div class="lw-progress-bar-inner" id="lw-progress-bar" style="width:17%;"></div></div>
-      </div>
-      <!-- R404: フッタ「次のステップ」削除 (各 Step content 内に「完了 → 次へ」ボタンがあるので二重ボタン構造を解消) -->
-      <div></div>
-    </footer>
-  </div>
-</div>
-
-<script id="line-wizard-js">
-(function(){
-  'use strict';
-  const state = {
-    currentStep: 0,
-    diagnosed: false,
-    status: {},
-    gasTestPassed: false,  /* R395: Step 5 通信テスト成功フラグ。「次へ」ブロックに使う */
-    steps: [
-      { id: 1, title: 'LINE 公式アカウント + Messaging API', icon: '①' },
-      { id: 2, title: 'トークン取得 + GAS デプロイ',         icon: '②' },
-      { id: 3, title: 'pc-edit に GAS URL 貼る',             icon: '③' },
-      { id: 4, title: 'LINE Developers に Webhook 登録',     icon: '④' },
-      { id: 5, title: 'Bot を LINE グループに招待',          icon: '⑤' },
-      { id: 6, title: 'テスト送信 → 完了',                   icon: '🎉' },
-    ],
-  };
-
-  function getCurrentConcert() {
-    try {
-      /* R393: 他箇所は全て `schedule-studio:concerts:v1` を読む。
-         `:v1` 抜けだと公演一覧が空扱いになり、診断の groupId が常に null になる */
-      const concerts = JSON.parse(localStorage.getItem('schedule-studio:concerts:v1') || '[]');
-      const activeId = localStorage.getItem('schedule-studio:active-concert-id');
-      return concerts.find(x => x.id === activeId) || concerts[0] || null;
-    } catch (e) { return null; }
-  }
-  function getCurrentConcertLineGroupId() {
-    const c = getCurrentConcert();
-    return c && c.lineGroupId ? c.lineGroupId : null;
-  }
-  function getCurrentConcertTitle() {
-    const c = getCurrentConcert();
-    return c && c.title ? c.title : '(公演未選択)';
-  }
-
-  function diagnose() {
-    const status = {};
-    const gasUrl = localStorage.getItem('schedule-studio:line-gas-url') || '';
-    const groupId = getCurrentConcertLineGroupId();
-    /* R404: 統合 — Step 1 (旧1+2) は LINE Manager 系 2 つ揃って完了 */
-    status[1] = !!localStorage.getItem('schedule-studio:wiz-official-confirmed')
-             && !!localStorage.getItem('schedule-studio:wiz-messaging-api-confirmed');
-    /* R404: 統合 — Step 2 (旧3+4) はトークン取得 + GAS デプロイ揃って完了 */
-    status[2] = !!localStorage.getItem('schedule-studio:line-token-confirmed')
-             && !!localStorage.getItem('schedule-studio:wiz-gas-deployed-confirmed');
-    status[3] = !!gasUrl;
-    status[4] = !!localStorage.getItem('schedule-studio:wiz-webhook-confirmed');
-    status[5] = !!groupId;
-    status[6] = !!localStorage.getItem('schedule-studio:line-test-passed');
-    state.status = status;
-    state.diagnosed = true;
-  }
-
-  function nextUnfinishedStep() {
-    for (let i = 1; i <= 6; i++) {
-      if (!state.status[i]) return i;
-    }
-    return 6;
-  }
-
-  window.__wizardOpen = function() {
-    diagnose();
-    /* R404: 旧 Step 0 (自動診断) 廃止 — 次にやるべき未完了 Step に自動ジャンプ。
-       nextUnfinishedStep は 1-6 (1-based)、currentStep は 0-5 (0-based) なので -1 する */
-    const nextIdx = nextUnfinishedStep() - 1;
-    state.currentStep = Math.max(0, Math.min(5, nextIdx));
-    state.gasTestPassed = false;  /* R395: 開くたびに通信テスト要再実行 */
-    document.getElementById('wizard-overlay').style.display = 'flex';
-    document.body.style.overflow = 'hidden';
-    render();
-  };
-  window.__wizardClose = function() {
-    document.getElementById('wizard-overlay').style.display = 'none';
-    document.body.style.overflow = '';
-  };
-  /* R395: Step 5 通信テスト成功/失敗を state に記録、「次へ」ガードに使う */
-  window.__wizardSetTestPassed = function(v) { state.gasTestPassed = !!v; };
-  window.__wizardCanNext = function() { return state.gasTestPassed; };
-  window.__wizardNext = function() {
-    if (state.currentStep < state.steps.length - 1) {
-      state.currentStep++;
-      render();
-    }
-  };
-  window.__wizardPrev = function() {
-    if (state.currentStep > 0) {
-      state.currentStep--;
-      render();
-    }
-  };
-  window.__wizardJump = function(idx) {
-    if (idx >= 0 && idx < state.steps.length) {
-      state.currentStep = idx;
-      render();
-    }
-  };
-  window.__wizardMarkDone = function(stepIdx) {
-    /* R404: 新 index 用、旧 1+2 と 3+4 は配列で複数キーを同時セット */
-    const keys = {
-      1: ['schedule-studio:wiz-official-confirmed', 'schedule-studio:wiz-messaging-api-confirmed'],
-      2: ['schedule-studio:line-token-confirmed', 'schedule-studio:wiz-gas-deployed-confirmed'],
-      4: ['schedule-studio:wiz-webhook-confirmed'],
-      6: ['schedule-studio:line-test-passed'],
-    };
-    if (keys[stepIdx]) {
-      keys[stepIdx].forEach(function(k){ localStorage.setItem(k, '1'); });
-      diagnose();
-    }
-  };
-  /* R404: __wizardReset 削除 (旧 content_0 から呼ばれていたが、Step 0 廃止により呼び出し元が消えた。
-     社員運用で誤って進捗マークを消すリスクもあるため、関数定義ごと削除) */
-  window.__wizardToggleHelp = function(id) {
-    const el = document.getElementById(id);
-    if (el) el.classList.toggle('is-open');
-  };
-
-  function escapeHtml(s){return String(s||'').replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]));}
-  /* R404: escapeAttr は escapeHtml と完全同一実装だったので alias 化 */
-  const escapeAttr = escapeHtml;
-
-  /* R404: 旧 content_0 (自動診断) 削除。__wizardOpen で次の未完了 Step に直接ジャンプする方式に変更 */
-
-  function content_1() {
-    return '<h3>① LINE 公式アカウント + Messaging API</h3>'
-      + '<div class="lw-h-sub">公式アカウントを作って、Messaging API (Bot 機能) を有効化</div>'
-      + '<p>SCHEDULE STUDIO 用に <strong>LINE 公式アカウント</strong> を作成し、続けて <strong>Messaging API</strong> を有効化します。LINE Manager で 1 セッションで完結。</p>'
-      + '<div class="lw-card"><strong>手順 (LINE Manager で):</strong><br>'
-      + '1. 下の「LINE Manager を開く」を押す → LINE アカウントでログイン<br>'
-      + '2. アカウントがなければ「新規アカウント作成」(例: 「スタジオのスケジュール」)<br>'
-      + '3. 右上「⚙ 設定」→ 左メニュー「Messaging API」<br>'
-      + '4. 「Messaging API を利用する」→ プロバイダー選択 or 新規作成 (例: nrs2013) → 同意して有効化<br>'
-      + '5. 「ステータス: 利用中」になれば完了</div>'
-      + '<div class="lw-action-row">'
-      + '<button class="lw-btn lw-btn-primary" onclick="window.open(\'https://manager.line.biz/\',\'_blank\')">LINE Manager を開く</button>'
-      + '<button class="lw-btn lw-btn-success" onclick="__wizardMarkDone(1); __wizardNext()">① 完了とする → 次へ</button>'
-      + '</div>'
-      + '<div class="lw-help-toggle" onclick="__wizardToggleHelp(\'help-1\')">❓ アカウント作成 / Messaging API のボタンが見つからない</div>'
-      + '<div class="lw-help-body" id="help-1">'
-      + '<p><strong>アカウント未作成の場合:</strong> LINE Manager にログイン後、「新規アカウント作成」→ アカウント名と業種を入力。</p>'
-      + '<p><strong>Messaging API ボタンが見つからない場合:</strong> 画面右上の「⚙ 設定」→ 左メニューの「Messaging API」を開く。既に有効化済みなら「ステータス: 利用中」と表示。</p>'
-      + '</div>';
-  }
-
-  function content_2() {
-    return '<h3>② トークン取得 + GAS デプロイ</h3>'
-      + '<div class="lw-h-sub">LINE Developers でトークン発行 → GAS にコードを貼ってデプロイ</div>'
-      + '<p>LINE Developers で <strong>長期チャネルアクセストークン</strong> を発行 → コピーし、続けて GAS に Bot コードを貼り付け、トークンを埋め込んでデプロイします。</p>'
-      + '<div class="lw-card"><strong>パート A: トークン発行 (LINE Developers で)</strong><br>'
-      + '1. 「LINE Developers を開く」→ プロバイダー (例: nrs2013) → SCHEDULE STUDIO チャネル<br>'
-      + '2. 上タブ「Messaging API 設定」<br>'
-      + '3. ページ下部「チャネルアクセストークン(長期)」の「発行」or「再発行」<br>'
-      + '4. 表示されたトークンを「コピー」ボタンでコピー</div>'
-      + '<div class="lw-card-warn">⚠️ <strong>トークンは絶対にスクショに映さない、他人に見せない</strong>。漏れた場合は再発行で即無効化できます。</div>'
-      + '<div class="lw-action-row">'
-      + '<button class="lw-btn lw-btn-primary" onclick="window.open(\'https://developers.line.biz/console/\',\'_blank\')">LINE Developers を開く</button>'
-      + '</div>'
-      + '<hr style="border:none;border-top:0.5px solid #2c2c30;margin:18px 0;">'
-      + '<div class="lw-card"><strong>パート B: GAS デプロイ</strong><br>'
-      + '1. 「GAS を開く」→「新しいプロジェクト」<br>'
-      + '2. デフォルトの <code>function myFunction()</code> を全部削除<br>'
-      + '3. 下の「GAS に貼るコードを表示」でコードをコピー → GAS に貼り付け<br>'
-      + '4. 1 行目あたりの <code>CHANNEL_ACCESS_TOKEN = \'...\'</code> の中身を、パート A でコピーしたトークンに置き換え<br>'
-      + '5. プロジェクト名を「SCHEDULE STUDIO LINE Bot」等に rename<br>'
-      + '6. 右上「デプロイ」→「新しいデプロイ」→ 種類「ウェブアプリ」<br>'
-      + '7. アクセス権「全員」(必ず！) → デプロイ<br>'
-      + '8. 表示された「ウェブアプリ URL」をコピー (次の Step ③ で使う)</div>'
-      + '<div class="lw-action-row">'
-      + '<button class="lw-btn lw-btn-primary" onclick="window.open(\'https://script.google.com/home\',\'_blank\')">GAS を開く</button>'
-      + '<button class="lw-btn" onclick="if(typeof window.__r167ShowGasCode===\'function\') window.__r167ShowGasCode(); else alert(\'既存の GAS コード表示機能が見つかりません。INFO タブの 3-b ボタンを使ってください。\')">📋 GAS に貼るコードを表示 (コピーボタン付き)</button>'
-      + '<button class="lw-btn lw-btn-success" onclick="__wizardMarkDone(2); __wizardNext()">② トークン + デプロイ完了 → 次へ</button>'
-      + '</div>'
-      + '<div class="lw-help-toggle" onclick="__wizardToggleHelp(\'help-2\')">❓ 「アクセスできるユーザー」がよく分からない / Webhook 検証で失敗する</div>'
-      + '<div class="lw-help-body" id="help-2"><p>デプロイ時の「アクセスできるユーザー」は必ず <strong>「全員」</strong> にしてください。「自分のみ」or「ドメイン内のみ」になっていると、LINE 側から Webhook を呼べないため、後で Step ④ の検証で失敗します。</p><p>失敗した場合は GAS の「デプロイを管理」→ 鉛筆アイコン → 設定変更 → 新バージョンでデプロイ。</p></div>';
-  }
-
-  function content_3() {
-    const gasUrl = localStorage.getItem('schedule-studio:line-gas-url') || '';
-    return '<h3>③ pc-edit に GAS の URL を貼る</h3>'
-      + '<div class="lw-h-sub">Step ② でコピーしたウェブアプリ URL を pc-edit に登録</div>'
-      + '<p>Step ② でコピーした <code>https://script.google.com/macros/s/.../exec</code> 形式の URL を貼り付けます。</p>'
-      + '<input type="text" class="lw-input" id="wiz-gas-url-input" placeholder="https://script.google.com/macros/s/.../exec" value="' + escapeAttr(gasUrl) + '">'
-      + '<div class="lw-action-row">'
-      + '<button class="lw-btn lw-btn-primary" onclick="(function(){var v=document.getElementById(\'wiz-gas-url-input\').value.trim();if(!v){alert(\'URL を入力してください\');return;}if(!/^https:\\/\\/script\\.google\\.com\\/macros\\//.test(v)){alert(\'GAS のウェブアプリ URL ではないようです。\\n正しい形式: https://script.google.com/macros/s/.../exec\');return;}localStorage.setItem(\'schedule-studio:line-gas-url\', v);var inp=document.getElementById(\'info-line-gas-url\'); if(inp) inp.value=v;window.__wizardSetTestPassed(false);alert(\'保存しました — 続けて 🩺 通信テスト を実行してください\');})()">保存</button>'
-      + '<button class="lw-btn" onclick="(async function(){var url=document.getElementById(\'wiz-gas-url-input\').value.trim();if(!url){alert(\'URL を入力 → 保存してから\');return;}var status=document.getElementById(\'wiz-gas-test-status\');status.textContent=\'送信中...\';status.className=\'lw-status\';try{var res=await fetch(url+\'?cb=\'+Date.now());var text=await res.text();if(text.indexOf(\'is running\')>=0){status.textContent=\'✅ 通信成功 — 次へ進めます\';status.className=\'lw-status is-ok\';window.__wizardSetTestPassed(true);}else{status.textContent=\'⚠️ 想定外の応答: \'+text.slice(0,60);status.className=\'lw-status is-err\';window.__wizardSetTestPassed(false);}}catch(e){status.textContent=\'❌ 通信失敗: \'+e.message;status.className=\'lw-status is-err\';window.__wizardSetTestPassed(false);}})()">🩺 通信テスト</button>'
-      + '<span class="lw-status" id="wiz-gas-test-status"></span>'
-      + '</div>'
-      + '<div class="lw-action-row">'
-      + '<button class="lw-btn lw-btn-success" onclick="if(!window.__wizardCanNext()){alert(\'先に 🩺 通信テスト で ✅ を出してください。\\n失敗のまま進めると Step ④・⑤・⑥ が動きません\');return;}__wizardNext()">③ 完了 → 次へ</button>'
-      + '</div>'
-      + '<div class="lw-help-toggle" onclick="__wizardToggleHelp(\'help-3\')">❓ 通信テストで失敗する</div>'
-      + '<div class="lw-help-body" id="help-3"><p>「❌ 通信失敗」の場合、Step ② のデプロイで「アクセスできるユーザー」が「全員」になっていない可能性が高いです。</p><p>GAS の「デプロイを管理」→ 鉛筆アイコン → 設定変更 → 新バージョンでデプロイし直してください。</p><p>「⚠️ 想定外の応答」の場合、コードが正しく貼れていない or トークンの置換ミスが考えられます。Step ② をやり直してください。</p></div>';
-  }
-
-  function content_4() {
-    const gasUrl = localStorage.getItem('schedule-studio:line-gas-url') || '';
-    return '<h3>④ LINE Developers に Webhook URL を登録</h3>'
-      + '<div class="lw-h-sub">Bot がメッセージを受け取れるように設定</div>'
-      + '<p>Step ② の GAS URL を LINE 側の「Webhook URL」として登録します。</p>'
-      + (gasUrl
-        ? '<div class="lw-copy-block"><span class="lw-copy-block-text">' + escapeHtml(gasUrl) + '</span><button class="lw-btn" onclick="navigator.clipboard.writeText(\'' + escapeAttr(gasUrl) + '\').then(function(){var b=event.target; b.textContent=\'コピー済 ✓\'; setTimeout(function(){b.textContent=\'コピー\';},1500);})">コピー</button></div>'
-        : '<div class="lw-card-error">⚠️ Step ③ で GAS URL を保存してから戻ってきてください</div>')
-      + '<div class="lw-card"><strong>手順:</strong><br>'
-      + '1. 下の「LINE Developers を開く」<br>'
-      + '2. SCHEDULE STUDIO チャネル → 上タブ「Messaging API 設定」<br>'
-      + '3. 「Webhook URL」の欄に上の URL を貼り付け → 「更新」<br>'
-      + '4. 「Webhook の利用」を <strong>ON</strong> に<br>'
-      + '5. 「検証」ボタンを押して「成功」が出れば OK</div>'
-      + '<div class="lw-card-warn">⚠️ 同じ Messaging API 設定ページの少し上にある <strong>「応答メッセージ」を OFF</strong>、<strong>「あいさつメッセージ」を OFF</strong> も忘れずに (Bot が雑談に勝手に返事しないように)。</div>'
-      + '<div class="lw-action-row">'
-      + '<button class="lw-btn lw-btn-primary" onclick="window.open(\'https://developers.line.biz/console/\',\'_blank\')">LINE Developers を開く</button>'
-      + '<button class="lw-btn lw-btn-success" onclick="__wizardMarkDone(4); __wizardNext()">④ Webhook 検証成功 → 次へ</button>'
-      + '</div>';
-  }
-
-  function content_5() {
-    const c = getCurrentConcert();
-    const groupId = c && c.lineGroupId ? c.lineGroupId : '';
-    return '<h3>⑤ Bot を LINE グループに招待 + 紐付け</h3>'
-      + '<div class="lw-h-sub">公演ごとに別のスタッフ LINE グループに紐付けられます</div>'
-      + '<p>現在の公演 <strong>「' + escapeHtml(getCurrentConcertTitle()) + '」</strong> 用のスタッフ LINE グループに Bot を招待します。</p>'
-      + '<div class="lw-card"><strong>スマホで行う手順:</strong><br>'
-      + '1. LINE で <strong>友だち追加</strong> → ID 検索 → <code>@242uoxqo</code> を検索 → 友だち追加<br>'
-      + '2. この公演用の <strong>スタッフ LINE グループ</strong>を開く (既存 or 新規)<br>'
-      + '3. グループメニュー → 「招待」 → 「スタジオのスケジュール」を選んで招待<br>'
-      + '4. Bot が「グループに参加しました」とメッセージを送れば成功<br>'
-      + '5. pc-edit に戻って下の「グループ一覧を取得」を押す</div>'
-      + '<div class="lw-action-row">'
-      + '<button class="lw-btn lw-btn-primary" onclick="(function(){if(typeof window.__r164ListGroups===\'function\'){window.__r164ListGroups();}else{var s=document.getElementById(\'wiz-group-list-status\');s.textContent=\'❌ 既存機能が見つかりません\';s.className=\'lw-status is-err\';}})()">📥 グループ一覧を取得</button>'
-      + '<span class="lw-status" id="wiz-group-list-status"></span>'
-      + '</div>'
-      /* R394: Wizard 内にグループ一覧表示エリアを追加 (旧 UI にしか出なかった問題の修正) */
-      + '<div id="wiz-group-list" style="margin-top:10px;"></div>'
-      /* R404: 手貼り欄を <details> で折りたたみ (R393 で自動セットされるようになったので普段は使わない) */
-      + '<details style="margin-top:18px;"><summary style="cursor:pointer;color:#888;font-size:12px;">🔧 グループ ID を手動で貼る (上の「一覧から選ぶ」で埋まらない時のみ)</summary>'
-      + '<p style="margin-top:10px;">この公演に紐付ける LINE グループ ID を貼ってください:</p>'
-      + '<input type="text" class="lw-input" id="wiz-group-id-input" placeholder="C1234abcd... (LINE グループ ID)" value="' + escapeAttr(groupId) + '">'
-      + '</details>'
-      + '<div class="lw-action-row">'
-      /* R404: 「保存」と「次へ」を 1 ボタンに統合: 紐付け保存して次へ */
-      + '<button class="lw-btn lw-btn-success" onclick="(function(){var v=document.getElementById(\'wiz-group-id-input\').value.trim();if(!v){alert(\'グループ ID が空です。上の「📥 グループ一覧を取得」→「この公演に使う」をクリックしてください\');return;}var inp=document.getElementById(\'info-line-group-id\'); if(inp){inp.value=v;}if(typeof window.__r164SaveGroupId===\'function\'){window.__r164SaveGroupId();}__wizardNext();})()">⑤ この公演に紐付けて次へ</button>'
-      + '</div>';
-  }
-
-  function content_6() {
-    /* R404: 完了バナーは line-test-passed フラグが立った時のみ表示 (フライング解消) */
-    const testPassed = !!localStorage.getItem('schedule-studio:line-test-passed');
-    return '<h3>⑥ テスト送信 → セットアップ完了</h3>'
-      + '<div class="lw-h-sub">最後に、実際の LINE グループにテストメッセージを送って動作確認</div>'
-      + '<p>下のボタンで <strong>「' + escapeHtml(getCurrentConcertTitle()) + '」</strong> に紐付けた LINE グループに、メニューカードを試送します。</p>'
-      + '<div class="lw-action-row">'
-      /* R404: ping テストボタン削除 (Step ③ 通信テストと役割被り) */
-      + '<button class="lw-btn lw-btn-primary" onclick="(function(){if(typeof window.__r186SendMenu===\'function\'){window.__r186SendMenu();setTimeout(function(){if(confirm(\'LINE グループにメニューカードは届きましたか？\')){__wizardMarkDone(6);alert(\'🎉 セットアップ完了！INFO タブから配信できます。\');render();}},1500);}else{alert(\'既存のメニュー送信機能が見つかりません\');}})()">📱 メニューカードを送信</button>'
-      + '</div>'
-      + (testPassed
-        ? '<div class="lw-completed-banner" style="margin-top:24px;">'
-          + '<div class="lw-completed-title">🎉 セットアップ完了!</div>'
-          + '<p>これで INFO タブの「📱 LINE プッシュ送信」が動きます。</p>'
-          + '<p>別の公演を追加するときは、その公演を選んでから再度 Step ⑤ だけ実行してください。</p>'
-          + '</div>'
-        : '<div class="lw-card-tip" style="margin-top:24px;">'
-          + '上の「📱 メニューカードを送信」を押して、LINE グループに届くか確認してください。届けばこのステップが「完了」になります。'
-          + '</div>')
-      + '<div class="lw-action-row">'
-      + '<button class="lw-btn lw-btn-success" onclick="__wizardClose();">完了して閉じる</button>'
-      + '</div>';
-  }
-
-  /* R404: 9 ステップ → 6 ステップに縮約。Step 0 (自動診断) は廃止 → __wizardOpen で次の未完了 Step に自動ジャンプ */
-  const contentFns = [content_1, content_2, content_3, content_4, content_5, content_6];
-
-  function render() {
-    const stepsEl = document.getElementById('lw-steps');
-    const contentEl = document.getElementById('lw-content');
-    const progressEl = document.getElementById('lw-progress');
-    const progressBarEl = document.getElementById('lw-progress-bar');
-
-    stepsEl.innerHTML = state.steps.map(function(s, i){
-      var cls = [];
-      if (i === state.currentStep) cls.push('is-active');
-      /* R404: 新 index — contentFns の i 番目 = state.steps の i 番目 = state.status の (i+1) 番目 */
-      if (state.status[i + 1]) cls.push('is-done');
-      var isDone = state.status[i + 1];
-      var num = isDone ? '' : '<span class="lw-step-num-inner">' + s.icon + '</span>';
-      return '<li class="lw-step ' + cls.join(' ') + '" onclick="__wizardJump(' + i + ')">'
-        + '<span class="lw-step-num">' + num + '</span>'
-        + '<span>' + escapeHtml(s.title) + '</span>'
-        + '</li>';
-    }).join('');
-
-    try {
-      contentEl.innerHTML = contentFns[state.currentStep]();
-    } catch (e) {
-      contentEl.innerHTML = '<div class="lw-card-error">レンダリングエラー: ' + escapeHtml(e.message) + '</div>';
-    }
-    contentEl.scrollTop = 0;
-
-    progressEl.textContent = 'Step ' + (state.currentStep + 1) + ' / ' + state.steps.length;
-    progressBarEl.style.width = ((state.currentStep + 1) / state.steps.length * 100) + '%';
-  }
-})();
-</script>
 </body>
 </html>
