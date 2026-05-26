@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260525.395000">
+<meta name="build-version" content="20260525.396000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -5575,6 +5575,9 @@
     font-feature-settings: 'tnum', 'palt';
     box-shadow: inset 0 1px 0 rgba(255,255,255,0.14), 0 1px 3px rgba(0,0,0,0.30);
     transition: transform 0.18s cubic-bezier(0.4,0,0.2,1), box-shadow 0.18s cubic-bezier(0.4,0,0.2,1), filter 0.18s ease, background 0.18s ease;
+    /* R396: GPU レイヤー化で hover/drag を滑らかに。contain で再描画範囲を制限。 */
+    will-change: transform;
+    contain: layout style paint;
     z-index: 5;
   }
   /* R281e-D: 選択中は hover の浮き上がりを抑制（amber リングと二重に動かない） */
@@ -5583,6 +5586,21 @@
     filter: brightness(1.10);
     box-shadow: inset 0 1px 0 rgba(255,255,255,0.22), 0 4px 12px rgba(0,0,0,0.45);
     z-index: 8;
+  }
+  /* R396: ドラッグ／リサイズ中は transition と hover の浮き上がりを完全に切る。
+     transition: transform 0.18s が効いてると、毎フレームの位置更新が 180ms 遅れて
+     追従する → カクつきの主因。drag class が body に付いてる間だけ disable。 */
+  body.tt-dragging .tt-bar,
+  body.tt-resizing .tt-bar,
+  body.tt-resizing-v .tt-bar {
+    transition: none !important;
+  }
+  body.tt-dragging .tt-bar:hover,
+  body.tt-resizing .tt-bar:hover,
+  body.tt-resizing-v .tt-bar:hover {
+    transform: none !important;
+    filter: none !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.14), 0 1px 3px rgba(0,0,0,0.30) !important;
   }
   /* R281b: 個別バーの hover/selected で文字をバー外にこぼさない。
      ellipsis のまま収め、フルテキストは tooltip(el.title) で確認できる */
@@ -14004,24 +14022,42 @@ function show(id) {
     if (body.__bound) return;
     body.__bound = true;
     // R246: マウスホバー時刻インジケータ
+    // R396: requestAnimationFrame で 60fps に同期。120Hz モニタや高頻度マウスで
+    //       mousemove が毎秒 1000 回飛んできても、描画は毎秒 60 回に束ねる。
+    let __hoverRectCache = null;
+    let __hoverPendingEv = null;
+    let __hoverRafScheduled = false;
     body.addEventListener('mousemove', function(e){
       if (e.buttons) return; // ドラッグ中は表示しない
-      const scale = getPaperScale();
-      const rect = body.getBoundingClientRect();
-      const x = (e.clientX - rect.left) / scale;
-      if (x < 0) return;
-      const t = snapTime(pixelToTime(x, tt), tt.timeStart);
-      const px = timeToPixel(t, tt);
-      let cur = body.__hoverCur;
-      if (!cur) {
-        cur = document.createElement('div');
-        cur.className = 'tt-hover-cursor';
-        body.appendChild(cur);
-        body.__hoverCur = cur;
-      }
-      cur.style.left = px + 'px';
-      cur.setAttribute('data-time', fmtTimeFromHour(t));
+      __hoverPendingEv = e;
+      if (__hoverRafScheduled) return;
+      __hoverRafScheduled = true;
+      requestAnimationFrame(function(){
+        __hoverRafScheduled = false;
+        const ev = __hoverPendingEv;
+        __hoverPendingEv = null;
+        if (!ev) return;
+        const scale = getPaperScale();
+        if (!__hoverRectCache) __hoverRectCache = body.getBoundingClientRect();
+        const rect = __hoverRectCache;
+        const x = (ev.clientX - rect.left) / scale;
+        if (x < 0) return;
+        const t = snapTime(pixelToTime(x, tt), tt.timeStart);
+        const px = timeToPixel(t, tt);
+        let cur = body.__hoverCur;
+        if (!cur) {
+          cur = document.createElement('div');
+          cur.className = 'tt-hover-cursor';
+          body.appendChild(cur);
+          body.__hoverCur = cur;
+        }
+        cur.style.transform = 'translateX(' + px + 'px)';
+        cur.setAttribute('data-time', fmtTimeFromHour(t));
+      });
     });
+    // R396: scroll/resize 時に rect キャッシュを破棄
+    body.addEventListener('scroll', function(){ __hoverRectCache = null; }, { passive: true });
+    window.addEventListener('resize', function(){ __hoverRectCache = null; }, { passive: true });
     body.addEventListener('mouseleave', function(){
       if (body.__hoverCur) { body.__hoverCur.remove(); body.__hoverCur = null; }
     });
