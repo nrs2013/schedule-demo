@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260525.398000">
+<meta name="build-version" content="20260525.399000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -5050,12 +5050,13 @@
   .tt-side-toolbar .tt-btn { text-align: center; }
   .tt-paper {
     /* R356: 編集画面は A4 比率の縛りを外して横幅を画面いっぱいに。
-       縦は (100vh - 上下 UI) で詰める。PDF 出力 (buildTtPdfPageHtml) は A4 比率
-       で別経路生成しているのでこの変更は影響なし。 */
+       R399: 高さを固定 (calc 100vh) から「最低 viewport 高さ + 中身に応じて伸びる」に変更。
+       セクション行が min-height で広がった時、画面に収まらなければ tt-paper-stage (overflow:auto)
+       で縦スクロール。PDF/印刷は @media print で別途上書きされる。 */
     width: 100%;
     max-width: calc(100vw - 32px);
-    height: calc(100vh - 190px);
-    min-height: 420px;
+    min-height: calc(100vh - 190px);
+    height: auto;
     flex: 0 0 auto;
     background: #1a1a1a;
     border: 1px solid #2c2c2c;
@@ -5069,7 +5070,8 @@
     position: relative;
     border-radius: 8px;
   }
-  .tt-paper .tt-grid { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+  /* R399: 中身が tt-paper の高さを越えてもはみ出しを許す (親の tt-paper-stage が縦スクロール) */
+  .tt-paper .tt-grid { flex: 1; min-height: 0; overflow: visible; display: flex; flex-direction: column; }
   /* R353: 編集画面では A4 を最大化するため、紙の中ヘッダ/フッタとヘルプを非表示。
      PDF 出力は別経路 (buildTtPdfPageHtml) なので影響なし。 */
   #mode-timetable .tt-paper-header,
@@ -5449,6 +5451,12 @@
     position: relative;
   }
   .tt-sec-row:last-child { border-bottom: none; }
+  /* R399: 編集画面でセクション行の最低高さを保証 — バー操作の余裕を確保。
+     lanes 別に段階的に大きく。印刷時は @media print の min-height:0 !important で上書きされ
+     A4 1 枚に等分配される (PDF/Cmd+P 共通)。 */
+  .tt-paper .tt-sec-row[data-lanes="1"] { min-height: 80px; }
+  .tt-paper .tt-sec-row[data-lanes="2"] { min-height: 130px; }
+  .tt-paper .tt-sec-row[data-lanes="3"] { min-height: 180px; }
   /* R390-2: セクション下端のリサイズハンドル — ドラッグで lanes 増減 */
   .tt-sec-resize {
     position: absolute;
@@ -14764,7 +14772,8 @@ function show(id) {
     tt.sections.forEach(function(sec){
       const rowH = LANE_H * sec.lanes;
       /* R390-2: 下端に lanes リサイズハンドルを足す */
-      html += '<div class="tt-sec-row" style="display:grid; grid-template-columns:' + LABEL_W + 'px ' + axisW + 'px ' + ADD_W + 'px;" data-sec-id="' + escapeHtml(sec.id) + '">';
+      /* R399: data-lanes 属性で CSS の min-height を切替 (1→80px / 2→130px / 3→180px) */
+      html += '<div class="tt-sec-row" style="display:grid; grid-template-columns:' + LABEL_W + 'px ' + axisW + 'px ' + ADD_W + 'px;" data-sec-id="' + escapeHtml(sec.id) + '" data-lanes="' + (sec.lanes || 1) + '">';
       // resize ハンドルは行末で append する（grid 内に置くと崩れるので、JS で append）
       html += '<div class="tt-sec-label">';
       // R256: ドラッグハンドル（並び替え用）
