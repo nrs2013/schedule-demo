@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260527.408000">
+<meta name="build-version" content="20260527.409000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -210,6 +210,7 @@
   const FB_SYNC_EXCLUDE = new Set([
     'schedule-studio:line-test-passed',
     'schedule-studio:line-group-hidden',
+    'schedule-studio:line-group-names',
   ]);
   function shouldSyncFb(key) {
     return typeof key === 'string' && key.indexOf('schedule-studio:') === 0 && !FB_SYNC_EXCLUDE.has(key);
@@ -11479,7 +11480,8 @@ function show(id) {
     }
   }, 500);
 
-  /* R405: INFO タブ LINE 連携セクションの「公演 / 連携グループ」表示更新 */
+  /* R405: INFO タブ LINE 連携セクションの「公演 / 連携グループ」表示更新
+     R409: グループ ID だけでなく名前も併記。listGroups で取得した names マップから引く。 */
   window.__r405UpdateLineCurrent = function() {
     const el = document.getElementById('info-line-current');
     if (!el) return;
@@ -11489,9 +11491,21 @@ function show(id) {
       const c = (aid && concerts.find(function(x){return x.id===aid;})) || concerts[0];
       const title = (c && c.title) || '(公演未選択)';
       const gid = (c && c.lineGroupId) || '';
-      const safeTitle = String(title).replace(/[&<>]/g, function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[m];});
-      el.innerHTML = '公演: <strong style="color:#e8e8e2;">' + safeTitle + '</strong><br>' +
-        '連携中の LINE グループ: ' + (gid ? '<code style="color:#7ec27a;">' + gid + '</code>' : '<span style="color:#e07a5f;">未紐付け</span>');
+      let names = {};
+      try { names = JSON.parse(localStorage.getItem('schedule-studio:line-group-names') || '{}'); } catch(_) {}
+      const groupName = gid ? (names[gid] || '') : '';
+      const esc = function(s){ return String(s).replace(/[&<>]/g, function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[m];}); };
+      let groupHtml;
+      if (gid) {
+        const namePart = groupName
+          ? '<strong style="color:#7ec27a;">' + esc(groupName) + '</strong> '
+          : '<span style="color:#888;font-style:italic;font-size:11px;">(名前未取得 — 一覧を取得すると更新)</span> ';
+        groupHtml = namePart + '<code style="color:#888;font-size:11px;">' + esc(gid) + '</code>';
+      } else {
+        groupHtml = '<span style="color:#e07a5f;">未紐付け</span>';
+      }
+      el.innerHTML = '公演: <strong style="color:#e8e8e2;">' + esc(title) + '</strong><br>' +
+        '連携中の LINE グループ: ' + groupHtml;
     } catch(e) { el.textContent = '(描画エラー)'; }
   };
   /* 起動時に 1 回呼ぶ (DOM 構築後を待つため遅延) */
@@ -11637,6 +11651,13 @@ function show(id) {
         return;
       }
       const allGroups = data.groups || [];
+      /* R409: グループ名マップを localStorage に保存 → __r405UpdateLineCurrent で「名前 (ID)」併記に使う */
+      try {
+        const nameMap = {};
+        allGroups.forEach(function(g){ if (g && g.id) nameMap[g.id] = g.name || ''; });
+        localStorage.setItem('schedule-studio:line-group-names', JSON.stringify(nameMap));
+        if (window.__r405UpdateLineCurrent) window.__r405UpdateLineCurrent();
+      } catch(_) {}
       /* R408: ローカル隠し — ユーザが「× 隠す」したグループは表示から除外。
          GAS 側のデータは触らない (LINE 側で Bot を退会させると GAS 側からも自動で消える)。 */
       let hiddenIds = [];
@@ -11653,7 +11674,10 @@ function show(id) {
         setStatus('✓ ' + allGroups.length + ' 件取得 (' + hiddenCount + ' 隠し)', '#888');
         return;
       }
-      setList('<div style="font-size:11px;color:#888;margin-bottom:4px;">下記からコピーしてグループ ID 欄に貼ってください：</div>' +
+      setList('<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">' +
+        '<div style="font-size:11px;color:#888;">下記からコピーしてグループ ID 欄に貼ってください：</div>' +
+        '<button type="button" onclick="document.getElementById(\'wiz-group-list\').innerHTML=\'\';var s=document.getElementById(\'wiz-group-list-status\');if(s)s.textContent=\'\';var l2=document.getElementById(\'info-line-group-list\');if(l2)l2.innerHTML=\'\';var s2=document.getElementById(\'info-line-group-status\');if(s2)s2.textContent=\'\';" title="一覧を非表示にする (もう一度開きたい時は「📥 LINE グループ一覧を取得」を押す)" style="background:transparent;border:0.5px solid #555;color:#888;font-size:10px;padding:2px 10px;border-radius:3px;cursor:pointer;white-space:nowrap;">× 一覧を閉じる</button>' +
+        '</div>' +
         groups.map(function(g){
           return '<div style="padding:6px 8px;margin:3px 0;background:rgba(255,255,255,0.04);border-radius:4px;">' +
                  '<strong style="color:#e8e8e2;">' + (g.name || '(名前未取得)') + '</strong>' +
@@ -13036,6 +13060,7 @@ function show(id) {
         'schedule-studio:wiz-webhook-confirmed',
         'schedule-studio:line-test-passed',
         'schedule-studio:line-group-hidden',
+        'schedule-studio:line-group-names',
       ];
       const toRemove = [];
       for (let i = 0; i < localStorage.length; i++) {
