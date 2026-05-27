@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260527.411000">
+<meta name="build-version" content="20260527.412000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -7017,45 +7017,50 @@
       <div class="info-header">
         <h2 class="info-title">INFO — お知らせ配信</h2>
       </div>
-      <!-- R405: LINE 連携ミニマル化 — Wizard 廃止、INFO タブに直置き -->
-      <div id="info-line-section" style="background:#1c1c1f;border:0.5px solid #2c2c30;border-radius:8px;padding:18px 20px;margin:0 0 16px 0;">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
-          <h3 style="margin:0;font-size:15px;color:#e8e8e2;font-weight:600;letter-spacing:0.04em;">📱 LINE グループ連携</h3>
-          <span style="font-size:11px;color:#888;">公演ごとに別の LINE スタッフグループに通知できます</span>
+      <!-- R412: Brutalist Vivid 化 — Mono uppercase ラベル + 0.5px 細線ボタン + 英字併記タイトル -->
+      <div id="info-line-section" style="background:#131211;border:0.5px solid rgba(255,255,255,0.08);border-radius:6px;padding:22px 24px;margin:0 0 16px 0;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:20px;padding-bottom:14px;border-bottom:0.5px solid rgba(245,200,120,0.20);gap:12px;flex-wrap:wrap;">
+          <div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.28em;color:#f5c878;text-transform:uppercase;">LINE Bridge</div>
+            <h3 style="margin:5px 0 0 0;font-size:15px;color:#fafaf8;font-weight:600;letter-spacing:0.04em;">LINE グループ連携</h3>
+          </div>
+          <div style="font-size:10px;color:#666;text-align:right;letter-spacing:0.04em;line-height:1.5;">公演ごとに別グループへ<br>通知できます</div>
         </div>
-        <div id="info-line-current" style="font-size:12.5px;color:#a8a8a0;line-height:1.7;margin-bottom:14px;">
+        <div id="info-line-current" style="margin-bottom:18px;">
           <!-- __r405UpdateLineCurrent() で動的に描画 -->
         </div>
-        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px;">
-          <button type="button" onclick="window.__r164ListGroups()" style="background:#2c2c30;border:0.5px solid #444;color:#e8e8e2;font-size:12px;padding:7px 14px;border-radius:4px;cursor:pointer;">📥 LINE グループ一覧を取得</button>
-          <span id="wiz-group-list-status" style="font-size:11.5px;color:#888;"></span>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px;">
+          <button type="button" onclick="window.__r164ListGroups()" style="background:transparent;border:0.5px solid rgba(255,255,255,0.22);color:#fafaf8;font-size:10.5px;padding:8px 14px;border-radius:3px;cursor:pointer;font-family:'JetBrains Mono',monospace;letter-spacing:0.14em;text-transform:uppercase;">📥 Sync Groups</button>
+          <span id="wiz-group-list-status" style="font-size:11px;color:#888;font-family:'JetBrains Mono',monospace;"></span>
         </div>
         <div id="wiz-group-list" style="margin:8px 0 14px 0;"></div>
-        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding-top:14px;border-top:0.5px solid #2c2c30;">
-          <button type="button" onclick="window.__r186SendMenu()" style="background:#f5c878;border:0.5px solid #f5c878;color:#1c1c1f;font-size:12px;padding:7px 14px;border-radius:4px;cursor:pointer;font-weight:600;">📱 メニューカードを送信</button>
-          <span id="info-line-status" style="font-size:11.5px;color:#888;"></span>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding-top:14px;border-top:0.5px solid rgba(255,255,255,0.06);">
+          <button type="button" onclick="window.__r186SendMenu()" style="background:transparent;border:0.5px solid rgba(245,200,120,0.45);color:#f5c878;font-size:10.5px;padding:8px 14px;border-radius:3px;cursor:pointer;font-family:'JetBrains Mono',monospace;letter-spacing:0.14em;text-transform:uppercase;font-weight:500;">📡 Send Menu</button>
+          <span id="info-line-status" style="font-size:11px;color:#888;font-family:'JetBrains Mono',monospace;"></span>
         </div>
-        <details style="margin-top:16px;">
-          <summary style="cursor:pointer;color:#888;font-size:11.5px;list-style:none;">❓ 初めての方へ (Bot 招待手順)</summary>
-          <div style="background:rgba(0,0,0,0.25);border-left:2px solid #444;padding:10px 14px;margin:8px 0;font-size:11.5px;color:#a8a8a0;line-height:1.7;">
-            <p style="margin:4px 0;"><strong>1.</strong> スマホの LINE で <strong>友だち追加</strong> → ID 検索 → <code>@242uoxqo</code> を友だち追加</p>
-            <p style="margin:4px 0;"><strong>2.</strong> この公演用の <strong>スタッフ LINE グループ</strong>を開く (新規でも既存でも可)</p>
-            <p style="margin:4px 0;"><strong>3.</strong> グループメニュー → 「招待」 → 「スタジオのスケジュール」を選んで招待</p>
-            <p style="margin:4px 0;"><strong>4.</strong> Bot が「グループに参加しました」と返信したら、上の「📥 LINE グループ一覧を取得」を押して、表示されたグループの「この公演に使う」をクリック</p>
+        <details style="margin-top:18px;">
+          <summary style="cursor:pointer;list-style:none;font-family:'JetBrains Mono',monospace;font-size:10px;color:#666;letter-spacing:0.22em;text-transform:uppercase;">▸ Setup Guide ／ 初めての方へ</summary>
+          <div style="background:rgba(255,255,255,0.02);border-left:2px solid rgba(245,200,120,0.30);padding:12px 16px;margin:10px 0 0 0;font-size:11.5px;color:#a8a8a0;line-height:1.8;">
+            <p style="margin:4px 0;"><strong style="color:#f5c878;">1.</strong> スマホの LINE で <strong style="color:#fafaf8;">友だち追加</strong> → ID 検索 → <code style="font-family:'JetBrains Mono',monospace;color:#a8e878;">@242uoxqo</code> を友だち追加</p>
+            <p style="margin:4px 0;"><strong style="color:#f5c878;">2.</strong> この公演用の <strong style="color:#fafaf8;">スタッフ LINE グループ</strong> を開く (新規でも既存でも可)</p>
+            <p style="margin:4px 0;"><strong style="color:#f5c878;">3.</strong> グループメニュー → 「招待」 → 「<strong style="color:#fafaf8;">SCHEDULE STUDIO</strong>」を選んで招待</p>
+            <p style="margin:4px 0;"><strong style="color:#f5c878;">4.</strong> Bot が「グループに参加しました」と返信したら、上の <code style="font-family:'JetBrains Mono',monospace;color:#a8e878;">Sync Groups</code> を押して、表示されたグループの「この公演に使う」をクリック</p>
           </div>
         </details>
-        <details style="margin-top:8px;">
-          <summary style="cursor:pointer;color:#888;font-size:11.5px;list-style:none;">🔧 上級者向け (GAS URL と グループ ID を手動入力)</summary>
-          <div style="padding:10px 0;">
+        <details style="margin-top:6px;">
+          <summary style="cursor:pointer;list-style:none;font-family:'JetBrains Mono',monospace;font-size:10px;color:#666;letter-spacing:0.22em;text-transform:uppercase;">▸ Advanced ／ 上級者向け</summary>
+          <div style="padding:14px 0 0 0;">
             <!-- R406: GAS URL 入力欄 (一度保存すれば次回以降不要、Bot のサーバー連絡先) -->
-            <div style="font-size:11px;color:#888;margin-bottom:6px;line-height:1.5;">GAS のウェブアプリ URL <span style="color:#666;">— Bot のサーバー連絡先。一度保存すれば次回以降不要。</span></div>
-            <input type="text" id="info-line-gas-url" placeholder="https://script.google.com/macros/s/.../exec" style="width:100%;background:#0e0e10;border:0.5px solid #2c2c30;color:#e8e8e2;font-size:12px;padding:7px 10px;border-radius:4px;font-family:'JetBrains Mono',monospace;box-sizing:border-box;">
-            <button type="button" onclick="window.__r125SaveLineUrl()" style="margin-top:8px;background:#2c2c30;border:0.5px solid #444;color:#e8e8e2;font-size:11.5px;padding:6px 12px;border-radius:4px;cursor:pointer;">GAS URL を保存</button>
-            <hr style="border:none;border-top:0.5px solid #2c2c30;margin:16px 0;">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:#666;letter-spacing:0.20em;text-transform:uppercase;margin-bottom:6px;">GAS Webhook URL</div>
+            <div style="font-size:11px;color:#888;margin-bottom:8px;line-height:1.5;">Bot のサーバー連絡先。一度保存すれば次回以降不要。</div>
+            <input type="text" id="info-line-gas-url" placeholder="https://script.google.com/macros/s/.../exec" style="width:100%;background:transparent;border:0.5px solid rgba(255,255,255,0.15);color:#fafaf8;font-size:11.5px;padding:8px 10px;border-radius:3px;font-family:'JetBrains Mono',monospace;box-sizing:border-box;">
+            <button type="button" onclick="window.__r125SaveLineUrl()" style="margin-top:8px;background:transparent;border:0.5px solid rgba(255,255,255,0.22);color:#fafaf8;font-size:10.5px;padding:6px 14px;border-radius:3px;cursor:pointer;font-family:'JetBrains Mono',monospace;letter-spacing:0.12em;text-transform:uppercase;">Save URL</button>
+            <hr style="border:none;border-top:0.5px solid rgba(255,255,255,0.06);margin:18px 0;">
             <!-- グループ ID 手動入力 (一覧から選べない場合の保険) -->
-            <div style="font-size:11px;color:#888;margin-bottom:6px;line-height:1.5;">この公演用の LINE グループ ID <span style="color:#666;">— 一覧から選べない場合のみ。</span></div>
-            <input type="text" id="info-line-group-id" placeholder="C1234abcd... (LINE グループ ID)" style="width:100%;background:#0e0e10;border:0.5px solid #2c2c30;color:#e8e8e2;font-size:12px;padding:7px 10px;border-radius:4px;font-family:'JetBrains Mono',monospace;box-sizing:border-box;">
-            <button type="button" onclick="window.__r164SaveGroupId(); if(window.__r405UpdateLineCurrent)window.__r405UpdateLineCurrent();" style="margin-top:8px;background:#2c2c30;border:0.5px solid #444;color:#e8e8e2;font-size:11.5px;padding:6px 12px;border-radius:4px;cursor:pointer;">この公演に紐付け保存</button>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:#666;letter-spacing:0.20em;text-transform:uppercase;margin-bottom:6px;">Group ID — Manual</div>
+            <div style="font-size:11px;color:#888;margin-bottom:8px;line-height:1.5;">一覧から選べない場合のみ手動で入力。</div>
+            <input type="text" id="info-line-group-id" placeholder="C1234abcd... (LINE グループ ID)" style="width:100%;background:transparent;border:0.5px solid rgba(255,255,255,0.15);color:#fafaf8;font-size:11.5px;padding:8px 10px;border-radius:3px;font-family:'JetBrains Mono',monospace;box-sizing:border-box;">
+            <button type="button" onclick="window.__r164SaveGroupId(); if(window.__r405UpdateLineCurrent)window.__r405UpdateLineCurrent();" style="margin-top:8px;background:transparent;border:0.5px solid rgba(168,232,120,0.45);color:#a8e878;font-size:10.5px;padding:6px 14px;border-radius:3px;cursor:pointer;font-family:'JetBrains Mono',monospace;letter-spacing:0.12em;text-transform:uppercase;">Bind to Concert</button>
           </div>
         </details>
       </div>
@@ -11482,7 +11487,8 @@ function show(id) {
   }, 500);
 
   /* R405: INFO タブ LINE 連携セクションの「公演 / 連携グループ」表示更新
-     R409: グループ ID だけでなく名前も併記。listGroups で取得した names マップから引く。 */
+     R409: グループ ID だけでなく名前も併記。listGroups で取得した names マップから引く。
+     R412: Brutalist Vivid 化 — Mono uppercase ラベル + green アクセント名 + Mono ID。 */
   window.__r405UpdateLineCurrent = function() {
     const el = document.getElementById('info-line-current');
     if (!el) return;
@@ -11496,17 +11502,24 @@ function show(id) {
       try { names = JSON.parse(localStorage.getItem('schedule-studio:line-group-names') || '{}'); } catch(_) {}
       const groupName = gid ? (names[gid] || '') : '';
       const esc = function(s){ return String(s).replace(/[&<>]/g, function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[m];}); };
+      const labelStyle = 'font-family:\'JetBrains Mono\',monospace;font-size:9.5px;color:#666;letter-spacing:0.22em;text-transform:uppercase;';
+      const valueStyle = 'color:#fafaf8;font-weight:600;';
       let groupHtml;
       if (gid) {
         const namePart = groupName
-          ? '<strong style="color:#7ec27a;">' + esc(groupName) + '</strong> '
-          : '<span style="color:#888;font-style:italic;font-size:11px;">(名前未取得 — 一覧を取得すると更新)</span> ';
-        groupHtml = namePart + '<code style="color:#888;font-size:11px;">' + esc(gid) + '</code>';
+          ? '<strong style="color:#a8e878;font-weight:600;">' + esc(groupName) + '</strong>'
+          : '<span style="color:#888;font-style:italic;font-size:11.5px;">(名前未取得 — Sync Groups で更新)</span>';
+        groupHtml = namePart + '<br><code style="font-family:\'JetBrains Mono\',monospace;color:#666;font-size:10.5px;letter-spacing:0.02em;">' + esc(gid) + '</code>';
       } else {
-        groupHtml = '<span style="color:#e07a5f;">未紐付け</span>';
+        groupHtml = '<span style="color:#e07a5f;font-style:italic;">未紐付け</span>';
       }
-      el.innerHTML = '公演: <strong style="color:#e8e8e2;">' + esc(title) + '</strong><br>' +
-        '連携中の LINE グループ: ' + groupHtml;
+      el.innerHTML =
+        '<div style="display:grid;grid-template-columns:auto 1fr;gap:8px 18px;align-items:baseline;">' +
+        '<div style="' + labelStyle + '">Concert</div>' +
+        '<div style="' + valueStyle + '">' + esc(title) + '</div>' +
+        '<div style="' + labelStyle + 'padding-top:4px;">Linked Group</div>' +
+        '<div style="padding-top:4px;">' + groupHtml + '</div>' +
+        '</div>';
     } catch(e) { el.textContent = '(描画エラー)'; }
   };
   /* 起動時に 1 回呼ぶ (DOM 構築後を待つため遅延) */
