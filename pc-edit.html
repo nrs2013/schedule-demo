@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260527.419100">
+<meta name="build-version" content="20260527.420000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -7018,8 +7018,9 @@
       <div class="info-header">
         <h2 class="info-title">INFO — お知らせ配信</h2>
       </div>
-      <!-- R412: Brutalist Vivid 化 — Mono uppercase ラベル + 0.5px 細線ボタン + 英字併記タイトル -->
-      <div id="info-line-section" style="background:#131211;border:0.5px solid rgba(255,255,255,0.08);border-radius:6px;padding:22px 24px;margin:0 0 16px 0;">
+      <!-- R412: Brutalist Vivid 化 — Mono uppercase ラベル + 0.5px 細線ボタン + 英字併記タイトル
+           R420: max-width 880px に揃えて他カードと統一 -->
+      <div id="info-line-section" style="max-width:880px;margin:0 auto 16px;background:#131211;border:0.5px solid rgba(255,255,255,0.08);border-radius:6px;padding:22px 24px;">
         <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:20px;padding-bottom:14px;border-bottom:0.5px solid rgba(245,200,120,0.20);gap:12px;flex-wrap:wrap;">
           <div>
             <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.28em;color:#f5c878;text-transform:uppercase;">LINE Bridge</div>
@@ -7066,49 +7067,63 @@
           </div>
         </details>
       </div>
-      <!-- D123/D124: パスワード認証撤去、placeholder シンプル化 -->
-      <div class="info-auth">
-        <div class="info-login-input-group">
-          <label>送信者の名前（任意）</label>
-          <input type="text" id="info-login-name" autocomplete="off">
+      <!-- R420: BROADCAST POST セクション — 送信者名 / 件名 / 本文 / 送信ボタン / 入場パスワードを 1 つのカードに統合 -->
+      <div id="info-post-section" style="max-width:880px;margin:0 auto 16px;background:#131211;border:0.5px solid rgba(255,255,255,0.08);border-radius:6px;padding:22px 24px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:20px;padding-bottom:14px;border-bottom:0.5px solid rgba(245,200,120,0.20);gap:12px;flex-wrap:wrap;">
+          <div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.28em;color:#f5c878;text-transform:uppercase;">Broadcast Post</div>
+            <h3 style="margin:5px 0 0 0;font-size:15px;color:#fafaf8;font-weight:600;letter-spacing:0.04em;">お知らせ配信</h3>
+          </div>
+          <div style="font-size:10px;color:#666;text-align:right;letter-spacing:0.04em;line-height:1.5;">件名 + 本文を入力 →<br>LINE グループへ配信</div>
         </div>
-        <span class="info-login-hint">無記入だと「匿名」として記録されます</span>
-      </div>
-      <div class="info-form" id="info-form">
-        <!-- R395: 旧「⚙ LINE 連携 設定」UI を撤去 (Wizard で全機能カバー済み)。
-             入場パスワード設定だけ別の <details> として保持 -->
-        <details style="margin-bottom:16px;background:rgba(255,255,255,0.03);padding:12px 16px;border-radius:6px;border:1px solid rgba(255,255,255,0.08);">
-          <summary style="cursor:pointer;color:#a8a8a0;font-size:12px;letter-spacing:0.06em;">この公演の入場パスワード（4 桁）— LINE スタッフ用</summary>
-          <!-- R176: この公演の「入場パスワード（4 桁）」を後付けで設定 / 変更できる UI -->
-          <div style="margin-top:14px;">
-            <div style="font-size:11px;color:#888;line-height:1.6;margin-bottom:6px;">
-              LINE グループから来た新しいスタッフが初回だけ入力するパスワード。<br>
-              一度入場すれば、その端末は次回からパスワード不要で自動入場。
-            </div>
-            <input type="password" id="info-entry-pass" class="info-input" placeholder="例：4827" style="margin-top:4px;font-family:'JetBrains Mono',monospace;font-size:11px;" maxlength="8" autocomplete="new-password">
-            <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
-              <button type="button" class="info-push-btn" style="background:#444;border-color:#666;font-size:12px;padding:6px 14px;" onclick="window.__r176SaveEntryPass()">保存</button>
-              <span id="info-entry-pass-status" style="color:#888;font-size:11px;align-self:center;"></span>
+
+        <!-- 送信者名 -->
+        <div style="margin-bottom:16px;">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:#666;letter-spacing:0.22em;text-transform:uppercase;margin-bottom:6px;">Sender Name <span style="text-transform:none;letter-spacing:0.02em;color:#555;">(任意)</span></div>
+          <input type="text" id="info-login-name" autocomplete="off" placeholder="無記入だと「匿名」として記録" style="width:100%;background:transparent;border:0.5px solid rgba(255,255,255,0.15);color:#fafaf8;font-size:13px;padding:9px 12px;border-radius:3px;box-sizing:border-box;font-family:'Noto Sans JP',sans-serif;">
+        </div>
+
+        <!-- 件名 -->
+        <div style="margin-bottom:14px;">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:#666;letter-spacing:0.22em;text-transform:uppercase;margin-bottom:6px;">Subject <span style="text-transform:none;letter-spacing:0.02em;color:#555;">件名</span></div>
+          <input type="text" id="info-subject" style="width:100%;background:transparent;border:0.5px solid rgba(255,255,255,0.15);color:#fafaf8;font-size:14px;padding:10px 12px;border-radius:3px;box-sizing:border-box;font-family:'Noto Sans JP',sans-serif;">
+        </div>
+
+        <!-- 本文 -->
+        <div style="margin-bottom:14px;">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:#666;letter-spacing:0.22em;text-transform:uppercase;margin-bottom:6px;">Body <span style="text-transform:none;letter-spacing:0.02em;color:#555;">本文</span></div>
+          <textarea id="info-body" rows="8" style="width:100%;min-height:220px;background:transparent;border:0.5px solid rgba(255,255,255,0.15);color:#fafaf8;font-size:14px;line-height:1.75;padding:12px 14px;border-radius:3px;box-sizing:border-box;font-family:'Noto Sans JP',sans-serif;resize:vertical;letter-spacing:0.02em;"></textarea>
+        </div>
+
+        <!-- 送信ボタン -->
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding-top:14px;border-top:0.5px solid rgba(255,255,255,0.06);">
+          <button type="button" data-action="info-push" style="background:transparent;border:0.5px solid rgba(245,200,120,0.5);color:#f5c878;font-size:10.5px;padding:9px 18px;border-radius:3px;cursor:pointer;font-family:'JetBrains Mono',monospace;letter-spacing:0.14em;text-transform:uppercase;font-weight:500;">LINE Push 送信</button>
+          <span style="font-size:11px;color:#666;font-family:'JetBrains Mono',monospace;letter-spacing:0.02em;">この公演に紐付けた LINE グループに配信</span>
+        </div>
+
+        <!-- 入場パスワード details -->
+        <details style="margin-top:18px;">
+          <summary style="cursor:pointer;list-style:none;font-family:'JetBrains Mono',monospace;font-size:10px;color:#666;letter-spacing:0.22em;text-transform:uppercase;">▸ Entry Password ／ 入場パスワード設定</summary>
+          <div style="padding:14px 0 0 0;">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:#666;letter-spacing:0.20em;text-transform:uppercase;margin-bottom:6px;">Entry Password — 4 桁</div>
+            <div style="font-size:11px;color:#888;margin-bottom:8px;line-height:1.5;">LINE グループから来た新しいスタッフが初回だけ入力するパスワード。一度入場すれば、その端末は次回からパスワード不要で自動入場。</div>
+            <input type="password" id="info-entry-pass" placeholder="例：4827" maxlength="8" autocomplete="new-password" style="width:100%;background:transparent;border:0.5px solid rgba(255,255,255,0.15);color:#fafaf8;font-size:11.5px;padding:8px 10px;border-radius:3px;font-family:'JetBrains Mono',monospace;box-sizing:border-box;">
+            <div style="display:flex;gap:8px;align-items:center;margin-top:8px;">
+              <button type="button" onclick="window.__r176SaveEntryPass()" style="background:transparent;border:0.5px solid rgba(255,255,255,0.22);color:#fafaf8;font-size:10.5px;padding:6px 14px;border-radius:3px;cursor:pointer;font-family:'JetBrains Mono',monospace;letter-spacing:0.12em;text-transform:uppercase;">Save</button>
+              <span id="info-entry-pass-status" style="color:#888;font-size:11px;font-family:'JetBrains Mono',monospace;"></span>
             </div>
           </div>
         </details>
-        <div class="info-field">
-          <label class="info-label">件名（タイトル）</label>
-          <input type="text" id="info-subject" class="info-input">
-        </div>
-        <div class="info-field">
-          <label class="info-label">本文</label>
-          <textarea id="info-body" rows="8" class="info-textarea"></textarea>
-        </div>
-        <div class="info-actions">
-          <button class="info-push-btn" data-action="info-push">LINE プッシュ送信</button>
-          <span class="info-push-hint">この公演に紐付けた LINE グループに配信（R164）</span>
-        </div>
       </div>
-      <div class="info-history">
-        <div class="info-history-head">
-          <span class="info-history-title">— 過去の送信履歴 —</span>
-          <span class="info-history-count" id="info-history-count">0 件</span>
+
+      <!-- R420: HISTORY セクション — 送信履歴を別カードに -->
+      <div id="info-history-section" style="max-width:880px;margin:0 auto 16px;background:#131211;border:0.5px solid rgba(255,255,255,0.08);border-radius:6px;padding:22px 24px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:16px;padding-bottom:12px;border-bottom:0.5px solid rgba(245,200,120,0.20);gap:12px;flex-wrap:wrap;">
+          <div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.28em;color:#f5c878;text-transform:uppercase;">History</div>
+            <h3 style="margin:5px 0 0 0;font-size:15px;color:#fafaf8;font-weight:600;letter-spacing:0.04em;">送信履歴</h3>
+          </div>
+          <span id="info-history-count" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#666;letter-spacing:0.04em;align-self:center;">0 件</span>
         </div>
         <div class="info-history-list" id="info-history-list"></div>
       </div>
@@ -7131,7 +7146,7 @@
             <div id="board-updated" style="margin-top:3px;color:#444;"></div>
           </div>
         </div>
-        <textarea id="board-textarea" placeholder="ここに書いた内容が、LINE グループ全員のスマホでリアルタイムに見られます。&#10;&#10;例:&#10;・楽屋 A に水補充済み&#10;・鈴木さん 18:00 着予定&#10;・PA インフ 17:00 OK&#10;・明日 9:00 集合" style="width:100%;min-height:380px;background:transparent;border:0.5px solid rgba(255,255,255,0.15);color:#fafaf8;font-family:'Noto Sans JP','JetBrains Mono',monospace;font-size:14px;line-height:1.8;padding:14px 16px;border-radius:4px;box-sizing:border-box;resize:vertical;letter-spacing:0.02em;"></textarea>
+        <textarea id="board-textarea" placeholder="ここに書いた内容が、LINE グループ全員のスマホでリアルタイムに見られます。&#10;&#10;例:&#10;・楽屋 A に水補充済み&#10;・鈴木さん 18:00 着予定&#10;・PA インフ 17:00 OK&#10;・明日 9:00 集合" style="width:100%;min-height:640px;background:transparent;border:0.5px solid rgba(255,255,255,0.15);color:#fafaf8;font-family:'Noto Sans JP','JetBrains Mono',monospace;font-size:15px;line-height:1.85;padding:18px 20px;border-radius:4px;box-sizing:border-box;resize:vertical;letter-spacing:0.02em;"></textarea>
         <div style="display:flex;gap:10px;align-items:center;margin-top:14px;flex-wrap:wrap;">
           <button type="button" onclick="window.__r419SendBoardLink()" style="background:transparent;border:0.5px solid rgba(168,232,120,0.5);color:#a8e878;font-size:10.5px;padding:8px 14px;border-radius:3px;cursor:pointer;font-family:'JetBrains Mono',monospace;letter-spacing:0.14em;text-transform:uppercase;font-weight:500;">Send Board Link to LINE</button>
           <span id="board-send-status" style="font-size:11px;color:#888;font-family:'JetBrains Mono',monospace;"></span>
