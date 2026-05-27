@@ -45,6 +45,8 @@ function doPost(e) {
       return handlePush(body);
     case 'pushMenu':
       return handlePushMenu(body);
+    case 'pushFlex':
+      return handlePushFlex(body);
     case 'listGroups':
       return handleListGroups();
     case 'getGroupName':
@@ -290,6 +292,25 @@ function handlePushMenu(body) {
   } catch (e) {
     /* R398: 内部例外メッセージ (スタックトレース等) の外部漏洩を防止。
        詳細は GAS 実行ログ側で確認 */
+    console.error('[GAS Error]', e);
+    return _json({ ok: false, error: 'internal error' });
+  }
+}
+
+// ────────────────────────────────────────────────────────────
+// R418: 汎用 Flex Push — SCHEDULE STUDIO 側で組み立てた任意の Flex JSON を送る
+// body = { action: 'pushFlex', to: '<groupId>', altText: '<string>', contents: { ... Flex JSON ... } }
+// ────────────────────────────────────────────────────────────
+function handlePushFlex(body) {
+  const to = body.to;
+  const altText = body.altText || 'SCHEDULE STUDIO';
+  const contents = body.contents;
+  if (!to) return _json({ ok: false, error: 'missing to' });
+  if (!contents) return _json({ ok: false, error: 'missing contents' });
+  try {
+    const res = pushFlexToGroup(to, altText, contents);
+    return _json({ ok: res.getResponseCode() === 200, lineStatus: res.getResponseCode() });
+  } catch (e) {
     console.error('[GAS Error]', e);
     return _json({ ok: false, error: 'internal error' });
   }

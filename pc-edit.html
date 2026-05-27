@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260527.414000">
+<meta name="build-version" content="20260527.418000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -7036,6 +7036,7 @@
         <div id="wiz-group-list" style="margin:8px 0 14px 0;"></div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding-top:14px;border-top:0.5px solid rgba(255,255,255,0.06);">
           <button type="button" onclick="window.__r186SendMenu()" style="background:transparent;border:0.5px solid rgba(245,200,120,0.45);color:#f5c878;font-size:10.5px;padding:8px 14px;border-radius:3px;cursor:pointer;font-family:'JetBrains Mono',monospace;letter-spacing:0.14em;text-transform:uppercase;font-weight:500;">Send Menu</button>
+          <button type="button" onclick="window.__r418SendDaySchedule()" style="background:transparent;border:0.5px solid rgba(168,232,120,0.5);color:#a8e878;font-size:10.5px;padding:8px 14px;border-radius:3px;cursor:pointer;font-family:'JetBrains Mono',monospace;letter-spacing:0.14em;text-transform:uppercase;font-weight:500;">Send Day Schedule</button>
           <span id="info-line-status" style="font-size:11px;color:#888;font-family:'JetBrains Mono',monospace;"></span>
         </div>
         <details style="margin-top:18px;">
@@ -11470,6 +11471,94 @@ function show(id) {
       if (status) { status.textContent = '✗ 失敗: ' + err.message; status.style.color = '#e07a5f'; }
     });
   };
+
+  /* R418: 今日の DAY スケジュール (タイムテーブル) を Flex カードで LINE に送信。
+     現在の masterDate のタイムテーブルバーを時刻順に並べたカードを生成 →
+     GAS の pushFlex アクション経由でグループに配信。 */
+  window.__r418SendDaySchedule = function() {
+    const url = localStorage.getItem('schedule-studio:line-gas-url') || '';
+    const status = document.getElementById('info-line-status');
+    if (!url) {
+      if (status) { status.textContent = '✗ 先に GAS URL を保存してください'; status.style.color = '#e07a5f'; }
+      return;
+    }
+    let groupId = '', concertTitle = '';
+    try {
+      const concerts = JSON.parse(localStorage.getItem('schedule-studio:concerts:v1') || '[]');
+      const aid = localStorage.getItem('schedule-studio:active-concert-id');
+      const c = (aid && concerts.find(function(x){return x.id===aid;})) || concerts[0];
+      groupId = (c && c.lineGroupId) || '';
+      concertTitle = (c && c.title) || '公演';
+    } catch(e) {}
+    if (!groupId) {
+      if (status) { status.textContent = '✗ 現在の公演に LINE グループ ID が紐付いていません'; status.style.color = '#e07a5f'; }
+      return;
+    }
+    const dateKey = localStorage.getItem('schedule-studio:masterDate') || new Date().toISOString().slice(0, 10);
+    let tt = {};
+    try { tt = JSON.parse(localStorage.getItem('schedule-studio:timetableByDate:v1') || '{}'); } catch(_) {}
+    const ttToday = tt[dateKey] || { sections: [], bars: [] };
+    const secMap = {};
+    (ttToday.sections || []).forEach(function(s){ secMap[s.id] = s.name; });
+    const bars = (ttToday.bars || []).slice().sort(function(a,b){ return a.start - b.start; });
+    function fmt(t){
+      const h = Math.floor(t);
+      const m = Math.round((t - h) * 60);
+      return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
+    }
+    const bodyContents = [
+      { type: 'text', text: "TODAY'S SCHEDULE", size: 'xxs', color: '#a8a8a0', weight: 'bold' },
+      { type: 'text', text: concertTitle + ' · ' + dateKey, size: 'lg', weight: 'bold', color: '#1a1a1a', margin: 'sm' },
+      { type: 'separator', margin: 'lg', color: '#dddddd' }
+    ];
+    if (bars.length === 0) {
+      bodyContents.push({ type: 'text', text: '(タイムテーブル未登録)', size: 'sm', color: '#888888', margin: 'md', style: 'italic' });
+    } else {
+      bars.forEach(function(bar){
+        const timeStr = fmt(bar.start) + '–' + fmt(bar.end);
+        const secName = secMap[bar.secId] || bar.secId;
+        const text = (bar.text || '').trim() || '(未記入)';
+        bodyContents.push({
+          type: 'box',
+          layout: 'baseline',
+          spacing: 'md',
+          margin: 'md',
+          contents: [
+            { type: 'text', text: timeStr, size: 'sm', color: '#1a7a3a', weight: 'bold', flex: 4 },
+            { type: 'text', text: secName, size: 'sm', color: '#666666', flex: 2 },
+            { type: 'text', text: text, size: 'sm', color: '#1a1a1a', flex: 4, wrap: true }
+          ]
+        });
+      });
+    }
+    const flex = {
+      type: 'bubble',
+      size: 'kilo',
+      body: {
+        type: 'box',
+        layout: 'vertical',
+        paddingAll: '18px',
+        contents: bodyContents
+      }
+    };
+    if (status) { status.textContent = 'DAY スケジュール送信中…'; status.style.color = '#888'; }
+    fetch(url, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({
+        action: 'pushFlex',
+        to: groupId,
+        altText: "TODAY'S SCHEDULE — " + concertTitle,
+        contents: flex
+      })
+    }).then(function(){
+      if (status) { status.textContent = '✓ DAY スケジュールを送信しました'; status.style.color = '#7ec27a'; }
+    }).catch(function(err){
+      if (status) { status.textContent = '✗ 失敗: ' + err.message; status.style.color = '#e07a5f'; }
+    });
+  };
+
   // 起動時に保存済み URL をフォームに反映
   setTimeout(function(){
     const inp = document.getElementById('info-line-gas-url');
