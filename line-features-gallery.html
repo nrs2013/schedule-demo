@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="build-version" content="20260527.417000">
+<title>LINE Bot 機能カタログ — SCHEDULE STUDIO</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: #0a0a0a;
+    color: #fafaf8;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    padding: 40px 28px 60px;
+    letter-spacing: 0.01em;
+  }
+
+  /* ───── トップ見出し ───── */
+  .page-head { max-width: 1280px; margin: 0 auto 36px; }
+  .page-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: #f5c878;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .page-title {
+    font-size: 26px;
+    font-weight: 700;
+    color: #fafaf8;
+    letter-spacing: 0.02em;
+    margin: 0 0 8px;
+  }
+  .page-sub {
+    font-size: 13px;
+    color: #888;
+    line-height: 1.6;
+    max-width: 720px;
+  }
+
+  /* ───── グリッド ───── */
+  .grid {
+    max-width: 1280px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    gap: 30px;
+  }
+
+  /* ───── 機能カード ───── */
+  .feature {
+    background: #131211;
+    border: 0.5px solid rgba(255,255,255,0.08);
+    border-radius: 8px;
+    padding: 22px 22px 24px;
+    display: flex;
+    flex-direction: column;
+  }
+  .f-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9.5px;
+    color: #666;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .f-name {
+    font-size: 17px;
+    font-weight: 700;
+    color: #fafaf8;
+    margin-bottom: 4px;
+    letter-spacing: 0.01em;
+  }
+  .f-name-en {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: #f5c878;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .f-desc {
+    font-size: 12px;
+    color: #a8a8a0;
+    line-height: 1.7;
+    margin-bottom: 14px;
+  }
+  .f-use {
+    font-size: 11.5px;
+    color: #a8e878;
+    line-height: 1.7;
+    background: rgba(168,232,120,0.06);
+    padding: 8px 12px;
+    border-left: 2px solid rgba(168,232,120,0.4);
+    border-radius: 0 4px 4px 0;
+    margin-top: 12px;
+  }
+
+  /* ───── LINE モック（共通） ───── */
+  .mock {
+    background: #8bb29f;
+    border-radius: 12px;
+    padding: 14px 12px;
+    margin-bottom: 4px;
+    min-height: 120px;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.4) inset;
+  }
+  .mock-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .mock-row.user {
+    justify-content: flex-end;
+  }
+  .mock-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #131211;
+    color: #f5c878;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .mock-side { display: flex; flex-direction: column; max-width: 78%; }
+  .mock-name {
+    font-size: 10px;
+    color: #fff;
+    opacity: 0.85;
+    margin-bottom: 3px;
+    margin-left: 2px;
+  }
+  .bubble {
+    background: #fff;
+    color: #1a1a1a;
+    border-radius: 14px;
+    padding: 8px 12px;
+    font-size: 12.5px;
+    line-height: 1.55;
+    max-width: 100%;
+    word-break: break-word;
+  }
+  .bubble.user {
+    background: #06c755;
+    color: #fff;
+  }
+  .mock-time {
+    font-size: 9px;
+    color: #fff;
+    opacity: 0.7;
+    margin-top: 2px;
+    align-self: flex-end;
+  }
+  .sticker {
+    width: 70px;
+    height: 70px;
+    border-radius: 6px;
+    background: linear-gradient(135deg, #ffe57a, #f5c878);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #1a1a1a;
+    font-size: 22px;
+    font-weight: 700;
+  }
+
+  /* Flex Message カード */
+  .flex {
+    background: #fff;
+    color: #1a1a1a;
+    border-radius: 14px;
+    overflow: hidden;
+    width: 100%;
+  }
+  .flex-hero {
+    background: linear-gradient(135deg, #f5c878, #c186c8);
+    color: #1a1a1a;
+    padding: 14px 14px 12px;
+  }
+  .flex-hero-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8.5px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    opacity: 0.8;
+  }
+  .flex-hero-title {
+    font-size: 16px;
+    font-weight: 700;
+    margin-top: 3px;
+  }
+  .flex-body {
+    padding: 12px 14px;
+    font-size: 12px;
+  }
+  .flex-row {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 5px;
+  }
+  .flex-row .t {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    color: #1a7a3a;
+    min-width: 44px;
+  }
+  .flex-row .x {
+    color: #444;
+  }
+  .flex-footer {
+    border-top: 0.5px solid #ddd;
+    padding: 8px 14px;
+    display: flex;
+    gap: 6px;
+  }
+  .flex-btn {
+    flex: 1;
+    background: #06c755;
+    color: #fff;
+    border-radius: 6px;
+    padding: 7px 8px;
+    font-size: 11px;
+    text-align: center;
+    font-weight: 600;
+  }
+  .flex-btn.alt {
+    background: #fff;
+    color: #06c755;
+    border: 1px solid #06c755;
+  }
+
+  /* クイックリプライ */
+  .quick-row {
+    display: flex;
+    gap: 6px;
+    margin-top: 6px;
+    flex-wrap: wrap;
+  }
+  .quick-btn {
+    background: #fff;
+    color: #06c755;
+    border: 1px solid #06c755;
+    border-radius: 999px;
+    padding: 5px 12px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  /* リッチメニュー風 */
+  .rich-menu {
+    background: #fff;
+    color: #1a1a1a;
+    border-radius: 12px;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    height: 130px;
+    border: 1px solid #ddd;
+  }
+  .rich-cell {
+    border-right: 1px solid #eee;
+    border-bottom: 1px solid #eee;
+    padding: 8px 6px;
+    text-align: center;
+    font-size: 10.5px;
+    font-weight: 600;
+    color: #333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1.35;
+  }
+  .rich-cell:nth-child(3n) { border-right: none; }
+  .rich-cell:nth-child(n+4) { border-bottom: none; }
+
+  /* 位置情報 */
+  .loc-card {
+    background: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+    width: 220px;
+  }
+  .loc-map {
+    height: 90px;
+    background: linear-gradient(135deg, #d6e8c4, #b6d3a8 60%, #91b8a3);
+    position: relative;
+  }
+  .loc-pin {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -100%);
+    color: #d04848;
+    font-size: 22px;
+    font-weight: 700;
+  }
+  .loc-text {
+    padding: 8px 12px;
+    color: #1a1a1a;
+    font-size: 11.5px;
+  }
+  .loc-text strong { display: block; font-size: 12.5px; margin-bottom: 2px; }
+
+  /* 進捗バー (Domino) */
+  .progress-card {
+    background: #fff;
+    color: #1a1a1a;
+    border-radius: 14px;
+    padding: 14px;
+    width: 100%;
+  }
+  .progress-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 10px;
+  }
+  .progress-name { font-size: 13px; font-weight: 700; }
+  .progress-eta { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #1a7a3a; font-weight: 700; }
+  .progress-bar {
+    background: #e8e8e2;
+    height: 8px;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+  .progress-fill {
+    background: linear-gradient(90deg, #06c755, #a8e878);
+    height: 100%;
+    width: 60%;
+  }
+  .progress-steps {
+    display: flex;
+    justify-content: space-between;
+    font-size: 9.5px;
+    color: #888;
+  }
+  .progress-steps span.done { color: #06c755; font-weight: 700; }
+
+  /* レシート風 */
+  .receipt {
+    background: #fff;
+    color: #1a1a1a;
+    border-radius: 12px;
+    padding: 14px;
+    font-size: 11.5px;
+  }
+  .receipt-title { font-weight: 700; font-size: 13px; margin-bottom: 8px; }
+  .receipt-row { display: flex; justify-content: space-between; margin: 2px 0; }
+  .receipt-total { border-top: 1px dashed #ccc; margin-top: 6px; padding-top: 6px; font-weight: 700; }
+
+  /* ステップ配信 */
+  .step-stack { display: flex; flex-direction: column; gap: 8px; }
+  .step-pill {
+    background: #fff;
+    color: #1a1a1a;
+    border-radius: 12px;
+    padding: 8px 12px;
+    font-size: 11.5px;
+    position: relative;
+  }
+  .step-pill::before {
+    content: attr(data-when);
+    position: absolute;
+    left: -6px;
+    top: -8px;
+    background: #f5c878;
+    color: #1a1a1a;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    letter-spacing: 0.06em;
+  }
+
+  /* 既読集計 LIFF */
+  .read-card {
+    background: #131211;
+    color: #fafaf8;
+    border: 0.5px solid rgba(168,232,120,0.4);
+    border-radius: 10px;
+    padding: 14px;
+    width: 100%;
+  }
+  .read-label { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; color: #666; letter-spacing: 0.22em; text-transform: uppercase; margin-bottom: 4px; }
+  .read-headline { font-size: 14px; font-weight: 700; margin-bottom: 8px; }
+  .read-row { font-size: 11.5px; padding: 4px 0; display: flex; justify-content: space-between; }
+  .read-row .ok { color: #a8e878; }
+  .read-row .ng { color: #e07a5f; }
+
+  /* ガチャ */
+  .gacha-card {
+    background: linear-gradient(135deg, #c186c8, #f5c878);
+    color: #1a1a1a;
+    border-radius: 14px;
+    padding: 16px 14px;
+    text-align: center;
+  }
+  .gacha-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9.5px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    opacity: 0.8;
+  }
+  .gacha-quote {
+    font-size: 14px;
+    font-weight: 700;
+    margin: 6px 0;
+    line-height: 1.5;
+  }
+  .gacha-from { font-size: 10.5px; opacity: 0.7; }
+
+  /* シェア (1:1 トーク + 友だち選択風) */
+  .share-card {
+    background: #fff;
+    color: #1a1a1a;
+    border-radius: 12px;
+    padding: 12px;
+    font-size: 11.5px;
+  }
+  .share-list { display: flex; flex-direction: column; gap: 5px; }
+  .share-friend { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
+  .share-circle { width: 22px; height: 22px; border-radius: 50%; background: #ddd; }
+  .share-check {
+    margin-left: auto;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #06c755;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  /* フッタ */
+  .footer {
+    text-align: center;
+    margin-top: 60px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: #444;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+  }
+</style>
+</head>
+<body>
+
+<div class="page-head">
+  <div class="page-eyebrow">SCHEDULE STUDIO · LINE Bot Features</div>
+  <h1 class="page-title">LINE Bot 機能カタログ</h1>
+  <p class="page-sub">SCHEDULE STUDIO の LINE 連携で使える機能を、実際のトーク画面に近いモックで一覧化しました。緑のエリアが LINE のグループ・トーク画面で、白いカードや吹き出しが Bot から届くメッセージのイメージです。「これいいね」のやつを 1〜複数選んでください、実装します。</p>
+</div>
+
+<div class="grid">
+
+  <!-- 1. テキスト Push -->
+  <div class="feature">
+    <div class="f-num">01</div>
+    <div class="f-name">テキスト Push</div>
+    <div class="f-name-en">Text Push Message</div>
+    <div class="f-desc">一番シンプル。Bot から文字メッセージを送る。短い連絡・お知らせ向け。今 INFO 配信で使ってるやつ。</div>
+    <div class="mock">
+      <div class="mock-row">
+        <div class="mock-avatar">SS</div>
+        <div class="mock-side">
+          <div class="mock-name">SCHEDULE STUDIO</div>
+          <div class="bubble">【テスト4】<br>■ 楽屋の水補充お願いします<br>― 17:42 ―</div>
+          <div class="mock-time">17:42 既読 4</div>
+        </div>
+      </div>
+    </div>
+    <div class="f-use">用途: 緊急連絡 / 短い指示 / 報告</div>
+  </div>
+
+  <!-- 2. Flex Message - シンプル -->
+  <div class="feature">
+    <div class="f-num">02</div>
+    <div class="f-name">Flex Message (シンプル)</div>
+    <div class="f-name-en">Flex — Header + Body</div>
+    <div class="f-desc">タイトル付きの白いカード。テキスト Push より目立つ。重要連絡や定型情報向け。</div>
+    <div class="mock">
+      <div class="mock-row">
+        <div class="mock-avatar">SS</div>
+        <div class="mock-side">
+          <div class="flex">
+            <div class="flex-hero">
+              <div class="flex-hero-label">Today's Schedule</div>
+              <div class="flex-hero-title">テスト4 · 2026-05-27</div>
+            </div>
+            <div class="flex-body">
+              <div class="flex-row"><span class="t">09:00</span><span class="x">入り</span></div>
+              <div class="flex-row"><span class="t">11:00</span><span class="x">Rh #1</span></div>
+              <div class="flex-row"><span class="t">15:00</span><span class="x">ゲネ</span></div>
+              <div class="flex-row"><span class="t">19:00</span><span class="x">開演</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="f-use">用途: 今日の進行サマリ / 入り時間一覧 / 公演情報</div>
+  </div>
+
+  <!-- 3. Flex Message - ボタン付き -->
+  <div class="feature">
+    <div class="f-num">03</div>
+    <div class="f-name">Flex Message (ボタン付き)</div>
+    <div class="f-name-en">Flex — With Action Buttons</div>
+    <div class="f-desc">カードの下にボタン。タップで「了解」や「詳細」「電話」「Maps」などのアクションが飛ぶ。</div>
+    <div class="mock">
+      <div class="mock-row">
+        <div class="mock-avatar">SS</div>
+        <div class="mock-side">
+          <div class="flex">
+            <div class="flex-hero" style="background:linear-gradient(135deg,#7bc5e8,#06c755);color:#fff;">
+              <div class="flex-hero-label">Venue Info</div>
+              <div class="flex-hero-title">東京体育館</div>
+            </div>
+            <div class="flex-body">
+              <div style="color:#666;font-size:11.5px;line-height:1.5;">〒150-0041<br>渋谷区神南2-XX-XX</div>
+            </div>
+            <div class="flex-footer">
+              <div class="flex-btn">Maps</div>
+              <div class="flex-btn alt">電話</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="f-use">用途: 会場アクセス / 連絡先 / アクション付き告知</div>
+  </div>
+
+  <!-- 4. クイックリプライ -->
+  <div class="feature">
+    <div class="f-num">04</div>
+    <div class="f-name">クイックリプライ</div>
+    <div class="f-name-en">Quick Reply Buttons</div>
+    <div class="f-desc">メッセージに付随して下にボタン群が出る。タップで定型の返答が送れる。投票・確認に最適。</div>
+    <div class="mock">
+      <div class="mock-row">
+        <div class="mock-avatar">SS</div>
+        <div class="mock-side">
+          <div class="bubble">明日のリハ 10:00 開始で OK？</div>
+          <div class="quick-row">
+            <div class="quick-btn">OK</div>
+            <div class="quick-btn">遅れる</div>
+            <div class="quick-btn">休む</div>
+            <div class="quick-btn">質問あり</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="f-use">用途: 出欠確認 / 簡易投票 / 「了解」収集</div>
+  </div>
+
+  <!-- 5. スタンプ -->
+  <div class="feature">
+    <div class="f-num">05</div>
+    <div class="f-name">スタンプ送信</div>
+    <div class="f-name-en">Sticker Message</div>
+    <div class="f-desc">Bot もスタンプ送れる。「お疲れさま」「おはよう」みたいな雰囲気作りに。文字より早く伝わる。</div>
+    <div class="mock">
+      <div class="mock-row">
+        <div class="mock-avatar">SS</div>
+        <div class="mock-side">
+          <div class="sticker">お疲</div>
+          <div class="mock-time">17:42</div>
+        </div>
+      </div>
+    </div>
+    <div class="f-use">用途: 朝の挨拶 / 終演おつかれ / 公演成功祝い</div>
+  </div>
+
+  <!-- 6. 位置情報 -->
+  <div class="feature">
+    <div class="f-num">06</div>
+    <div class="f-name">位置情報メッセージ</div>
+    <div class="f-name-en">Location Message</div>
+    <div class="f-desc">地図プレビュー付きのメッセージ。タップで Apple/Google Maps に飛ぶ。会場・楽屋・集合場所の共有に。</div>
+    <div class="mock">
+      <div class="mock-row">
+        <div class="mock-avatar">SS</div>
+        <div class="mock-side">
+          <div class="loc-card">
+            <div class="loc-map"><div class="loc-pin">●</div></div>
+            <div class="loc-text">
+              <strong>東京体育館</strong>
+              渋谷区神南2-XX-XX
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="f-use">用途: 会場集合 / 楽屋入口 / バス乗り場</div>
+  </div>
+
+  <!-- 7. リッチメニュー -->
+  <div class="feature">
+    <div class="f-num">07</div>
+    <div class="f-name">リッチメニュー</div>
+    <div class="f-name-en">Rich Menu (1:1 Only)</div>
+    <div class="f-desc">1:1 トーク画面の<strong style="color:#fafaf8;">下部に常時表示</strong>される 6 ボタンメニュー。タップで定型応答 or LIFF 起動。グループでは表示されない。</div>
+    <div class="mock" style="background:#cfe4d7;padding:0;border-radius:12px;overflow:hidden;">
+      <div style="background:#ECECEC;padding:14px 12px;min-height:80px;display:flex;align-items:flex-end;">
+        <div style="background:#fff;border-radius:14px;padding:8px 12px;font-size:12.5px;max-width:75%;color:#1a1a1a;">何かご用ですか？下のメニューから選べます。</div>
+      </div>
+      <div class="rich-menu">
+        <div class="rich-cell">入り時間</div>
+        <div class="rich-cell">タイムテーブル</div>
+        <div class="rich-cell">部屋番号</div>
+        <div class="rich-cell">会場</div>
+        <div class="rich-cell">INFO</div>
+        <div class="rich-cell">連絡先</div>
+      </div>
+    </div>
+    <div class="f-use">用途: スタッフが Bot と 1:1 トーク開始 → ボタンで自分専用情報引き出し</div>
+  </div>
+
+  <!-- 8. LIFF リンク -->
+  <div class="feature">
+    <div class="f-num">08</div>
+    <div class="f-name">LIFF (LINE 内ミニアプリ)</div>
+    <div class="f-name-en">LIFF Link</div>
+    <div class="f-desc">URL をタップすると<strong style="color:#fafaf8;">LINE アプリの中で</strong>独自 Web ページが開く。LINE Login で個人識別できる。今 Phase 1〜2 で作ったやつ。</div>
+    <div class="mock">
+      <div class="mock-row">
+        <div class="mock-avatar">SS</div>
+        <div class="mock-side">
+          <div class="flex">
+            <div class="flex-hero" style="background:linear-gradient(135deg,#131211,#3a3530);color:#f5c878;">
+              <div class="flex-hero-label">Your Dashboard</div>
+              <div class="flex-hero-title" style="color:#fafaf8;">あなた専用画面</div>
+            </div>
+            <div class="flex-body">
+              <div style="font-size:11.5px;color:#666;">タップで LINE 内で開く</div>
+            </div>
+            <div class="flex-footer">
+              <div class="flex-btn">開く</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="f-use">用途: 個人別ダッシュボード / 投票画面 / 入力フォーム / アルバム</div>
+  </div>
+
+  <!-- 9. 進捗バー (Domino's 配達追跡型) -->
+  <div class="feature">
+    <div class="f-num">09</div>
+    <div class="f-name">進捗バー Flex</div>
+    <div class="f-name-en">Progress Tracking Card</div>
+    <div class="f-desc">Domino's の配達追跡みたいに、リアルタイムで進捗バーが伸びるカード。タイムテーブルの各バーの進行状況を可視化。</div>
+    <div class="mock">
+      <div class="mock-row">
+        <div class="mock-avatar">SS</div>
+        <div class="mock-side">
+          <div class="progress-card">
+            <div class="progress-head">
+              <div class="progress-name">Rh #3 進行中</div>
+              <div class="progress-eta">残り 12 分</div>
+            </div>
+            <div class="progress-bar"><div class="progress-fill"></div></div>
+            <div class="progress-steps">
+              <span class="done">準備</span>
+              <span class="done">PA</span>
+              <span class="done">照明</span>
+              <span>本番中</span>
+              <span>終了</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="f-use">用途: リハ進行ライブ追跡 / ステージ準備ステータス / 公演カウントダウン</div>
+  </div>
+
+  <!-- 10. 既読集計 (LIFF) -->
+  <div class="feature">
+    <div class="f-num">10</div>
+    <div class="f-name">既読集計 (LIFF)</div>
+    <div class="f-name-en">Read Receipt Aggregation</div>
+    <div class="f-desc">のむさんが LIFF で配信した連絡を、誰が見たか / 未読かを LIFF 画面で一覧。「鈴木さんまだ未読だ」が一目。</div>
+    <div class="mock">
+      <div class="mock-row">
+        <div class="mock-avatar">SS</div>
+        <div class="mock-side">
+          <div class="read-card">
+            <div class="read-label">INFO #4 既読集計</div>
+            <div class="read-headline">楽屋の水補充お願いします</div>
+            <div class="read-row"><span>田中</span><span class="ok">✓ 既読 17:43</span></div>
+            <div class="read-row"><span>佐藤</span><span class="ok">✓ 既読 17:45</span></div>
+            <div class="read-row"><span>鈴木</span><span class="ng">未読</span></div>
+            <div class="read-row"><span>山田</span><span class="ok">✓ 既読 17:50</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="f-use">用途: 重要連絡の到達確認 / 確認漏れ防止 / リーダーが現場掌握</div>
+  </div>
+
+  <!-- 11. レシート / 公演レポ -->
+  <div class="feature">
+    <div class="f-num">11</div>
+    <div class="f-name">公演レポート Flex</div>
+    <div class="f-name-en">Recap Receipt</div>
+    <div class="f-desc">Spotify の年間まとめみたいな、終演後 / ツアー後の数字レポ。「お疲れさま」感のあるカード。アーカイブとして残せる。</div>
+    <div class="mock">
+      <div class="mock-row">
+        <div class="mock-avatar">SS</div>
+        <div class="mock-side">
+          <div class="receipt">
+            <div class="receipt-title">テスト4 · 終演レポ</div>
+            <div class="receipt-row"><span>リハ回数</span><span>5 回</span></div>
+            <div class="receipt-row"><span>INFO 配信</span><span>4 件</span></div>
+            <div class="receipt-row"><span>参加スタッフ</span><span>8 名</span></div>
+            <div class="receipt-row"><span>会場入り平均</span><span>17:42</span></div>
+            <div class="receipt-row receipt-total"><span>公演時間</span><span>02:14:00</span></div>
+            <div style="font-size:10px;color:#888;margin-top:8px;text-align:center;">お疲れさまでした</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="f-use">用途: 終演後の数字振り返り / ツアー終了時の年間まとめ / メンバーへの感謝カード</div>
+  </div>
+
+  <!-- 12. ガチャ / お楽しみ -->
+  <div class="feature">
+    <div class="f-num">12</div>
+    <div class="f-name">演出ヒントガチャ</div>
+    <div class="f-name-en">Daily Random Card</div>
+    <div class="f-desc">1 日 1 回、Bot がランダムに「のむさん語録」「過去公演の名場面」を配信。便利じゃないけど<strong style="color:#fafaf8;">もらって嬉しい</strong>系。雑談ネタにも。</div>
+    <div class="mock">
+      <div class="mock-row">
+        <div class="mock-avatar">SS</div>
+        <div class="mock-side">
+          <div class="gacha-card">
+            <div class="gacha-eyebrow">Today's Quote</div>
+            <div class="gacha-quote">「ステージは生もの。<br>今日も全力で。」</div>
+            <div class="gacha-from">— のむ語録 No.34</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="f-use">用途: 朝の景気付け / 楽屋雑談ネタ / 過去公演アーカイブ活用</div>
+  </div>
+
+  <!-- 13. ステップ配信 -->
+  <div class="feature">
+    <div class="f-num">13</div>
+    <div class="f-name">ステップ配信</div>
+    <div class="f-name-en">Step Messaging</div>
+    <div class="f-desc">「3 日前 → 前日 → 当日朝 → 開演 1 時間前」みたいに、<strong style="color:#fafaf8;">段階的に</strong> 自動配信。公演準備チェックリストを時系列で。</div>
+    <div class="mock" style="padding:14px;">
+      <div class="step-stack">
+        <div class="step-pill" data-when="-3D">機材確認 / 衣装サイズ最終</div>
+        <div class="step-pill" data-when="-1D">明日のスケジュール確認</div>
+        <div class="step-pill" data-when="D-AM">今日の天気 / 移動経路</div>
+        <div class="step-pill" data-when="-1H">開演 1 時間前です</div>
+      </div>
+    </div>
+    <div class="f-use">用途: 公演前の準備チェックリスト / ツアー前の段階準備</div>
+  </div>
+
+  <!-- 14. シェアターゲットピッカー -->
+  <div class="feature">
+    <div class="f-num">14</div>
+    <div class="f-name">シェアターゲットピッカー</div>
+    <div class="f-name-en">Share Target Picker</div>
+    <div class="f-desc">LIFF から「これを誰かにシェア」ボタン → LINE の友だち選択画面が出る → 選んだ相手に Flex カードが届く。スタッフ間で情報共有が 2 タップ。</div>
+    <div class="mock">
+      <div class="mock-row">
+        <div class="mock-avatar">SS</div>
+        <div class="mock-side">
+          <div class="share-card">
+            <div style="font-size:12.5px;font-weight:700;margin-bottom:8px;">送る相手を選んでください</div>
+            <div class="share-list">
+              <div class="share-friend"><div class="share-circle"></div><span>田中</span><div class="share-check">✓</div></div>
+              <div class="share-friend"><div class="share-circle"></div><span>佐藤</span></div>
+              <div class="share-friend"><div class="share-circle"></div><span>鈴木</span><div class="share-check">✓</div></div>
+              <div class="share-friend"><div class="share-circle"></div><span>櫻坂46スタッフ</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="f-use">用途: タイムテーブルを後輩に転送 / 別現場の友だちと公演情報共有</div>
+  </div>
+
+  <!-- 15. メンション通知 -->
+  <div class="feature">
+    <div class="f-num">15</div>
+    <div class="f-name">メンション通知</div>
+    <div class="f-name-en">Mention Push</div>
+    <div class="f-desc">のむさんが LINE で「@田中 楽屋A に水」と打つと、Bot が拾って<strong style="color:#fafaf8;">田中さんだけに強通知</strong>。タスク化して LIFF にも記録。</div>
+    <div class="mock">
+      <div class="mock-row user">
+        <div class="mock-side">
+          <div class="bubble user">@田中 楽屋A に水補充</div>
+          <div class="mock-time" style="text-align:right;">17:42</div>
+        </div>
+        <div class="mock-avatar" style="background:#06c755;color:#fff;">N</div>
+      </div>
+      <div class="mock-row">
+        <div class="mock-avatar">SS</div>
+        <div class="mock-side">
+          <div class="bubble">タスク登録: 田中 — 楽屋A 水補充<br>田中さんに強通知しました</div>
+        </div>
+      </div>
+    </div>
+    <div class="f-use">用途: 個別タスク振り / 担当指名 / 「@」で誰でも頼める</div>
+  </div>
+
+  <!-- 16. 音声メッセージ -->
+  <div class="feature">
+    <div class="f-num">16</div>
+    <div class="f-name">音声メッセージ</div>
+    <div class="f-name-en">Audio Message</div>
+    <div class="f-desc">Bot が音声を送れる。テキストを TTS で読み上げ。<strong style="color:#fafaf8;">楽屋でスマホ見れない人</strong>にも届く。緊急アナウンスにも。</div>
+    <div class="mock">
+      <div class="mock-row">
+        <div class="mock-avatar">SS</div>
+        <div class="mock-side">
+          <div class="bubble" style="display:flex;align-items:center;gap:8px;padding:10px 14px;min-width:200px;">
+            <div style="width:24px;height:24px;border-radius:50%;background:#06c755;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;">▶</div>
+            <div style="flex:1;">
+              <div style="height:3px;background:#ddd;border-radius:2px;"><div style="background:#06c755;height:100%;width:35%;border-radius:2px;"></div></div>
+              <div style="font-size:10px;color:#888;margin-top:3px;">0:07 / 0:18</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="f-use">用途: 影アナ予告 / 楽屋アナウンス / 移動中ののむさんの音声メモ</div>
+  </div>
+
+</div>
+
+<div class="footer">SCHEDULE STUDIO · v.417 · LINE FEATURES GALLERY</div>
+
+</body>
+</html>
