@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260527.413000">
+<meta name="build-version" content="20260527.414000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -839,7 +839,7 @@
     background-color: #1f1a14 !important;
   }
   body.excel-drop-hint::before {
-    content: '📊  Excel をドロップして取込';
+    content: ' Excel をドロップして取込';
     position: fixed;
     top: 50%;
     left: 50%;
@@ -6756,7 +6756,7 @@
     <!-- D139: グランドパスワード入力モード（新規 CONCERT 作成時のみ要求） -->
     <div class="lock-mode" id="lock-grand-mode">
       <div class="lock-card">
-        <div class="lock-icon">🛡</div>
+        <div class="lock-icon"></div>
         <div class="lock-mode-label">GRAND PASS</div>
         <div class="lock-form-sub">新しい CONCERT を作成するには<br>nrs の GRAND PASSWORD が必要です</div>
         <input type="password" class="lock-input" placeholder="GRAND PASSWORD" id="lock-grand-pass" autocomplete="off">
@@ -6769,7 +6769,7 @@
     <!-- ログインモード（中央カード） -->
     <div class="lock-mode" id="lock-login-mode">
       <div class="lock-card">
-        <div class="lock-icon">🔒</div>
+        <div class="lock-icon"></div>
         <div class="lock-mode-label">PC 編集版</div>
         <div class="lock-tour-display" id="lock-login-concert-title"></div>
         <div class="lock-form-sub">編集パスワードを入力してください</div>
@@ -6929,8 +6929,8 @@
         <div class="hotel-toolbar">
           <!-- D103: debug 撤去、シンプルな onclick だけ残す -->
           <button class="toolbar-btn primary" data-action="add-hotel">＋ HOTEL を手入力で追加</button>
-          <button class="toolbar-btn" data-action="import-excel">📊 Excel から取込</button>
-          <button class="toolbar-btn" data-action="download-template">📥 テンプレートDL</button>
+          <button class="toolbar-btn" data-action="import-excel">Excel から取込</button>
+          <button class="toolbar-btn" data-action="download-template">テンプレートDL</button>
           <input type="file" class="hotel-file-input" id="hotel-file-input" accept=".xlsx,.xls">
           <span class="toolbar-hint">PCでは横に列を増やす ／ スマホは縦スクロールで閲覧</span>
         </div>
@@ -6977,7 +6977,7 @@
             <!-- R383-1: ズームボタン群削除（常に FIT 動作のため不要） -->
             <button class="tt-btn" id="tt-btn-copy-prev" type="button">前日から複製</button>
             <button class="tt-btn" id="tt-btn-reset-day" type="button" style="color:#d97070;">この日リセット</button>
-            <button class="tt-btn" id="tt-btn-print" type="button">📄 PDF 出力</button>
+            <button class="tt-btn" id="tt-btn-print" type="button">PDF 出力</button>
           </aside>
           <div class="tt-paper" id="tt-paper">
             <div class="tt-paper-header" id="tt-paper-header"></div>
@@ -7006,7 +7006,7 @@
             <div style="color:#f5c878; font-weight:600; margin-top:10px; margin-bottom:6px;">その他</div>
             <div>・<strong style="color:#c8a878;">⌘+Z / Ctrl+Z</strong> でアンドゥ（最大 25 件）／ <strong style="color:#c8a878;">⌘+Shift+Z</strong> でリドゥ</div>
             <div>・マウスを乗せると<strong style="color:#c8a878;">時刻インジケータ</strong>がリアルタイム表示</div>
-            <div>・<strong style="color:#c8a878;">📄 PDF 出力</strong>で白黒の A4 印刷向け版を出力（線の太さ・実線/破線で 5 色を識別）</div>
+            <div>・<strong style="color:#c8a878;">PDF 出力</strong>で白黒の A4 印刷向け版を出力（線の太さ・実線/破線で 5 色を識別）</div>
           </div>
         </div>
       </div>
@@ -7076,7 +7076,7 @@
         <!-- R395: 旧「⚙ LINE 連携 設定」UI を撤去 (Wizard で全機能カバー済み)。
              入場パスワード設定だけ別の <details> として保持 -->
         <details style="margin-bottom:16px;background:rgba(255,255,255,0.03);padding:12px 16px;border-radius:6px;border:1px solid rgba(255,255,255,0.08);">
-          <summary style="cursor:pointer;color:#a8a8a0;font-size:12px;letter-spacing:0.06em;">🔐 この公演の入場パスワード（4 桁）— LINE スタッフ用</summary>
+          <summary style="cursor:pointer;color:#a8a8a0;font-size:12px;letter-spacing:0.06em;">この公演の入場パスワード（4 桁）— LINE スタッフ用</summary>
           <!-- R176: この公演の「入場パスワード（4 桁）」を後付けで設定 / 変更できる UI -->
           <div style="margin-top:14px;">
             <div style="font-size:11px;color:#888;line-height:1.6;margin-bottom:6px;">
@@ -7099,7 +7099,7 @@
           <textarea id="info-body" rows="8" class="info-textarea"></textarea>
         </div>
         <div class="info-actions">
-          <button class="info-push-btn" data-action="info-push">📱 LINE プッシュ送信</button>
+          <button class="info-push-btn" data-action="info-push">LINE プッシュ送信</button>
           <span class="info-push-hint">この公演に紐付けた LINE グループに配信（R164）</span>
         </div>
       </div>
@@ -7209,11 +7209,11 @@
       </div>
 
       <div class="phone-bottom-tabs">
-        <button class="active"><span class="ico">📋</span>RH</button>
-        <button><span class="ico">📢</span>INFO<span class="badge">3</span></button>
-        <button><span class="ico">🚪</span>入り時間</button>
-        <button class="locked"><span class="ico">🏨</span>HOTEL</button>
-        <button><span class="ico">🔒</span>PASS</button>
+        <button class="active"><span class="ico"></span>RH</button>
+        <button><span class="ico"></span>INFO<span class="badge">3</span></button>
+        <button><span class="ico"></span>入り時間</button>
+        <button class="locked"><span class="ico"></span>HOTEL</button>
+        <button><span class="ico"></span>PASS</button>
       </div>
     </div>
   </div>
@@ -7292,11 +7292,11 @@
       </div>
 
       <div class="phone-bottom-tabs">
-        <button><span class="ico">📋</span>RH</button>
-        <button class="active"><span class="ico">📢</span>INFO<span class="badge">3</span></button>
-        <button><span class="ico">🚪</span>入り時間</button>
-        <button class="locked"><span class="ico">🏨</span>HOTEL</button>
-        <button><span class="ico">🔒</span>PASS</button>
+        <button><span class="ico"></span>RH</button>
+        <button class="active"><span class="ico"></span>INFO<span class="badge">3</span></button>
+        <button><span class="ico"></span>入り時間</button>
+        <button class="locked"><span class="ico"></span>HOTEL</button>
+        <button><span class="ico"></span>PASS</button>
       </div>
     </div>
   </div>
@@ -7385,11 +7385,11 @@
       </div>
 
       <div class="phone-bottom-tabs">
-        <button><span class="ico">📋</span>RH</button>
-        <button><span class="ico">📢</span>INFO<span class="badge">3</span></button>
-        <button class="active"><span class="ico">🚪</span>入り時間</button>
-        <button class="locked"><span class="ico">🏨</span>HOTEL</button>
-        <button><span class="ico">🔒</span>PASS</button>
+        <button><span class="ico"></span>RH</button>
+        <button><span class="ico"></span>INFO<span class="badge">3</span></button>
+        <button class="active"><span class="ico"></span>入り時間</button>
+        <button class="locked"><span class="ico"></span>HOTEL</button>
+        <button><span class="ico"></span>PASS</button>
       </div>
     </div>
   </div>
@@ -7446,11 +7446,11 @@
       </div>
 
       <div class="phone-bottom-tabs">
-        <button><span class="ico">📋</span>RH</button>
-        <button><span class="ico">📢</span>INFO<span class="badge">3</span></button>
-        <button><span class="ico">🚪</span>入り時間</button>
-        <button class="active"><span class="ico">🏨</span>HOTEL</button>
-        <button><span class="ico">🔒</span>PASS</button>
+        <button><span class="ico"></span>RH</button>
+        <button><span class="ico"></span>INFO<span class="badge">3</span></button>
+        <button><span class="ico"></span>入り時間</button>
+        <button class="active"><span class="ico"></span>HOTEL</button>
+        <button><span class="ico"></span>PASS</button>
       </div>
     </div>
   </div>
@@ -7472,7 +7472,7 @@
       </div>
 
       <div class="pass-screen">
-        <div class="pass-icon">🔒</div>
+        <div class="pass-icon"></div>
         <div class="pass-title">この公演のパスワード</div>
         <div class="pass-sub">
           演出担当（のむ）から共有された<br>
@@ -7487,11 +7487,11 @@
       </div>
 
       <div class="phone-bottom-tabs">
-        <button><span class="ico">📋</span>RH</button>
-        <button><span class="ico">📢</span>INFO<span class="badge">3</span></button>
-        <button><span class="ico">🚪</span>入り時間</button>
-        <button class="locked"><span class="ico">🏨</span>HOTEL</button>
-        <button class="active"><span class="ico">🔒</span>PASS</button>
+        <button><span class="ico"></span>RH</button>
+        <button><span class="ico"></span>INFO<span class="badge">3</span></button>
+        <button><span class="ico"></span>入り時間</button>
+        <button class="locked"><span class="ico"></span>HOTEL</button>
+        <button class="active"><span class="ico"></span>PASS</button>
       </div>
     </div>
   </div>
@@ -7513,7 +7513,7 @@
       </div>
 
       <div class="locked-overlay">
-        <div class="locked-icon">🔒</div>
+        <div class="locked-icon"></div>
         <div class="pass-title" style="margin-bottom:12px;">ロック中</div>
         <div class="locked-msg">
           このタブは <strong style="color:#e89a4a">PASS タブ</strong> で<br>
@@ -7523,11 +7523,11 @@
       </div>
 
       <div class="phone-bottom-tabs">
-        <button><span class="ico">📋</span>RH</button>
-        <button><span class="ico">📢</span>INFO<span class="badge">3</span></button>
-        <button><span class="ico">🚪</span>入り時間</button>
-        <button class="locked active"><span class="ico">🏨</span>HOTEL</button>
-        <button><span class="ico">🔒</span>PASS</button>
+        <button><span class="ico"></span>RH</button>
+        <button><span class="ico"></span>INFO<span class="badge">3</span></button>
+        <button><span class="ico"></span>入り時間</button>
+        <button class="locked active"><span class="ico"></span>HOTEL</button>
+        <button><span class="ico"></span>PASS</button>
       </div>
     </div>
   </div>
@@ -9589,7 +9589,7 @@ function show(id) {
                           : sameNext ? ' bar-start'
                           : samePrev ? ' bar-end'
                           : '';
-          const bandLabel = samePrev ? '' : ('📍 ' + venueGroup.venue);
+          const bandLabel = samePrev ? '' : ('' + venueGroup.venue);
           const showRightHandle = (bandPosCls === '' || bandPosCls === ' bar-end');
           const showLeftHandle = (bandPosCls === '' || bandPosCls === ' bar-start');
           const rightHandleHtml = showRightHandle ? '<span class="pc-cal-venue-band-resize-handle" draggable="false"></span>' : '';
@@ -9785,7 +9785,7 @@ function show(id) {
                         : sameNext ? ' bar-start'
                         : samePrev ? ' bar-end'
                         : '';
-        const bandLabel = samePrev ? '' : ('📍 ' + venueGroup.venue);
+        const bandLabel = samePrev ? '' : ('' + venueGroup.venue);
         const showRightHandle = (bandPosCls === '' || bandPosCls === ' bar-end');
         const showLeftHandle = (bandPosCls === '' || bandPosCls === ' bar-start');
         const rightHandleHtml = showRightHandle ? '<span class="pc-cal-venue-band-resize-handle" draggable="false"></span>' : '';
@@ -9934,7 +9934,7 @@ function show(id) {
     const dateKey = fmtDateKey(d);
     const venue = evs.length > 0 ? evs[0].venue : '';
 
-    // D74: 詳細パネルヘッダーのボタン群（📲/⤓/⤒/保存）を撤去 — 全部自動保存運用に統一
+    // D74: 詳細パネルヘッダーのボタン群（/⤓/⤒/保存）を撤去 — 全部自動保存運用に統一
     let html = '';
 
     // 編集UI（常に表示）
@@ -9992,7 +9992,7 @@ function show(id) {
     const detailEl = document.getElementById('pc-cal-detail');
     if (!detailEl) return;
 
-    // R63 F-Alt: 📲 同期URL コピー
+    // R63 F-Alt: 同期URL コピー
     detailEl.querySelectorAll('[data-action="share-sync"]').forEach(function(b){
       b.addEventListener('click', function(){
         if (typeof window.__generateSyncUrlForPhone === 'function') {
@@ -11091,10 +11091,10 @@ function show(id) {
       +     '<div class="info-label">住所</div><input value="' + escH(h.address) + '" data-field="address">'
       +     '<div class="info-label">電話</div><input value="' + escH(h.tel) + '" data-field="tel">'
       +     '<div class="info-label">URL</div><input value="' + escH(h.url) + '" data-field="url">'
-      +     '<div class="info-label">マップ</div><a class="hotel-map-link' + mapClass + '" href="' + mapHref + '" target="_blank" rel="noopener" title="' + (h.address ? 'Googleマップで住所を開く' : '住所が未入力です') + '">📍 Google マップで開く</a>'
+      +     '<div class="info-label">マップ</div><a class="hotel-map-link' + mapClass + '" href="' + mapHref + '" target="_blank" rel="noopener" title="' + (h.address ? 'Googleマップで住所を開く' : '住所が未入力です') + '">Google マップで開く</a>'
       +   '</div>'
       +   '<div class="hotel-section">'
-      +     '<div class="hotel-section-head">🚕 タクシー配車 <span class="hotel-section-count">' + h.taxis.length + ' 件</span></div>'
+      +     '<div class="hotel-section-head">タクシー配車 <span class="hotel-section-count">' + h.taxis.length + ' 件</span></div>'
       +     '<div class="taxi-list">' + taxisHtml + '</div>'
       +     '<button class="add-btn" data-action="add-taxi" data-hotel="' + h.id + '">＋ 配車を追加</button>'
       +   '</div>'
@@ -11114,10 +11114,10 @@ function show(id) {
     if (hotels.length === 0) {
       wrap.innerHTML = ''
         + '<div class="hotel-empty">'
-        +   '<div class="hotel-empty-icon">🏨</div>'
+        +   '<div class="hotel-empty-icon"></div>'
         +   '<div class="hotel-empty-title">ホテルがまだありません</div>'
         +   '<div class="hotel-empty-msg">上の <strong>＋ HOTEL を手入力で追加</strong> ボタンで新規カードを作るか、<br>'
-        +   '<strong>📊 Excel から取込</strong> で一括登録できます。</div>'
+        +   '<strong>Excel から取込</strong> で一括登録できます。</div>'
         + '</div>';
       return;
     }
@@ -11588,7 +11588,7 @@ function show(id) {
       box.style.cssText = 'background:#1a1a1a;border:1px solid rgba(216,184,120,0.4);border-radius:8px;padding:18px;max-width:920px;width:100%;max-height:88vh;display:flex;flex-direction:column;';
       box.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">' +
         '<strong style="color:#f0e0c8;font-size:14px;">GAS に貼るコード</strong>' +
-        '<button id="r167-copy-code" style="background:#1d1d1d;border:1px solid rgba(216,184,120,0.5);color:#f0e0c8;padding:6px 14px;border-radius:4px;font-size:12px;cursor:pointer;">📋 コードをコピー</button>' +
+        '<button id="r167-copy-code" style="background:#1d1d1d;border:1px solid rgba(216,184,120,0.5);color:#f0e0c8;padding:6px 14px;border-radius:4px;font-size:12px;cursor:pointer;">コードをコピー</button>' +
         '</div>' +
         '<div style="color:#888;font-size:11px;margin-bottom:8px;line-height:1.6;">GAS の「コード.gs」を全選択して削除 → ここの内容を貼り付け → 一番上の CHANNEL_ACCESS_TOKEN にトークンを貼る → デプロイ → ウェブアプリ URL を SCHEDULE STUDIO に戻して保存。</div>' +
         '<textarea readonly id="r167-code-area" style="flex:1;background:#0a0a08;color:#e8e8e2;border:1px solid #2c2c2c;border-radius:4px;padding:10px;font-family:JetBrains Mono,monospace;font-size:11px;line-height:1.5;resize:none;min-height:400px;"></textarea>' +
@@ -11714,7 +11714,7 @@ function show(id) {
       }
       setList('<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">' +
         '<div style="font-size:11px;color:#888;">下記からコピーしてグループ ID 欄に貼ってください：</div>' +
-        '<button type="button" onclick="document.getElementById(\'wiz-group-list\').innerHTML=\'\';var s=document.getElementById(\'wiz-group-list-status\');if(s)s.textContent=\'\';var l2=document.getElementById(\'info-line-group-list\');if(l2)l2.innerHTML=\'\';var s2=document.getElementById(\'info-line-group-status\');if(s2)s2.textContent=\'\';" title="一覧を非表示にする (もう一度開きたい時は「📥 LINE グループ一覧を取得」を押す)" style="background:transparent;border:0.5px solid #555;color:#888;font-size:10px;padding:2px 10px;border-radius:3px;cursor:pointer;white-space:nowrap;">× 一覧を閉じる</button>' +
+        '<button type="button" onclick="document.getElementById(\'wiz-group-list\').innerHTML=\'\';var s=document.getElementById(\'wiz-group-list-status\');if(s)s.textContent=\'\';var l2=document.getElementById(\'info-line-group-list\');if(l2)l2.innerHTML=\'\';var s2=document.getElementById(\'info-line-group-status\');if(s2)s2.textContent=\'\';" title="一覧を非表示にする (もう一度開きたい時は「LINE グループ一覧を取得」を押す)" style="background:transparent;border:0.5px solid #555;color:#888;font-size:10px;padding:2px 10px;border-radius:3px;cursor:pointer;white-space:nowrap;">× 一覧を閉じる</button>' +
         '</div>' +
         groups.map(function(g){
           return '<div style="padding:6px 8px;margin:3px 0;background:rgba(255,255,255,0.04);border-radius:4px;">' +
@@ -12011,7 +12011,7 @@ function show(id) {
     saveHotels(); // R62 M4
   });
 
-  // R63 F-Alt: PC側に「📲 同期URL生成」機能を追加
+  // R63 F-Alt: PC側に「同期URL生成」機能を追加
   // 全 localStorage を JSON 化 → Base64 → URL ハッシュに埋め込んで phone.html へのリンクを生成
   window.__generateSyncUrlForPhone = function() {
     const data = {
@@ -12028,7 +12028,7 @@ function show(id) {
     const url = 'https://nrs2013.github.io/schedule-studio/phone.html#sync=' + b64;
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(url).then(function(){
-        alert('📲 同期URL をクリップボードにコピーしました。\n\nLINE グループに貼り付けて送信すると、スタッフがタップした瞬間にスマホ版に最新データ（予定・入り時間・HOTEL）が自動反映されます。\n\nURL長: ' + url.length + ' 文字');
+        alert('同期URL をクリップボードにコピーしました。\n\nLINE グループに貼り付けて送信すると、スタッフがタップした瞬間にスマホ版に最新データ（予定・入り時間・HOTEL）が自動反映されます。\n\nURL長: ' + url.length + ' 文字');
       }).catch(function(){
         prompt('クリップボードに自動コピーできませんでした。下記をコピーして使ってください:', url);
       });
@@ -12417,7 +12417,7 @@ function show(id) {
       const dayLabel = (v.days && v.days > 1) ? ' <span style="color:#76766f;font-size:10px;">(' + v.days + '日)</span>' : '';
       return ''
         + '<div class="cal-event-venue" draggable="true" data-venue-id="' + v.id + '" data-venue-name="' + (v.name || '').replace(/"/g, '&quot;') + '" data-venue-days="' + (v.days || 1) + '">'
-        +   '<span style="flex-shrink:0;">📍</span>'
+        +   '<span style="flex-shrink:0;"></span>'
         +   '<span class="venue-name">' + (v.name || '').replace(/</g, '&lt;') + dayLabel + '</span>'
         +   '<button class="venue-del" type="button" data-venue-del-id="' + v.id + '" title="削除">×</button>'
         + '</div>';
@@ -14447,7 +14447,7 @@ function show(id) {
           ghost.style.top = topMin + 'px';
           ghost.style.width = width + 'px';
           ghost.style.height = (botMax - topMin) + 'px';
-          ghost.textContent = '🎯 ' + spanSecIds.length + ' セクション貫通  ' + fmtTimeFromHour(st) + ' 〜 ' + fmtTimeFromHour(et);
+          ghost.textContent = '' + spanSecIds.length + ' セクション貫通  ' + fmtTimeFromHour(st) + ' 〜 ' + fmtTimeFromHour(et);
           // R281e-A/C: HUD + grabbing
           if (typeof ttSetDragClass === 'function' && !document.body.classList.contains('tt-dragging')) ttSetDragClass('tt-dragging');
           ttShowHud(ev.clientX, ev.clientY, st, et);
@@ -14905,7 +14905,7 @@ function show(id) {
     // 削除
     const del = document.createElement('div');
     del.className = 'tt-color-delete';
-    del.textContent = '🗑 このバーを削除';
+    del.textContent = 'このバーを削除';
     del.addEventListener('click', function(){
       const dk = getCurrentDateKey();
       const tt = getTimetableForDate(dk);
@@ -16554,7 +16554,7 @@ function show(id) {
       const html = '<!doctype html><html><head><meta charset="utf-8"><title>印刷: タイムスケジュール</title>' + stylesheet + '</head><body>' +
         '<div class="print-controls">' +
         '<span>A4 横で印刷準備完了。ブラウザの印刷ダイアログから「用紙: A4」「向き: 横」を選んでください。</span>' +
-        '<button onclick="window.print()">🖨️ 印刷ダイアログを開く</button>' +
+        '<button onclick="window.print()">️ 印刷ダイアログを開く</button>' +
         '<button onclick="window.close()">閉じる</button>' +
         '</div>' +
         '<div id="tt-pdf-root">' + pages + '</div>' +
@@ -16629,7 +16629,7 @@ function show(id) {
       <div class="pdf-progress" id="pdf-progress">　</div>
       <div class="pdf-modal-actions">
         <button class="pdf-btn" id="pdf-btn-cancel" type="button">キャンセル</button>
-        <button class="pdf-btn" id="pdf-btn-browser-print" type="button" disabled title="ブラウザの印刷ダイアログで直接印刷 (A4 横自動)">🖨️ 直接印刷</button>
+        <button class="pdf-btn" id="pdf-btn-browser-print" type="button" disabled title="ブラウザの印刷ダイアログで直接印刷 (A4 横自動)">️ 直接印刷</button>
         <button class="pdf-btn pdf-btn-primary" id="pdf-btn-export" type="button" disabled>PDF に出力</button>
       </div>
     </div>
