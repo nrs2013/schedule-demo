@@ -3,12 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-<meta name="build-version" content="20260527.415100">
+<meta name="build-version" content="20260527.416000">
 <title>SCHEDULE STUDIO — STAFF</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; }
@@ -94,9 +97,7 @@
     letter-spacing: 0.04em;
     line-height: 1.6;
   }
-  .error {
-    color: #e07a5f;
-  }
+  .error { color: #e07a5f; }
   .footer {
     text-align: center;
     margin-top: 32px;
@@ -117,6 +118,64 @@
     border-radius: 0 4px 4px 0;
   }
   .phase-note strong { color: #f5c878; font-weight: 600; }
+  /* Phase 2: スタッフ識別入力 */
+  .form-row { margin-top: 14px; }
+  input.text-input, select.text-input {
+    width: 100%;
+    background: transparent;
+    border: 0.5px solid rgba(255,255,255,0.18);
+    color: #fafaf8;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 15px;
+    padding: 10px 12px;
+    border-radius: 4px;
+    box-sizing: border-box;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  input.text-input::placeholder { color: #555; }
+  button.btn {
+    margin-top: 10px;
+    background: transparent;
+    border: 0.5px solid rgba(245,200,120,0.5);
+    color: #f5c878;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 10px 18px;
+    border-radius: 3px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    cursor: pointer;
+    width: 100%;
+  }
+  button.btn-secondary {
+    border-color: rgba(255,255,255,0.18);
+    color: #888;
+    margin-top: 6px;
+  }
+  /* タイムテーブル / 入り時間 行 */
+  .row {
+    padding: 10px 12px;
+    background: rgba(255,255,255,0.03);
+    border-left: 2px solid rgba(168,232,120,0.4);
+    border-radius: 0 4px 4px 0;
+    margin-bottom: 6px;
+  }
+  .row .time {
+    font-family: 'JetBrains Mono', monospace;
+    color: #a8e878;
+    font-weight: 600;
+    font-size: 18px;
+    margin-right: 10px;
+  }
+  .row .who { color: #fafaf8; font-size: 14px; }
+  .row .where { color: #888; font-size: 11px; margin-top: 3px; }
+  .empty {
+    font-size: 12px;
+    color: #666;
+    font-style: italic;
+    padding: 4px 0;
+  }
 </style>
 </head>
 <body>
@@ -129,12 +188,26 @@
   <div class="value status-line" id="status-text">LIFF 初期化中…</div>
 </div>
 
-<div class="footer">SCHEDULE STUDIO · v.415 · LIFF PHASE 1</div>
+<div class="footer">SCHEDULE STUDIO · v.416 · LIFF PHASE 2</div>
 
 <script>
-  // R415 Phase 1: LIFF プロトタイプ — プロフィール表示のみ
-  // のむさんが LINE Developers Console で作成した LIFF ID をここに埋め込む
+  // R416 Phase 2: Firebase 経由でアクティブ公演取得 + スタッフ識別 + 自分の入り時間表示
   const LIFF_ID = '2010208406-s7urLLR0';
+  const FIREBASE_CONFIG = {
+    apiKey: "AIzaSyB0g9NU2jHWLgHSpgxyvWjizdloLbkJ_aM",
+    authDomain: "schedule-studio-2b14f.firebaseapp.com",
+    databaseURL: "https://schedule-studio-2b14f-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "schedule-studio-2b14f",
+    storageBucket: "schedule-studio-2b14f.firebasestorage.app",
+    messagingSenderId: "480145267674",
+    appId: "1:480145267674:web:8d1a8e9b11d3ee69613ee3"
+  };
+  // LIFF 側 localStorage キー (LIFF 内 WebView 専用)
+  const LK_SELF_NAME = 'liff-staff:self-name';
+  // SCHEDULE STUDIO 側 localStorage キー (Firebase 経由で読む)
+  const SS_CONCERTS = 'schedule-studio:concerts:v1';
+  const SS_ACTIVE   = 'schedule-studio:active-concert-id';
+  const SS_ARRIVALS = 'schedule-studio:arrivalSectionsByDate:v1';
 
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, function(m){
@@ -142,52 +215,174 @@
     });
   }
 
+  let __profile = null;   // LIFF profile (displayName, userId, pictureUrl)
+  let __selfName = null;  // スタッフが自己申告した名前 (LIFF 側 localStorage に保存)
+  let __concert = null;   // アクティブ公演の object
+  let __arrivals = {};    // arrivalSectionsByDate
+
   function renderError(msg) {
     document.getElementById('root').innerHTML =
       '<div class="label">Error</div>' +
-      '<div class="value error">' + esc(msg) + '</div>' +
-      '<div class="status-line" style="margin-top:14px;">LIFF ID: <code class="id-mono">' + esc(LIFF_ID) + '</code></div>';
+      '<div class="value error">' + esc(msg) + '</div>';
   }
 
-  function renderProfile(profile, concertTitle) {
+  function renderStaffIdentify() {
     const root = document.getElementById('root');
-    const avatarHtml = profile.pictureUrl
-      ? '<img src="' + esc(profile.pictureUrl) + '" class="avatar" alt="">'
+    const avatarHtml = __profile.pictureUrl
+      ? '<img src="' + esc(__profile.pictureUrl) + '" class="avatar" alt="">'
       : '';
     root.innerHTML =
       avatarHtml +
       '<div class="label">Hi</div>' +
-      '<div class="name">' + esc(profile.displayName) + '</div>' +
-      (profile.statusMessage ? '<div class="status-line" style="margin-bottom:6px;">' + esc(profile.statusMessage) + '</div>' : '') +
+      '<div class="name">' + esc(__profile.displayName) + '</div>' +
       '<hr>' +
       '<div class="label">Concert</div>' +
-      '<div class="value accent-amber">' + esc(concertTitle) + '</div>' +
-      '<div class="label">Your LINE ID</div>' +
-      '<div class="id-mono" style="margin-bottom:4px;">' + esc(profile.userId) + '</div>' +
+      '<div class="value accent-amber">' + esc(__concert ? __concert.title : '(取得失敗)') + '</div>' +
       '<hr>' +
-      '<div class="phase-note">' +
-      '<strong>Phase 1: プロトタイプ</strong><br>' +
-      '次のステップで、ここに自分の <strong>入り時間 / タイムテーブル / 部屋番号</strong> が表示される予定です。' +
+      '<div class="label">あなたは誰？</div>' +
+      '<div style="font-size:11.5px;color:#a8a8a0;line-height:1.6;margin-bottom:10px;">' +
+        'のむさんが SCHEDULE STUDIO で登録した <strong style="color:#fafaf8;">スタッフ名 (フルネーム or 役職)</strong> を入力してください。' +
+        '<br>例: 田中、舞台監督、PA、照明など。<br>一度設定すれば次回から自動で出ます。' +
+      '</div>' +
+      '<div class="form-row">' +
+      '<input type="text" class="text-input" id="self-name-input" placeholder="例: 田中 / 舞台監督" autocomplete="off">' +
+      '</div>' +
+      '<button class="btn" id="self-name-save">この名前で続行</button>';
+
+    document.getElementById('self-name-save').addEventListener('click', function(){
+      const v = (document.getElementById('self-name-input').value || '').trim();
+      if (!v) return;
+      __selfName = v;
+      try { localStorage.setItem(LK_SELF_NAME, v); } catch(_) {}
+      renderDashboard();
+    });
+    // Enter キーでも送信
+    document.getElementById('self-name-input').addEventListener('keydown', function(e){
+      if (e.key === 'Enter') document.getElementById('self-name-save').click();
+    });
+  }
+
+  function findMyArrivals() {
+    // arrivalSectionsByDate[dateKey] = { sections: [{name, time, ...}], ... } or 配列など。
+    // データ構造が複数バージョンの可能性があるので、柔軟に再帰的に探す。
+    const matches = [];
+    const needle = String(__selfName || '').toLowerCase();
+    if (!needle) return matches;
+
+    function walk(node, dateKey) {
+      if (!node) return;
+      if (Array.isArray(node)) { node.forEach(function(x){ walk(x, dateKey); }); return; }
+      if (typeof node !== 'object') return;
+      // この node に name / time っぽいプロパティがあれば arrival 行候補
+      const name = node.name || node.staff || node.person || node.who || '';
+      const time = node.time || node.in || node.arrival || node.arrivalTime || '';
+      const where = node.location || node.venue || node.place || '';
+      if (name && String(name).toLowerCase().indexOf(needle) >= 0) {
+        matches.push({ date: dateKey, name: name, time: time, where: where });
+      }
+      Object.keys(node).forEach(function(k){
+        if (k === 'name' || k === 'time' || k === 'in' || k === 'arrival') return;
+        walk(node[k], dateKey);
+      });
+    }
+    Object.keys(__arrivals || {}).forEach(function(dateKey){
+      walk(__arrivals[dateKey], dateKey);
+    });
+    // 日付昇順
+    matches.sort(function(a,b){ return String(a.date).localeCompare(String(b.date)); });
+    return matches;
+  }
+
+  function renderDashboard() {
+    const root = document.getElementById('root');
+    const avatarHtml = __profile.pictureUrl
+      ? '<img src="' + esc(__profile.pictureUrl) + '" class="avatar" alt="">'
+      : '';
+
+    const arrivals = findMyArrivals();
+    const arrivalsHtml = arrivals.length === 0
+      ? '<div class="empty">あなた名 (<code style="color:#888;">' + esc(__selfName) + '</code>) の入り時間が見つかりませんでした。<br>のむさんに「LIFF で表示される名前」を SCHEDULE STUDIO 側の入り時間と揃えてもらってください。</div>'
+      : arrivals.map(function(a){
+          return '<div class="row">' +
+                 '<span class="time">' + esc(a.time || '--:--') + '</span>' +
+                 '<span class="who">' + esc(a.name) + '</span>' +
+                 (a.where ? '<div class="where">' + esc(a.where) + '</div>' : '') +
+                 (a.date ? '<div class="where">' + esc(a.date) + '</div>' : '') +
+                 '</div>';
+        }).join('');
+
+    root.innerHTML =
+      avatarHtml +
+      '<div class="label">Hi</div>' +
+      '<div class="name">' + esc(__profile.displayName) + '</div>' +
+      '<hr>' +
+      '<div class="label">Concert</div>' +
+      '<div class="value accent-amber">' + esc(__concert ? __concert.title : '(取得失敗)') + '</div>' +
+      '<div class="label">You (Staff Name)</div>' +
+      '<div class="value">' + esc(__selfName) + '</div>' +
+      '<hr>' +
+      '<div class="label">My Arrival Time</div>' +
+      arrivalsHtml +
+      '<hr>' +
+      '<button class="btn btn-secondary" id="reset-name">スタッフ名を再設定</button>' +
+      '<div class="phase-note" style="margin-top:14px;">' +
+        '<strong>Phase 2 進行中</strong><br>' +
+        '次に「タイムテーブル / 部屋番号 / リハーサル予定」を個人別に出します。' +
       '</div>';
+
+    document.getElementById('reset-name').addEventListener('click', function(){
+      try { localStorage.removeItem(LK_SELF_NAME); } catch(_) {}
+      __selfName = null;
+      renderStaffIdentify();
+    });
+  }
+
+  async function fetchSSData(db) {
+    function read(key) {
+      return db.ref('ls/' + key).once('value').then(function(snap){
+        const data = snap.val();
+        if (!data || data.v == null) return null;
+        try { return JSON.parse(data.v); } catch(_) { return data.v; }
+      });
+    }
+    const [concerts, activeId, arrivals] = await Promise.all([
+      read(SS_CONCERTS).catch(function(){ return null; }),
+      read(SS_ACTIVE).catch(function(){ return null; }),
+      read(SS_ARRIVALS).catch(function(){ return null; }),
+    ]);
+    let active = null;
+    if (Array.isArray(concerts)) {
+      active = concerts.find(function(x){ return x && x.id === activeId; }) || concerts[0] || null;
+    }
+    __concert = active;
+    __arrivals = arrivals || {};
   }
 
   async function main() {
-    if (LIFF_ID === '___LIFF_ID_PLACEHOLDER___') {
-      renderError('LIFF ID が未設定です。LINE Developers Console で LIFF アプリを作成してください。');
-      return;
-    }
     try {
       await liff.init({ liffId: LIFF_ID });
-      if (!liff.isLoggedIn()) {
-        liff.login();
-        return;
+      if (!liff.isLoggedIn()) { liff.login(); return; }
+      __profile = await liff.getProfile();
+
+      // Firebase 初期化 + 匿名認証
+      firebase.initializeApp(FIREBASE_CONFIG);
+      try {
+        await firebase.auth().signInAnonymously();
+      } catch (authErr) {
+        console.warn('[Firebase Auth] failed:', authErr && authErr.message);
+        // 認証失敗でもデータベース読みを試みる (ルール次第)
       }
-      const profile = await liff.getProfile();
-      // Phase 1: アクティブ公演はクエリパラメータ or 固定値。
-      // Phase 2 で Firebase 経由で SCHEDULE STUDIO 側のアクティブ公演と同期する予定。
-      const params = new URLSearchParams(window.location.search);
-      const concertTitle = params.get('concert') || '(未指定 — Phase 2 で自動同期)';
-      renderProfile(profile, concertTitle);
+      const db = firebase.database();
+
+      // SCHEDULE STUDIO データ取得
+      await fetchSSData(db);
+
+      // 既存のスタッフ名 (LIFF 側 localStorage)
+      try { __selfName = localStorage.getItem(LK_SELF_NAME); } catch(_) {}
+
+      if (__selfName) renderDashboard();
+      else renderStaffIdentify();
+
     } catch (err) {
       renderError('LIFF init 失敗: ' + (err && err.message ? err.message : String(err)));
     }
