@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260527.410000">
+<meta name="build-version" content="20260527.411000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -11386,6 +11386,7 @@ function show(id) {
 
   // R125: LINE GAS URL の保存・テスト送信
   window.__r125SaveLineUrl = function(){
+    if (window.__r411RequireEditPass && !window.__r411RequireEditPass()) return; /* R411: 編集パスワード認証 */
     const inp = document.getElementById('info-line-gas-url');
     const status = document.getElementById('info-line-status');
     if (!inp) return;
@@ -11515,6 +11516,7 @@ function show(id) {
   // R164: 公演ごとの LINE グループ ID 管理
   // ────────────────────────────────────────────────────────────
   window.__r164SaveGroupId = function() {
+    if (window.__r411RequireEditPass && !window.__r411RequireEditPass()) return; /* R411: 編集パスワード認証 */
     const inp = document.getElementById('info-line-group-id');
     const status = document.getElementById('info-line-group-status');
     if (!inp) return;
@@ -11618,6 +11620,7 @@ function show(id) {
   };
 
   window.__r164ListGroups = function() {
+    if (window.__r411RequireEditPass && !window.__r411RequireEditPass()) return; /* R411: 編集パスワード認証 */
     const url = localStorage.getItem('schedule-studio:line-gas-url') || '';
     /* R394: Wizard を開いている時、結果が旧 INFO タブにしか出ない問題を修正。
        旧 UI と Wizard 内の表示エリア両方に同じ HTML を描画する */
@@ -11716,6 +11719,34 @@ function show(id) {
     });
   };
 
+  /* R411: LINE 連携 編集系操作の認証ゲート。
+     active concert の passwords.edit を要求。1 度通れば sessionStorage で同一タブ中ずっと通過。
+     編集パスワード未設定の公演は素通り (運用上は公演作成時に必ず設定する前提)。 */
+  window.__r411RequireEditPass = function() {
+    if (sessionStorage.getItem('schedule-studio:edit-auth-session') === '1') return true;
+    let editPass = '';
+    let concertTitle = '';
+    try {
+      const concerts = JSON.parse(localStorage.getItem('schedule-studio:concerts:v1') || '[]');
+      const aid = localStorage.getItem('schedule-studio:active-concert-id');
+      const c = (aid && concerts.find(function(x){return x.id===aid;})) || concerts[0];
+      editPass = (c && c.passwords && c.passwords.edit) || '';
+      concertTitle = (c && c.title) || '';
+    } catch(_) {}
+    if (!editPass) {
+      sessionStorage.setItem('schedule-studio:edit-auth-session', '1');
+      return true;
+    }
+    const input = prompt('「' + concertTitle + '」の編集パスワードを入力してください。\n\n(LINE 連携の編集操作には認証が必要です。\n一度通れば、このタブを開いてる間は再入力不要)');
+    if (input == null) return false;
+    if (input === editPass) {
+      sessionStorage.setItem('schedule-studio:edit-auth-session', '1');
+      return true;
+    }
+    alert('編集パスワードが違います。');
+    return false;
+  };
+
   /* R408: グループ一覧からのローカル隠し。
      GAS 側のデータは触らず、localStorage の hidden リストに groupId を蓄積。
      LINE 側で Bot を退会させれば GAS の groups から自動削除されるが、
@@ -11723,6 +11754,7 @@ function show(id) {
      R410: 誤操作防止に確認ダイアログを追加。あとで復元できることも明示。 */
   window.__r408HideGroup = function(id) {
     if (!id) return;
+    if (window.__r411RequireEditPass && !window.__r411RequireEditPass()) return; /* R411: 編集パスワード認証 */
     let names = {};
     try { names = JSON.parse(localStorage.getItem('schedule-studio:line-group-names') || '{}'); } catch(_) {}
     const groupName = names[id] || '(名前不明)';
@@ -11747,6 +11779,7 @@ function show(id) {
   /* R410: 隠したグループの復元 (個別) */
   window.__r410ShowGroup = function(id) {
     if (!id) return;
+    if (window.__r411RequireEditPass && !window.__r411RequireEditPass()) return; /* R411: 編集パスワード認証 */
     const key = 'schedule-studio:line-group-hidden';
     let list;
     try { list = JSON.parse(localStorage.getItem(key) || '[]'); } catch(_) { list = []; }
@@ -11760,6 +11793,7 @@ function show(id) {
 
   /* R410: 隠したグループの全件復元 */
   window.__r410ShowAllGroups = function() {
+    if (window.__r411RequireEditPass && !window.__r411RequireEditPass()) return; /* R411: 編集パスワード認証 */
     const key = 'schedule-studio:line-group-hidden';
     let count = 0;
     try { count = (JSON.parse(localStorage.getItem(key) || '[]') || []).length; } catch(_) {}
