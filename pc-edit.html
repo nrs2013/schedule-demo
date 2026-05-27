@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260527.420000">
+<meta name="build-version" content="20260527.422000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -211,6 +211,7 @@
     'schedule-studio:line-test-passed',
     'schedule-studio:line-group-hidden',
     'schedule-studio:line-group-names',
+    'schedule-studio:masterDate', /* R422: 端末ローカル属性 — 2 台同時編集での日付上書き合戦防止 */
   ]);
   function shouldSyncFb(key) {
     return typeof key === 'string' && key.indexOf('schedule-studio:') === 0 && !FB_SYNC_EXCLUDE.has(key);
@@ -336,6 +337,8 @@
       if (item.k === 'schedule-studio:hotels:v1' && typeof window.__reloadHotels === 'function') window.__reloadHotels();
       // R237 Phase 1: タイムテーブル
       if (item.k === 'schedule-studio:timetableByDate:v1' && typeof window.__reloadTimetableByDate === 'function') window.__reloadTimetableByDate();
+      // R422: INFORMATION BOARD — Firebase 経由の更新を textarea に反映
+      if (item.k === 'schedule-studio:board:v1' && typeof window.__boardLoadFromLS === 'function') window.__boardLoadFromLS();
       // R109: render 前に renderMonth のキャッシュフラグを無効化（強制完全再描画）
       try {
         const monthEl = document.getElementById('pc-cal-month');
@@ -11541,7 +11544,12 @@ function show(id) {
       if (status) { status.textContent = '✗ 現在の公演に LINE グループ ID が紐付いていません'; status.style.color = '#e07a5f'; }
       return;
     }
-    const dateKey = localStorage.getItem('schedule-studio:masterDate') || new Date().toISOString().slice(0, 10);
+    /* R422: masterDate 未設定時のフォールバックを JST 化 (UTC だと深夜帯に前日扱いになるバグ修正) */
+    function _jstDateKey(){
+      const d = new Date();
+      return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    }
+    const dateKey = localStorage.getItem('schedule-studio:masterDate') || _jstDateKey();
     let tt = {};
     try { tt = JSON.parse(localStorage.getItem('schedule-studio:timetableByDate:v1') || '{}'); } catch(_) {}
     const ttToday = tt[dateKey] || { sections: [], bars: [] };
@@ -11634,6 +11642,8 @@ function show(id) {
       lastSavedValue = v;
       setStatus(v ? '✓ 保存済み' : '未編集', v ? '#a8e878' : '#888');
     }
+    /* R422: 外部 (applyFbItem) から呼べるように export。Firebase 経由の他デバイス更新を反映 */
+    window.__boardLoadFromLS = loadFromLS;
     function autosave() {
       const ta = getTa();
       if (!ta || ta.readOnly) return;
@@ -13453,6 +13463,7 @@ function show(id) {
         'schedule-studio:line-test-passed',
         'schedule-studio:line-group-hidden',
         'schedule-studio:line-group-names',
+        'schedule-studio:board:v1', /* R422: INFORMATION BOARD は公演を跨いで残す */
       ];
       const toRemove = [];
       for (let i = 0; i < localStorage.length; i++) {
