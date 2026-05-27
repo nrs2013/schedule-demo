@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260527.418000">
+<meta name="build-version" content="20260527.419000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -6827,6 +6827,7 @@
         <button class="parent-tab" data-parent="rehearsal">REHEARSAL</button>
         <button class="parent-tab no-children" data-parent="hotel">HOTEL</button>
         <button class="parent-tab no-children" data-parent="info">INFO</button>
+        <button class="parent-tab no-children" data-parent="board">BOARD</button>
       </div>
       <div class="children-bar" id="children-bar"></div>
     </div><!-- /tab-bar -->
@@ -7110,6 +7111,36 @@
           <span class="info-history-count" id="info-history-count">0 件</span>
         </div>
         <div class="info-history-list" id="info-history-list"></div>
+      </div>
+    </div>
+
+    <!-- R419: INFORMATION BOARD タブ — 全員共通の掲示板。Firebase でリアルタイム同期 -->
+    <div class="mode-content" id="mode-board">
+      <div class="info-header">
+        <h2 class="info-title">BOARD — INFORMATION BOARD</h2>
+        <p class="info-desc">全員共通の掲示板。のむさん（編集パスワード所持者）が書き換えると、LINE 経由で全スタッフのスマホ側にリアルタイム反映されます。</p>
+      </div>
+      <div id="board-section" style="max-width:880px;margin:0 auto 20px;background:#131211;border:0.5px solid rgba(255,255,255,0.08);border-radius:6px;padding:22px 24px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:18px;padding-bottom:12px;border-bottom:0.5px solid rgba(245,200,120,0.20);gap:12px;flex-wrap:wrap;">
+          <div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.28em;color:#f5c878;text-transform:uppercase;">Information Board</div>
+            <h3 style="margin:5px 0 0 0;font-size:15px;color:#fafaf8;font-weight:600;letter-spacing:0.04em;">掲示板</h3>
+          </div>
+          <div style="text-align:right;font-family:'JetBrains Mono',monospace;font-size:10px;color:#666;letter-spacing:0.04em;">
+            <div id="board-status">未編集</div>
+            <div id="board-updated" style="margin-top:3px;color:#444;"></div>
+          </div>
+        </div>
+        <textarea id="board-textarea" placeholder="ここに書いた内容が、LINE グループ全員のスマホでリアルタイムに見られます。&#10;&#10;例:&#10;・楽屋 A に水補充済み&#10;・鈴木さん 18:00 着予定&#10;・PA インフ 17:00 OK&#10;・明日 9:00 集合" style="width:100%;min-height:380px;background:transparent;border:0.5px solid rgba(255,255,255,0.15);color:#fafaf8;font-family:'Noto Sans JP','JetBrains Mono',monospace;font-size:14px;line-height:1.8;padding:14px 16px;border-radius:4px;box-sizing:border-box;resize:vertical;letter-spacing:0.02em;"></textarea>
+        <div style="display:flex;gap:10px;align-items:center;margin-top:14px;flex-wrap:wrap;">
+          <button type="button" onclick="window.__r419SendBoardLink()" style="background:transparent;border:0.5px solid rgba(168,232,120,0.5);color:#a8e878;font-size:10.5px;padding:8px 14px;border-radius:3px;cursor:pointer;font-family:'JetBrains Mono',monospace;letter-spacing:0.14em;text-transform:uppercase;font-weight:500;">Send Board Link to LINE</button>
+          <span id="board-send-status" style="font-size:11px;color:#888;font-family:'JetBrains Mono',monospace;"></span>
+        </div>
+        <div style="margin-top:14px;font-family:'JetBrains Mono',monospace;font-size:10px;color:#666;letter-spacing:0.04em;line-height:1.7;">
+          ・タイピング中、1 秒間操作がないと自動保存 → Firebase 経由で全スマホに即反映<br>
+          ・編集パスワード未認証の場合、テキストエリアは読み取り専用<br>
+          ・「Send Board Link to LINE」で、LINE グループに「掲示板を開く」リンクカードを 1 通配信
+        </div>
       </div>
     </div>
 </div>
@@ -11554,6 +11585,155 @@ function show(id) {
       })
     }).then(function(){
       if (status) { status.textContent = '✓ DAY スケジュールを送信しました'; status.style.color = '#7ec27a'; }
+    }).catch(function(err){
+      if (status) { status.textContent = '✗ 失敗: ' + err.message; status.style.color = '#e07a5f'; }
+    });
+  };
+
+  /* R419: INFORMATION BOARD — 全員共通の掲示板。typing 中 1 秒 debounce で
+     localStorage + Firebase に自動保存 → 他デバイス (LIFF) でリアルタイム反映 */
+  (function(){
+    const LS_KEY_BOARD = 'schedule-studio:board:v1';
+    let saveTimer = null;
+    let lastSavedValue = null;
+    function getTa() { return document.getElementById('board-textarea'); }
+    function setStatus(text, color) {
+      const s = document.getElementById('board-status');
+      if (s) { s.textContent = text; s.style.color = color || '#888'; }
+    }
+    function setUpdated() {
+      const u = document.getElementById('board-updated');
+      if (!u) return;
+      const n = new Date();
+      u.textContent = '更新: ' + String(n.getHours()).padStart(2,'0') + ':' + String(n.getMinutes()).padStart(2,'0') + ':' + String(n.getSeconds()).padStart(2,'0');
+    }
+    function loadFromLS() {
+      const v = localStorage.getItem(LS_KEY_BOARD) || '';
+      const ta = getTa();
+      if (ta && ta.value !== v) {
+        const c = ta.selectionStart;
+        ta.value = v;
+        try { ta.setSelectionRange(c, c); } catch(_) {}
+      }
+      lastSavedValue = v;
+      setStatus(v ? '✓ 保存済み' : '未編集', v ? '#a8e878' : '#888');
+    }
+    function autosave() {
+      const ta = getTa();
+      if (!ta || ta.readOnly) return;
+      const v = ta.value;
+      if (v === lastSavedValue) return;
+      try { localStorage.setItem(LS_KEY_BOARD, v); } catch(_){}
+      // R68 既存システムが setItem を hook して Firebase 同期する
+      lastSavedValue = v;
+      setStatus('✓ 保存済み', '#a8e878');
+      setUpdated();
+    }
+    function applyEditPermission() {
+      const ta = getTa();
+      if (!ta) return;
+      const authed = sessionStorage.getItem('schedule-studio:edit-auth-session') === '1';
+      ta.readOnly = !authed;
+      let note = document.getElementById('board-readonly-note');
+      if (!authed) {
+        if (!note) {
+          note = document.createElement('div');
+          note.id = 'board-readonly-note';
+          note.style.cssText = 'margin-bottom:10px;padding:8px 12px;background:rgba(245,200,120,0.08);border-left:2px solid rgba(245,200,120,0.5);border-radius:0 4px 4px 0;font-size:11.5px;color:#f5c878;line-height:1.6;';
+          note.textContent = '読み取り専用です。編集するには、INFO タブの LINE 連携で 1 回操作 (例: Sync Groups) して編集パスワードを通してください。';
+          ta.parentNode.insertBefore(note, ta);
+        }
+      } else if (note) {
+        note.remove();
+      }
+    }
+    function init() {
+      const ta = getTa();
+      if (!ta) return;
+      ta.addEventListener('input', function(){
+        if (ta.readOnly) return;
+        setStatus('編集中…', '#f5c878');
+        if (saveTimer) clearTimeout(saveTimer);
+        saveTimer = setTimeout(autosave, 1000);
+      });
+      loadFromLS();
+      applyEditPermission();
+    }
+    /* 他タブ / Firebase 経由の変更を受け取る */
+    window.addEventListener('storage', function(e) {
+      if (e.key !== LS_KEY_BOARD) return;
+      const ta = getTa();
+      if (!ta) return;
+      if (document.activeElement === ta) return; /* 編集中は上書きしない */
+      loadFromLS();
+      setStatus('✓ 他デバイスから更新', '#7bc5e8');
+      setUpdated();
+    });
+    /* BOARD タブクリック時に再ロード + 権限再評価 */
+    document.addEventListener('click', function(e) {
+      const t = e.target;
+      if (t && t.classList && t.classList.contains('parent-tab') && t.getAttribute('data-parent') === 'board') {
+        setTimeout(function(){ loadFromLS(); applyEditPermission(); }, 100);
+      }
+    });
+    setTimeout(init, 800);
+  })();
+
+  /* R419: 「Send Board Link」 — LIFF ?view=board に飛ぶ Flex リンクを LINE に配信 */
+  window.__r419SendBoardLink = function() {
+    const url = localStorage.getItem('schedule-studio:line-gas-url') || '';
+    const status = document.getElementById('board-send-status');
+    if (!url) {
+      if (status) { status.textContent = '✗ 先に INFO タブで GAS URL を保存してください'; status.style.color = '#e07a5f'; }
+      return;
+    }
+    let groupId = '', concertTitle = '';
+    try {
+      const concerts = JSON.parse(localStorage.getItem('schedule-studio:concerts:v1') || '[]');
+      const aid = localStorage.getItem('schedule-studio:active-concert-id');
+      const c = (aid && concerts.find(function(x){return x.id===aid;})) || concerts[0];
+      groupId = (c && c.lineGroupId) || '';
+      concertTitle = (c && c.title) || '公演';
+    } catch(e) {}
+    if (!groupId) {
+      if (status) { status.textContent = '✗ 現在の公演に LINE グループ ID が紐付いていません'; status.style.color = '#e07a5f'; }
+      return;
+    }
+    const liffUrl = 'https://liff.line.me/2010208406-s7urLLR0?view=board';
+    const flex = {
+      type: 'bubble',
+      size: 'kilo',
+      body: {
+        type: 'box',
+        layout: 'vertical',
+        paddingAll: '20px',
+        backgroundColor: '#131211',
+        contents: [
+          { type: 'text', text: 'INFORMATION BOARD', size: 'xxs', color: '#f5c878', weight: 'bold' },
+          { type: 'text', text: '掲示板', size: 'xl', color: '#fafaf8', weight: 'bold', margin: 'sm' },
+          { type: 'text', text: concertTitle, size: 'sm', color: '#a8a8a0', margin: 'md' },
+          { type: 'separator', margin: 'lg', color: '#444444' },
+          { type: 'text', text: 'タップで開くと、今 SCHEDULE STUDIO の掲示板に書かれている最新情報が見られます。書き換わると自動でリアルタイム反映されます。', size: 'sm', color: '#a8a8a0', wrap: true, margin: 'md' },
+          {
+            type: 'button',
+            style: 'primary',
+            color: '#1a7a3a',
+            height: 'sm',
+            margin: 'lg',
+            action: { type: 'uri', label: '掲示板を開く', uri: liffUrl }
+          }
+        ]
+      },
+      styles: { body: { backgroundColor: '#131211' } }
+    };
+    if (status) { status.textContent = '送信中…'; status.style.color = '#888'; }
+    fetch(url, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'pushFlex', to: groupId, altText: 'INFORMATION BOARD — ' + concertTitle, contents: flex })
+    }).then(function(){
+      if (status) { status.textContent = '✓ 掲示板リンクを LINE に送信しました'; status.style.color = '#7ec27a'; }
     }).catch(function(err){
       if (status) { status.textContent = '✗ 失敗: ' + err.message; status.style.color = '#e07a5f'; }
     });

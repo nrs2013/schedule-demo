@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-<meta name="build-version" content="20260527.416000">
+<meta name="build-version" content="20260527.419000">
 <title>SCHEDULE STUDIO — STAFF</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -358,6 +358,61 @@
     __arrivals = arrivals || {};
   }
 
+  /* R419: 掲示板モード — Firebase の board:v1 をリアルタイム購読して表示 */
+  function renderBoardMode(db) {
+    const root = document.getElementById('root');
+    let concertTitle = '';
+
+    function renderBoardUI(text, updatedAt) {
+      const safeText = esc(text || '').replace(/\n/g, '<br>');
+      const updateTime = updatedAt ? new Date(updatedAt).toLocaleTimeString('ja-JP') : '';
+      root.innerHTML =
+        '<div class="label">Information Board</div>' +
+        '<div class="name" style="font-size:18px;">' + esc(concertTitle || '掲示板') + '</div>' +
+        '<hr>' +
+        (safeText
+          ? '<div style="font-family:\'Noto Sans JP\',sans-serif;font-size:14px;line-height:1.85;color:#fafaf8;white-space:pre-wrap;padding:8px 4px;letter-spacing:0.02em;min-height:200px;">' + safeText + '</div>'
+          : '<div style="padding:40px 8px;text-align:center;font-style:italic;color:#666;font-size:13px;line-height:1.6;">まだ何も書かれていません。<br>のむさんが書くと、ここに即座に表示されます。</div>'
+        ) +
+        '<hr>' +
+        '<div class="status-line"><span style="color:#a8e878;">●</span>&nbsp;リアルタイム同期中' +
+        (updateTime ? '<span style="margin-left:12px;color:#666;">更新 ' + esc(updateTime) + '</span>' : '') +
+        '</div>';
+    }
+
+    /* 初回表示 (ローディング) */
+    root.innerHTML = '<div class="label">Information Board</div><div class="value status-line" style="margin-top:6px;">読み込み中…</div>';
+
+    /* 公演名を取得 (1 回だけ) */
+    db.ref('ls/schedule-studio:concerts:v1').once('value').then(function(snap){
+      const d = snap.val();
+      if (!d || d.v == null) return null;
+      try { return JSON.parse(d.v); } catch(_) { return null; }
+    }).then(function(concerts){
+      if (!Array.isArray(concerts)) return;
+      return db.ref('ls/schedule-studio:active-concert-id').once('value').then(function(aSnap){
+        const aD = aSnap.val();
+        let aid = null;
+        if (aD && aD.v != null) {
+          try { aid = JSON.parse(aD.v); } catch(_) { aid = aD.v; }
+        }
+        const c = concerts.find(function(x){ return x && x.id === aid; }) || concerts[0];
+        concertTitle = (c && c.title) ? (c.title + ' 掲示板') : '掲示板';
+      });
+    }).catch(function(){});
+
+    /* 掲示板内容をリアルタイム購読 */
+    db.ref('ls/schedule-studio:board:v1').on('value', function(snap){
+      const d = snap.val();
+      const text = d && d.v != null ? d.v : '';
+      const updatedAt = d && d.t ? d.t : null;
+      renderBoardUI(text, updatedAt);
+    }, function(err){
+      console.warn('[Board] subscribe failed:', err && err.message);
+      renderBoardUI('(購読失敗)', null);
+    });
+  }
+
   async function main() {
     try {
       await liff.init({ liffId: LIFF_ID });
@@ -373,6 +428,13 @@
         // 認証失敗でもデータベース読みを試みる (ルール次第)
       }
       const db = firebase.database();
+
+      /* R419: URL クエリ ?view=board なら掲示板モード */
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('view') === 'board') {
+        renderBoardMode(db);
+        return;
+      }
 
       // SCHEDULE STUDIO データ取得
       await fetchSSData(db);
