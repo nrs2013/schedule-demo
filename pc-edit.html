@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260527.423000">
+<meta name="build-version" content="20260527.424000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -11516,7 +11516,7 @@ function show(id) {
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({action:'pushMenu', to: groupId})
     }).then(function(){
-      if (status) { status.textContent = '✓ メニューカードを送信しました（LINE で長押し→アナウンスで固定できます）'; status.style.color = '#7ec27a'; }
+      if (status) { status.textContent = '✓ 送信しました（LINE で受信確認 / 長押し→アナウンスで固定可）'; status.style.color = '#7ec27a'; }
     }).catch(function(err){
       if (status) { status.textContent = '✗ 失敗: ' + err.message; status.style.color = '#e07a5f'; }
     });
@@ -11608,7 +11608,7 @@ function show(id) {
         contents: flex
       })
     }).then(function(){
-      if (status) { status.textContent = '✓ DAY スケジュールを送信しました'; status.style.color = '#7ec27a'; }
+      if (status) { status.textContent = '✓ 送信しました（LINE で受信確認 / 届かない時は GAS 更新が必要）'; status.style.color = '#7ec27a'; }
     }).catch(function(err){
       if (status) { status.textContent = '✗ 失敗: ' + err.message; status.style.color = '#e07a5f'; }
     });
@@ -11681,6 +11681,14 @@ function show(id) {
         setStatus('編集中…', '#f5c878');
         if (saveTimer) clearTimeout(saveTimer);
         saveTimer = setTimeout(autosave, 1000);
+      });
+      /* R424: 1 秒 debounce 中にタブ/ウィンドウを閉じても編集を失わない — beforeunload で即 flush */
+      window.addEventListener('beforeunload', function(){
+        if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; autosave(); }
+      });
+      /* R424: タブ非表示化 (スマホでアプリ切替・バックグラウンド化) でも flush */
+      document.addEventListener('visibilitychange', function(){
+        if (document.visibilityState === 'hidden' && saveTimer) { clearTimeout(saveTimer); saveTimer = null; autosave(); }
       });
       loadFromLS();
       applyEditPermission();
@@ -11759,7 +11767,7 @@ function show(id) {
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({ action: 'pushFlex', to: groupId, altText: 'INFORMATION BOARD — ' + concertTitle, contents: flex })
     }).then(function(){
-      if (status) { status.textContent = '✓ 掲示板リンクを LINE に送信しました'; status.style.color = '#7ec27a'; }
+      if (status) { status.textContent = '✓ 送信しました（LINE で受信確認 / 届かない時は GAS 更新が必要）'; status.style.color = '#7ec27a'; }
     }).catch(function(err){
       if (status) { status.textContent = '✗ 失敗: ' + err.message; status.style.color = '#e07a5f'; }
     });
