@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260527.424000">
+<meta name="build-version" content="20260530.425000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -14031,6 +14031,9 @@ function show(id) {
     const layout = computeLaneLayout(body, sec.lanes);
     const barH = layout.barH;
     const created = [];
+    // R425: 下にセクションがあれば lanes=1 でも下端ハンドルを出す（縦串化のため）
+    const __secIdx = tt.sections.findIndex(function(s){ return s.id === sec.id; });
+    const __hasSecBelow = __secIdx >= 0 && __secIdx < tt.sections.length - 1;
     tt.bars.filter(function(b){ return b.secId === sec.id && !isVAll(b) && !getSpanSecIds(b); }).forEach(function(bar){
       const lane = Math.max(0, Math.min(sec.lanes - 1, bar.lane || 0));
       const left = timeToPixel(bar.start, tt);
@@ -14052,14 +14055,14 @@ function show(id) {
       el.innerHTML = '<div class="tt-bar-handle l"></div>' +
         '<div class="tt-bar-text">' + escapeHtml(bar.text || '') + '</div>' +
         '<div class="tt-bar-handle r"></div>' +
-        /* R390-3: バー下端の laneSpan リサイズハンドル */
-        (sec.lanes >= 2 ? '<div class="tt-bar-handle b" title="下にドラッグで縦に大きく"></div>' : '') +
+        /* R390-3/R425: バー下端ハンドル — 縦サイズ拡大＆下に引くと縦串化 */
+        ((sec.lanes >= 2 || __hasSecBelow) ? '<div class="tt-bar-handle b" title="下にドラッグで縦に大きく／さらに引くと縦串"></div>' : '') +
         '<div class="tt-bar-corner tl"></div><div class="tt-bar-corner tr"></div>' +
         '<div class="tt-bar-corner bl"></div><div class="tt-bar-corner br"></div>';
       body.appendChild(el);
       bindBarEvents(tt, bar, el, sec);
-      /* R390-3: 下端ハンドルに laneSpan ドラッグを bind */
-      bindBarLaneSpanHandle(tt, bar, el, sec, layout);
+      /* R425: 下端ハンドルに統一ドラッグ（laneSpan 増減＋縦串化）を bind */
+      bindUnifiedBottomDrag(tt, bar, el);
       created.push({ el: el, bar: bar });
     });
     // R389-B: 各バーを auto-fit (文字溢れなら font-size 自動縮小)。
@@ -14368,7 +14371,9 @@ function show(id) {
           if (e.button !== 0) return;
           e.stopPropagation();
           e.preventDefault();
+          let converted = false; // R425: 1 セクションまで縮めたら単品化。以降の move は span 前提なので抑止
           function move(ev){
+            if (converted) return;
             // R288: マウスがセクション範囲外でも、最も近いセクションを hover とみなす
             // （以前は範囲外で null になり、下に振り切ると伸びなかった）
             // R291: data-sec-id が .tt-sec-drag / .tt-sec-name にも付くので、行だけに絞る
@@ -14402,8 +14407,20 @@ function show(id) {
             const newIds = [];
             for (let i = newTop; i <= newBot; i++) newIds.push(orderedIds[i]);
             if (newIds.length < 1) return;
-            // 単品化はしない（2 セクション以上維持）
-            if (newIds.length === 1) return;
+            // R425: 1 セクションまで縮めたら縦串をやめて単品化（双方向シームレス変換）
+            if (newIds.length === 1) {
+              const onlyId = orderedIds[newTop];
+              const onlySec = tt.sections.find(function(s){ return s.id === onlyId; });
+              delete bar.spanSecIds;
+              bar.secId = onlyId;
+              bar.lane = 0;
+              bar.laneSpan = onlySec ? (onlySec.lanes || 1) : 1; // 元の見た目（セクション全体を埋める）を保つ
+              converted = true;
+              ttHideHud(); ttSetDragClass(null);
+              saveToStorage();
+              render();
+              return;
+            }
             // R262: 上下端ハンドルでセクション増減する時も、新しい spanSecIds で他バーと重ならないかチェック
             const isOverlap = overlapsAnyBar(tt, {
               start: bar.start, end: bar.end, lane: 0,
@@ -14437,13 +14454,15 @@ function show(id) {
         };
       }
       if (handleT) handleT.addEventListener('mousedown', startVResize('t'));
-      if (handleB) handleB.addEventListener('mousedown', startVResize('b'));
+      // R425: 下端は統一ドラッグハンドラ（下へ伸ばし／縮めて1セクションで単品化までシームレス）
+      if (handleB) bindUnifiedBottomDrag(tt, bar, el);
       // R290: 4 隅コーナーハンドル — 専用ハンドラで横＋縦を 1 つの mousemove に統合（dispatchEvent 競合解消）
       function startCornerResize(corner){
         return function(e){
           if (e.button !== 0) return;
           e.stopPropagation();
           e.preventDefault();
+          let converted = false; // R425: 1 セクションまで縮めたら単品化。以降の move を抑止
           const isLeftCorner = corner.indexOf('l') >= 0;
           const isTopCorner = corner.indexOf('t') === 0;
           const scale = getPaperScale();
@@ -14457,6 +14476,7 @@ function show(id) {
           const sampleRow = gridEl.querySelector('[data-sec-id="' + orderedSecIds[initIdxs[0]] + '"]');
           const sectionH = sampleRow ? sampleRow.offsetHeight : LANE_H;
           function move(ev){
+            if (converted) return;
             const dx = (ev.clientX - startX) / scale;
             const dy = (ev.clientY - startY) / scale;
             // 横方向：時間を 15 分グリッドにスナップしながら伸縮
@@ -14481,10 +14501,22 @@ function show(id) {
               const cand = initIdxs[initIdxs.length - 1] + shift;
               if (cand < orderedSecIds.length && cand >= initIdxs[0]) newBotIdx = cand;
             }
-            // 2 セクション以上を維持
+            // R425: 1 セクションまで縮めたら縦串をやめて単品化（双方向シームレス変換）
             if (newTopIdx === newBotIdx) {
-              if (isTopCorner && newBotIdx > 0) newTopIdx = newBotIdx - 1;
-              else if (!isTopCorner && newTopIdx < orderedSecIds.length - 1) newBotIdx = newTopIdx + 1;
+              const onlyId = orderedSecIds[newTopIdx];
+              const onlySec = tt.sections.find(function(s){ return s.id === onlyId; });
+              delete bar.spanSecIds;
+              bar.secId = onlyId;
+              bar.lane = 0;
+              bar.laneSpan = onlySec ? (onlySec.lanes || 1) : 1;
+              bar.start = newStart;
+              bar.end = newEnd;
+              converted = true;
+              ttHideHud();
+              if (typeof ttSetDragClass === 'function') ttSetDragClass(null);
+              saveToStorage();
+              render();
+              return;
             }
             const newSpanIds = [];
             for (let i = newTopIdx; i <= newBotIdx; i++) newSpanIds.push(orderedSecIds[i]);
@@ -14850,41 +14882,99 @@ function show(id) {
     });
   }
 
-  /* R390-3: バー下端ハンドルで laneSpan を上下ドラッグ増減 */
-  function bindBarLaneSpanHandle(tt, bar, el, sec, layout){
+  /* R425: 下端ハンドル統一ドラッグ。シングル⇄縦串をシームレスに変換。
+     下に引く → まず同一セクション内で laneSpan を増やし、セクションの底を越えて
+     さらに引くと隣セクションへ食い込んで縦串化。上に戻すと縦串が縮み、
+     1 セクションまで戻ると単品化。マウス Y の絶対位置から毎回再計算するので
+     render() で要素が作り直されてもドラッグが継続する。
+     単品バー・縦串バー両方の .tt-bar-handle.b に bind する。 */
+  function bindUnifiedBottomDrag(tt, bar, el){
     const handle = el.querySelector('.tt-bar-handle.b');
     if (!handle) return;
-    if (!sec || (sec.lanes || 1) < 2) return; // lanes >= 2 のみ有効
-    let dragging = false, startY = 0, startSpan = 1, laneStep = layout.barH + layout.innerGap;
     handle.addEventListener('mousedown', function(e){
+      if (e.button !== 0) return;
       e.preventDefault();
       e.stopPropagation();
-      dragging = true;
-      startY = e.clientY;
-      startSpan = Math.max(1, bar.laneSpan || 1);
-      laneStep = layout.barH + layout.innerGap;
-      document.body.classList.add('tt-row-resizing');
+      const orderedIds = tt.sections.map(function(s){ return s.id; });
+      // top アンカー（ドラッグ中は固定）。縦串なら先頭セクション・レーン0、単品なら自セクション・自レーン
+      const curSpan0 = getSpanSecIds(bar);
+      const topSecId = curSpan0 ? curSpan0[0] : bar.secId;
+      const topLane = curSpan0 ? 0 : (bar.lane || 0);
+      const topSecIdx = orderedIds.indexOf(topSecId);
+      if (topSecIdx < 0) return;
       el.classList.add('selected');
-    });
-    function onMove(e){
-      if (!dragging) return;
-      const dy = e.clientY - startY;
-      const stepDelta = Math.round(dy / laneStep);
-      const maxAvail = (sec.lanes || 1) - (bar.lane || 0);
-      const next = Math.max(1, Math.min(maxAvail, startSpan + stepDelta));
-      if (next !== (bar.laneSpan || 1)) {
-        bar.laneSpan = next;
-        if (typeof saveToStorage === 'function') saveToStorage();
-        if (typeof render === 'function') render();
+      function move(ev){
+        // hover セクション判定（startVResize と同じ手法）
+        const sectionRows = document.querySelectorAll('.tt-sec-row[data-sec-id]');
+        let hoverSecId = null, lastBelow = null, firstAbove = null;
+        sectionRows.forEach(function(row){
+          const sid = row.getAttribute('data-sec-id');
+          const r = row.getBoundingClientRect();
+          if (ev.clientY >= r.top && ev.clientY <= r.bottom) hoverSecId = sid;
+          if (ev.clientY > r.bottom) lastBelow = sid;
+          if (ev.clientY < r.top && !firstAbove) firstAbove = sid;
+        });
+        if (!hoverSecId) hoverSecId = lastBelow || firstAbove;
+        if (!hoverSecId) return;
+        let hoverIdx = orderedIds.indexOf(hoverSecId);
+        if (hoverIdx < topSecIdx) hoverIdx = topSecIdx; // 下端は top より上に行けない
+        if (hoverIdx === topSecIdx) {
+          // 同一セクション内 → 単品（laneSpan 調整）
+          const topSec = tt.sections[topSecIdx];
+          const lanes = topSec.lanes || 1;
+          const row = document.querySelector('.tt-sec-row[data-sec-id="' + topSecId + '"]');
+          let laneAtMouse = topLane;
+          if (row) {
+            const rr = row.getBoundingClientRect();
+            const laneH = rr.height / lanes;
+            laneAtMouse = Math.floor((ev.clientY - rr.top) / laneH);
+            if (laneAtMouse < topLane) laneAtMouse = topLane;
+            if (laneAtMouse > lanes - 1) laneAtMouse = lanes - 1;
+          }
+          const newSpanCount = laneAtMouse - topLane + 1;
+          if (getSpanSecIds(bar)) {
+            // 縦串から単品へ戻す
+            delete bar.spanSecIds;
+            bar.secId = topSecId;
+            bar.lane = topLane;
+            bar.laneSpan = newSpanCount;
+            saveToStorage(); render();
+          } else if ((bar.laneSpan || 1) !== newSpanCount) {
+            bar.laneSpan = newSpanCount;
+            saveToStorage(); render();
+          }
+        } else {
+          // 下のセクションに到達 → 縦串化（top..hover を貫通）
+          const newIds = orderedIds.slice(topSecIdx, hoverIdx + 1);
+          const isOverlap = overlapsAnyBar(tt, {
+            start: bar.start, end: bar.end, lane: 0,
+            secId: topSecId, spanSecIds: newIds
+          }, bar.id);
+          if (isOverlap) return;
+          const cur = getSpanSecIds(bar);
+          const same = cur && cur.length === newIds.length && cur.every(function(v, i){ return v === newIds[i]; });
+          if (!same) {
+            bar.spanSecIds = newIds;
+            bar.secId = topSecId;
+            delete bar.laneSpan;
+            bar.lane = 0;
+            saveToStorage(); render();
+          }
+        }
+        if (typeof ttSetDragClass === 'function' && !document.body.classList.contains('tt-resizing-v')) ttSetDragClass('tt-resizing-v');
+        ttShowHud(ev.clientX, ev.clientY, bar.start, bar.end);
       }
-    }
-    function onUp(){
-      if (!dragging) return;
-      dragging = false;
-      document.body.classList.remove('tt-row-resizing');
-    }
-    document.addEventListener('mousemove', onMove);
-    document.addEventListener('mouseup', onUp);
+      function up(){
+        document.removeEventListener('mousemove', move);
+        document.removeEventListener('mouseup', up);
+        ttHideHud();
+        if (typeof ttSetDragClass === 'function') ttSetDragClass(null);
+        saveToStorage();
+        render();
+      }
+      document.addEventListener('mousemove', move);
+      document.addEventListener('mouseup', up);
+    });
   }
 
   function bindBarEvents(tt, bar, el, sec){
