@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260530.425000">
+<meta name="build-version" content="20260530.426000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -16579,10 +16579,14 @@ function show(id) {
 
       // 縦串バー（sections を跨ぐ）：sections 順から top/bottom を絶対 % で算出
       // ただし sections 各行は flex で lanes 比率分配なので、絶対位置は「section index ベースで等比近似」
-      const totalLanes = sections.reduce(function(a, s){ return a + (s.lanes || 1); }, 0) || 1;
+      // R426: PDF の行の高さは flexVal (lanes<=2→1、それ以上→lanes/2) で配分される (L16554 と一致させる)。
+      //   縦串バーの縦位置も「生 lanes」ではなく同じ重みで算出しないと、lanes 混在時に
+      //   行の高さとバンドがズレて、串刺しバーが全く別の場所に飛んでしまう。
+      function rowWeight(s){ const l = s.lanes || 1; return l <= 2 ? 1 : (l / 2); }
+      const totalLanes = sections.reduce(function(a, s){ return a + rowWeight(s); }, 0) || 1;
       const secLaneOffsets = (function(){
         const out = {}; let cum = 0;
-        sections.forEach(function(s){ out[s.id] = { start: cum, end: cum + (s.lanes || 1) }; cum += (s.lanes || 1); });
+        sections.forEach(function(s){ const w = rowWeight(s); out[s.id] = { start: cum, end: cum + w }; cum += w; });
         return out;
       })();
       const spanBarsHtml = allBars.filter(isSpan).map(function(b){
@@ -16620,11 +16624,14 @@ function show(id) {
         //   sec-body (20mm から右) の中で left%。span-bar だけ 18mm 基準だったため
         //   バー外の縦線とバー内の縦線が 2mm 横にズレて見えていた。これを統一。
         // R344: 縦串バーの border も CSS で全方向同じ (color 別)。inline style 撤廃。
+        // R426: 縦串バーは sec-rows と同じコンテナ (時刻行の外) に絶対配置されるので、
+        //   行と同じ 0〜100% 基準で置く。以前の「5mm 補正」は時刻行がこの中に無いのに
+        //   引いていた余分なオフセットで、バー全体が下にズレて短くなる原因だった。
         return '<div class="tt-pdf-span-bar color-' + color + padCls +
                '" style="left:calc(20mm + (100% - 20mm) * ' + (left/100) + ');' +
                'width:calc((100% - 20mm) * ' + (width/100) + ');' +
-               'top:calc(5mm + (100% - 5mm) * ' + (topPct/100) + ');' +
-               'height:calc((100% - 5mm) * ' + (heightPct/100) + ');">' +
+               'top:calc(100% * ' + (topPct/100) + ');' +
+               'height:calc(100% * ' + (heightPct/100) + ');">' +
                '<div class="b-text">' + escapeHtml(text) + '</div>' +
                (tm ? '<div class="b-time">' + escapeHtml(tm) + '</div>' : '') + '</div>';
       }).join('');
