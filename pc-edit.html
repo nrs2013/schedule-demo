@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260530.428000">
+<meta name="build-version" content="20260530.429000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -7871,7 +7871,7 @@ function show(id) {
     else if (song.isEvent)  specialCls = ' special-vcr';
     return ''
       + '<div class="pc-row' + isCurrent + specialCls + '" data-id="' + song.id + '">'
-      +   '<div class="drag" title="ドラッグで並び替え（実装予定）">⋮⋮</div>'
+      +   '<div class="drag" title="ドラッグで並び替え">⋮⋮</div>'
       +   '<input class="m-no" type="text" data-field="mNo" data-id="' + song.id + '" value="' + escHtml(mNo) + '" placeholder="" title="クリックで編集">'
       +   '<div class="title-cell" contenteditable="true" data-field="title" data-id="' + song.id + '" title="クリックで曲名編集">' + escHtml(song.title) + '</div>'
       +   '<input class="time-cell" type="text" data-field="timeStr" data-id="' + song.id + '" value="' + escHtml(time) + '" placeholder="0:00" title="クリックで時間編集">'

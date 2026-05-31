@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260530.428000">
+<meta name="build-version" content="20260530.429000">
 <!-- R389: CDS /output デザインに寄せるための Google Fonts (Bebas Neue + Noto Sans JP) -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -2729,6 +2729,10 @@ function show(id) {
     const subBtn = ttReh.querySelector('button[data-sub="' + actualScreenId + '"]');
     if (subBtn) subBtn.classList.add('active');
   }
+
+  // R428fix: リハ系画面を開いたら必ずカードを再描画。下タブ REHEARSAL 経由や、
+  //   ポーリング/同期で反対側リストがクリアされた後でもテクリハが空白にならないように。
+  if (isRehearsalScreen && typeof renderRhCards === 'function') renderRhCards();
 
   const body = document.getElementById('body');
   if (body) body.scrollTop = 0;
