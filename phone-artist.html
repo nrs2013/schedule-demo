@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260530.429000">
+<meta name="build-version" content="20260530.430000">
 <!-- R389: CDS /output デザインに寄せるための Google Fonts (Bebas Neue + Noto Sans JP) -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -2392,6 +2392,10 @@
     <div id="info-list-host">
       <div style="padding:40px 20px; text-align:center; color:#888; font-size:13px;">まだお知らせはありません<br><span style="font-size:11px; color:#666;">「＋ NEW POST」から投稿できます</span></div>
     </div>
+    <!-- R430: 役割切替（押し間違い時の復帰用）。役割を消してスタッフ入口へ戻る -->
+    <div style="text-align:center; margin:16px 0 0;">
+      <button type="button" onclick="(function(){try{localStorage.removeItem('schedule-studio:role');}catch(e){} location.replace('phone-staff.html');})()" style="background:none; border:none; color:#666; font-size:11px; letter-spacing:0.08em; text-decoration:underline; cursor:pointer; padding:8px;">表示を切り替える（スタッフ / アーティスト）</button>
+    </div>
 
     <!-- 投稿シート（簡易ボトムモーダル）R208: 下タブと被らないよう padding-bottom 増やす -->
     <div id="info-compose-sheet" style="display:none; position:fixed; inset:0; z-index:99999; background:rgba(0,0,0,0.72); align-items:flex-end; justify-content:center;">
@@ -3422,6 +3426,15 @@ function renderRhCards() {
     '</div>';
   });
   list.innerHTML = html;
+  // R430: 現在のソート(リハ順/セトリ順)を再適用。再描画(ポーリング/同期)で勝手にセトリ順へ戻るのを防ぐ。
+  (function reapplySort(){
+    var mode = document.body.classList.contains('sort-rh') ? 'rh' : (document.body.classList.contains('sort-m') ? 'm' : null);
+    if (!mode) return;
+    var attr = (mode === 'm') ? 'data-m' : 'data-rh';
+    var cards = Array.prototype.slice.call(list.querySelectorAll('.rh-card'));
+    cards.sort(function(a,b){ return parseInt(a.getAttribute(attr),10) - parseInt(b.getAttribute(attr),10); });
+    cards.forEach(function(c){ list.appendChild(c); if(mode==='m') c.classList.add('m-mode'); else c.classList.remove('m-mode'); });
+  })();
   if (typeof updateProgress === 'function') updateProgress();
 }
 
@@ -4484,6 +4497,9 @@ renderHotelListPhone();
     else { if(err)err.textContent='パスワードが違います'; if(inp){inp.value=''; inp.focus();} }
   }
   function init(){
+    /* R430: 入口は phone-staff に一本化。役割が staff（または未設定）の端末が
+       phone-artist を直接開いたら共通入口へ戻す（素通り防止）。role='artist' のみ通す。 */
+    try { if (localStorage.getItem('schedule-studio:role') !== 'artist') { location.replace('phone-staff.html'); return; } } catch(e) {}
     var c=getActiveConcert(); if(!c) return; if(isEntered(c)) return;
     var hasPw=c.passwords&&(c.passwords.entry||c.passwords.artist||c.passwords.edit); if(!hasPw) return;
     showLock(c);
@@ -4528,7 +4544,7 @@ renderHotelListPhone();
     'tekuriha': 'rehearsal',
     'info': 'info',
     'arrival': 'arrival',
-    'hotel': 'hotel',
+    /* R430: アーティストにはホテルを見せない（やわらか仕切り）。#hotel 経由の閲覧を無効化 */
     'pass': 'pass'
   };
   function applyHash() {

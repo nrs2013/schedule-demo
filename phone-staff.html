@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260530.429000">
+<meta name="build-version" content="20260530.430000">
 <!-- R389: CDS /output デザインに寄せるための Google Fonts (Bebas Neue + Noto Sans JP) -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -2431,6 +2431,10 @@
     <div id="info-list-host">
       <div style="padding:40px 20px; text-align:center; color:#888; font-size:13px;">まだお知らせはありません<br><span style="font-size:11px; color:#666;">「＋ NEW POST」から投稿できます</span></div>
     </div>
+    <!-- R430: 役割切替（押し間違い時の復帰用）。役割を消して入口の選択に戻る -->
+    <div style="text-align:center; margin:16px 0 0;">
+      <button type="button" onclick="(function(){try{localStorage.removeItem('schedule-studio:role');}catch(e){} location.reload();})()" style="background:none; border:none; color:#666; font-size:11px; letter-spacing:0.08em; text-decoration:underline; cursor:pointer; padding:8px;">表示を切り替える（スタッフ / アーティスト）</button>
+    </div>
 
     <!-- 投稿シート（簡易ボトムモーダル）R208: 下タブと被らないよう padding-bottom 増やす -->
     <div id="info-compose-sheet" style="display:none; position:fixed; inset:0; z-index:99999; background:rgba(0,0,0,0.72); align-items:flex-end; justify-content:center;">
@@ -3501,6 +3505,15 @@ function renderRhCards() {
     '</div>';
   });
   list.innerHTML = html;
+  // R430: 現在のソート(リハ順/セトリ順)を再適用。再描画(ポーリング/同期)で勝手にセトリ順へ戻るのを防ぐ。
+  (function reapplySort(){
+    var mode = document.body.classList.contains('sort-rh') ? 'rh' : (document.body.classList.contains('sort-m') ? 'm' : null);
+    if (!mode) return;
+    var attr = (mode === 'm') ? 'data-m' : 'data-rh';
+    var cards = Array.prototype.slice.call(list.querySelectorAll('.rh-card'));
+    cards.sort(function(a,b){ return parseInt(a.getAttribute(attr),10) - parseInt(b.getAttribute(attr),10); });
+    cards.forEach(function(c){ list.appendChild(c); if(mode==='m') c.classList.add('m-mode'); else c.classList.remove('m-mode'); });
+  })();
   if (typeof updateProgress === 'function') updateProgress();
 }
 
@@ -5011,10 +5024,19 @@ renderHotelListPhone();
     <div class="r170-entry-icon">⊡</div>
     <div class="r170-entry-title">入場パスワード</div>
     <div class="r170-entry-concert" id="r170-entry-concert">—</div>
-    <div class="r170-entry-hint">この公演のスタッフ向け<br>初回だけ入力してください（次回からは自動で入れます）</div>
+    <div class="r170-entry-hint">この公演の入場パスワードを入力してください<br>初回だけでOK（次回から自動で入れます）</div>
     <input type="tel" inputmode="numeric" maxlength="8" class="r170-entry-input" id="r170-entry-input" autocomplete="off">
     <button type="button" class="r170-entry-btn" id="r170-entry-btn">入場する</button>
     <div class="r170-entry-err" id="r170-entry-err"></div>
+  </div>
+</div>
+<!-- R430: 役割選択（入場後に1回だけ。アーティスト/スタッフ。選択は記憶し次回スキップ） -->
+<div class="r170-entry-lock" id="role-chooser">
+  <div class="r170-entry-card">
+    <div class="r170-entry-title">どちらで見ますか？</div>
+    <div class="r170-entry-hint">あとで切り替えられます</div>
+    <button type="button" class="r170-entry-btn" id="role-staff-btn" style="margin-bottom:10px; font-family:'JetBrains Mono',monospace; letter-spacing:0.18em;">STAFF</button>
+    <button type="button" class="r170-entry-btn" id="role-artist-btn" style="background:transparent;border:1px solid rgba(200,168,120,0.6);color:#f0e0c8; font-family:'JetBrains Mono',monospace; letter-spacing:0.18em;">ARTIST</button>
   </div>
 </div>
 <script>
@@ -5063,17 +5085,40 @@ renderHotelListPhone();
       if (c) localStorage.setItem(ENTERED_PREFIX + c.id, 'true');
       if (err) err.textContent = '';
       hideLock();
+      decideRole();              // R430: 入場後に役割を決める
     } else {
       if (err) err.textContent = 'パスワードが違います';
       if (inp) { inp.value = ''; inp.focus(); }
     }
   }
+  /* R430: 役割選択（アーティスト/スタッフ）。phone-staff を共通入口にし、
+     アーティストを選んだら phone-artist へ転送。選択は localStorage に記憶し次回スキップ。
+     入場フラグ(entered:)は同一オリジンで共有されるので転送先でパスワード再要求なし。 */
+  var ROLE_KEY = 'schedule-studio:role';
+  function getRole(){ try { return localStorage.getItem(ROLE_KEY) || ''; } catch(e){ return ''; } }
+  function setRole(r){ try { localStorage.setItem(ROLE_KEY, r); } catch(e){} }
+  function gotoArtist(){ location.replace('phone-artist.html'); }
+  function showRoleChooser(){
+    var el = document.getElementById('role-chooser'); if (el) el.classList.add('show');
+    var sb = document.getElementById('role-staff-btn');
+    var ab = document.getElementById('role-artist-btn');
+    if (sb) sb.onclick = function(){ setRole('staff'); if (el) el.classList.remove('show'); };
+    if (ab) ab.onclick = function(){ setRole('artist'); gotoArtist(); };
+  }
+  function decideRole(){
+    var role = getRole();
+    if (role === 'artist') { gotoArtist(); return; }
+    if (role === 'staff') { var el=document.getElementById('role-chooser'); if(el) el.classList.remove('show'); return; }
+    showRoleChooser();
+  }
   function init() {
     var c = getActiveConcert();
     if (!c) return;                 // 公演不明
-    if (isEntered(c)) return;        // 既に入場済み
     var hasPw = c.passwords && (c.passwords.entry || c.passwords.edit);
-    if (!hasPw) return;              // パスワード未設定の古い公演はスキップ
+    if (isEntered(c) || !hasPw) {    // 入場済み or パスワード未設定 → 役割判定へ
+      decideRole();
+      return;
+    }
     showLock(c);
     var btn = document.getElementById('r170-entry-btn');
     if (btn) btn.onclick = tryEnter;

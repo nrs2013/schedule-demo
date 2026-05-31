@@ -37,6 +37,11 @@
 <button id="goBtn" disabled>② 保管庫に復元（アップロード）</button>
 <div class="status" id="status"></div>
 
+<hr style="border:none;border-top:0.5px solid rgba(255,255,255,0.12);margin:28px 0 16px;">
+<div class="note" style="color:#e07a5f;">真っ新にしてデプロイする場合（今までのデータを全部消す）：<br>※先に「① バックアップ」を取っておくと安心です。</div>
+<button id="resetBtn" style="background:#7a2f2f;color:#fff;">③ 全部消して真っ新にする（この端末＋保管庫）</button>
+<div class="status" id="resetStatus"></div>
+
 <script>
 var FIREBASE_CONFIG = {
   apiKey: "AIzaSyB0g9NU2jHWLgHSpgxyvWjizdloLbkJ_aM",
@@ -167,6 +172,28 @@ document.getElementById('dlBtn').addEventListener('click', function(){
     st.innerHTML = '<span class="ok">✓ バックアップ（'+n+'件）をダウンロードしました。\nこのファイルがあれば、いつでも元に戻せます（消えても安心）。\n次に「② 保管庫に復元」を押してください。</span>';
   } catch(e){
     st.innerHTML = '<span class="err">ダウンロード失敗: '+esc(e.message)+'</span>';
+  }
+});
+
+// ③ 全消去（真っ新化）。この端末の schedule-studio: localStorage を消し、保管庫(ls/)も空にする。
+document.getElementById('resetBtn').addEventListener('click', function(){
+  if (!confirm('本当に全部消して真っ新にしますか？\n\nこの端末の SCHEDULE STUDIO データと、共有保管庫(Firebase)の中身を全部消します。\n（先に①バックアップを取っておくと安心です）')) return;
+  var rs = document.getElementById('resetStatus');
+  rs.innerHTML = '消去中…';
+  // 1) この端末の localStorage（schedule-studio: で始まるキー）を削除
+  var localKeys = [];
+  for (var i=0;i<localStorage.length;i++){ var k=localStorage.key(i); if(k && k.indexOf('schedule-studio:')===0) localKeys.push(k); }
+  localKeys.forEach(function(k){ try{ localStorage.removeItem(k); }catch(e){} });
+  // 2) 保管庫(Firebase ls/)を空に
+  function finish(msg, cls){ rs.innerHTML = '<span class="'+(cls||'ok')+'">'+msg+'</span>'; }
+  if (db){
+    db.ref('ls').remove().then(function(){
+      finish('✓ 真っ新にしました（この端末'+localKeys.length+'件＋保管庫を消去）。\nいつものSCHEDULE STUDIOを開くと、空の状態から始められます。');
+    }).catch(function(e){
+      finish('この端末は消去しました（'+localKeys.length+'件）。保管庫の消去だけ失敗: '+esc(e.message)+'\nもう一度押すか報告してください。','warn');
+    });
+  } else {
+    finish('この端末のデータを消去しました（'+localKeys.length+'件）。保管庫(Firebase)は未接続のため消えていません。','warn');
   }
 });
 </script>

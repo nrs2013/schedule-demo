@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260530.429000">
+<meta name="build-version" content="20260530.430000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -12055,7 +12055,8 @@ function show(id) {
       concertTitle = (c && c.title) || '';
     } catch(_) {}
     if (!editPass) {
-      sessionStorage.setItem('schedule-studio:edit-auth-session', '1');
+      // R430: パス未設定の公演でも「認証済みフラグ」を立てない。
+      //   立てると、その後パス設定済みの公演に切り替えても素通りしてしまうため。
       return true;
     }
     const input = prompt('「' + concertTitle + '」の編集パスワードを入力してください。\n\n(LINE 連携の編集操作には認証が必要です。\n一度通れば、このタブを開いてる間は再入力不要)');
@@ -13364,6 +13365,8 @@ function show(id) {
     // D120 Phase A2: active concert id を保存 + 認証フラグ → リロードで全 IIFE を新しい LS_PREFIX で再評価
     localStorage.setItem(LS_ACTIVE, concert.id);
     sessionStorage.setItem(SS_AUTHED_PREFIX + concert.id, '1');
+    // R430: 公演を切り替えたら送信(LINE配信)の編集パス認証はリセット（別公演で素通りしないように）
+    try { sessionStorage.removeItem('schedule-studio:edit-auth-session'); } catch(e) {}
     location.reload();
   }
 
@@ -14415,6 +14418,8 @@ function show(id) {
             // R425: 1 セクションまで縮めたら縦串をやめて単品化（双方向シームレス変換）
             if (newIds.length === 1) {
               const onlyId = orderedIds[newTop];
+              // R430: 単品化先（lane0・同時刻）に別の単品バーがあるなら重ねない（変換を保留）
+              if (overlapsAnyBar(tt, { start: bar.start, end: bar.end, lane: 0, secId: onlyId }, bar.id)) return;
               const onlySec = tt.sections.find(function(s){ return s.id === onlyId; });
               delete bar.spanSecIds;
               bar.secId = onlyId;
@@ -14509,6 +14514,8 @@ function show(id) {
             // R425: 1 セクションまで縮めたら縦串をやめて単品化（双方向シームレス変換）
             if (newTopIdx === newBotIdx) {
               const onlyId = orderedSecIds[newTopIdx];
+              // R430: 単品化先（lane0・同時刻）に別の単品バーがあるなら重ねない（変換を保留）
+              if (overlapsAnyBar(tt, { start: newStart, end: newEnd, lane: 0, secId: onlyId }, bar.id)) return;
               const onlySec = tt.sections.find(function(s){ return s.id === onlyId; });
               delete bar.spanSecIds;
               bar.secId = onlyId;
@@ -14938,6 +14945,8 @@ function show(id) {
           }
           const newSpanCount = laneAtMouse - topLane + 1;
           if (getSpanSecIds(bar)) {
+            // R430: 単品化先（同セクション・同レーン・同時刻）に別バーがあるなら重ねない（変換を保留）
+            if (overlapsAnyBar(tt, { start: bar.start, end: bar.end, lane: topLane, secId: topSecId }, bar.id)) return;
             // 縦串から単品へ戻す
             delete bar.spanSecIds;
             bar.secId = topSecId;

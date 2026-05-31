@@ -201,13 +201,13 @@
   <div class="concert-sub" id="concert-sub">Tap your role to enter</div>
 
   <div class="role-list">
-    <a class="role-btn" href="phone-staff.html">
+    <button type="button" class="role-btn" onclick="enterAs('staff')">
       STAFF
-      <span class="role-hint">パスワード不要</span>
-    </a>
-    <button type="button" class="role-btn" onclick="openArtistPass()">
+      <span class="role-hint">スタッフ画面</span>
+    </button>
+    <button type="button" class="role-btn" onclick="enterAs('artist')">
       ARTIST
-      <span class="role-hint">パスワードが必要です</span>
+      <span class="role-hint">アーティスト画面</span>
     </button>
   </div>
 
@@ -251,6 +251,12 @@
       }
     } catch(e) {}
   })();
+
+  // R430: 役割を記憶して共通入口(phone-staff)へ。入場パスワードは phone-staff 側で1回だけ聞く。
+  function enterAs(role){
+    try { localStorage.setItem('schedule-studio:role', role); } catch(e) {}
+    location.href = 'phone-staff.html';
+  }
 
   // R114: ARTIST パスワード判定 - concerts:v1 の active concert から取得
   function getArtistPassword(){
