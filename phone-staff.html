@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260530.430000">
+<meta name="build-version" content="20260530.431000">
 <!-- R389: CDS /output デザインに寄せるための Google Fonts (Bebas Neue + Noto Sans JP) -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -2790,6 +2790,23 @@ function resetAuth() {
 }
 
 // 終了ボタン トグル動作: 認証済みなら done のオン/オフを切り替え
+/* R431: リハ「終了」状態を日付別に保存（再描画・同期・日付切替でも残す） */
+var LS_KEY_FINISHED = 'schedule-studio:finishedByDate:v1';
+function loadFinishedPhone(){ try { return JSON.parse(localStorage.getItem(LS_KEY_FINISHED) || '{}') || {}; } catch(e){ return {}; } }
+function isFinishedPhone(songId){
+  var iso = (typeof getCurrentDateIso === 'function') ? getCurrentDateIso() : null;
+  if (!iso) return false;
+  var m = loadFinishedPhone()[iso] || {};
+  return !!m[String(songId)];
+}
+function setFinishedPhone(songId, val){
+  var iso = (typeof getCurrentDateIso === 'function') ? getCurrentDateIso() : null;
+  if (!iso) return;
+  var all = loadFinishedPhone();
+  if (!all[iso]) all[iso] = {};
+  if (val) all[iso][String(songId)] = true; else delete all[iso][String(songId)];
+  localStorage.setItem(LS_KEY_FINISHED, JSON.stringify(all)); // setItem hook で Firebase 同期
+}
 function toggleFinish(cardId) {
   /* R115: 未認証時はサイレントに無視（PASS タブを押した時だけ認証画面が出る） */
   if (!authed) return;
@@ -2797,6 +2814,9 @@ function toggleFinish(cardId) {
   if (!card) return;
   const btn = card.querySelector('.finish-btn');
   const wasDone = card.classList.contains('done');
+  /* R431: 状態を保存（DOM だけでなく localStorage に永続化） */
+  const __sid = card.getAttribute('data-song-id');
+  if (__sid) setFinishedPhone(__sid, !wasDone);
 
   if (wasDone) {
     // 完了取り消し: done を外して「終了」に戻す
@@ -3483,6 +3503,7 @@ function renderRhCards() {
     const rhDisp = (rhNo == null) ? '×' : rhNo;
     const rhVal = (rhNo == null) ? 'x' : String(rhNo);
     const noRhCls = (rhNo == null) ? ' no-rh' : '';
+    const doneCls = (typeof isFinishedPhone === 'function' && isFinishedPhone(song.id)) ? ' done' : ''; // R431: 保存済みの「終了」状態
     const dataRh = (rhNo == null) ? '99' : String(rhNo);
     const tags = Array.isArray(reh.tags) ? reh.tags : [];
 
@@ -3492,13 +3513,13 @@ function renderRhCards() {
       tagHtml += '<span class="tag-pill ' + t.key + onCls + '">' + t.label + '</span>';
     });
 
-    html += '<div class="rh-card' + noRhCls + '" id="card-' + song.id + '" data-song-id="' + song.id + '" data-rh="' + dataRh + '" data-m="' + (i + 1) + '">' +
+    html += '<div class="rh-card' + noRhCls + doneCls + '" id="card-' + song.id + '" data-song-id="' + song.id + '" data-rh="' + dataRh + '" data-m="' + (i + 1) + '">' +
       '<div class="rh-line1">' +
         '<button type="button" class="rh-rhno" data-value="' + rhVal + '" onclick="openRhPicker(this)">' + rhDisp + '</button>' +
         '<div class="rh-mno">' + mNo + '</div>' +
         '<div class="rh-title">' + escHtmlPhone(song.title || '') + '</div>' +
         '<div class="rh-time">' + escHtmlPhone(time) + '</div>' +
-        '<button class="finish-btn ' + ((typeof authed !== "undefined" && authed) ? '' : 'disabled') + '" onclick="toggleFinish(\'card-' + song.id + '\')"><span>終了</span></button>' +
+        '<button class="finish-btn ' + ((typeof authed !== "undefined" && authed) ? '' : 'disabled') + '" onclick="toggleFinish(\'card-' + song.id + '\')"><span>' + (doneCls ? '完了' : '終了') + '</span></button>' +
       '</div>' +
       '<div class="rh-line2">' + tagHtml + '</div>' +
       '<div class="rh-line3" contenteditable="' + (typeof authed !== "undefined" && authed ? "true" : "false") + '" data-song-id="' + song.id + '" data-field="memo">' + escHtmlPhone(reh.memo || '') + '</div>' +

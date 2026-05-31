@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260530.430000">
+<meta name="build-version" content="20260530.431000">
 <!-- R389: CDS /output デザインに寄せるための Google Fonts (Bebas Neue + Noto Sans JP) -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -2018,6 +2018,12 @@
   .cal-day-sheet, .cal-day-sheet.show {
     display: none !important;
   }
+  /* R431: ARTIST 完全閲覧専用 — D149 の add/delete/edit 検出から漏れる書き込みトリガーも隠す */
+  .info-compose, .info-compose-btn,   /* INFO 投稿（＋NEW POST） */
+  .finish-btn,                          /* リハの「終了」ボタン */
+  #tour-edit-toggle {                   /* ツアー日程の「編集」（onclick が toggleTourEdit で D149 に当たらない） */
+    display: none !important;
+  }
 
   /* ── NOW タブ（CDS リアルタイム同期） ───────── R386: phone-staff から移植 */
   /* R392: ".screen.active 以外は display:none" の制御を上書きしないよう
@@ -2286,7 +2292,7 @@
     <div class="cal-months-wrap" id="cal-months-wrap"><!-- R63 B2: 縦スクロール多月 --></div>
 
     <div style="font-size:11px; color:#5a5a55; text-align:center; margin:14px 0 6px; letter-spacing:0.08em;">
-      日をタップで編集／PCのCALENDARタブと相互リンク
+      PC の CALENDAR と連動（このスマホでは閲覧のみ）
     </div>
   </div>
 
