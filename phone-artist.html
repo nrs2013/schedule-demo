@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260530.431000">
+<meta name="build-version" content="20260530.432000">
 <!-- R389: CDS /output デザインに寄せるための Google Fonts (Bebas Neue + Noto Sans JP) -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -2024,6 +2024,11 @@
   #tour-edit-toggle {                   /* ツアー日程の「編集」（onclick が toggleTourEdit で D149 に当たらない） */
     display: none !important;
   }
+  /* R432: タグ・リハ番号・時刻ボタンは span/button で D149 の input 系ロックに当たらないため、
+     防御として明示的に操作不可化（認証経路は塞いだが二重で安全に）。 */
+  .tag-pill, .rh-rhno, .arrival-add-time-btn {
+    pointer-events: none !important;
+  }
 
   /* ── NOW タブ（CDS リアルタイム同期） ───────── R386: phone-staff から移植 */
   /* R392: ".screen.active 以外は display:none" の制御を上書きしないよう
@@ -2396,7 +2401,7 @@
       <button class="info-compose-btn" type="button" onclick="openInfoComposePhone()">＋ NEW POST</button>
     </div>
     <div id="info-list-host">
-      <div style="padding:40px 20px; text-align:center; color:#888; font-size:13px;">まだお知らせはありません<br><span style="font-size:11px; color:#666;">「＋ NEW POST」から投稿できます</span></div>
+      <div style="padding:40px 20px; text-align:center; color:#888; font-size:13px;">まだお知らせはありません</div>
     </div>
     <!-- R430: 役割切替（押し間違い時の復帰用）。役割を消してスタッフ入口へ戻る -->
     <div style="text-align:center; margin:16px 0 0;">
@@ -2680,8 +2685,10 @@ function showRehearsalSub(sub) {
 }
 
 function tryUnlock() {
-  /* R65 Step 1: cross-redirect 撤去。ARTIST パスワード '2222' のみ受付。
-     1111 を入れても STAFF にはリダイレクトしない（spec では STAFF は index.html から passless で入る） */
+  /* R432: アーティスト版は完全閲覧専用。編集解除（authed=true 化）を無効化し、
+     #pass 経由でログインして編集機能が復活する穴を塞ぐ。 */
+  return;
+  /* eslint-disable no-unreachable */
   const v = document.getElementById('pass-field').value;
   /* R114: コンサートに保存されたパスワードを参照（fallback で 2222） */
   var _r114Concerts = JSON.parse(localStorage.getItem('schedule-studio:concerts:v1')||'[]');
@@ -2705,6 +2712,7 @@ function tryUnlock() {
 
 /* R114: ?authed=1 URL バイパスを撤廃（セキュリティ穴）。代わりに sessionStorage flag をチェック */
 (function autoUnlockFromSession(){
+  return; /* R432: アーティスト版は完全閲覧専用。authed=true 化の経路を全て無効化 */
   if (sessionStorage.getItem('schedule-studio:artist-authed-via-index') !== '1') return;
   /* 一度使ったら消す（再利用防止） */
   sessionStorage.removeItem('schedule-studio:artist-authed-via-index');
@@ -4044,7 +4052,7 @@ function renderInfoPhone() {
   const list = (loadJSON(LS_KEY_INFO_HISTORY, []) || []).slice()
     .sort(function(a,b){ return String(b.sentAt||'').localeCompare(String(a.sentAt||'')); });
   if (list.length === 0) {
-    host.innerHTML = '<div style="padding:40px 20px; text-align:center; color:#888; font-size:13px;">まだお知らせはありません<br><span style="font-size:11px; color:#666;">「＋ NEW POST」から投稿できます</span></div>';
+    host.innerHTML = '<div style="padding:40px 20px; text-align:center; color:#888; font-size:13px;">まだお知らせはありません</div>';
     return;
   }
   host.innerHTML = list.map(function(h){
@@ -4151,7 +4159,7 @@ function renderScheduleDayListPhone() {
 
   // 空＋編集不可：未登録メッセージ
   if (list.length === 0 && !isEditable) {
-    host.innerHTML = '<div style="color:#5a5a55; font-size:13px; padding:14px 14px 18px; text-align:center; line-height:1.6;">— この日の DAY SCHEDULE は未登録 —<br><span style="font-size:11px;">PASS で認証すると編集できます</span></div>';
+    host.innerHTML = '<div style="color:#5a5a55; font-size:13px; padding:14px 14px 18px; text-align:center; line-height:1.6;">— この日の DAY SCHEDULE は未登録 —</div>';
     return;
   }
 
@@ -4277,7 +4285,12 @@ let hotels = loadJSON(LS_KEY_HOTELS, JSON.parse(JSON.stringify(DEFAULT_HOTELS)))
 function saveHotels() { saveJSON(LS_KEY_HOTELS, hotels); }
 
 function renderHotelListPhone() {
+  /* R432: アーティスト版はホテルを見せない。画面到達も封鎖済みだが、住所/電話/宿泊者名を
+     隠れDOMにも描画しない（devtools 等での個人情報露出を防ぐ）。 */
   const host = document.getElementById('hotel-list-host');
+  if (host) host.innerHTML = '';
+  return;
+  /* eslint-disable no-unreachable */
   if (!host) return;
   if (!hotels || hotels.length === 0) {
     host.innerHTML = '<div style="color:#5a5a55;font-size:13px;padding:20px;text-align:center;">— ホテル未登録 —</div>';
@@ -4549,9 +4562,8 @@ renderHotelListPhone();
     'rh': 'rehearsal',
     'tekuriha': 'rehearsal',
     'info': 'info',
-    'arrival': 'arrival',
-    /* R430: アーティストにはホテルを見せない（やわらか仕切り）。#hotel 経由の閲覧を無効化 */
-    'pass': 'pass'
+    'arrival': 'arrival'
+    /* R430: #hotel は無効化（やわらか仕切り）。R432: #pass も無効化（閲覧専用＝認証画面に行かせない） */
   };
   function applyHash() {
     var h = (location.hash || '').replace(/^#/, '').toLowerCase().trim();

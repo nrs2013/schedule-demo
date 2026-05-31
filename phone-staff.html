@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260530.431000">
+<meta name="build-version" content="20260530.432000">
 <!-- R389: CDS /output デザインに寄せるための Google Fonts (Bebas Neue + Noto Sans JP) -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -136,6 +136,8 @@
     });
     suppress = false;
     console.log('[FB] pull keys=' + Object.keys(all).length);
+    // R432: Firebase から公演データが届いた直後に入場/役割判定を再チェック（新品端末の素通り防止）
+    if (typeof window.__r170RecheckEntry === 'function') { try { window.__r170RecheckEntry(); } catch(e){} }
     // R95: child_changed と child_added を統一処理（初回書き込みも反映するため）
     // R272: window.__reloadXXX 経由で in-memory を更新（fbSync は別 script ブロックで let 変数に直接アクセスできない）
     function applyFbItem(it) {
@@ -156,6 +158,10 @@
         if (it.k === 'schedule-studio:timetableByDate:v1'         && typeof window.__reloadTimetableByDatePhone === 'function') window.__reloadTimetableByDatePhone();
       } catch(e) { console.warn('[R272] inmem reload fail', it.k, e); }
       if (typeof window.__phoneRefreshAll === 'function') window.__phoneRefreshAll();
+      // R432: 公演/アクティブIDが届いたら入場判定を再チェック
+      if ((it.k === 'schedule-studio:concerts:v1' || it.k === 'schedule-studio:active-concert-id') && typeof window.__r170RecheckEntry === 'function') {
+        try { window.__r170RecheckEntry(); } catch(e){}
+      }
     }
     window.__db.ref(FB_ROOT).on('child_changed', function(s){ applyFbItem(s.val()); });
     window.__db.ref(FB_ROOT).on('child_added',   function(s){ applyFbItem(s.val()); });
@@ -2770,6 +2776,7 @@ function tryUnlock() {
     document.querySelectorAll('.finish-btn.disabled').forEach(b => b.classList.remove('disabled'));
     // R77 P3: SCHEDULE タブを編集UI に切り替え
     if (typeof renderScheduleDayListPhone === 'function') renderScheduleDayListPhone();
+    if (typeof renderRhCards === 'function') renderRhCards(); // R432: リハのメモ/タグも即・編集可に
   } else {
     alert('パスワードが違います');
   }
@@ -2787,6 +2794,7 @@ function resetAuth() {
   document.querySelectorAll('.rh-card:not(.done) .finish-btn').forEach(b => b.classList.add('disabled'));
   // R77 P3: SCHEDULE タブを閲覧UI に戻す
   if (typeof renderScheduleDayListPhone === 'function') renderScheduleDayListPhone();
+  if (typeof renderRhCards === 'function') renderRhCards(); // R432: リハのメモ/タグを閲覧（編集不可）に戻す
 }
 
 // 終了ボタン トグル動作: 認証済みなら done のオン/オフを切り替え
@@ -2840,8 +2848,11 @@ function toggleFinish(cardId) {
 }
 
 function updateProgress() {
-  const total = document.querySelectorAll('.rh-card').length;
-  const done = document.querySelectorAll('.rh-card.done').length;
+  // R432: リハ順では × 曲(.no-rh)は非表示なので母数から除外（画面の枚数と進捗を一致させる）
+  const sortRh = document.body.classList.contains('sort-rh');
+  const baseSel = sortRh ? '.rh-card:not(.no-rh)' : '.rh-card';
+  const total = document.querySelectorAll(baseSel).length;
+  const done = document.querySelectorAll(baseSel + '.done').length;
   const remain = total - done;
   const el = document.getElementById('progress-mini');
   if (el) el.textContent = done + ' / ' + total;
@@ -3274,6 +3285,7 @@ function selectTourDay(idx) {
   if (typeof renderRhCards === 'function') renderRhCards();
   if (typeof renderArrivalListPhone === 'function') renderArrivalListPhone();
   if (typeof renderScheduleDayListPhone === 'function') renderScheduleDayListPhone();
+  if (typeof renderTimetableInlinePhone === 'function') renderTimetableInlinePhone(); // R432: タイムテーブルも日付に追従
 }
 
 function changeTourDay(delta) {
@@ -3292,6 +3304,7 @@ function changeTourDay(delta) {
   if (typeof renderRhCards === 'function') renderRhCards();
   if (typeof renderArrivalListPhone === 'function') renderArrivalListPhone();
   if (typeof renderScheduleDayListPhone === 'function') renderScheduleDayListPhone();
+  if (typeof renderTimetableInlinePhone === 'function') renderTimetableInlinePhone(); // R432: タイムテーブルも日付に追従
 }
 // R154: changeTourDay をグローバルにも公開（HTML inline onclick から確実に呼べるように）
 window.changeTourDay = changeTourDay;
@@ -3565,6 +3578,10 @@ setInterval(function() {
   const setSig = localStorage.getItem(LS_KEY_SETLISTS) || '';
   const rehSig = localStorage.getItem(LS_KEY_REH_BY_DATE) || '';
   if (setSig !== _lastSetlistSig || rehSig !== _lastRehSig) {
+    // R432: メモ等を編集入力中は再描画を見送る（書きかけが消えるのを防ぐ）。
+    //   sig は更新しないので、編集が終わった次の tick で再描画される。
+    var __ae = document.activeElement;
+    if (__ae && (__ae.isContentEditable || __ae.tagName === 'INPUT' || __ae.tagName === 'TEXTAREA')) return;
     console.log('[R88b] data changed → re-render', { setChanged: setSig !== _lastSetlistSig, rehChanged: rehSig !== _lastRehSig });
     _lastSetlistSig = setSig;
     _lastRehSig = rehSig;
@@ -5132,9 +5149,12 @@ renderHotelListPhone();
     if (role === 'staff') { var el=document.getElementById('role-chooser'); if(el) el.classList.remove('show'); return; }
     showRoleChooser();
   }
+  var __resolved = false; // R432: 入場/役割判定が一度確定したか（公演データ到着前の空振り対策）
   function init() {
+    if (__resolved) return;
     var c = getActiveConcert();
-    if (!c) return;                 // 公演不明
+    if (!c) return;                 // 公演不明（まだ Firebase から届いていない → 後で再チェック）
+    __resolved = true;
     var hasPw = c.passwords && (c.passwords.entry || c.passwords.edit);
     if (isEntered(c) || !hasPw) {    // 入場済み or パスワード未設定 → 役割判定へ
       decideRole();
@@ -5146,11 +5166,18 @@ renderHotelListPhone();
     var inp = document.getElementById('r170-entry-input');
     if (inp) inp.onkeydown = function(e){ if (e.key === 'Enter') tryEnter(); };
   }
+  /* R432: 新品端末では起動直後 localStorage が空で、公演データは Firebase から
+     非同期に届く。init は __resolved まで何度呼ばれても安全なので、
+     Firebase pull / 受信フックから再チェックできるよう公開する。 */
+  window.__r170RecheckEntry = init;
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function(){ setTimeout(init, 80); });
   } else {
     setTimeout(init, 80);
   }
+  // 念のため、起動後しばらくは数回リトライ（Firebase 受信フックが無い経路の保険）
+  var __r432tries = 0;
+  var __r432iv = setInterval(function(){ if (__resolved || __r432tries++ > 20) { clearInterval(__r432iv); return; } init(); }, 400);
 })();
 </script>
 
