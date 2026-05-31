@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260601.436000">
+<meta name="build-version" content="20260601.437000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -11802,25 +11802,40 @@
   }
 
   function importHotelsFromRows(rows){
-    // 列順：A=SECTION, B=名前, C=HOTEL名 ／ 1行目はヘッダー
+    // 列順（R438）：A=通し番号(無視) / B=セクション / C=ホテル名 / D=名前
+    // 1行目がラベル行(ヘッダー)ならスキップ。ヘッダー無し(1行目からデータ)にも対応。
+    let __startIdx = 0;
+    if (rows.length > 0 && Array.isArray(rows[0])) {
+      /* R438: ヘッダー行はセルが「ラベル語そのもの」に完全一致する場合のみ。
+         「クインテッサホテル千葉船橋」のような実データに『ホテル』が部分一致して
+         1行目データ(野村裕紀)を誤スキップしないよう、完全一致で判定する。 */
+      const __cells = rows[0].map(function(c){ return String(c == null ? '' : c).trim().toLowerCase(); });
+      const __labels = ['セクション','section','名前','name','ホテル名','hotel名','番号','no','区分','部署','hotel'];
+      if (__cells.some(function(c){ return c && __labels.indexOf(c) >= 0; })) __startIdx = 1;
+    }
     const dataRows = [];
-    for (let i = 1; i < rows.length; i++) {
+    for (let i = __startIdx; i < rows.length; i++) {
       const r = rows[i];
       if (!r || r.length === 0) continue;
       if (r.every(function(c){ return c == null || String(c).trim() === ''; })) continue;
       dataRows.push(r);
     }
     if (dataRows.length === 0) {
-      alert('Excel にデータが見つかりませんでした。\n\n列順は左から：SECTION / 名前 / HOTEL名\nテンプレートDL ボタンから雛形を入手できます。');
+      alert('Excel にデータが見つかりませんでした。\n\n列順は左から：番号 / セクション / ホテル名 / 名前\nテンプレートDL ボタンから雛形を入手できます。');
       return;
     }
 
     // ホテル名でグルーピング
     const hotelMap = new Map(); // hotelName -> { members: [{section, name}, ...] }
+    /* R437: セクション名は「グループ先頭行にだけ記入」される Excel が多い（結合セル/省略）。
+       セクション名が空の行は直前の非空セクションを引き継ぐ（forward fill）。
+       これをしないと、空欄行が全員 '演出' fallback になり「全員が演出」化する。 */
+    let lastSection = '';
     dataRows.forEach(function(r){
-      const section = String(r[0] || '').trim();
-      const name    = String(r[1] || '').trim();
-      const hname   = String(r[2] || '').trim();
+      let section   = String(r[1] || '').trim(); /* B列=セクション */
+      const hname   = String(r[2] || '').trim(); /* C列=ホテル名 */
+      const name    = String(r[3] || '').trim(); /* D列=名前 */
+      if (section) lastSection = section; else section = lastSection;
       if (!hname) return; // ホテル名なしはスキップ
       if (!hotelMap.has(hname)) hotelMap.set(hname, { members: [] });
       hotelMap.get(hname).members.push({ section: section, name: name });
