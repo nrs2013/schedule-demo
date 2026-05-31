@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260530.427000">
+<meta name="build-version" content="20260530.428000">
 <!-- R389: CDS /output デザインに寄せるための Google Fonts (Bebas Neue + Noto Sans JP) -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -56,6 +56,9 @@
 })();
 // R309 phone: デモデータ自動投入 — 初回アクセスでもタイムスケジュールが見える
 (function seedDemoIfEmpty(){
+  /* R428: 本番運用のためデモseedを無効化。まっさらな端末でデモ公演(入場パスワード1111)や
+     デモ進行表が混入する事故を防ぐ。デモが再び必要になったら下の return を外す。 */
+  return;
   try {
     // 公演データが無い場合だけ投入（既存ユーザーのデータは絶対に壊さない）
     if (!localStorage.getItem('schedule-studio:concerts:v1')) {
@@ -2384,9 +2387,9 @@
       <div class="rh-countdown-card">
         <div class="rh-countdown-left">
           <div class="rh-countdown-label">テクリハ終了まで</div>
-          <div class="rh-countdown-meta">予定 <strong>21:00</strong></div>
+          <div class="rh-countdown-meta">予定 <strong>--:--</strong></div>
         </div>
-        <div class="rh-countdown-time">02:34:18</div>
+        <div class="rh-countdown-time" id="tek-cd">--:--:--</div>
       </div>
     </div>
 
@@ -2406,9 +2409,9 @@
       <div class="rh-countdown-card">
         <div class="rh-countdown-left">
           <div class="rh-countdown-label">リハ終了まで</div>
-          <div class="rh-countdown-meta">予定 <strong>16:00</strong></div>
+          <div class="rh-countdown-meta">予定 <strong>--:--</strong></div>
         </div>
-        <div class="rh-countdown-time" id="rh-cd">02:34:18</div>
+        <div class="rh-countdown-time" id="rh-cd">--:--:--</div>
       </div>
     </div>
 
@@ -2818,34 +2821,26 @@ function updateProgress() {
   if (remainEl) remainEl.textContent = remain;
 }
 
-// R213: リハーサル全体カウントダウン: DAY SCHEDULE のリハ終了時刻まで動的計算
-function updateRhCountdownPhone() {
-  const el = document.getElementById('rh-cd');
-  const metaStrong = document.querySelector('#screen-rh .rh-countdown-meta strong');
+// R213/R428: リハ・テクリハ両方のカウントダウンを DAY SCHEDULE の終了時刻から動的計算
+function _updateRhCdOne(cdId, metaSel, matchFn) {
+  const el = document.getElementById(cdId);
   if (!el) return;
+  const metaStrong = document.querySelector(metaSel);
   let iso = null;
   try { iso = (typeof getCurrentDateIso === 'function') ? getCurrentDateIso() : null; } catch(e) {}
   const events = (typeof dailyEventsPhone !== 'undefined' && iso && dailyEventsPhone[iso]) ? dailyEventsPhone[iso] : [];
-  const rhCandidates = events.filter(function(e){
-    const lbl = (e.label || '').toLowerCase();
-    return (lbl.indexOf('リハ') >= 0 || lbl.indexOf('reh') >= 0) && e.endTime;
-  });
-  if (rhCandidates.length === 0) {
+  const cands = events.filter(function(e){ return matchFn((e.label || '').toLowerCase()) && e.endTime; });
+  if (cands.length === 0) {
     el.textContent = '--:--:--';
     if (metaStrong) metaStrong.textContent = '--:--';
     return;
   }
-  // 最後（時刻が一番遅い）のリハイベントを採用
-  const lastRh = rhCandidates.slice().sort(function(a,b){
-    return String(a.endTime).localeCompare(String(b.endTime));
-  }).pop();
-  const endTime = lastRh.endTime;
+  // 最後（時刻が一番遅い）のイベントを採用
+  const last = cands.slice().sort(function(a,b){ return String(a.endTime).localeCompare(String(b.endTime)); }).pop();
+  const endTime = last.endTime;
   if (metaStrong) metaStrong.textContent = endTime;
   const parts = String(endTime).split(':').map(Number);
-  if (parts.length < 2 || isNaN(parts[0]) || isNaN(parts[1])) {
-    el.textContent = '--:--:--';
-    return;
-  }
+  if (parts.length < 2 || isNaN(parts[0]) || isNaN(parts[1])) { el.textContent = '--:--:--'; return; }
   const now = new Date();
   const endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), parts[0], parts[1], 0);
   const diff = Math.max(0, Math.floor((endDate.getTime() - now.getTime()) / 1000));
@@ -2853,6 +2848,11 @@ function updateRhCountdownPhone() {
   const m = String(Math.floor((diff % 3600) / 60)).padStart(2,'0');
   const s = String(diff % 60).padStart(2,'0');
   el.textContent = h + ':' + m + ':' + s;
+}
+function updateRhCountdownPhone() {
+  // 全体リハ = ラベルに「リハ」/「reh」を含むが「テク」は含まない。テクリハ = 「テク」を含む。
+  _updateRhCdOne('rh-cd', '#screen-rh .rh-countdown-meta strong', function(lbl){ return (lbl.indexOf('リハ') >= 0 || lbl.indexOf('reh') >= 0) && lbl.indexOf('テク') < 0; });
+  _updateRhCdOne('tek-cd', '#screen-tekuriha .rh-countdown-meta strong', function(lbl){ return lbl.indexOf('テク') >= 0; });
 }
 setInterval(updateRhCountdownPhone, 1000);
 setTimeout(updateRhCountdownPhone, 200);
@@ -3447,8 +3447,15 @@ function escHtmlPhone(s) {
 }
 
 function renderRhCards() {
-  const list = document.getElementById('rh-card-list');
+  // R428: テクリハ画面でもカードを表示。アクティブなリハ画面のリスト(#rh-card-list/#tekuriha-card-list)
+  //   へ描画し、反対側はクリアして card-* のID重複を防ぐ。テクリハと全体リハは同じ曲データを共有。
+  const activeScreen = document.querySelector('.screen.active');
+  const list = (activeScreen && activeScreen.querySelector('#rh-card-list, #tekuriha-card-list')) || document.getElementById('rh-card-list');
   if (!list) return;
+  ['rh-card-list','tekuriha-card-list'].forEach(function(idn){
+    const other = document.getElementById(idn);
+    if (other && other !== list) other.innerHTML = '';
+  });
   const songs = getActiveSongs();
   const rehDict = getRehDictForToday();
 

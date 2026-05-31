@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260530.427000">
+<meta name="build-version" content="20260530.428000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -7035,13 +7035,13 @@
           <!-- __r405UpdateLineCurrent() で動的に描画 -->
         </div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px;">
-          <button type="button" onclick="window.__r164ListGroups()" style="background:transparent;border:0.5px solid rgba(255,255,255,0.22);color:#fafaf8;font-size:10.5px;padding:8px 14px;border-radius:3px;cursor:pointer;font-family:'JetBrains Mono',monospace;letter-spacing:0.14em;text-transform:uppercase;">Sync Groups</button>
+          <button type="button" onclick="window.__r164ListGroups()" style="background:transparent;border:0.5px solid rgba(255,255,255,0.22);color:#fafaf8;font-size:10.5px;padding:8px 14px;border-radius:3px;cursor:pointer;font-family:'JetBrains Mono',monospace;letter-spacing:0.14em;text-transform:uppercase;">Sync Groups<span style="display:block;font-size:8px;letter-spacing:0.02em;text-transform:none;font-weight:400;opacity:0.65;margin-top:3px;">グループ一覧を取得</span></button>
           <span id="wiz-group-list-status" style="font-size:11px;color:#888;font-family:'JetBrains Mono',monospace;"></span>
         </div>
         <div id="wiz-group-list" style="margin:8px 0 14px 0;"></div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding-top:14px;border-top:0.5px solid rgba(255,255,255,0.06);">
-          <button type="button" onclick="window.__r186SendMenu()" title="スタッフ用スマホページ (TODAY / CALENDAR / REHEARSAL / INFO / HOTEL / PASS) への入口カードを LINE グループに送信" style="background:transparent;border:0.5px solid rgba(245,200,120,0.45);color:#f5c878;font-size:10.5px;padding:8px 14px;border-radius:3px;cursor:pointer;font-family:'JetBrains Mono',monospace;letter-spacing:0.14em;text-transform:uppercase;font-weight:500;">All Menu</button>
-          <button type="button" onclick="window.__r418SendDaySchedule()" style="background:transparent;border:0.5px solid rgba(168,232,120,0.5);color:#a8e878;font-size:10.5px;padding:8px 14px;border-radius:3px;cursor:pointer;font-family:'JetBrains Mono',monospace;letter-spacing:0.14em;text-transform:uppercase;font-weight:500;">Send Day Schedule</button>
+          <button type="button" onclick="window.__r186SendMenu()" title="スタッフ用スマホページ (TODAY / CALENDAR / REHEARSAL / INFO / HOTEL / PASS) への入口カードを LINE グループに送信" style="background:transparent;border:0.5px solid rgba(245,200,120,0.45);color:#f5c878;font-size:10.5px;padding:8px 14px;border-radius:3px;cursor:pointer;font-family:'JetBrains Mono',monospace;letter-spacing:0.14em;text-transform:uppercase;font-weight:500;">All Menu<span style="display:block;font-size:8px;letter-spacing:0.02em;text-transform:none;font-weight:400;opacity:0.7;margin-top:3px;">メニュー一式を送信</span></button>
+          <button type="button" onclick="window.__r418SendDaySchedule()" style="background:transparent;border:0.5px solid rgba(168,232,120,0.5);color:#a8e878;font-size:10.5px;padding:8px 14px;border-radius:3px;cursor:pointer;font-family:'JetBrains Mono',monospace;letter-spacing:0.14em;text-transform:uppercase;font-weight:500;">Send Day Schedule<span style="display:block;font-size:8px;letter-spacing:0.02em;text-transform:none;font-weight:400;opacity:0.7;margin-top:3px;">今日の段取りを送信</span></button>
           <span id="info-line-status" style="font-size:11px;color:#888;font-family:'JetBrains Mono',monospace;"></span>
         </div>
         <details style="margin-top:18px;">
@@ -7060,13 +7060,13 @@
             <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:#666;letter-spacing:0.20em;text-transform:uppercase;margin-bottom:6px;">GAS Webhook URL</div>
             <div style="font-size:11px;color:#888;margin-bottom:8px;line-height:1.5;">Bot のサーバー連絡先。一度保存すれば次回以降不要。</div>
             <input type="text" id="info-line-gas-url" placeholder="https://script.google.com/macros/s/.../exec" style="width:100%;background:transparent;border:0.5px solid rgba(255,255,255,0.15);color:#fafaf8;font-size:11.5px;padding:8px 10px;border-radius:3px;font-family:'JetBrains Mono',monospace;box-sizing:border-box;">
-            <button type="button" onclick="window.__r125SaveLineUrl()" style="margin-top:8px;background:transparent;border:0.5px solid rgba(255,255,255,0.22);color:#fafaf8;font-size:10.5px;padding:6px 14px;border-radius:3px;cursor:pointer;font-family:'JetBrains Mono',monospace;letter-spacing:0.12em;text-transform:uppercase;">Save URL</button>
+            <button type="button" onclick="window.__r125SaveLineUrl()" style="margin-top:8px;background:transparent;border:0.5px solid rgba(255,255,255,0.22);color:#fafaf8;font-size:10.5px;padding:6px 14px;border-radius:3px;cursor:pointer;font-family:'JetBrains Mono',monospace;letter-spacing:0.12em;text-transform:uppercase;">Save URL<span style="display:block;font-size:8px;letter-spacing:0.02em;text-transform:none;font-weight:400;opacity:0.65;margin-top:3px;">GAS の URL を保存</span></button>
             <hr style="border:none;border-top:0.5px solid rgba(255,255,255,0.06);margin:18px 0;">
             <!-- グループ ID 手動入力 (一覧から選べない場合の保険) -->
             <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:#666;letter-spacing:0.20em;text-transform:uppercase;margin-bottom:6px;">Group ID — Manual</div>
             <div style="font-size:11px;color:#888;margin-bottom:8px;line-height:1.5;">一覧から選べない場合のみ手動で入力。</div>
             <input type="text" id="info-line-group-id" placeholder="C1234abcd... (LINE グループ ID)" style="width:100%;background:transparent;border:0.5px solid rgba(255,255,255,0.15);color:#fafaf8;font-size:11.5px;padding:8px 10px;border-radius:3px;font-family:'JetBrains Mono',monospace;box-sizing:border-box;">
-            <button type="button" onclick="window.__r164SaveGroupId(); if(window.__r405UpdateLineCurrent)window.__r405UpdateLineCurrent();" style="margin-top:8px;background:transparent;border:0.5px solid rgba(168,232,120,0.45);color:#a8e878;font-size:10.5px;padding:6px 14px;border-radius:3px;cursor:pointer;font-family:'JetBrains Mono',monospace;letter-spacing:0.12em;text-transform:uppercase;">Bind to Concert</button>
+            <button type="button" onclick="window.__r164SaveGroupId(); if(window.__r405UpdateLineCurrent)window.__r405UpdateLineCurrent();" style="margin-top:8px;background:transparent;border:0.5px solid rgba(168,232,120,0.45);color:#a8e878;font-size:10.5px;padding:6px 14px;border-radius:3px;cursor:pointer;font-family:'JetBrains Mono',monospace;letter-spacing:0.12em;text-transform:uppercase;">Bind to Concert<span style="display:block;font-size:8px;letter-spacing:0.02em;text-transform:none;font-weight:400;opacity:0.65;margin-top:3px;">この公演に紐付け</span></button>
           </div>
         </details>
       </div>
@@ -7151,7 +7151,7 @@
         </div>
         <textarea id="board-textarea" placeholder="ここに書いた内容が、LINE グループ全員のスマホでリアルタイムに見られます。&#10;&#10;例:&#10;・楽屋 A に水補充済み&#10;・鈴木さん 18:00 着予定&#10;・PA インフ 17:00 OK&#10;・明日 9:00 集合" style="width:100%;min-height:640px;background:transparent;border:0.5px solid rgba(255,255,255,0.15);color:#fafaf8;font-family:'Noto Sans JP','JetBrains Mono',monospace;font-size:15px;line-height:1.85;padding:18px 20px;border-radius:4px;box-sizing:border-box;resize:vertical;letter-spacing:0.02em;"></textarea>
         <div style="display:flex;gap:10px;align-items:center;margin-top:14px;flex-wrap:wrap;">
-          <button type="button" onclick="window.__r419SendBoardLink()" style="background:transparent;border:0.5px solid rgba(168,232,120,0.5);color:#a8e878;font-size:10.5px;padding:8px 14px;border-radius:3px;cursor:pointer;font-family:'JetBrains Mono',monospace;letter-spacing:0.14em;text-transform:uppercase;font-weight:500;">Send Board Link to LINE</button>
+          <button type="button" onclick="window.__r419SendBoardLink()" style="background:transparent;border:0.5px solid rgba(168,232,120,0.5);color:#a8e878;font-size:10.5px;padding:8px 14px;border-radius:3px;cursor:pointer;font-family:'JetBrains Mono',monospace;letter-spacing:0.14em;text-transform:uppercase;font-weight:500;">Send Board Link to LINE<span style="display:block;font-size:8px;letter-spacing:0.02em;text-transform:none;font-weight:400;opacity:0.7;margin-top:3px;">掲示板リンクを送信</span></button>
           <span id="board-send-status" style="font-size:11px;color:#888;font-family:'JetBrains Mono',monospace;"></span>
         </div>
         <div style="margin-top:14px;font-family:'JetBrains Mono',monospace;font-size:10px;color:#666;letter-spacing:0.04em;line-height:1.7;">
@@ -16960,7 +16960,7 @@ function show(id) {
       const html = '<!doctype html><html><head><meta charset="utf-8"><title>印刷: タイムスケジュール</title>' + stylesheet + '</head><body>' +
         '<div class="print-controls">' +
         '<span>A4 横で印刷準備完了。ブラウザの印刷ダイアログから「用紙: A4」「向き: 横」を選んでください。</span>' +
-        '<button onclick="window.print()">️ 印刷ダイアログを開く</button>' +
+        '<button onclick="window.print()">印刷ダイアログを開く</button>' +
         '<button onclick="window.close()">閉じる</button>' +
         '</div>' +
         '<div id="tt-pdf-root">' + pages + '</div>' +
@@ -17035,7 +17035,7 @@ function show(id) {
       <div class="pdf-progress" id="pdf-progress">　</div>
       <div class="pdf-modal-actions">
         <button class="pdf-btn" id="pdf-btn-cancel" type="button">キャンセル</button>
-        <button class="pdf-btn" id="pdf-btn-browser-print" type="button" disabled title="ブラウザの印刷ダイアログで直接印刷 (A4 横自動)">️ 直接印刷</button>
+        <button class="pdf-btn" id="pdf-btn-browser-print" type="button" disabled title="ブラウザの印刷ダイアログで直接印刷 (A4 横自動)">直接印刷</button>
         <button class="pdf-btn pdf-btn-primary" id="pdf-btn-export" type="button" disabled>PDF に出力</button>
       </div>
     </div>

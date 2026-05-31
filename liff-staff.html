@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-<meta name="build-version" content="20260527.419000">
+<meta name="build-version" content="20260530.428000">
 <title>SCHEDULE STUDIO — STAFF</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -188,7 +188,7 @@
   <div class="value status-line" id="status-text">LIFF 初期化中…</div>
 </div>
 
-<div class="footer">SCHEDULE STUDIO · v.416 · LIFF PHASE 2</div>
+<div class="footer">SCHEDULE STUDIO · v.428 · 入り時間ダッシュボード</div>
 
 <script>
   // R416 Phase 2: Firebase 経由でアクティブ公演取得 + スタッフ識別 + 自分の入り時間表示
@@ -295,46 +295,43 @@
 
   function renderDashboard() {
     const root = document.getElementById('root');
-    const avatarHtml = __profile.pictureUrl
+    const avatarHtml = (__profile && __profile.pictureUrl)
       ? '<img src="' + esc(__profile.pictureUrl) + '" class="avatar" alt="">'
       : '';
 
-    const arrivals = findMyArrivals();
-    const arrivalsHtml = arrivals.length === 0
-      ? '<div class="empty">あなた名 (<code style="color:#888;">' + esc(__selfName) + '</code>) の入り時間が見つかりませんでした。<br>のむさんに「LIFF で表示される名前」を SCHEDULE STUDIO 側の入り時間と揃えてもらってください。</div>'
-      : arrivals.map(function(a){
-          return '<div class="row">' +
-                 '<span class="time">' + esc(a.time || '--:--') + '</span>' +
-                 '<span class="who">' + esc(a.name) + '</span>' +
-                 (a.where ? '<div class="where">' + esc(a.where) + '</div>' : '') +
-                 (a.date ? '<div class="where">' + esc(a.date) + '</div>' : '') +
-                 '</div>';
-        }).join('');
+    // R428: 個人名照合(Phase2 個人ダッシュボード)は廃止。
+    //   「自分の入り時間はいらない・各セクションの入り時間だけでよい」とのむさん判断。
+    //   arrivalSectionsByDate[dateKey] = [{id, section, time}] を日付ごとに一覧表示。
+    const dates = Object.keys(__arrivals || {}).sort();
+    let arrivalsHtml = '';
+    dates.forEach(function(dateKey){
+      const raw = __arrivals[dateKey];
+      const rows = Array.isArray(raw) ? raw : (raw && Array.isArray(raw.sections) ? raw.sections : []);
+      const valid = rows.filter(function(r){ return r && (r.section || r.name) && (r.time || r.in); });
+      if (valid.length === 0) return;
+      valid.sort(function(a,b){ return String(a.time||a.in||'99:99').localeCompare(String(b.time||b.in||'99:99')); });
+      arrivalsHtml += '<div class="label" style="margin-top:12px;">' + esc(dateKey) + '</div>';
+      valid.forEach(function(r){
+        arrivalsHtml += '<div class="row">' +
+          '<span class="time">' + esc(r.time || r.in || '--:--') + '</span>' +
+          '<span class="who">' + esc(r.section || r.name || '') + '</span>' +
+          '</div>';
+      });
+    });
+    if (!arrivalsHtml) {
+      arrivalsHtml = '<div class="empty">入り時間がまだ登録されていません。<br>SCHEDULE STUDIO で入力すると自動で表示されます。</div>';
+    }
 
     root.innerHTML =
       avatarHtml +
       '<div class="label">Hi</div>' +
-      '<div class="name">' + esc(__profile.displayName) + '</div>' +
+      '<div class="name">' + esc(__profile ? __profile.displayName : '') + '</div>' +
       '<hr>' +
       '<div class="label">Concert</div>' +
       '<div class="value accent-amber">' + esc(__concert ? __concert.title : '(取得失敗)') + '</div>' +
-      '<div class="label">You (Staff Name)</div>' +
-      '<div class="value">' + esc(__selfName) + '</div>' +
       '<hr>' +
-      '<div class="label">My Arrival Time</div>' +
-      arrivalsHtml +
-      '<hr>' +
-      '<button class="btn btn-secondary" id="reset-name">スタッフ名を再設定</button>' +
-      '<div class="phase-note" style="margin-top:14px;">' +
-        '<strong>Phase 2 進行中</strong><br>' +
-        '次に「タイムテーブル / 部屋番号 / リハーサル予定」を個人別に出します。' +
-      '</div>';
-
-    document.getElementById('reset-name').addEventListener('click', function(){
-      try { localStorage.removeItem(LK_SELF_NAME); } catch(_) {}
-      __selfName = null;
-      renderStaffIdentify();
-    });
+      '<div class="label">入り時間（セクション別）</div>' +
+      arrivalsHtml;
   }
 
   async function fetchSSData(db) {
@@ -439,11 +436,8 @@
       // SCHEDULE STUDIO データ取得
       await fetchSSData(db);
 
-      // 既存のスタッフ名 (LIFF 側 localStorage)
-      try { __selfName = localStorage.getItem(LK_SELF_NAME); } catch(_) {}
-
-      if (__selfName) renderDashboard();
-      else renderStaffIdentify();
+      // R428: 個人名の自己申告は廃止。常にセクション別入り時間ダッシュボードを表示。
+      renderDashboard();
 
     } catch (err) {
       renderError('LIFF init 失敗: ' + (err && err.message ? err.message : String(err)));
