@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260530.434000">
+<meta name="build-version" content="20260531.435000">
 <!-- R389: CDS /output デザインに寄せるための Google Fonts (Bebas Neue + Noto Sans JP) -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -3389,14 +3389,9 @@ function computeMNoPhone(song, songsArr) {
   if (song.isEncore) return 'EN';
   if (song.isEvent) return 'VCR';
   if (song.isEnd) return 'END';
-  let cnt = 0;
-  for (const s of songsArr) {
-    if (!s.isMC && !s.isEncore && !s.isEvent && !s.isEnd) {
-      cnt++;
-      if (s.id === song.id) return 'M' + cnt;
-    }
-  }
-  return 'M?';
+  // R435: PC版(computeMNo)と統一。Excel取込の mNo をそのまま表示し、自動連番しない。空欄はブランク（PC版と曲順・M番号を一致させる）。
+  if (song.mNo && String(song.mNo).trim() !== '') return String(song.mNo);
+  return '';
 }
 function formatTimePhone(sec) {
   if (sec == null) return '—';
