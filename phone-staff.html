@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260525.394000">
+<meta name="build-version" content="20260530.427000">
 <!-- R389: CDS /output デザインに寄せるための Google Fonts (Bebas Neue + Noto Sans JP) -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -2498,7 +2498,7 @@
     <!-- タクシー編集シート -->
     <div id="taxi-edit-sheet" style="display:none; position:fixed; inset:0; z-index:99999; background:rgba(0,0,0,0.72); align-items:flex-end; justify-content:center;">
       <div style="width:100%; max-width:520px; background:#1d1d1d; border-top:1px solid #3a3a36; border-radius:14px 14px 0 0; padding:18px 18px 100px; box-sizing:border-box;">
-        <div style="font-size:14px; letter-spacing:0.3em; color:#d8d8d4; margin-bottom:12px;">🚕 TAXI</div>
+        <div style="font-size:14px; letter-spacing:0.3em; color:#d8d8d4; margin-bottom:12px;">TAXI</div>
         <div style="display:flex; gap:8px; margin-bottom:8px;">
           <button id="taxi-edit-time" class="sde-time" data-time="09:00" onclick="openTimePicker(this)" style="width:90px; flex-shrink:0; box-sizing:border-box; background:#0f0f0f; border:1px solid #2c2c2c; border-radius:4px; padding:9px 10px; color:#e8e8e8; font-size:16px; cursor:pointer;">09:00</button>
           <input id="taxi-edit-section" type="text" placeholder="セクション (PA等)" style="flex:1; min-width:0; box-sizing:border-box; background:#0f0f0f; border:1px solid #2c2c2c; border-radius:4px; padding:9px 10px; color:#e8e8e8; font-size:16px;">
@@ -2518,7 +2518,7 @@
     <!-- 宿泊メンバー編集シート -->
     <div id="member-edit-sheet" style="display:none; position:fixed; inset:0; z-index:99999; background:rgba(0,0,0,0.72); align-items:flex-end; justify-content:center;">
       <div style="width:100%; max-width:520px; background:#1d1d1d; border-top:1px solid #3a3a36; border-radius:14px 14px 0 0; padding:18px 18px 100px; box-sizing:border-box;">
-        <div style="font-size:14px; letter-spacing:0.3em; color:#d8d8d4; margin-bottom:12px;">🛏 MEMBER</div>
+        <div style="font-size:14px; letter-spacing:0.3em; color:#d8d8d4; margin-bottom:12px;">MEMBER</div>
         <input id="member-edit-section" type="text" placeholder="セクション (PA等)" style="width:100%; box-sizing:border-box; background:#0f0f0f; border:1px solid #2c2c2c; border-radius:4px; padding:9px 10px; color:#e8e8e8; font-size:16px; margin-bottom:8px;">
         <input id="member-edit-name" type="text" placeholder="お名前" style="width:100%; box-sizing:border-box; background:#0f0f0f; border:1px solid #2c2c2c; border-radius:4px; padding:9px 10px; color:#e8e8e8; font-size:16px;">
         <div style="display:flex; gap:8px; margin-top:12px;">
@@ -3783,7 +3783,7 @@ function renderCalendarMonths() {
                           : sameNext ? ' bar-start'
                           : samePrev ? ' bar-end'
                           : '';
-          const bandLabel = samePrev ? '' : ('📍 ' + (vg.venue || ''));
+          const bandLabel = samePrev ? '' : ('' + (vg.venue || ''));
           venueBandHtml = '<div class="cal-venue-band' + bandPosCls + '" title="' + escHtmlPhone(vg.venue || '') + '">' + escHtmlPhone(bandLabel) + '</div>';
           /* R198b: ラベル描画する側のセル（bar-start or 単独）は z-index を上げて、はみ出した会場名が隣セルに隠れないようにする */
           if (!samePrev) cellCls.push('has-band-start');
@@ -3884,11 +3884,18 @@ function openCalDaySheet(iso) {
   const dateStr = `${d.getMonth() + 1}/${d.getDate()} (${dow})`;
   document.getElementById('cal-day-sheet-date').textContent = dateStr;
 
-  // スケジュール反映
-  const key = `${d.getMonth() + 1}/${d.getDate()}`;
-  const s = tourSchedules[key] || { tekuriha:['--','--'], rehearsal:['--','--'], door:'--', show:'--' };
+  // R427: 固定モック(tourSchedules)ではなく実データ(showTimes)から DOOR/SHOW を反映。
+  //   会場は calEvents の同日エントリから引く。テクリハ/リハの開始終了時刻は
+  //   現状どのデータにも保持していないため '--'（嘘の時刻を出さない）。
+  let door = '--', show = '--';
+  try {
+    const evs = (typeof calEvents !== 'undefined' && Array.isArray(calEvents)) ? calEvents.filter(function(e){ return e.date === iso; }) : [];
+    const venue = evs.length ? evs[0].venue : '';
+    const tk = (venue && typeof showTimes !== 'undefined' && showTimes[venue]) ? showTimes[venue] : null;
+    if (tk) { if (tk.door) door = tk.door; if (tk.show) show = tk.show; }
+  } catch(e) {}
   const vals = document.querySelectorAll('#cal-day-sheet .cal-day-sheet-val');
-  const arr = [s.tekuriha[0], s.tekuriha[1], s.rehearsal[0], s.rehearsal[1], s.door, s.show];
+  const arr = ['--', '--', '--', '--', door, show];
   vals.forEach((v, i) => {
     const t = arr[i] || '--:--';
     v.dataset.time = (t === '--' || t === '--:--') ? '00:00' : t;
@@ -4708,10 +4715,10 @@ function renderHotelListPhone() {
           (h.tel    ? '<dt>電話</dt><dd><a href="tel:' + escHtmlPhone(h.tel.replace(/-/g,'')) + '">' + escHtmlPhone(h.tel) + '</a></dd>' : '') +
           (h.url    ? '<dt>URL</dt><dd><a href="' + escHtmlPhone(h.url) + '" target="_blank">' + escHtmlPhone(urlText) + '</a></dd>' : '') +
         '</dl>' +
-        (h.name ? '<a class="hotel-map-btn" href="https://maps.google.com/?q=' + mapsQ + '" target="_blank">📍 MAP</a>' : '') +
+        (h.name ? '<a class="hotel-map-btn" href="https://maps.google.com/?q=' + mapsQ + '" target="_blank">MAP</a>' : '') +
       '</div>' +
       '<div class="taxi-section">' +
-        '<div class="taxi-head" style="display:flex; align-items:center; justify-content:space-between; gap:8px;"><div class="taxi-title" style="white-space:nowrap;">🚕 タクシー配車</div>' + taxiAddBtn + '</div>' +
+        '<div class="taxi-head" style="display:flex; align-items:center; justify-content:space-between; gap:8px;"><div class="taxi-title" style="white-space:nowrap;">タクシー配車</div>' + taxiAddBtn + '</div>' +
         (taxiList ? '<div class="taxi-list">' + taxiList + '</div>' : '<div style="color:#5a5a55; font-size:12px; padding:6px 0;">— 未登録 —</div>') +
       '</div>' +
       '<div class="hotel-members-head" style="display:flex; align-items:center; justify-content:space-between; gap:8px;">' +
@@ -4855,11 +4862,11 @@ renderHotelListPhone();
     if (window.history && window.history.replaceState) {
       window.history.replaceState(null, '', location.pathname + location.search);
     }
-    alert('✅ 同期データを取り込みました。リロードします。\n\n（同期日時: ' + (data.syncedAt || '不明') + '）');
+    alert('同期データを取り込みました。リロードします。\n\n（同期日時: ' + (data.syncedAt || '不明') + '）');
     setTimeout(function(){ location.reload(); }, 100);
   } catch (e) {
     console.warn('[SYNC] import failed:', e);
-    alert('❌ 同期URL の読込に失敗しました。\n\n' + e.message);
+    alert('同期URL の読込に失敗しました。\n\n' + e.message);
   }
 })();
 </script>
@@ -4990,7 +4997,7 @@ renderHotelListPhone();
 </style>
 <div class="r170-entry-lock" id="r170-entry-lock">
   <div class="r170-entry-card">
-    <div class="r170-entry-icon">🎫</div>
+    <div class="r170-entry-icon">⊡</div>
     <div class="r170-entry-title">入場パスワード</div>
     <div class="r170-entry-concert" id="r170-entry-concert">—</div>
     <div class="r170-entry-hint">この公演のスタッフ向け<br>初回だけ入力してください（次回からは自動で入れます）</div>
