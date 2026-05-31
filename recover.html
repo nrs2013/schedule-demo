@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SCHEDULE STUDIO — データ復旧</title>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<style>
+  body { margin:0; padding:24px 20px 60px; background:#0a0a0a; color:#fafaf8;
+         font-family:-apple-system,BlinkMacSystemFont,'Noto Sans JP',sans-serif; line-height:1.7; }
+  h1 { font-size:18px; color:#f5c878; letter-spacing:0.04em; }
+  .note { font-size:13px; color:#a8a8a0; margin:8px 0 18px; }
+  .card { background:#131211; border:0.5px solid rgba(255,255,255,0.1); border-radius:8px; padding:16px 18px; margin-bottom:14px; }
+  .k { font-family:'JetBrains Mono',monospace; font-size:11px; color:#888; }
+  .v { font-size:13px; color:#fafaf8; margin:2px 0 10px; word-break:break-all; }
+  .big { font-size:15px; color:#a8e878; font-weight:600; }
+  button { width:100%; padding:14px; font-size:15px; font-weight:600; border:none; border-radius:6px; cursor:pointer; margin-top:8px; }
+  #goBtn { background:#c8a878; color:#0a0a08; }
+  #goBtn:disabled { background:#3a3a36; color:#888; cursor:default; }
+  .status { font-size:13px; margin-top:14px; white-space:pre-wrap; }
+  .ok { color:#a8e878; } .err { color:#e07a5f; } .warn { color:#f5c878; }
+</style>
+</head>
+<body>
+<h1>SCHEDULE STUDIO データ復旧</h1>
+<div class="note">この端末（ブラウザ）に残っている本物のデータを、共有保管庫(Firebase)へアップロードして元に戻します。<br>
+<strong>この端末のデータは一切消しません・取り込みません（アップロードのみ）。</strong></div>
+
+<div class="card">
+  <div style="font-size:13px;color:#a8a8a0;margin-bottom:8px;">この端末に見つかったデータ：</div>
+  <div id="found">読み込み中…</div>
+</div>
+
+<button id="goBtn" disabled>確認中…</button>
+<div class="status" id="status"></div>
+
+<script>
+var FIREBASE_CONFIG = {
+  apiKey: "AIzaSyB0g9NU2jHWLgHSpgxyvWjizdloLbkJ_aM",
+  authDomain: "schedule-studio-2b14f.firebaseapp.com",
+  databaseURL: "https://schedule-studio-2b14f-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "schedule-studio-2b14f",
+  storageBucket: "schedule-studio-2b14f.firebasestorage.app",
+  messagingSenderId: "480145267674",
+  appId: "1:480145267674:web:8d1a8e9b11d3ee69613ee3"
+};
+// 端末ローカル属性（保管庫に上げないキー）。本体アプリの FB_SYNC_EXCLUDE と一致
+var EXCLUDE = {
+  'schedule-studio:line-test-passed':1,
+  'schedule-studio:line-group-hidden':1,
+  'schedule-studio:line-group-names':1,
+  'schedule-studio:masterDate':1
+};
+function encKey(k){ return k.replace(/[.#$/\[\]]/g, '_'); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+
+// この端末の schedule-studio: キーを収集
+var keys = [];
+for (var i=0;i<localStorage.length;i++){
+  var k = localStorage.key(i);
+  if (k && k.indexOf('schedule-studio:')===0 && !EXCLUDE[k]) keys.push(k);
+}
+
+// サマリー表示（本物か確認できるように）
+function summarize(){
+  var foundEl = document.getElementById('found');
+  if (keys.length===0){
+    foundEl.innerHTML = '<span class="err">この端末に SCHEDULE STUDIO のデータが見つかりませんでした。<br>'+
+      'いつも編集しているブラウザ（同じ Mac の同じブラウザ）で開いていますか？</span>';
+    return false;
+  }
+  var html = '';
+  // 公演一覧
+  try {
+    var concerts = JSON.parse(localStorage.getItem('schedule-studio:concerts:v1')||'[]');
+    if (Array.isArray(concerts) && concerts.length){
+      html += '<div class="k">公演一覧</div><div class="v big">'+
+        concerts.map(function(c){return esc(c.title||c.name||c.id);}).join(' / ')+'</div>';
+    }
+  } catch(e){}
+  // 進行表の日付
+  try {
+    var tt = JSON.parse(localStorage.getItem('schedule-studio:timetableByDate:v1')||'{}');
+    var ds = Object.keys(tt||{});
+    if (ds.length) html += '<div class="k">進行表のある日</div><div class="v">'+esc(ds.join(' , '))+'</div>';
+  } catch(e){}
+  html += '<div class="k">アップロードするデータ（全'+keys.length+'件）</div><div class="v" style="font-size:11px;color:#888;">'+
+    keys.map(function(k){return esc(k.replace('schedule-studio:',''));}).join(' , ')+'</div>';
+  foundEl.innerHTML = html;
+  return true;
+}
+
+var hasData = summarize();
+
+var app, db;
+try {
+  app = firebase.initializeApp(FIREBASE_CONFIG);
+  db = firebase.database();
+} catch(e){
+  document.getElementById('status').innerHTML = '<span class="err">Firebase 初期化失敗: '+esc(e.message)+'</span>';
+}
+
+var btn = document.getElementById('goBtn');
+function enableBtn(){
+  if (hasData && db){ btn.disabled=false; btn.textContent='この内容で保管庫に復元（アップロード）'; }
+  else { btn.disabled=true; btn.textContent = hasData ? '接続待ち…' : 'データなし'; }
+}
+// 匿名認証してから有効化（本体アプリと同じ）
+if (db){
+  firebase.auth().signInAnonymously().then(function(){ enableBtn(); }).catch(function(e){
+    // 認証が無くても書ける構成の場合があるので、警告のうえ有効化
+    document.getElementById('status').innerHTML = '<span class="warn">認証は通りませんでしたが、続行は可能です。</span>';
+    enableBtn();
+  });
+} else { enableBtn(); }
+
+btn.addEventListener('click', function(){
+  if (!db || !hasData) return;
+  btn.disabled = true; btn.textContent = 'アップロード中…';
+  var st = document.getElementById('status');
+  st.textContent = '';
+  var done = 0, fail = 0, total = keys.length;
+  keys.forEach(function(k){
+    var v = localStorage.getItem(k);
+    db.ref('ls/'+encKey(k)).set({ k:k, v:String(v), t:Date.now() })
+      .then(function(){ done++; render(); })
+      .catch(function(e){ fail++; st.innerHTML += '<div class="err">失敗: '+esc(k)+' / '+esc(e.message)+'</div>'; render(); });
+  });
+  function render(){
+    if (done+fail >= total){
+      if (fail===0){
+        st.innerHTML = '<span class="ok">✓ 復元完了（'+done+'件アップロード）。\nこの後、いつものSCHEDULE STUDIOを普通に開いてOKです。</span>';
+        btn.textContent = '完了';
+      } else {
+        st.innerHTML += '<div class="warn">'+done+'件成功 / '+fail+'件失敗。失敗分はもう一度ボタンを押すか、報告してください。</div>';
+        btn.disabled = false; btn.textContent = 'もう一度アップロード';
+      }
+    } else {
+      btn.textContent = 'アップロード中… ('+(done+fail)+'/'+total+')';
+    }
+  }
+});
+</script>
+</body>
+</html>
