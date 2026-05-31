@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260530.431000">
+<meta name="build-version" content="20260530.433000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -7632,10 +7632,13 @@
     // 既に focus 済みの場合は何もしない（ユーザーがカーソル位置を変えたい等のため）
   });
   // 万が一 mousedown が走らない経路（タブキー移動 / プログラム focus）でも全選択
+  // R433: 同期 select() はブラウザの mouseup カーソル配置に上書きされ全選択が外れる
+  //   （→ 既存値の右に追記され「2→22」）。setTimeout(0) で配置完了後に確実に全選択する。
   container.addEventListener('focusin', function(e){
     const el = e.target;
     if (el && el.classList && el.classList.contains('rh-no')) {
       try { el.select(); } catch(err) {}
+      setTimeout(function(){ try { if (document.activeElement === el) el.select(); } catch(err) {} }, 0);
     }
   });
   // Enter で確定（blur）

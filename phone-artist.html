@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260530.432000">
+<meta name="build-version" content="20260530.433000">
 <!-- R389: CDS /output デザインに寄せるための Google Fonts (Bebas Neue + Noto Sans JP) -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -2029,6 +2029,11 @@
   .tag-pill, .rh-rhno, .arrival-add-time-btn {
     pointer-events: none !important;
   }
+  /* R433: アーティストのリハカードは「自分の出番」中心に簡素化。
+     技術用の タグ列／リハ番号 を隠し、曲名を読みやすく（曲順・曲名・尺だけ残す）。 */
+  .rh-line2 { display: none !important; }   /* モニター/音/光… の技術タグ列 */
+  .rh-rhno  { display: none !important; }    /* リハ番号（×含む） */
+  .rh-title { font-size: 16px !important; font-weight: 600 !important; }
 
   /* ── NOW タブ（CDS リアルタイム同期） ───────── R386: phone-staff から移植 */
   /* R392: ".screen.active 以外は display:none" の制御を上書きしないよう
@@ -2246,6 +2251,7 @@
   <button class="tour-date-nav" onclick="changeTourDay(-1)">‹</button>
   <button class="tour-date-display" onclick="openDatePicker()">
     <span class="tour-date-main" id="tour-date-main">4/29 (水)</span>
+    <span class="tour-date-today" id="tour-date-today" style="display:none; margin-left:8px; font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:0.14em; color:#a8e878; border:0.5px solid rgba(168,232,120,0.7); border-radius:3px; padding:1px 5px; vertical-align:middle;">TODAY</span>
   </button>
   <button class="tour-date-nav" onclick="changeTourDay(1)">›</button>
 </div>
@@ -3168,6 +3174,8 @@ function renderDateBar() {
   if (!tourDays.length) return;
   const d = tourDays[selectedDayIdx];
   document.getElementById('tour-date-main').textContent = `${d.date} (${d.dow})`;
+  var __t = document.getElementById('tour-date-today'); // R433: TODAYバッジ
+  if (__t) __t.style.display = d.today ? 'inline-block' : 'none';
 }
 
 function renderDateList() {

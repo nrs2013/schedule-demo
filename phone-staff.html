@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260530.432000">
+<meta name="build-version" content="20260530.433000">
 <!-- R389: CDS /output デザインに寄せるための Google Fonts (Bebas Neue + Noto Sans JP) -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -2262,6 +2262,7 @@
   <button class="tour-date-nav" onclick="changeTourDay(-1)">‹</button>
   <button class="tour-date-display" onclick="openDatePicker()">
     <span class="tour-date-main" id="tour-date-main">4/29 (水)</span>
+    <span class="tour-date-today" id="tour-date-today" style="display:none; margin-left:8px; font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:0.14em; color:#a8e878; border:0.5px solid rgba(168,232,120,0.7); border-radius:3px; padding:1px 5px; vertical-align:middle;">TODAY</span>
   </button>
   <button class="tour-date-nav" onclick="changeTourDay(1)">›</button>
 </div>
@@ -2493,9 +2494,12 @@
           <input id="arrival-edit-section-input" type="text" placeholder="セクション名" style="flex:1; min-width:0; box-sizing:border-box; background:#0f0f0f; border:1px solid #2c2c2c; border-radius:4px; padding:9px 10px; color:#e8e8e8; font-size: 16px;" />
         </div>
         <div style="display:flex; gap:8px; margin-top:12px;">
-          <button type="button" onclick="deleteArrivalSectionPhone()" style="flex:1; background:#5a2222; color:#f0c0c0; border:1px solid #6d2c2c; border-radius:4px; padding:10px; font-size:14px;">削除</button>
           <button type="button" onclick="closeArrivalEditSheet()" style="flex:1; background:#2a2a26; color:#a8a8a8; border:1px solid #3a3a36; border-radius:4px; padding:10px; font-size:14px;">キャンセル</button>
           <button type="button" onclick="saveArrivalEditPhone()" style="flex:1; background:#c8a878; color:#0a0a08; border:none; border-radius:4px; padding:10px; font-size:14px; font-weight:600; letter-spacing:0.2em;">保存</button>
+        </div>
+        <!-- R433: 削除は誤タップ防止のため保存/キャンセル行から離して単独配置 -->
+        <div style="text-align:center; margin-top:14px;">
+          <button type="button" onclick="deleteArrivalSectionPhone()" style="background:none; border:none; color:#c97a7a; font-size:12px; text-decoration:underline; padding:6px;">この入り時間を削除</button>
         </div>
       </div>
     </div>
@@ -2521,9 +2525,11 @@
           <input id="taxi-edit-count" type="number" min="1" value="1" style="flex:1; box-sizing:border-box; background:#0f0f0f; border:1px solid #2c2c2c; border-radius:4px; padding:9px 10px; color:#e8e8e8; font-size:16px;">
         </div>
         <div style="display:flex; gap:8px; margin-top:12px;">
-          <button id="taxi-edit-delete-btn" type="button" onclick="deleteTaxiEditPhone()" style="flex:1; background:#5a2222; color:#f0c0c0; border:1px solid #6d2c2c; border-radius:4px; padding:10px; font-size:14px;">削除</button>
           <button type="button" onclick="closeTaxiEditPhone()" style="flex:1; background:#2a2a26; color:#a8a8a8; border:1px solid #3a3a36; border-radius:4px; padding:10px; font-size:14px;">キャンセル</button>
           <button type="button" onclick="saveTaxiEditPhone()" style="flex:1; background:#c8a878; color:#0a0a08; border:none; border-radius:4px; padding:10px; font-size:14px; font-weight:600; letter-spacing:0.2em;">保存</button>
+        </div>
+        <div style="text-align:center; margin-top:14px;">
+          <button id="taxi-edit-delete-btn" type="button" onclick="deleteTaxiEditPhone()" style="background:none; border:none; color:#c97a7a; font-size:12px; text-decoration:underline; padding:6px;">このタクシー配車を削除</button>
         </div>
       </div>
     </div>
@@ -2535,9 +2541,11 @@
         <input id="member-edit-section" type="text" placeholder="セクション (PA等)" style="width:100%; box-sizing:border-box; background:#0f0f0f; border:1px solid #2c2c2c; border-radius:4px; padding:9px 10px; color:#e8e8e8; font-size:16px; margin-bottom:8px;">
         <input id="member-edit-name" type="text" placeholder="お名前" style="width:100%; box-sizing:border-box; background:#0f0f0f; border:1px solid #2c2c2c; border-radius:4px; padding:9px 10px; color:#e8e8e8; font-size:16px;">
         <div style="display:flex; gap:8px; margin-top:12px;">
-          <button id="member-edit-delete-btn" type="button" onclick="deleteMemberEditPhone()" style="flex:1; background:#5a2222; color:#f0c0c0; border:1px solid #6d2c2c; border-radius:4px; padding:10px; font-size:14px;">削除</button>
           <button type="button" onclick="closeMemberEditPhone()" style="flex:1; background:#2a2a26; color:#a8a8a8; border:1px solid #3a3a36; border-radius:4px; padding:10px; font-size:14px;">キャンセル</button>
           <button type="button" onclick="saveMemberEditPhone()" style="flex:1; background:#c8a878; color:#0a0a08; border:none; border-radius:4px; padding:10px; font-size:14px; font-weight:600; letter-spacing:0.2em;">保存</button>
+        </div>
+        <div style="text-align:center; margin-top:14px;">
+          <button id="member-edit-delete-btn" type="button" onclick="deleteMemberEditPhone()" style="background:none; border:none; color:#c97a7a; font-size:12px; text-decoration:underline; padding:6px;">このメンバーを削除</button>
         </div>
       </div>
     </div>
@@ -3249,6 +3257,9 @@ function renderDateBar() {
   if (!tourDays.length) return;
   const d = tourDays[selectedDayIdx];
   document.getElementById('tour-date-main').textContent = `${d.date} (${d.dow})`;
+  // R433: 今日を見ている時だけ TODAY バッジ
+  var __t = document.getElementById('tour-date-today');
+  if (__t) __t.style.display = d.today ? 'inline-block' : 'none';
 }
 
 function renderDateList() {
@@ -3446,7 +3457,7 @@ function saveRehTag(songId, tagKey, isOn) {
 }
 
 function saveRehRhNo(songId, rhNo) { setRehDictForToday(songId, { rhNo: rhNo }); }
-function saveRehMemo(songId, memo) { setRehDictForToday(songId, { memo: memo }); }
+function saveRehMemo(songId, memo) { setRehDictForToday(songId, { memo: memo }); if (typeof showToastPhone === 'function') showToastPhone('メモを保存しました'); }
 
 // 8 種タグ定義（PC と同じ）
 const PHONE_TAG_LIST = [
@@ -4062,6 +4073,22 @@ function renderArrivalListPhone() {
 }
 
 // R195: 入り時間の追加（認証不要、誰でも登録可）
+// R433: 保存できたことを伝える小さなトースト（1.5秒・muted・絵文字なし）
+function showToastPhone(msg){
+  try {
+    var t = document.getElementById('phone-toast');
+    if (!t) {
+      t = document.createElement('div');
+      t.id = 'phone-toast';
+      t.style.cssText = 'position:fixed; left:50%; transform:translateX(-50%); bottom:78px; z-index:100000; background:rgba(30,30,28,0.96); color:#e8e8e4; border:0.5px solid rgba(255,255,255,0.18); border-radius:6px; padding:8px 16px; font-size:12px; letter-spacing:0.08em; opacity:0; transition:opacity 0.2s; pointer-events:none; max-width:80%; text-align:center;';
+      document.body.appendChild(t);
+    }
+    t.textContent = msg || '保存しました';
+    t.style.opacity = '1';
+    clearTimeout(t.__hide);
+    t.__hide = setTimeout(function(){ t.style.opacity = '0'; }, 1500);
+  } catch(e){}
+}
 function addArrivalSectionPhone() {
   const sectionInput = document.getElementById('arrival-add-section-input');
   const timeBtn = document.getElementById('arrival-add-time-btn');
@@ -4076,6 +4103,7 @@ function addArrivalSectionPhone() {
   saveArrivals();
   renderArrivalListPhone();
   sectionInput.value = '';
+  showToastPhone('登録しました');
 }
 
 // R206: 入り時間の編集シート（時間ピッカー対応、認証不要）
@@ -4122,6 +4150,7 @@ function saveArrivalEditPhone() {
   saveArrivals();
   renderArrivalListPhone();
   closeArrivalEditSheet();
+  showToastPhone('保存しました');
 }
 function deleteArrivalSectionPhone() {
   if (__editingArrivalIdx < 0) return;
