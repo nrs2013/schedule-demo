@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260530.433000">
+<meta name="build-version" content="20260601.436000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -10157,6 +10157,23 @@
     }).join('');
   }
 
+  /* R436: 再描画/追加/削除の前に、DOM 上の入力途中の項目名(label)をデータへ退避。
+     項目名を入力中(blur前)に別項目の時刻変更や項目追加で再描画が走ると、
+     未確定の入力テキストが消えるデータ消失バグの対策。 */
+  function syncDayEventInputsFromDOM(){
+    try {
+      const events = getDayEvents(masterDateState.current);
+      document.querySelectorAll('#day-event-list .day-event-card:not(.day-event-card-readonly)').forEach(function(card){
+        const id = +card.getAttribute('data-day-event');
+        const ev = events.find(function(x){ return x.id === id; });
+        if (!ev) return;
+        const labelInput = card.querySelector('.day-event-label');
+        if (labelInput) ev.label = labelInput.value;
+      });
+      saveDayEvents();
+    } catch(e) {}
+  }
+
   // 入力変更 → データ更新（startTime 変更時は再ソート）
   // R58: J案1窓型（H/M別 select）対応 — frame 内の H/M select 変化時は両方の値を結合
   document.addEventListener('change', function(e){
@@ -10186,6 +10203,7 @@
           if (_r75IsDoorLabel(ev.label) && showTimes[_v]) { showTimes[_v].door = ev[field]; if (typeof saveShowTimes === 'function') saveShowTimes(); }
           else if (_r75IsShowLabel(ev.label) && showTimes[_v]) { showTimes[_v].show = ev[field]; if (typeof saveShowTimes === 'function') saveShowTimes(); }
         }
+        syncDayEventInputsFromDOM(); /* R436: 入力中の項目名を保護してから再描画 */
         renderDaySchedule();
         /* マスター日付バーのチップも更新 */
         if (typeof window.__refreshMasterDateBar === 'function') window.__refreshMasterDateBar();
@@ -10205,6 +10223,7 @@
         if (_r75IsDoorLabel(ev.label) && showTimes[_v2]) { showTimes[_v2].door = ev[field]; if (typeof saveShowTimes === 'function') saveShowTimes(); }
         else if (_r75IsShowLabel(ev.label) && showTimes[_v2]) { showTimes[_v2].show = ev[field]; if (typeof saveShowTimes === 'function') saveShowTimes(); }
       }
+      syncDayEventInputsFromDOM(); /* R436: 入力中の項目名を保護してから再描画 */
       renderDaySchedule();
       if (typeof window.__refreshMasterDateBar === 'function') window.__refreshMasterDateBar();
     }
@@ -10215,6 +10234,7 @@
     const t = e.target;
     const action = t && t.getAttribute && t.getAttribute('data-action');
     if (action === 'add-day-event') {
+      syncDayEventInputsFromDOM(); /* R436: 追加前に入力中の項目名を保護 */
       const events = getDayEvents(masterDateState.current);
       events.push({
         id: nextDayEventId++,
@@ -10228,6 +10248,7 @@
       const card = t.closest('.day-event-card');
       if (!card) return;
       const id = +card.getAttribute('data-day-event');
+      syncDayEventInputsFromDOM(); /* R436: 削除前に入力中の項目名を保護 */
       const events = getDayEvents(masterDateState.current);
       const idx = events.findIndex(function(x){ return x.id === id; });
       if (idx >= 0) {
