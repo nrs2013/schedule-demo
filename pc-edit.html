@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build-version" content="20260601.437000">
+<meta name="build-version" content="20260704.440000">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>SCHEDULE STUDIO</title>
 <script>
@@ -362,6 +362,31 @@
         suppressFbWrite = false;
       }
     });
+    /* R440: ?pushall=1 — この端末の全データをクラウドへ送り直す救出機能。
+       クラウド側のデータが欠けた/壊れた時に、正しいデータを持つ端末でこの URL を
+       開くだけで復旧できる。pull 完了後に実行するので送るのは常に最新のローカル値。 */
+    (function checkPushAllParam(){
+      var params = new URLSearchParams(location.search);
+      if (params.get('pushall') !== '1') return;
+      history.replaceState(null, '', location.pathname); // リロードで再実行しない
+      setTimeout(function(){
+        var keys = [];
+        for (var i = 0; i < localStorage.length; i++) {
+          var k = localStorage.key(i);
+          if (shouldSyncFb(k)) keys.push(k);
+        }
+        if (!confirm('この端末に保存されている SCHEDULE STUDIO の全データ（' + keys.length + ' 件）をクラウドへ送り直します。\nクラウド側の同じ項目は、この端末の内容で上書きされます。\n実行しますか？')) return;
+        var sent = 0;
+        keys.forEach(function(k){
+          try {
+            window.__db.ref(FB_ROOT + '/' + encKey(k)).set({ k: k, v: String(localStorage.getItem(k)), t: Date.now() });
+            sent++;
+          } catch(e) { console.warn('[R440 pushall] fail', k, e); }
+        });
+        alert('クラウドへの送り直しが完了しました（' + sent + ' / ' + keys.length + ' 件）。');
+        console.log('[R440 pushall] done', sent + '/' + keys.length);
+      }, 500);
+    })();
   }).catch(function(e){
     console.error('[FB] pull 失敗:', e);
   });
@@ -5814,15 +5839,17 @@
     font-weight: 500;
     text-shadow: 0 1px 2px rgba(0,0,0,0.6);
   }
-  /* R247: 縦串ゴースト */
+  /* R247: 縦串ゴースト  R439: 「今、縦串モードに入った」が一目で分かるよう強調 */
   .tt-bar-ghost.span {
-    background: rgba(255,88,140,0.18);
-    border: 2px dashed #ff588c;
-    color: #ffd0dd;
+    background: rgba(255,88,140,0.34);
+    border: 3px solid #ff588c;
+    color: #ffffff;
     font-size: 13px;
+    font-weight: 700;
     align-items: flex-start;
     padding-top: 8px;
     z-index: 8;
+    box-shadow: 0 0 0 2px rgba(255,88,140,0.30), 0 4px 18px rgba(255,88,140,0.40);
   }
   .tt-bar-handle:hover { background: rgba(255,255,255,0.18); }
 
@@ -6080,8 +6107,11 @@
   /* R284: 縦串バーラベルを動的に最適表示。デフォルト横書き大きな文字、入らなければ縦書き→改行→小さく。
      JS の fitSpanLabel() で .layout-h / .layout-v / .layout-wrap / .layout-small クラスを切替。 */
   .tt-bar.span-bar { overflow: hidden !important; }
+  /* R439: ヒット領域の一元管理 — 非選択の縦串は本体・テキスト枠とも素通りさせ、
+     重なっている個別バーや背景(新規バー作成)の操作を邪魔しない。
+     掴める場所は「文字そのもの」(下の auto 指定)と上下左右のハンドル。 */
   .tt-bar.span-bar .tt-bar-text {
-    pointer-events: auto;
+    pointer-events: none;
     position: absolute;
     inset: 0;
     display: flex;
@@ -6287,6 +6317,28 @@
     width: 10px;
   }
   .tt-bar.span-bar .tt-bar-handle { pointer-events: auto; }
+  /* R439: 縦串バーの掴み方 —
+     ① 非選択時:「文字そのもの」だけ掴める。文字は placeSpanLabel が個別バーと
+        被らない位置へ逃がすので、個別バーの操作と衝突しない。
+     ② 一度選択したら(または編集中は)全身どこでも掴める。縦串は overlay(z:6) 内に
+        いるため、選択中は重なった個別バー(z:5)より優先してマウスを受ける。 */
+  .tt-bar.span-bar .tt-span-title,
+  .tt-bar.span-bar .tt-span-title-empty,
+  .tt-bar.span-bar .tt-span-time {
+    pointer-events: auto;
+    cursor: move;
+  }
+  .tt-bar.span-bar.selected .tt-bar-text,
+  .tt-bar.span-bar.tt-bar-editing .tt-bar-text {
+    pointer-events: auto;
+  }
+  /* R439: 細いバー(36px未満)は左右つまみを 4px に縮め、移動のつかみしろを確保。
+     下端つまみの左右余白も連動して縮める。 */
+  .tt-bar.narrow .tt-bar-handle.l,
+  .tt-bar.narrow .tt-bar-handle.r,
+  .tt-bar.span-bar.narrow .tt-bar-handle.l,
+  .tt-bar.span-bar.narrow .tt-bar-handle.r { width: 4px; }
+  .tt-bar.normal.narrow .tt-bar-handle.b { left: 4px; right: 4px; }
   .tt-span-overlay {
     position: absolute;
     pointer-events: none;
@@ -13650,7 +13702,7 @@
       const height = laneSpan * barH + (laneSpan - 1) * layout.innerGap;
       const color = bar.color || 'white';
       const el = document.createElement('div');
-      el.className = 'tt-bar normal color-' + color + (isSel(bar.id) ? ' selected' : '') + (laneSpan > 1 ? ' lane-span-' + laneSpan : '');
+      el.className = 'tt-bar normal color-' + color + (isSel(bar.id) ? ' selected' : '') + (laneSpan > 1 ? ' lane-span-' + laneSpan : '') + (width < 36 ? ' narrow' : '');  /* R439: 細いバーはつまみ縮小 */
       el.setAttribute('data-bar-id', bar.id);
       el.style.cssText = 'left:' + left + 'px; width:' + width + 'px; top:' + top + 'px; height:' + height + 'px;';
       // R248: 単品バーは時刻表示なし。テキストのみ。tooltip にだけ時刻を入れる
@@ -13945,9 +13997,11 @@
       const widthPx = Math.max(SLOT_W(), timeToPixel(bar.end, tt) - timeToPixel(bar.start, tt));
       const color = bar.color || 'pink';
       const el = document.createElement('div');
-      el.className = 'tt-bar span-bar color-' + color + (isSel(bar.id) ? ' selected' : '');
+      el.className = 'tt-bar span-bar color-' + color + (isSel(bar.id) ? ' selected' : '') + (widthPx < 36 ? ' narrow' : '');  /* R439: 細いバーはつまみ縮小 */
       el.setAttribute('data-bar-id', bar.id);
-      el.style.cssText = 'position:absolute; left:' + leftPx + 'px; top:' + topY + 'px; width:' + widthPx + 'px; height:' + height + 'px; pointer-events:auto;';
+      /* R439: インラインの pointer-events:auto を撤去 — ヒット判定は CSS 側で一元管理。
+         非選択時は「文字」だけ掴める(他は下の個別バーや背景へ素通り)、選択中は全身掴める。 */
+      el.style.cssText = 'position:absolute; left:' + leftPx + 'px; top:' + topY + 'px; width:' + widthPx + 'px; height:' + height + 'px;';
       const timeLabel = fmtTimeFromHour(bar.start) + '〜' + fmtTimeFromHour(bar.end);
       const title = (bar.text || '').trim();
       el.title = (title || '(無題)') + '  ' + timeLabel + '  ／ ' + spanIds.length + ' セクション';
@@ -14355,15 +14409,18 @@
           const isDownward = (mouseY > startBot);
           const passedSecIds = [sec.id];
           // R291: .tt-sec-drag / .tt-sec-name にも data-sec-id があるので、行だけに絞る
+          // R439: 誤爆防止 — 行の中央(50%)ではなく 75% の深さまで引いたときだけ「通過」扱いに。
+          //       横ドラッグ中のわずかな縦ブレで意図せず縦串化するのを防ぐ。
           const secRows = gridEl.querySelectorAll('.tt-sec-row[data-sec-id]');
           secRows.forEach(function(row){
             const rId = row.getAttribute('data-sec-id');
             if (rId === sec.id) return;
             const r = row.getBoundingClientRect();
-            const rMid = (r.top + r.bottom) / 2;
+            const rH = r.bottom - r.top;
+            const rDeep = isDownward ? (r.top + rH * 0.75) : (r.bottom - rH * 0.75);
             const passed = isDownward
-              ? (rMid > startBot && rMid < mouseY)   // 下に向かって：rMid が開始の下〜マウスの間
-              : (rMid > mouseY && rMid < startTop); // 上に向かって：rMid がマウス〜開始の上の間
+              ? (rDeep > startBot && rDeep < mouseY)   // 下に向かって：行の 75% 地点を越えるまで通過にしない
+              : (rDeep > mouseY && rDeep < startTop); // 上に向かって：同じく深く引いたときだけ
             if (passed) passedSecIds.push(rId);
           });
           spanSecIds = passedSecIds;
@@ -14511,7 +14568,15 @@
       const topSecIdx = orderedIds.indexOf(topSecId);
       if (topSecIdx < 0) return;
       el.classList.add('selected');
+      // R439: 誤爆防止 — 6px しっかり引くまで何も起こさない「あそび」。
+      //       バーを掴むつもりで下端に触れただけでは変形しない。
+      let armed = false;
+      const startClientY = e.clientY;
       function move(ev){
+        if (!armed) {
+          if (Math.abs(ev.clientY - startClientY) < 6) return;
+          armed = true;
+        }
         // hover セクション判定（startVResize と同じ手法）
         const sectionRows = document.querySelectorAll('.tt-sec-row[data-sec-id]');
         let hoverSecId = null, lastBelow = null, firstAbove = null;
@@ -14591,6 +14656,18 @@
     const handleL = el.querySelector('.tt-bar-handle.l');
     const handleR = el.querySelector('.tt-bar-handle.r');
 
+    // R440: 非選択の縦串ラベルが個別バーの真上に重なった位置では「見えている個別バー」優先。
+    //       placeSpanLabel の逃がし配置は中間セクションのバーを避けられないので、
+    //       当たり判定で確実に解決する（選択済み縦串は従来どおり全身優先）。
+    function barUnderPoint(cx, cy){
+      const stack = document.elementsFromPoint(cx, cy);
+      for (let i = 0; i < stack.length; i++) {
+        const hit = stack[i].closest ? stack[i].closest('.tt-bar') : null;
+        if (hit && hit !== el && !hit.classList.contains('span-bar')) return hit;
+      }
+      return null;
+    }
+
     // バー本体ドラッグ = 移動／クリックのみ = 選択
     el.addEventListener('mousedown', function(e){
       if (e.target === handleL || e.target === handleR) return;
@@ -14598,6 +14675,20 @@
       // R274: 編集中はドラッグ移動しない（textEl 内部クリックを許可）
       if (el.classList.contains('tt-bar-editing')) return;
       if (e.button !== 0) return;
+      // R440: ラベル越しクリックを下の個別バーへ転送
+      if (el.classList.contains('span-bar') && !el.classList.contains('selected')) {
+        const underBar = barUnderPoint(e.clientX, e.clientY);
+        if (underBar) {
+          e.stopPropagation();
+          e.preventDefault();
+          underBar.dispatchEvent(new MouseEvent('mousedown', {
+            bubbles: true, cancelable: true, view: window,
+            clientX: e.clientX, clientY: e.clientY, button: 0,
+            metaKey: e.metaKey, ctrlKey: e.ctrlKey
+          }));
+          return;
+        }
+      }
       e.stopPropagation();
       const scale = getPaperScale();
       const parent = el.parentElement;
@@ -14724,6 +14815,12 @@
     // ハンドル以外、時刻 span を含むどこをダブルクリックしても再編集できる。
     el.addEventListener('dblclick', function(e){
       if (e.target.closest('.tt-bar-handle')) return;
+      // R440: ラベル越しダブルクリックは下の個別バーの編集フロー（再クリック編集）に譲る
+      if (el.classList.contains('span-bar') && !el.classList.contains('selected') && barUnderPoint(e.clientX, e.clientY)) {
+        e.stopPropagation();
+        e.preventDefault();
+        return;
+      }
       e.stopPropagation();
       e.preventDefault();
       // R281d: 直前の click 経由 setTimeout(startEdit) を取り消して二重発火回避
