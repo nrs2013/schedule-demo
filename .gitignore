@@ -25,3 +25,23 @@ _watcher_test.txt
 pc-edit-r[0-9]*.html
 *-backup.html
 *.backup-*
+
+# 公演機密（2026-07-25 追加・公開リポなので絶対に push しない）
+sources/
+docs/
+*.xlsx
+*.xls
+*進行表*
+*セトリ*
+*セットリスト*
+
+# 作業中バックアップ・ゴミ
+*-pre-push.html
+*-pre-timetable.html
+*.bak-r*
+.DS_Store
+__pycache__/
+
+# 公演データ（2026-07-25 GitHub から削除・ローカルには残す）
+data/sakurazaka-4ki.json
+inject-sakurazaka.html
