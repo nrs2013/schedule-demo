@@ -329,7 +329,13 @@
         } catch(e) {}
       }
       // R108: window export 経由で各 in-memory 変数を再読込
-      if (item.k === 'schedule-studio:calEvents:v1' && typeof window.__reloadCalEvents === 'function') window.__reloadCalEvents();
+      if (item.k === 'schedule-studio:calEvents:v1' && typeof window.__reloadCalEvents === 'function') {
+        window.__reloadCalEvents();
+        // 自動パトロール修正: 他端末から calEvents が丸ごと差し替わると古い選択インデックスが
+        // 別のイベントを指してしまう（幽霊選択→Delete で誤削除の恐れ）ため、リモート反映時は選択をクリア
+        window.__selectedEventIdx = null;
+        window.__selectedBandId = null;
+      }
       if (item.k === 'schedule-studio:calMemos:v1' && typeof window.__reloadCalMemos === 'function') window.__reloadCalMemos();
       if (item.k === 'schedule-studio:showTimes:v1' && typeof window.__reloadShowTimes === 'function') window.__reloadShowTimes();
       if (item.k === 'schedule-studio:arrivalSectionsByDate:v1' && typeof window.__reloadArrivals === 'function') window.__reloadArrivals();
@@ -12241,6 +12247,7 @@
       if (!editingCtx || editingCtx.isNew || !window.__calApi) { closeModal(); return; }
       if (!confirm('このイベントを削除しますか？')) return;
       window.__calApi.deleteEvent(editingCtx.ev);
+      window.__selectedEventIdx = null; // 自動パトロール修正: モーダル削除でも選択インデックスをクリア（幽霊選択→誤削除防止、キーボード削除経路と統一）
       closeModal();
     }
   });
@@ -15691,6 +15698,9 @@
   // Firebase reload（他端末からの変更通知時）
   window.__reloadTimetableByDate = function(){
     loadFromStorage();
+    // 自動パトロール修正: 他端末からの同期でバーが差し替わるため、選択状態も解除する。
+    // （R358 の日付切替時 clearSel と同じ理由。これが無いと消えたバーが選択されたまま残る）
+    clearSel();
     if (document.getElementById('tt-grid')) render();
   };
 
